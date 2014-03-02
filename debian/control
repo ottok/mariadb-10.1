@@ -1,0 +1,250 @@
+Source: mariadb-10.0
+Section: database
+Priority: optional
+Maintainer: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Uploaders: Otto Kekäläinen <otto@seravo.fi>,
+           Clint Byrum <clint@ubuntu.com>,
+           James Page <jamespage@debian.org>
+Build-Depends: bison,
+               chrpath,
+               cmake,
+               debhelper (>= 9),
+               hardening-wrapper,
+               libaio-dev [linux-any],
+               libjemalloc-dev [linux-any],
+               libncurses5-dev (>= 5.0-6),
+               libpam0g-dev,
+               libreadline-gplv2-dev,
+               libssl-dev,
+               libwrap0-dev (>= 7.6-8.3),
+               lsb-release,
+               perl,
+               po-debconf,
+               psmisc,
+               zlib1g-dev (>= 1:1.1.3-5),
+               libboost-dev,
+               libjudy-dev
+Standards-Version: 3.9.5
+Homepage: http://mariadb.org/
+Vcs-Git: git://git.debian.org/git/pkg-mysql/mariadb-10.0.git
+Vcs-Browser: http://git.debian.org/?p=pkg-mysql/mariadb-10.0.git
+
+Package: libmariadbclient18
+Section: libs
+Architecture: any
+Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
+Pre-Depends: multiarch-support, ${misc:Pre-Depends}
+Conflicts: mariadb-galera-server-5.5 (<< 5.5.33),
+           mariadb-server-5.1,
+           mariadb-server-5.2,
+           mariadb-server-5.3,
+           mariadb-server-5.5 (<< 5.5.33)
+Multi-Arch: same
+Description: MariaDB database client library
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes the client library.
+
+Package: libmariadbd-dev
+Architecture: any
+Section: libdevel
+Pre-Depends: multiarch-support
+Depends: libmariadbclient-dev (>= ${source:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: libmysqld-dev
+Replaces: libmysqld-dev
+Provides: libmysqld-dev
+Description: MariaDB embedded database development files
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes the embedded server library and header files.
+
+Package: libmariadbclient-dev
+Architecture: any
+Section: libdevel
+Depends: libmariadbclient18 (= ${binary:Version}),
+         zlib1g-dev,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: libmysqlclient-dev
+Replaces: libmysqlclient-dev
+Provides: libmysqlclient-dev
+Description: MariaDB database development files
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes development libraries and header files.
+
+Package: mariadb-common
+Architecture: all
+Depends: mysql-common, ${misc:Depends}
+Multi-Arch: foreign
+Description: MariaDB common metapackage
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This empty metapackage makes the introduction on MariaDB specific
+ configurationfiles easier at any later time.
+
+Package: mariadb-client-core-10.0
+Architecture: any
+Depends: libmariadbclient18 (>= ${source:Version}),
+         mariadb-common,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Conflicts: mysql-client-5.5, mysql-client-5.6
+Breaks: mysql-client-core-5.5, mysql-client-core-5.6
+Replaces: mysql-client-core-5.5, mysql-client-core-5.6
+Description: MariaDB database core client binaries
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes the core client files, as used by Akonadi.
+
+Package: mariadb-client-10.0
+Architecture: any
+Depends: debianutils (>=1.6),
+         libdbi-perl,
+         mariadb-client-core-10.0 (>= ${source:Version}),
+         ${misc:Depends},
+         ${perl:Depends},
+         ${shlibs:Depends}
+Recommends: libdbd-mysql-perl (>= 1.2202)
+Conflicts: mysql-client-core-5.5, mysql-client-core-5.6
+Breaks: mysql-client-5.5, mysql-client-5.6
+Replaces: mysql-client-5.5, mysql-client-5.6
+Provides: virtual-mysql-client
+Description: MariaDB database client binaries
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes the client binaries and the additional tools
+ innotop and mysqlreport.
+
+Package: mariadb-server-core-10.0
+Architecture: any
+Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
+Conflicts: mysql-server-5.5, mysql-server-5.6, mariadb-galera-server-5.5
+Breaks: mysql-server-core-5.5, mysql-server-core-5.6
+Replaces: mysql-server-core-5.5, mysql-server-core-5.6
+Description: MariaDB database core server files
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes the core server files, as used by Akonadi.
+
+Package: mariadb-test-10.0
+Architecture: any
+Depends: mariadb-client-10.0 (>= ${source:Version}),
+         mariadb-server-10.0 (>= ${source:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: mariadb-test (<< ${source:Version}), mysql-testsuite-5.5, mysql-testsuite-5.6
+Replaces: mariadb-test (<< ${source:Version}), mysql-testsuite-5.5, mysql-testsuite-5.6
+Suggests: patch
+Description: MariaDB database regression test suite
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes the regression test suite.
+
+Package: mariadb-server-10.0
+Architecture: any
+Suggests: mailx, mariadb-test, tinyca
+Recommends: libhtml-template-perl
+Pre-Depends: adduser (>= 3.40), debconf, mariadb-common
+Depends: libdbi-perl,
+         lsb-base (>= 3.0-10),
+         mariadb-client-10.0 (>= ${source:Version}),
+         mariadb-server-core-10.0 (>= ${binary:Version}),
+         passwd,
+         perl (>= 5.6),
+         psmisc,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Conflicts: mariadb-tokudb-engine-5.5, mariadb-tokudb-engine-10.0, mysql-server-core-5.5, mysql-server-core-5.6
+Breaks: mariadb-tokudb-engine-5.5, mariadb-tokudb-engine-10.0, mysql-server-5.5, mysql-server-5.6, mariadb-galera-server-5.5
+Replaces: mariadb-tokudb-engine-5.5, mariadb-tokudb-engine-10.0, mysql-server-5.5, mysql-server-5.6, mariadb-galera-server-5.5
+Provides: virtual-mysql-server
+Description: MariaDB database server binaries
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package includes the server binaries.
+
+Package: mariadb-server
+Architecture: all
+Depends: mariadb-server-10.0 (>= ${source:Version}), ${misc:Depends}
+Breaks: mysql-server, mariadb-galera-server
+Replaces: mysql-server, mariadb-galera-server
+Description: MariaDB database server (metapackage depending on the latest version)
+ This is an empty package that depends on the current "best" version of
+ mariadb-server (currently mariadb-server-10.0), as determined by the MariaDB
+ maintainers. Install this package if in doubt about which MariaDB
+ version you need. That will install the version recommended by the
+ package maintainers.
+ .
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+
+Package: mariadb-client
+Architecture: all
+Depends: mariadb-client-10.0 (>= ${source:Version}), ${misc:Depends}
+Breaks: mysql-client
+Replaces: mysql-client
+Description: MariaDB database client (metapackage depending on the latest version)
+ This is an empty package that depends on the current "best" version of
+ mariadb-client (currently mariadb-client-10.0), as determined by the MariaDB
+ maintainers.  Install this package if in doubt about which MariaDB version
+ you want, as this is the one considered to be in the best shape.
+
+Package: mariadb-test
+Architecture: all
+Depends: mariadb-test-10.0 (>= ${source:Version}), ${misc:Depends}
+Breaks: mysql-testsuite
+Replaces: mysql-testsuite
+Description: MariaDB database regression test suite (metapackage for the latest version)
+ This is an empty package that depends on the current "best" version of
+ mariadb-test (currently mariadb-test-10.0), as determined by the MariaDB
+ maintainers.
+
+Package: mariadb-connect-engine-10.0
+Section: database
+Architecture: any
+Depends: mariadb-server-10.0, unixODBC-dev, libxml2-dev
+Description: Connect storage engine for MariaDB
+ Connect engine supports a number of file formats (dbf, xml, txt, bin, etc),
+ connections to ODBC tables and remote MySQL tables, as well as a number of
+ other interesting features.
+
+Package: mariadb-oqgraph-engine-10.0
+Section: database
+Architecture: any
+Depends: mariadb-server-10.0, libjudydebian1
+Description: Oqgraph storage engine for MariaDB
+ The OQGRAPH engine is a computation engine plugin for handling hierarchies
+ (trees) and graphs (friend-of-a-friend, etc) cleanly through standard SQL.
+
