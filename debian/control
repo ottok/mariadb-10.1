@@ -11,7 +11,9 @@ Build-Depends: bison,
                debhelper (>= 9),
                hardening-wrapper,
                libaio-dev [linux-any],
+               libboost-dev,
                libjemalloc-dev [linux-any],
+               libjudy-dev,
                libncurses5-dev (>= 5.0-6),
                libpam0g-dev,
                libreadline-gplv2-dev,
@@ -21,9 +23,7 @@ Build-Depends: bison,
                perl,
                po-debconf,
                psmisc,
-               zlib1g-dev (>= 1:1.1.3-5),
-               libboost-dev,
-               libjudy-dev
+               zlib1g-dev (>= 1:1.1.3-5)
 Standards-Version: 3.9.5
 Homepage: http://mariadb.org/
 Vcs-Git: git://git.debian.org/git/pkg-mysql/mariadb-10.0.git
@@ -139,7 +139,7 @@ Description: MariaDB database client binaries
 Package: mariadb-server-core-10.0
 Architecture: any
 Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
-Conflicts: mysql-server-5.5, mysql-server-5.6, mariadb-galera-server-5.5
+Conflicts: mariadb-galera-server-5.5, mysql-server-5.5, mysql-server-5.6
 Breaks: mysql-server-core-5.5, mysql-server-core-5.6
 Replaces: mysql-server-core-5.5, mysql-server-core-5.6
 Description: MariaDB database core server files
@@ -156,8 +156,12 @@ Depends: mariadb-client-10.0 (>= ${source:Version}),
          mariadb-server-10.0 (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Breaks: mariadb-test (<< ${source:Version}), mysql-testsuite-5.5, mysql-testsuite-5.6
-Replaces: mariadb-test (<< ${source:Version}), mysql-testsuite-5.5, mysql-testsuite-5.6
+Breaks: mariadb-test (<< ${source:Version}),
+        mysql-testsuite-5.5,
+        mysql-testsuite-5.6
+Replaces: mariadb-test (<< ${source:Version}),
+          mysql-testsuite-5.5,
+          mysql-testsuite-5.6
 Suggests: patch
 Description: MariaDB database regression test suite
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
@@ -181,9 +185,20 @@ Depends: libdbi-perl,
          psmisc,
          ${misc:Depends},
          ${shlibs:Depends}
-Conflicts: mariadb-tokudb-engine-5.5, mariadb-tokudb-engine-10.0, mysql-server-core-5.5, mysql-server-core-5.6
-Breaks: mariadb-tokudb-engine-5.5, mariadb-tokudb-engine-10.0, mysql-server-5.5, mysql-server-5.6, mariadb-galera-server-5.5
-Replaces: mariadb-tokudb-engine-5.5, mariadb-tokudb-engine-10.0, mysql-server-5.5, mysql-server-5.6, mariadb-galera-server-5.5
+Conflicts: mariadb-tokudb-engine-10.0,
+           mariadb-tokudb-engine-5.5,
+           mysql-server-core-5.5,
+           mysql-server-core-5.6
+Breaks: mariadb-galera-server-5.5,
+        mariadb-tokudb-engine-10.0,
+        mariadb-tokudb-engine-5.5,
+        mysql-server-5.5,
+        mysql-server-5.6
+Replaces: mariadb-galera-server-5.5,
+          mariadb-tokudb-engine-10.0,
+          mariadb-tokudb-engine-5.5,
+          mysql-server-5.5,
+          mysql-server-5.6
 Provides: virtual-mysql-server
 Description: MariaDB database server binaries
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
@@ -196,8 +211,8 @@ Description: MariaDB database server binaries
 Package: mariadb-server
 Architecture: all
 Depends: mariadb-server-10.0 (>= ${source:Version}), ${misc:Depends}
-Breaks: mysql-server, mariadb-galera-server
-Replaces: mysql-server, mariadb-galera-server
+Breaks: mariadb-galera-server, mysql-server
+Replaces: mariadb-galera-server, mysql-server
 Description: MariaDB database server (metapackage depending on the latest version)
  This is an empty package that depends on the current "best" version of
  mariadb-server (currently mariadb-server-10.0), as determined by the MariaDB
@@ -234,7 +249,7 @@ Description: MariaDB database regression test suite (metapackage for the latest 
 Package: mariadb-connect-engine-10.0
 Section: database
 Architecture: any
-Depends: mariadb-server-10.0, unixODBC-dev, libxml2-dev
+Depends: libxml2-dev, mariadb-server-10.0, unixODBC-dev
 Description: Connect storage engine for MariaDB
  Connect engine supports a number of file formats (dbf, xml, txt, bin, etc),
  connections to ODBC tables and remote MySQL tables, as well as a number of
@@ -243,8 +258,7 @@ Description: Connect storage engine for MariaDB
 Package: mariadb-oqgraph-engine-10.0
 Section: database
 Architecture: any
-Depends: mariadb-server-10.0, libjudydebian1
+Depends: libjudydebian1, mariadb-server-10.0
 Description: Oqgraph storage engine for MariaDB
  The OQGRAPH engine is a computation engine plugin for handling hierarchies
  (trees) and graphs (friend-of-a-friend, etc) cleanly through standard SQL.
-
