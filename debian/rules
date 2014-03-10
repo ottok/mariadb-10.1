@@ -1,8 +1,7 @@
 #!/usr/bin/make -f
 
 # TODO: take these files from mariadb-server-10.0 builddir and insert into separate packages
-# @CASSANDRA_DEB_FILES@
-# @SPIDER_DEB_FILES@
+# @CASSANDRA_DEB_FILES@ (requires libthrift-dev)
 # @TOKUDB_DEB_FILES@
 
 export DH_VERBOSE=1
