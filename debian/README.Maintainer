@@ -56,16 +56,13 @@ Eventually commit and push, build, test binaries, test packages etc..
 ## Upgrading sources from upstream ##
 
 Download new source package
-  wget XXXX
 
 Enter git repostitory path and apply new sources
   cd pkg-mariadb-10.0/mariadb-10.0/
   git-import-orig --pristine-tar ../../upstream/mariadb-10.0.9.tar.gz
 
-(Check that you are on correct 'master' branch before making changes to working dir with 'git branch')
-
 Generate new debian/changelog entry
-  dch -v 10.0.9-1
+  dch -v 10.0.9-1 -D unstable
 
 Manually merge what needs to be done
 

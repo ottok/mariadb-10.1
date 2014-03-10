@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.8-1) unstable; urgency=low
+mariadb-10.0 (10.0.9-1) unstable; urgency=low
 
   * New packaging for Galera based on MariaDB 5.5.35 in Debian official
   * Intended for inclusion into Debian (Closes: #740473)
