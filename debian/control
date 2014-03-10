@@ -104,8 +104,9 @@ Depends: libmariadbclient18 (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Conflicts: mysql-client-5.5, mysql-client-5.6
-Breaks: mysql-client-core-5.5, mysql-client-core-5.6
-Replaces: mysql-client-core-5.5, mysql-client-core-5.6
+Breaks: mysql-client-core-5.5, mysql-client-core-5.6, virtual-mysql-client-core
+Replaces: mysql-client-core-5.5, mysql-client-core-5.6, virtual-mysql-client-core
+Provides: virtual-mysql-client-core
 Description: MariaDB database core client binaries
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
@@ -124,8 +125,8 @@ Depends: debianutils (>=1.6),
          ${shlibs:Depends}
 Recommends: libdbd-mysql-perl (>= 1.2202)
 Conflicts: mysql-client-core-5.5, mysql-client-core-5.6
-Breaks: mysql-client-5.5, mysql-client-5.6
-Replaces: mysql-client-5.5, mysql-client-5.6
+Breaks: mysql-client, mysql-client-5.5, mysql-client-5.6, virtual-mysql-client
+Replaces: mysql-client, mysql-client-5.5, mysql-client-5.6, virtual-mysql-client
 Provides: virtual-mysql-client
 Description: MariaDB database client binaries
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
@@ -140,8 +141,9 @@ Package: mariadb-server-core-10.0
 Architecture: any
 Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
 Conflicts: mariadb-galera-server-5.5, mysql-server-5.5, mysql-server-5.6
-Breaks: mysql-server-core-5.5, mysql-server-core-5.6
-Replaces: mysql-server-core-5.5, mysql-server-core-5.6
+Breaks: mysql-server-core-5.5, mysql-server-core-5.6, virtual-mysql-server-core
+Replaces: mysql-server-core-5.5, mysql-server-core-5.6, virtual-mysql-server-core
+Provides: virtual-mysql-server-core
 Description: MariaDB database core server files
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
@@ -157,11 +159,16 @@ Depends: mariadb-client-10.0 (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Breaks: mariadb-test (<< ${source:Version}),
+        mysql-testsuite
         mysql-testsuite-5.5,
-        mysql-testsuite-5.6
+        mysql-testsuite-5.6,
+        virtual-mysql-testsuite
 Replaces: mariadb-test (<< ${source:Version}),
+          mysql-testsuite
           mysql-testsuite-5.5,
-          mysql-testsuite-5.6
+          mysql-testsuite-5.6,
+          virtual-mysql-testsuite
+Provides: virtual-mysql-testsuite
 Suggests: patch
 Description: MariaDB database regression test suite
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
@@ -193,12 +200,18 @@ Breaks: mariadb-galera-server-5.5,
         mariadb-tokudb-engine-10.0,
         mariadb-tokudb-engine-5.5,
         mysql-server-5.5,
-        mysql-server-5.6
+        mysql-server-5.6,
+        mariadb-galera-server,
+        mysql-server,
+        virtual-mysql-server
 Replaces: mariadb-galera-server-5.5,
           mariadb-tokudb-engine-10.0,
           mariadb-tokudb-engine-5.5,
           mysql-server-5.5,
           mysql-server-5.6
+          mariadb-galera-server,
+          mysql-server,
+          virtual-mysql-server
 Provides: virtual-mysql-server
 Description: MariaDB database server binaries
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
@@ -211,8 +224,6 @@ Description: MariaDB database server binaries
 Package: mariadb-server
 Architecture: all
 Depends: mariadb-server-10.0 (>= ${source:Version}), ${misc:Depends}
-Breaks: mariadb-galera-server, mysql-server
-Replaces: mariadb-galera-server, mysql-server
 Description: MariaDB database server (metapackage depending on the latest version)
  This is an empty package that depends on the current "best" version of
  mariadb-server (currently mariadb-server-10.0), as determined by the MariaDB
@@ -228,8 +239,6 @@ Description: MariaDB database server (metapackage depending on the latest versio
 Package: mariadb-client
 Architecture: all
 Depends: mariadb-client-10.0 (>= ${source:Version}), ${misc:Depends}
-Breaks: mysql-client
-Replaces: mysql-client
 Description: MariaDB database client (metapackage depending on the latest version)
  This is an empty package that depends on the current "best" version of
  mariadb-client (currently mariadb-client-10.0), as determined by the MariaDB
@@ -239,8 +248,6 @@ Description: MariaDB database client (metapackage depending on the latest versio
 Package: mariadb-test
 Architecture: all
 Depends: mariadb-test-10.0 (>= ${source:Version}), ${misc:Depends}
-Breaks: mysql-testsuite
-Replaces: mysql-testsuite
 Description: MariaDB database regression test suite (metapackage for the latest version)
  This is an empty package that depends on the current "best" version of
  mariadb-test (currently mariadb-test-10.0), as determined by the MariaDB
