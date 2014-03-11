@@ -163,12 +163,12 @@ Depends: mariadb-client-10.0 (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Breaks: mariadb-test (<< ${source:Version}),
-        mysql-testsuite
+        mysql-testsuite,
         mysql-testsuite-5.5,
         mysql-testsuite-5.6,
         virtual-mysql-testsuite
 Replaces: mariadb-test (<< ${source:Version}),
-          mysql-testsuite
+          mysql-testsuite,
           mysql-testsuite-5.5,
           mysql-testsuite-5.6,
           virtual-mysql-testsuite
@@ -213,7 +213,7 @@ Replaces: mariadb-galera-server-5.5,
           mariadb-tokudb-engine-5.5,
           mysql-server,
           mysql-server-5.5,
-          mysql-server-5.6
+          mysql-server-5.6,
           mariadb-galera-server,
           virtual-mysql-server
 Provides: virtual-mysql-server
