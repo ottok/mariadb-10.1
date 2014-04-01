@@ -5,7 +5,7 @@ Clone sources with all branches
   sudo apt-get install git-buildpackage
   gbp-clone --pristine-tar git://git.debian.org/git/pkg-mysql/mariadb-10.0.git
 
-Aalternatively use Github mirror at https://github.com/ottok/mariadb-10.0.git
+Alternatively use Github mirror at https://github.com/ottok/mariadb-10.0.git
 
 On later runs make sure to have latest version of sources
   gbp-pull --pristine-tar --force
@@ -72,7 +72,7 @@ Commit and push
   git push --tags; git push --tags github
 
 Note that in above if you want to sync to Github directly you need to have collaborator rights to the Github repo and you need to add it as a secondary remote location with:
-  git remote add origin git@github.com:ottok/mariadb-5.5.git
+  git remote add origin git@github.com:ottok/mariadb-10.0.git
 
 
 ### Maintaining symbols file for libmariadbclient18 et al ###
