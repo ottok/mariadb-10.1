@@ -103,7 +103,6 @@ configure-stamp:
 	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
 	    -DSYSTEM_TYPE="debian-$(DEB_BUILD_GNU_SYSTEM)" \
-	    -DWITHOUT_TOKUDB=true \
 	    -DBUILD_CONFIG=mysql_release \
 	    -DINSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH) \
 	    -DINSTALL_PLUGINDIR=lib/mysql/plugin \
@@ -111,6 +110,7 @@ configure-stamp:
 		-DDEB=1 ..'
 	touch $@
 
+#	    -DWITHOUT_TOKUDB=true \
 # Disable TokuDB above due to
 # * i386 does not work and CMakeLists.txt check for processor does not detect
 #   correct ARCH in chroot
@@ -141,6 +141,10 @@ auto_install-stamp:
 	# If libthrift-dev was available and ha_cassandra.so was built
 	# add it to the server install list.
 	[ ! -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || echo 'usr/lib/mysql/plugin/ha_sphinx.so' >> debian/mariadb-server-10.0.install
+	
+	# If TokuDB plugin was built
+	# add it to the server install list.
+	[ ! -f $(BUILDDIR)/usr/lib/mysql/plugin/ha_tokudb.so ] || echo 'usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/conf.d/tokudb.cnf\nusr/bin/tokuftdump\nusr/share/doc/mariadb-server-10.0/README-TOKUDB\nusr/share/doc/mariadb-server-10.0/README.md' >> debian/mariadb-server-10.0.install
 	
 	# some self written manpages which hopefully
 	# gets overwritten sooner or later with upstream's
