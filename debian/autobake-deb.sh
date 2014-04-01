@@ -27,6 +27,8 @@ RELEASE_NAME=""
 PATCHLEVEL="+maria"
 LOGSTRING="MariaDB build"
 
+CODENAME="$(lsb_release -sc)"
+
 # Adjust changelog, add new version.
 #
 echo "Incrementing changelog and starting build scripts"
