@@ -138,8 +138,12 @@ auto_install-stamp:
 	dh_testdir
 	dh_testroot
 	
+	# If libthrift-dev was available and ha_cassandra.so was built
+	# add it to the server install list.
+	[ ! -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || echo 'usr/lib/mysql/plugin/ha_sphinx.so' >> debian/mariadb-server-10.0.install
+	
 	# some self written manpages which hopefully
-	# gets overwritten sooner or later with upstreams
+	# gets overwritten sooner or later with upstream's
 	mkdir -p $(TMP)/usr/share/man/man1/
 	mkdir -p $(TMP)/usr/share/man/man8/
 	cp debian/additions/*.1 $(TMP)/usr/share/man/man1/
