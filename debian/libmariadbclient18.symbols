@@ -36,7 +36,9 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# all_charsets@Base 5.5.35
 #MISSING: 10.0.9-1# all_mysys_stages@Base 10.0.8
 #MISSING: 10.0.9-1# alloc_dynamic@Base 5.5.35
+ alloc_dynamic@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# alloc_root@Base 5.5.35
+ alloc_root@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# allocate_dynamic@Base 5.5.35
 #MISSING: 10.0.9-1# array_append_string_unique@Base 5.5.35
 #MISSING: 10.0.9-1# bchange@Base 5.5.35
@@ -97,6 +99,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  default_charset_info@libmariadbclient_18 10.0.9
 #MISSING: 10.0.9-1# default_client_charset_info@Base 5.5.35
 #MISSING: 10.0.9-1# delete_dynamic@Base 5.5.35
+ delete_dynamic@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# delete_dynamic_element@Base 5.5.35
 #MISSING: 10.0.9-1# delete_dynamic_with_callback@Base 10.0.8
 #MISSING: 10.0.8# directory_file_name@Base 5.5.35
@@ -124,11 +127,16 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# dynamic_column_update_many@Base 5.5.35
  dynamic_column_update_many@libmariadbclient_18 10.0.9
 #MISSING: 10.0.9-1# dynstr_append@Base 5.5.35
+ dynstr_append@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# dynstr_append_mem@Base 5.5.35
+ dynstr_append_mem@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# dynstr_append_os_quoted@Base 5.5.35
+ dynstr_append_os_quoted@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# dynstr_append_quoted@Base 10.0.8
 #MISSING: 10.0.9-1# dynstr_free@Base 5.5.35
+ dynstr_free@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# dynstr_realloc@Base 5.5.35
+ dynstr_realloc@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# dynstr_reassociate@Base 5.5.35
 #MISSING: 10.0.9-1# dynstr_set@Base 5.5.35
 #MISSING: 10.0.9-1# dynstr_trunc@Base 5.5.35
@@ -155,6 +163,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  free_defaults@libmariadbclient_18 10.0.9
 #MISSING: 10.0.9-1# free_old_query@Base 5.5.35
 #MISSING: 10.0.9-1# free_root@Base 5.5.35
+ free_root@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# free_rows@Base 5.5.35
 #MISSING: 10.0.9-1# free_vio_ssl_acceptor_fd@Base 5.5.35
 #MISSING: 10.0.9-1# freeze_size@Base 5.5.35
@@ -173,6 +182,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# get_collation_number@Base 5.5.35
 #MISSING: 10.0.9-1# get_defaults_options@Base 5.5.35
 #MISSING: 10.0.9-1# get_dynamic@Base 5.5.35
+ get_dynamic@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# get_global_errmsgs@Base 5.5.35
 #MISSING: 10.0.9-1# get_index_dynamic@Base 5.5.35
 #MISSING: 10.0.9-1# get_salt_from_password@Base 5.5.35
@@ -201,12 +211,15 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# init_client_errs@Base 5.5.35
 #MISSING: 10.0.9-1# init_compiled_charsets@Base 5.5.35
 #MISSING: 10.0.8# init_dynamic_array2@Base 5.5.35
+ init_dynamic_array2@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.8# init_dynamic_array@Base 5.5.35
 #MISSING: 10.0.9-1# init_dynamic_string@Base 5.5.35
+ init_dynamic_string@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# init_glob_errs@Base 5.5.35
 #MISSING: 10.0.9-1# insert_dynamic@Base 5.5.35
 #MISSING: 10.0.9-1# int10_to_str@Base 5.5.35
 #MISSING: 10.0.9-1# int2str@Base 5.5.35
+ int2str@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# intern_filename@Base 5.5.35
 #MISSING: 10.0.9-1# internal_str2dec@Base 5.5.35
 #MISSING: 10.0.9-1# is_prefix@Base 5.5.35
@@ -245,8 +258,10 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  libmariadbclient_18@libmariadbclient_18 10.0.9
 #MISSING: 10.0.9-1# libmysql_api_funcs@Base 5.5.35
 #MISSING: 10.0.9-1# list_add@Base 5.5.35
+ list_add@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# list_cons@Base 5.5.35
 #MISSING: 10.0.9-1# list_delete@Base 5.5.35
+ list_delete@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# list_free@Base 5.5.35
 #MISSING: 10.0.9-1# list_length@Base 5.5.35
 #MISSING: 10.0.9-1# list_reverse@Base 5.5.35
@@ -260,7 +275,9 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# make_password_from_salt@Base 5.5.35
 #MISSING: 10.0.9-1# make_password_from_salt_323@Base 5.5.35
 #MISSING: 10.0.9-1# make_scrambled_password@Base 5.5.35
+ make_scrambled_password@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# make_scrambled_password_323@Base 5.5.35
+ make_scrambled_password_323@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# make_type@Base 5.5.35
 #MISSING: 10.0.9-1# mariadb_connection@Base 5.5.35
 #MISSING: 10.0.9-1# mariadb_dyncol_check@Base 10.0.8
@@ -295,6 +312,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  mariadb_dyncol_prepare_decimal@libmariadbclient_18 10.0.9
 #MISSING: 10.0.9-1# mariadb_dyncol_unpack@Base 10.0.8
  mariadb_dyncol_unpack@libmariadbclient_18 10.0.9
+ mariadb_dyncol_unpack_free@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# mariadb_dyncol_update_many_named@Base 10.0.8
  mariadb_dyncol_update_many_named@libmariadbclient_18 10.0.9
 #MISSING: 10.0.9-1# mariadb_dyncol_update_many_num@Base 10.0.8
@@ -557,6 +575,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# my_disable_sync@Base 5.5.35
 #MISSING: 10.0.9-1# my_dont_interrupt@Base 5.5.35
 #MISSING: 10.0.9-1# my_end@Base 5.5.35
+ my_end@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# my_error@Base 5.5.35
 #MISSING: 10.0.9-1# my_error_register@Base 5.5.35
 #MISSING: 10.0.9-1# my_error_unregister@Base 5.5.35
@@ -578,6 +597,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# my_fprintf@Base 5.5.35
 #MISSING: 10.0.9-1# my_fread@Base 5.5.35
 #MISSING: 10.0.9-1# my_free@Base 5.5.35
+ my_free@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# my_freopen@Base 5.5.35
 #MISSING: 10.0.9-1# my_fseek@Base 5.5.35
 #MISSING: 10.0.9-1# my_fstat@Base 5.5.35
@@ -642,11 +662,13 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  my_make_scrambled_password@libmariadbclient_18 10.0.9
 #MISSING: 10.0.9-1# my_make_scrambled_password_323@Base 5.5.35
 #MISSING: 10.0.9-1# my_malloc@Base 5.5.35
+ my_malloc@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# my_mb_ctype_8bit@Base 5.5.35
 #MISSING: 10.0.9-1# my_mb_ctype_mb@Base 5.5.35
 #MISSING: 10.0.9-1# my_mb_wc_8bit@Base 5.5.35
 #MISSING: 10.0.9-1# my_mbcharlen_8bit@Base 5.5.35
 #MISSING: 10.0.9-1# my_memdup@Base 5.5.35
+ my_memdup@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# my_message@Base 5.5.35
 #MISSING: 10.0.9-1# my_message_stderr@Base 5.5.35
 #MISSING: 10.0.9-1# my_multi_malloc@Base 5.5.35
@@ -690,6 +712,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# my_read@Base 5.5.35
 #MISSING: 10.0.9-1# my_readlink@Base 5.5.35
 #MISSING: 10.0.9-1# my_realloc@Base 5.5.35
+ my_realloc@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# my_realpath@Base 5.5.35
 #MISSING: 10.0.9-1# my_recv_async@Base 5.5.35
 #MISSING: 10.0.9-1# my_register_filename@Base 5.5.35
@@ -715,6 +738,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# my_strcasecmp_mb@Base 5.5.35
 #MISSING: 10.0.9-1# my_strcasecmp_mb_bin@Base 5.5.35
 #MISSING: 10.0.9-1# my_strdup@Base 5.5.35
+ my_strdup@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# my_stream_opened@Base 5.5.35
 #MISSING: 10.0.9-1# my_strerror@Base 10.0.8
 #MISSING: 10.0.9-1# my_string_repertoire@Base 5.5.35
@@ -1354,6 +1378,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# scramble_323@Base 5.5.35
 #MISSING: 10.0.9-1# send_client_connect_attrs@Base 10.0.8
 #MISSING: 10.0.9-1# set_dynamic@Base 5.5.35
+ set_dynamic@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# set_malloc_size_cb@Base 10.0.8
 #MISSING: 10.0.9-1# set_mysql_error@Base 5.5.35
 #MISSING: 10.0.9-1# set_mysql_extended_error@Base 5.5.35
@@ -1377,14 +1402,20 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
 #MISSING: 10.0.9-1# str_to_time@Base 5.5.35
 #MISSING: 10.0.9-1# strcend@Base 5.5.35
 #MISSING: 10.0.9-1# strdup_root@Base 5.5.35
+ strdup_root@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# strend@Base 5.5.35
+ strend@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# strfill@Base 5.5.35
+ strfill@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# strlength@Base 5.5.35
 #MISSING: 10.0.9-1# strmake@Base 5.5.35
+ strmake@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# strmake_root@Base 5.5.35
+ strmake_root@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# strmov_overlapp@Base 5.5.35
 #MISSING: 10.0.9-1# strnmov@Base 5.5.35
 #MISSING: 10.0.9-1# strxmov@Base 5.5.35
+ strxmov@libmariadbclient_18 10.0.10-1
 #MISSING: 10.0.9-1# strxnmov@Base 5.5.35
 #MISSING: 10.0.9-1# system_filename@Base 5.5.35
 #MISSING: 10.0.9-1# test_if_hard_path@Base 5.5.35
