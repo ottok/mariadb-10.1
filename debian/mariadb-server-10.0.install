@@ -1,4 +1,3 @@
-
 etc/mysql/conf.d/mysqld_safe_syslog.cnf
 etc/mysql/debian-start
 usr/bin/aria_chk

@@ -1,9 +1,5 @@
 #!/usr/bin/make -f
 
-# TODO: take these files from mariadb-server-10.0 builddir and insert into separate packages
-# @CASSANDRA_DEB_FILES@ (requires libthrift-dev)
-# @TOKUDB_DEB_FILES@
-
 export DH_VERBOSE=1
 export DEB_BUILD_HARDENING=1
 
@@ -195,12 +191,20 @@ auto_install-stamp:
 	install -m 0644 $(builddir)/Docs/INFO_SRC $(TMP)/usr/share/doc/mariadb-server-10.0/INFO_SRC
 	install -m 0644 $(builddir)/Docs/INFO_BIN $(TMP)/usr/share/doc/mariadb-server-10.0/INFO_BIN
 	
+	# install AppArmor profile
+	install -D -m 644 debian/apparmor-profile $(TMP)/etc/apparmor.d/usr.sbin.mysqld
+	
+	# install Apport hook
+	install -D -m 644 debian/mariadb-server-10.0.py $(TMP)/usr/share/apport/package-hooks/source_mariadb-10.0.py
+	
 	# mariadb-test
 	mv $(TMP)/usr/mysql-test $(TMP)/usr/share/mysql
+	
 	touch $@
 
 override_dh_installlogrotate-arch:
 	dh_installlogrotate --name mysql-server
+	dh_apparmor -pmariadb-server-10.0 --profile-name=usr.sbin.mysqld
 
 # Start mysql in runlevel 19 before 20 where apache, proftpd etc gets
 # started which might depend on a running database server.

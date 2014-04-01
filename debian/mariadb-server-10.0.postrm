@@ -78,6 +78,9 @@ if [ "$1" = purge ] && [ -e /usr/share/debconf/confmodule ]; then
 fi
 # (normally) End automatically added section
 
+if [ "$1" = "purge" ] ; then
+     rm -f /etc/apparmor.d/force-complain/usr.sbin.mysqld >/dev/null 2>&1 || true
+fi
 # no DEBHELPER here, "update-rc.d remove" fails if mysql-server-5.1 is installed
 
 exit 0
