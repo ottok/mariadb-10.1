@@ -1,3 +1,4 @@
+
 etc/mysql/conf.d/mysqld_safe_syslog.cnf
 etc/mysql/debian-start
 usr/bin/aria_chk
@@ -40,6 +41,7 @@ usr/lib/mysql/plugin/query_cache_info.so
 usr/lib/mysql/plugin/query_response_time.so
 usr/lib/mysql/plugin/semisync_master.so
 usr/lib/mysql/plugin/semisync_slave.so
+usr/lib/mysql/plugin/server_audit.so
 usr/lib/mysql/plugin/sql_errlog.so
 usr/share/doc/mariadb-server-10.0/INFO_BIN
 usr/share/doc/mariadb-server-10.0/INFO_SRC

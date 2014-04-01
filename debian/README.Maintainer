@@ -60,7 +60,7 @@ Download new source package
   uscan --verbose
 
 Enter git repostitory path and apply new sources
-  cd mariadb-10.0/
+  cd mariadb-10.0
   git-import-orig --pristine-tar ../mariadb-10.0.10.tar.gz
 
 Generate new debian/changelog entry
@@ -69,7 +69,7 @@ Generate new debian/changelog entry
 Manually merge what needs to be done
 
 Commit and push
-  git commit -am "Merged with upstream 10.0.9"
+  git commit -am "Merged with upstream 10.0.10"
   git push --all; git push --all github
   git push --tags; git push --tags github
 

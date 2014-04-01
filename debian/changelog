@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.10-1) unstable; urgency=low
+
+  * Imported upstream 10.0.10 release
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Tue, 01 Apr 2014 09:56:38 +0300
+
 mariadb-10.0 (10.0.9-1) unstable; urgency=low
 
   * New packaging for Galera based on MariaDB 5.5.35 in Debian official
