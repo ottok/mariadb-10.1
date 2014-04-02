@@ -136,7 +136,7 @@ auto_install-stamp:
 	
 	# If libthrift-dev was available and ha_cassandra.so was built
 	# add it to the server install list.
-	[ ! -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || echo 'usr/lib/mysql/plugin/ha_sphinx.so' >> debian/mariadb-server-10.0.install
+	[ ! -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || echo 'usr/lib/mysql/plugin/ha_cassandra.so' >> debian/mariadb-server-10.0.install
 	
 	# If TokuDB plugin was built
 	# add it to the server install list.

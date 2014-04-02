@@ -208,13 +208,13 @@ Breaks: mariadb-galera-server,
         mysql-server-5.5,
         mysql-server-5.6,
         virtual-mysql-server
-Replaces: mariadb-galera-server-5.5,
+Replaces: mariadb-galera-server,
+          mariadb-galera-server-5.5,
           mariadb-tokudb-engine-10.0,
           mariadb-tokudb-engine-5.5,
           mysql-server,
           mysql-server-5.5,
           mysql-server-5.6,
-          mariadb-galera-server,
           virtual-mysql-server
 Provides: virtual-mysql-server
 Description: MariaDB database server binaries
