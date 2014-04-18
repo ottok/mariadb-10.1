@@ -1,2 +1,4 @@
 # OK, newer Debian should support xz
 libmariadbclient-dev: data.tar.xz-member-without-dpkg-pre-depends
+# OK, embedded has same source
+libmariadbclient-dev: embedded-library usr/lib/x86_64-linux-gnu/libmariadbclient.so.18.0.0: libmysqlclient
