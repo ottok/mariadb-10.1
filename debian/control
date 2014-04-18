@@ -264,7 +264,7 @@ Architecture: any
 Depends: libxml2-dev,
          mariadb-server-10.0 (>= ${source:Version}),
          unixodbc-dev,
-         ${misc:Depends}
+         ${shlibs:Depends}
 Description: Connect storage engine for MariaDB
  Connect engine supports a number of file formats (dbf, xml, txt, bin, etc),
  connections to ODBC tables and remote MySQL tables, as well as a number of
@@ -275,7 +275,7 @@ Section: database
 Architecture: any
 Depends: libjudydebian1,
          mariadb-server-10.0 (>= ${source:Version}),
-         ${misc:Depends}
+         ${shlibs:Depends}
 Description: Oqgraph storage engine for MariaDB
  The OQGRAPH engine is a computation engine plugin for handling hierarchies
  (trees) and graphs (friend-of-a-friend, etc) cleanly through standard SQL.
