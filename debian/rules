@@ -16,6 +16,11 @@ ifneq (,$(filter $(ARCH), i386 kfreebsd-i386 hurd-i386))
     TAOCRYPT_OPT="-DTAOCRYPT_DISABLE_X86ASM"
 endif
 
+# Skip TokuDB if arch is not amd64
+ifneq ($(ARCH), amd64)
+    TOKUDB_OPT="-DWITHOUT_TOKUDB=true"
+endif
+
 export MYSQL_BUILD_CC=$(DEB_HOST_GNU_TYPE)-gcc
 export MYSQL_BUILD_CXX=$(DEB_HOST_GNU_TYPE)-g++
 
@@ -98,7 +103,7 @@ configure-stamp:
 		$(USE_STATIC_MYSQLD) \
 	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
-	    -DSYSTEM_TYPE="debian-$(DEB_BUILD_GNU_SYSTEM)" \
+	    -DSYSTEM_TYPE="debian-$(DEB_BUILD_GNU_SYSTEM)" $(TOKUDB_OPT) \
 	    -DBUILD_CONFIG=mysql_release \
 	    -DINSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH) \
 	    -DINSTALL_PLUGINDIR=lib/mysql/plugin \
