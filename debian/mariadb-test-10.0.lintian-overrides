@@ -1,11 +1,13 @@
 # in modern Debian this xz support exists, this should not matter anymore
 mariadb-test-10.0: data.tar.xz-member-without-dpkg-pre-depends
-# Ask help from upstream to fix these later
+# OK, embedded has same source
 mariadb-test-10.0: embedded-library usr/bin/mysql_client_test: libmysqlclient
 mariadb-test-10.0: embedded-library usr/bin/mysql_client_test_embedded: libmysqlclient
 mariadb-test-10.0: embedded-library usr/bin/mysqltest: libmysqlclient
 mariadb-test-10.0: embedded-library usr/bin/mysqltest_embedded: libmysqlclient
+# OK, this file is part of test suite and only used for a test
 mariadb-test-10.0: arch-dependent-file-in-usr-share usr/share/mysql/mysql-test/lib/My/SafeProcess/my_safe_process
+# OK, this file is part of test suite and only used for a test
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_myisam.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_10.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_7_innodb.result

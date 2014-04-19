@@ -1,4 +1,4 @@
-# these libs are OK
+# OK, embedded has same source
 mariadb-client-core-10.0: embedded-library usr/bin/mysql: libmysqlclient
 mariadb-client-core-10.0: embedded-library usr/bin/mysqlcheck: libmysqlclient
 # OK in neẃer Debian, includes support for xz

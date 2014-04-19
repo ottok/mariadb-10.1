@@ -111,14 +111,6 @@ configure-stamp:
 		-DDEB=1 ..'
 	touch $@
 
-#	    -DWITHOUT_TOKUDB=true \
-# Disable TokuDB above due to
-# * i386 does not work and CMakeLists.txt check for processor does not detect
-#   correct ARCH in chroot
-# * Build errors in Trusty: https://mariadb.atlassian.net/browse/MDEV-5618
-# * There was ugly code in CMakeLists.txt that touched stuff in debian/*
-#   that needs to be re-written
-
 override_dh_auto_build: build-stamp
 
 build-stamp:
@@ -139,11 +131,11 @@ auto_install-stamp:
 	dh_testdir
 	dh_testroot
 	
-	# If libthrift-dev was available and ha_cassandra.so was built
+	# If libthrift-dev was available (manually installed, as it is not in Debian) and ha_cassandra.so was thus built
 	# add it to the server install list.
 	[ ! -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || echo 'usr/lib/mysql/plugin/ha_cassandra.so' >> debian/mariadb-server-10.0.install
 	
-	# If TokuDB plugin was built
+	# If TokuDB plugin was built (its cmake-files are conditional and do not build it unless certain checks apply)
 	# add it to the server install list.
 	[ ! -f $(BUILDDIR)/usr/lib/mysql/plugin/ha_tokudb.so ] || echo 'usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/conf.d/tokudb.cnf\nusr/bin/tokuftdump\nusr/share/doc/mariadb-server-10.0/README-TOKUDB\nusr/share/doc/mariadb-server-10.0/README.md' >> debian/mariadb-server-10.0.install
 	

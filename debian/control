@@ -35,11 +35,11 @@ Section: libs
 Architecture: any
 Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
 Pre-Depends: multiarch-support, ${misc:Pre-Depends}
-Conflicts: mariadb-galera-server-5.5 (<< 5.5.33),
+Conflicts: mariadb-galera-server-5.5,
            mariadb-server-5.1,
            mariadb-server-5.2,
            mariadb-server-5.3,
-           mariadb-server-5.5 (<< 5.5.33)
+           mariadb-server-5.5
 Multi-Arch: same
 Description: MariaDB database client library
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database

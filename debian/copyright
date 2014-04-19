@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: MariaDB 5.5
+Upstream-Name: MariaDB 10.0
 Upstream-Contact: https://mariadb.atlassian.net/browse/MDEV
-Source: https://code.launchpad.net/~maria-captains/maria/5.5
+Source: https://code.launchpad.net/~maria-captains/maria/10.0
 Comment:
  The file Docs/mysql.info is removed from the upstream source
  because it is incompatible with the Debian Free Software Guidelines.
