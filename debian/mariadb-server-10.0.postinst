@@ -4,7 +4,7 @@
 
 if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
 ${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*" 1>&2 }
- 
+
 export PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin
 
 # This command can be used as pipe to syslog. With "-s" it also logs to stderr.
@@ -141,10 +141,10 @@ EOF
     # This will fail if we are upgrading an existing database; in this case
     # mysql_upgrade, called from the /etc/init.d/mysql start script, will
     # handle things.
-    # Debian: beware of the bashisms... 
-    # Debian: can safely run on upgrades with existing databases 
+    # Debian: beware of the bashisms...
+    # Debian: can safely run on upgrades with existing databases
     set +e
-    /bin/bash /usr/bin/mysql_install_db --rpm --user=mysql 2>&1 | $ERR_LOGGER
+    bash /usr/bin/mysql_install_db --rpm --user=mysql 2>&1 | $ERR_LOGGER
     set -e
     
     ## On every reconfiguration the maintenance user is recreated.
@@ -165,7 +165,7 @@ EOF
     #   the old query which always succeeds and then the new which may or may not.
 
     # recreate the credentials file if not present or without mysql_upgrade stanza
-    dc=$mysql_cfgdir/debian.cnf; 
+    dc=$mysql_cfgdir/debian.cnf;
     if [ -e "$dc" -a -n "`fgrep mysql_upgrade $dc 2>/dev/null`" ]; then
         pass="`sed -n 's/^[     ]*password *= *// p' $dc | head -n 1`"
     else
