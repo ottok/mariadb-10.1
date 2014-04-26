@@ -5,3 +5,9 @@ outdated-autotools-helper-file extra/jemalloc/config.guess 2012-02-10
 outdated-autotools-helper-file extra/jemalloc/config.sub 2012-02-10
 outdated-autotools-helper-file storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/config.guess 2009-04-27
 outdated-autotools-helper-file storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/config.sub 2009-04-17
+# Not SVN but a X509 CRL file
+source-contains-svn-conflict-file mysql-test/std_data/crldir/fc725416.r0
+# OK, used in the test suite
+source-contains-prebuilt-windows-binary mysql-test/std_data/ctype_upgrade/maria050533_xxx_croatian_ci.MYD
+source-contains-prebuilt-windows-binary mysql-test/std_data/ctype_upgrade/maria100004_xxx_croatian_ci.MYD
+source-contains-prebuilt-windows-binary mysql-test/std_data/ctype_upgrade/mysql050614_xxx_croatian_ci.MYD

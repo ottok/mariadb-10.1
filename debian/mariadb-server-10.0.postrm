@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+# TODO: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=526464
+
 # It is possible that Debconf has already been removed, too.
 if [ -f /usr/share/debconf/confmodule ]; then
   . /usr/share/debconf/confmodule
@@ -52,9 +54,9 @@ if [ "$1" = "purge" -a ! \( -x /usr/sbin/mysqld -o -L /usr/sbin/mysqld \) ]; the
   rm -f /var/log/mysql.{log,err}{,.0,.[1234567].gz}
   rm -rf /var/log/mysql
 
-  db_input high mysql-server-5.1/postrm_remove_databases || true
+  db_input high mysql-server-10.0/postrm_remove_databases || true
   db_go || true
-  db_get mysql-server-5.1/postrm_remove_databases || true
+  db_get mysql-server-10.0/postrm_remove_databases || true
   if [ "$RET" = "true" ]; then
     # never remove the debian.cnf when the databases are still existing
     # else we ran into big trouble on the next install!
