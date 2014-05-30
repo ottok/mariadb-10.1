@@ -123,6 +123,7 @@ Package: mariadb-client-10.0
 Architecture: any
 Depends: debianutils (>=1.6),
          libdbi-perl,
+         libterm-readkey-perl,
          mariadb-client-core-10.0 (>= ${source:Version}),
          ${misc:Depends},
          ${perl:Depends},

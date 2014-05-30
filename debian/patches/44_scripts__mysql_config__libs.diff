@@ -1,7 +1,5 @@
-## 99-unnamed.dpatch by  <ch@debian.org>
-##
-
-## DP: Removes unnecessary library dependencies. See #390692
+Author: Christian Hammers <ch@debian.org>
+Description: Removes unnecessary library dependencies. See #390692
 
 diff -Nur mysql-dfsg-5.1-5.1.31.orig/scripts/mysql_config.sh mysql-dfsg-5.1-5.1.31/scripts/mysql_config.sh
 --- mysql-dfsg-5.1-5.1.31.orig/scripts/mysql_config.sh  2009-01-19 17:30:55.000000000 +0100
