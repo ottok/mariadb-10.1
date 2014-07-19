@@ -161,6 +161,7 @@ case "${1:-''}" in
 
   'restart')
 	set +e; $SELF stop; set -e
+	shift
 	$SELF start "${@}"
 	;;
 

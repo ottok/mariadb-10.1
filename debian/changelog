@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.10-2) unstable; urgency=low
+
+  * Fixed wrongly applied fix of MDEV-5957
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Sun, 20 Jul 2014 01:58:36 +0300
+
 mariadb-10.0 (10.0.10-1) unstable; urgency=low
 
   * Initial Upload (Closes: #740473)
