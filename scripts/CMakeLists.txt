@@ -1,4 +1,4 @@
-# Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -221,16 +221,26 @@ INSTALL_SCRIPT(
 ENDIF()
 
 SET(prefix "${CMAKE_INSTALL_PREFIX}")
-SET(sysconfdir ${prefix})
+IF(INSTALL_SYSCONFDIR)
+  SET(sysconfdir ${DEFAULT_SYSCONFDIR})
+ELSE()
+  SET(sysconfdir "/etc")
+ENDIF()
 SET(bindir ${prefix}/${INSTALL_BINDIR})
 SET(libexecdir ${prefix}/${INSTALL_SBINDIR})
 SET(scriptdir ${prefix}/${INSTALL_BINDIR})
 SET(datadir ${prefix}/${INSTALL_MYSQLSHAREDIR})
 SET(pkgdatadir ${prefix}/${INSTALL_MYSQLSHAREDIR})
+SET(libsubdir  ${INSTALL_LIBDIR})
 SET(pkgincludedir ${prefix}/${INSTALL_INCLUDEDIR})
 SET(pkglibdir ${prefix}/${INSTALL_LIBDIR})
 SET(pkgplugindir ${prefix}/${INSTALL_PLUGINDIR})
 SET(localstatedir ${MYSQL_DATADIR})
+
+SET(RPATH_OPTION "")
+IF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  SET(RPATH_OPTION "-R$pkglibdir")
+ENDIF()
 
 # some scripts use  @TARGET_LINUX@
 IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -265,10 +275,12 @@ MACRO(EXTRACT_LINK_LIBRARIES target var)
         IF (lib MATCHES "^\\-l")
           SET(${var} "${${var}} ${lib} ") 
         ELSEIF(lib MATCHES "^/")
-          # Full path, convert to just filename, strip "lib" prefix and extension
-          GET_FILENAME_COMPONENT(lib "${lib}" NAME_WE)
-          STRING(REGEX REPLACE "^lib" "" lib "${lib}")
-          SET(${var} "${${var}}-l${lib} " ) 
+          IF (lib MATCHES "\\.(a|so([0-9.]*)|lib|dll|dylib)$")
+            # Full path, convert to just filename, strip "lib" prefix and extension
+            GET_FILENAME_COMPONENT(lib "${lib}" NAME_WE)
+            STRING(REGEX REPLACE "^lib" "" lib "${lib}")
+            SET(${var} "${${var}}-l${lib} " ) 
+          ENDIF()
         ELSE()
           SET(${var} "${${var}}-l${lib} " ) 
         ENDIF()
@@ -320,6 +332,9 @@ IF(WIN32)
     INSTALL_SCRIPT(${CMAKE_CURRENT_BINARY_DIR}/${file}.pl COMPONENT Server_Scripts)
   ENDFOREACH()
 ELSE()
+  # Configure this one, for testing, but do not install it.
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql_config.pl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mysql_config.pl ESCAPE_QUOTES @ONLY)
   # On Unix, most of the files end up in the bin directory
   SET(BIN_SCRIPTS
     msql2mysql

@@ -768,7 +768,7 @@ Copyright:
  2008-2009 Patrick Galbraith
 License: BSD-3-clause
 
-Files zlib/CMakeLists.txt
+Files: zlib/CMakeLists.txt
 Copyright: 2006, 2013, Oracle and/or its affiliates
 License: GPL-2
 

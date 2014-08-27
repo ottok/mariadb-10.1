@@ -520,6 +520,11 @@
 #endif
 #define PSAPI_VERSION 1     /* for GetProcessMemoryInfo() */
 
+/* We don't want the min/max macros */
+#ifdef __WIN__
+#define NOMINMAX
+#endif
+
 /*
   MySQL features
 */
@@ -642,5 +647,13 @@
 
 #cmakedefine SIZEOF_TIME_T @SIZEOF_TIME_T@
 #cmakedefine TIME_T_UNSIGNED @TIME_T_UNSIGNED@
+
+#ifdef _AIX
+/*
+  AIX includes inttypes.h from sys/types.h
+  Explicitly request format macros before the first inclusion of inttypes.h
+*/
+#define __STDC_FORMAT_MACROS
+#endif
 
 #endif

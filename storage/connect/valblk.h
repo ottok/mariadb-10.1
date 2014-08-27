@@ -18,9 +18,39 @@
 /***********************************************************************/
 /*  Utility used to allocate value blocks.                             */
 /***********************************************************************/
-DllExport PVBLK AllocValBlock(PGLOBAL, void*, int, int, int, int, 
+DllExport PVBLK AllocValBlock(PGLOBAL, void*, int, int, int, int,
                                               bool, bool, bool);
 const char *GetFmt(int type, bool un = false);
+
+/***********************************************************************/
+/*  DB static external variables.                                      */
+/***********************************************************************/
+extern MBLOCK Nmblk;                /* Used to initialize MBLOCK's     */
+
+/***********************************************************************/
+/*  Class MBVALS is a utility class for (re)allocating VALBLK's.       */
+/***********************************************************************/
+class MBVALS : public BLOCK {
+//friend class LSTBLK;
+  friend class ARRAY;
+ public:
+  // Constructors
+  MBVALS(void) {Vblk = NULL; Mblk = Nmblk;}
+
+  // Methods
+  void  *GetMemp(void) {return Mblk.Memp;}
+  PVBLK  Allocate(PGLOBAL g, int type, int len, int prec,
+                             int n, bool sub = FALSE);
+  bool   ReAllocate(PGLOBAL g, int n);
+  void   Free(void);
+
+ protected:
+  // Members
+  PVBLK  Vblk;                    // Pointer to VALBLK
+  MBLOCK Mblk;                    // The memory block
+  }; // end of class MBVALS
+
+typedef class MBVALS *PMBV;
 
 /***********************************************************************/
 /*  Class VALBLK represent a base class for variable blocks.           */
@@ -45,7 +75,7 @@ class VALBLK : public BLOCK {
   virtual bool   IsNull(int n) {return To_Nulls && To_Nulls[n];}
   virtual void   SetNullable(bool b);
   virtual bool   IsUnsigned(void) {return Unsigned;}
-  virtual void   Init(PGLOBAL g, bool check) = 0;
+  virtual bool   Init(PGLOBAL g, bool check) = 0;
   virtual int    GetVlen(void) = 0;
   virtual PSZ    GetCharValue(int n);
   virtual char   GetTinyValue(int n) = 0;
@@ -78,6 +108,8 @@ class VALBLK : public BLOCK {
   virtual void   SetValue(char *sp, uint len, int n) {assert(false);}
   virtual void   SetValue(PVAL valp, int n) = 0;
   virtual void   SetValue(PVBLK pv, int n1, int n2) = 0;
+  virtual void   SetMin(PVAL valp, int n) = 0;
+  virtual void   SetMax(PVAL valp, int n) = 0;
   virtual void   Move(int i, int j) = 0;
   virtual int    CompVal(PVAL vp, int n) = 0;
   virtual int    CompVal(int i1, int i2) = 0;
@@ -88,12 +120,14 @@ class VALBLK : public BLOCK {
           bool   Locate(PVAL vp, int& i);
 
  protected:
+  bool AllocBuff(PGLOBAL g, size_t size);
   void ChkIndx(int n);
   void ChkTyp(PVAL v);
   void ChkTyp(PVBLK vb);
 
   // Members
   PGLOBAL Global;           // Used for messages and allocation
+  MBLOCK  Mblk;             // Used to allocate buffer
   char   *To_Nulls;         // Null values array
   void   *Blkp;             // To value block
   bool    Check;            // If true SetValue types must match
@@ -114,7 +148,7 @@ class TYPBLK : public VALBLK {
   TYPBLK(void *mp, int size, int type, int prec = 0, bool un = false);
 
   // Implementation
-  virtual void   Init(PGLOBAL g, bool check);
+  virtual bool   Init(PGLOBAL g, bool check);
   virtual int    GetVlen(void) {return sizeof(TYPE);}
   virtual char   GetTinyValue(int n) {return (char)Typp[n];}
   virtual uchar  GetUTinyValue(int n) {return (uchar)Typp[n];}
@@ -151,6 +185,8 @@ class TYPBLK : public VALBLK {
                   {Typp[n] = (TYPE)cval; SetNull(n, false);}
   virtual void   SetValue(PVAL valp, int n);
   virtual void   SetValue(PVBLK pv, int n1, int n2);
+  virtual void   SetMin(PVAL valp, int n);
+  virtual void   SetMax(PVAL valp, int n);
   virtual void   Move(int i, int j);
   virtual int    CompVal(PVAL vp, int n);
   virtual int    CompVal(int i1, int i2);
@@ -179,7 +215,7 @@ class CHRBLK : public VALBLK {
   CHRBLK(void *mp, int size, int len, int prec, bool b);
 
   // Implementation
-  virtual void   Init(PGLOBAL g, bool check);
+  virtual bool   Init(PGLOBAL g, bool check);
   virtual int    GetVlen(void) {return Long;}
   virtual PSZ    GetCharValue(int n);
   virtual char   GetTinyValue(int n);
@@ -201,6 +237,8 @@ class CHRBLK : public VALBLK {
   virtual void   SetValue(char *sp, uint len, int n);
   virtual void   SetValue(PVAL valp, int n);
   virtual void   SetValue(PVBLK pv, int n1, int n2);
+  virtual void   SetMin(PVAL valp, int n);
+  virtual void   SetMax(PVAL valp, int n);
   virtual void   Move(int i, int j);
   virtual int    CompVal(PVAL vp, int n);
   virtual int    CompVal(int i1, int i2);
@@ -232,7 +270,7 @@ class STRBLK : public VALBLK {
   virtual void   SetNull(int n, bool b) {if (b) {Strp[n] = NULL;}}
   virtual bool   IsNull(int n) {return Strp[n] == NULL;}
   virtual void   SetNullable(bool b) {}    // Always nullable
-  virtual void   Init(PGLOBAL g, bool check);
+  virtual bool   Init(PGLOBAL g, bool check);
   virtual int    GetVlen(void) {return sizeof(PSZ);}
   virtual PSZ    GetCharValue(int n) {return Strp[n];}
   virtual char   GetTinyValue(int n);
@@ -252,6 +290,8 @@ class STRBLK : public VALBLK {
   virtual void   SetValue(char *sp, uint len, int n);
   virtual void   SetValue(PVAL valp, int n);
   virtual void   SetValue(PVBLK pv, int n1, int n2);
+  virtual void   SetMin(PVAL valp, int n);
+  virtual void   SetMax(PVAL valp, int n);
   virtual void   Move(int i, int j);
   virtual int    CompVal(PVAL vp, int n);
   virtual int    CompVal(int i1, int i2);
@@ -288,6 +328,29 @@ class DATBLK : public TYPBLK<int> {
   // Members
   PVAL Dvalp;                    // Date value used to convert string
   }; // end of class DATBLK
+
+/***********************************************************************/
+/*  Class PTRBLK: represent a block of char pointers.                  */
+/*  Currently this class is used only by the ARRAY class to make and   */
+/*  sort a list of char pointers.                                      */
+/***********************************************************************/
+class PTRBLK : public STRBLK {
+  friend class ARRAY;
+  friend PVBLK AllocValBlock(PGLOBAL, void *, int, int, int, int,
+                                              bool, bool, bool);
+ protected:
+  // Constructors
+  PTRBLK(PGLOBAL g, void *mp, int size) : STRBLK(g, mp, size) {}
+
+  // Implementation
+
+  // Methods
+  virtual void   SetValue(PSZ p, int n) {Strp[n] = p;}
+  virtual int    CompVal(int i1, int i2);
+
+ protected:
+  // Members
+  }; // end of class PTRBLK
 
 #endif // __VALBLK__H__
 

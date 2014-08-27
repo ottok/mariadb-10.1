@@ -190,49 +190,33 @@ shell_quote_string() {
 }
 
 parse_arguments() {
-  # We only need to pass arguments through to the server if we don't
-  # handle them here.  So, we collect unrecognized options (passed on
-  # the command line) into the args variable.
-  pick_args=
-  if test "$1" = PICK-ARGS-FROM-ARGV
-  then
-    pick_args=1
-    shift
-  fi
-
   for arg do
-    # the parameter after "=", or the whole $arg if no match
-    val=`echo "$arg" | sed -e 's;^--[^=]*=;;'`
-    # what's before "=", or the whole $arg if no match
-    optname=`echo "$arg" | sed -e 's/^\(--[^=]*\)=.*$/\1/'`
-    # replace "_" by "-" ; mysqld_safe must accept "_" like mysqld does.
-    optname_subst=`echo "$optname" | sed 's/_/-/g'`
-    arg=`echo $arg | sed "s/^$optname/$optname_subst/"`
+    val=`echo "$arg" | sed -e "s;--[^=]*=;;"`
     case "$arg" in
-      --crash-script=*) CRASH_SCRIPT="$val" ;;
+      --crash[-_]script=*) CRASH_SCRIPT="$val" ;;
       # these get passed explicitly to mysqld
       --basedir=*) MY_BASEDIR_VERSION="$val" ;;
       --datadir=*|--data=*) DATADIR="$val" ;;
-      --pid-file=*) pid_file="$val" ;;
-      --plugin-dir=*) PLUGIN_DIR="$val" ;;
+      --pid[-_]file=*) pid_file="$val" ;;
+      --plugin[-_]dir=*) PLUGIN_DIR="$val" ;;
       --user=*) user="$val"; SET_USER=1 ;;
-      --log-basename=*|--hostname=*|--loose-log-basename=*)
+      --log[-_]basename=*|--hostname=*|--loose[-_]log[-_]basename=*)
         pid_file="$val.pid";
 	err_log="$val.err";
 	;;
 
       # these might have been set in a [mysqld_safe] section of my.cnf
       # they are added to mysqld command line to override settings from my.cnf
-      --log-error=*) err_log="$val" ;;
+      --log[-_]error=*) err_log="$val" ;;
       --port=*) mysql_tcp_port="$val" ;;
       --socket=*) mysql_unix_port="$val" ;;
 
       # mysqld_safe-specific options - must be set in my.cnf ([mysqld_safe])!
-      --core-file-size=*) core_file_size="$val" ;;
+      --core[-_]file[-_]size=*) core_file_size="$val" ;;
       --ledir=*) ledir="$val" ;;
-      --malloc-lib=*) set_malloc_lib "$val" ;;
+      --malloc[-_]lib=*) set_malloc_lib "$val" ;;
       --mysqld=*) MYSQLD="$val" ;;
-      --mysqld-version=*)
+      --mysqld[-_]version=*)
         if test -n "$val"
         then
           MYSQLD="mysqld-$val"
@@ -242,25 +226,23 @@ parse_arguments() {
         fi
         ;;
       --nice=*) niceness="$val" ;;
-      --nowatch|--no-watch|--no-auto-restart) nowatch=1 ;;
-      --open-files-limit=*) open_files="$val" ;;
-      --open_files_limit=*) open_files="$val" ;;
-      --skip-kill-mysqld*) KILL_MYSQLD=0 ;;
+      --nowatch|--no[-_]watch|--no[-_]auto[-_]restart) nowatch=1 ;;
+      --open[-_]files[-_]limit=*) open_files="$val" ;;
+      --skip[-_]kill[-_]mysqld*) KILL_MYSQLD=0 ;;
       --syslog) want_syslog=1 ;;
-      --skip-syslog) want_syslog=0 ;;
-      --syslog-tag=*) syslog_tag="$val" ;;
+      --skip[-_]syslog) want_syslog=0 ;;
+      --syslog[-_]tag=*) syslog_tag="$val" ;;
       --timezone=*) TZ="$val"; export TZ; ;;
-      --flush-caches) flush_caches=1 ;;
-      --numa-interleave) numa_interleave=1 ;;
+      --flush[-_]caches) flush_caches=1 ;;
+      --numa[-_]interleave) numa_interleave=1 ;;
 
       --help) usage ;;
 
       *)
-        if test -n "$pick_args"
-        then
-          append_arg_to_args "$arg"
-        fi
-        ;;
+        case "$unrecognized_handling" in
+          collect) append_arg_to_args "$arg" ;;
+          complain) log_error "unknown option '$arg'" ;;
+        esac
     esac
   done
 }
@@ -517,8 +499,16 @@ then
   SET_USER=0
 fi
 
+# If arguments come from [mysqld_safe] section of my.cnf
+# we complain about unrecognized options
+unrecognized_handling=complain
 parse_arguments `$print_defaults $defaults --loose-verbose mysqld_safe safe_mysqld mariadb_safe`
-parse_arguments PICK-ARGS-FROM-ARGV "$@"
+
+# We only need to pass arguments through to the server if we don't
+# handle them here.  So, we collect unrecognized options (passed on
+# the command line) into the args variable.
+unrecognized_handling=collect
+parse_arguments "$@"
 
 
 #

@@ -1,7 +1,7 @@
 /*************** RelDef H Declares Source Code File (.H) ***************/
-/*  Name: RELDEF.H  Version 1.3                                        */
+/*  Name: RELDEF.H  Version 1.4                                        */
 /*                                                                     */
-/*  (C) Copyright to the author Olivier BERTRAND          2004-2012    */
+/*  (C) Copyright to the author Olivier BERTRAND          2004-2014    */
 /*                                                                     */
 /*  This file contains the DEF classes definitions.                    */
 /***********************************************************************/
@@ -14,6 +14,7 @@
 #include "my_sys.h"
 
 typedef class  INDEXDEF *PIXDEF;
+typedef class  ha_connect *PHC;
 
 /***********************************************************************/
 /*  Table or View (relation) definition block.                         */
@@ -30,6 +31,7 @@ class DllExport RELDEF : public BLOCK {      // Relation definition block
   PSZ     GetName(void) {return Name;}
   PSZ     GetDB(void) {return (PSZ)Database;}
   PCOLDEF GetCols(void) {return To_Cols;}
+  PHC     GetHandler(void) {return Hc;}
   void    SetCols(PCOLDEF pcd) {To_Cols = pcd;}
   PCATLG  GetCat(void) {return Cat;}
   virtual const char *GetType(void) = 0;
@@ -38,7 +40,14 @@ class DllExport RELDEF : public BLOCK {      // Relation definition block
   void    SetCat(PCATLG cat) { Cat=cat; }
 
   // Methods
-  virtual bool Indexable(void) {return false;}
+  bool    GetBoolCatInfo(PSZ what, bool bdef);
+  bool    SetIntCatInfo(PSZ what, int ival);
+  bool    Partitioned(void);
+  int     GetIntCatInfo(PSZ what, int idef);
+  int     GetSizeCatInfo(PSZ what, PSZ sdef);
+  int     GetCharCatInfo(PSZ what, PSZ sdef, char *buf, int size);
+  char   *GetStringCatInfo(PGLOBAL g, PSZ what, PSZ sdef);
+  virtual int  Indexable(void) {return 0;}
   virtual bool Define(PGLOBAL g, PCATLG cat, LPCSTR name, LPCSTR am) = 0;
   virtual PTDB GetTable(PGLOBAL g, MODE mode) = 0;
 
@@ -48,6 +57,7 @@ class DllExport RELDEF : public BLOCK {      // Relation definition block
   LPCSTR  Database;                    /* Table database               */
   PCOLDEF To_Cols;                     /* To a list of column desc     */
   PCATLG  Cat;                         /* To DB catalog info           */
+  PHC     Hc;                          /* The Connect handler          */
   }; // end of RELDEF
 
 /***********************************************************************/
@@ -69,9 +79,9 @@ class DllExport TABDEF : public RELDEF {   /* Logical table descriptor */
   void    SetNext(PTABDEF tdfp) {Next = tdfp;}
   int     GetMultiple(void) {return Multiple;}
   int     GetPseudo(void) {return Pseudo;}
-  PSZ     GetPath(void) 
+  PSZ     GetPath(void)
             {return (Database) ? (PSZ)Database : Cat->GetDataPath();}
-  bool    SepIndex(void) {return Cat->GetBoolCatInfo("SepIndex", false);}
+  bool    SepIndex(void) {return GetBoolCatInfo("SepIndex", false);}
   bool    IsReadOnly(void) {return Read_Only;}
   virtual AMT    GetDefType(void) {return TYPE_AM_TAB;}
   virtual PIXDEF GetIndx(void) {return NULL;}
@@ -80,6 +90,8 @@ class DllExport TABDEF : public RELDEF {   /* Logical table descriptor */
   const CHARSET_INFO *data_charset() {return m_data_charset;}
 
   // Methods
+          int  GetColCatInfo(PGLOBAL g);
+          void SetIndexInfo(void);
           bool DropTable(PGLOBAL g, PSZ name);
   virtual bool Define(PGLOBAL g, PCATLG cat, LPCSTR name, LPCSTR am);
   virtual bool DefineAM(PGLOBAL, LPCSTR, int) = 0;
@@ -145,6 +157,8 @@ class DllExport COLCRT : public BLOCK { /* Column description block             
   PSZ  GetName(void) {return Name;}
   PSZ  GetDecode(void) {return Decode;}
   PSZ  GetFmt(void) {return Fmt;}
+  int  GetOpt(void) {return Opt;}
+  int  GetFreq(void) {return Freq;}
   int  GetLong(void) {return Long;}
   int  GetPrecision(void) {return Precision;}
   int  GetOffset(void) {return Offset;}
@@ -161,6 +175,8 @@ class DllExport COLCRT : public BLOCK { /* Column description block             
   int     Key;                /* Key (greater than 1 if multiple)      */
   int     Precision;          /* Logical column length                 */
   int     Scale;              /* Decimals for float/decimal values     */
+  int     Opt;                /* 0:Not 1:clustered 2:sorted-asc 3:desc */
+  int     Freq;               /* Estimated number of different values  */
   char    DataType;           /* Internal data type (C, N, F, T)       */
   }; // end of COLCRT
 
@@ -168,9 +184,7 @@ class DllExport COLCRT : public BLOCK { /* Column description block             
 /*  Column definition block.                                           */
 /***********************************************************************/
 class DllExport COLDEF : public COLCRT { /* Column description block             */
-  friend class CATALOG;
-  friend class PLUGCAT;
-  friend class MYCAT;
+  friend class TABDEF;
   friend class COLBLK;
   friend class DBFFAM;
   friend class TDBASE;
@@ -184,10 +198,34 @@ class DllExport COLDEF : public COLCRT { /* Column description block            
   int     GetClen(void) {return Clen;}
   int     GetType(void) {return Buf_Type;}
   int     GetPoff(void) {return Poff;}
+  void   *GetMin(void) {return To_Min;}
+  void    SetMin(void *minp) {To_Min = minp;}
+  void   *GetMax(void) {return To_Max;}
+  void    SetMax(void *maxp) {To_Max = maxp;}
+  bool    GetXdb2(void) {return Xdb2;}
+  void    SetXdb2(bool b) {Xdb2 = b;}
+  void   *GetBmap(void) {return To_Bmap;}
+  void    SetBmap(void *bmp) {To_Bmap = bmp;}
+  void   *GetDval(void) {return To_Dval;}
+  void    SetDval(void *dvp) {To_Dval = dvp;}
+  int     GetNdv(void) {return Ndv;}
+  void    SetNdv(int ndv) {Ndv = ndv;}
+  int     GetNbm(void) {return Nbm;}
+  void    SetNbm(int nbm) {Nbm = nbm;}
   int     Define(PGLOBAL g, void *memp, PCOLINFO cfp, int poff);
   void    Define(PGLOBAL g, PCOL colp);
+  bool    IsSpecial(void) {return (Flags & U_SPECIAL) ? true : false;} 
+  bool    IsVirtual(void) {return (Flags & U_VIRTUAL) ? true : false;} 
 
  protected:
+  void   *To_Min;              /* Point to array of block min values   */
+  void   *To_Max;              /* Point to array of block max values   */
+  int    *To_Pos;              /* Point to array of block positions    */
+  bool    Xdb2;                /* TRUE if to be optimized by XDB2      */
+  void   *To_Bmap;             /* To array of block bitmap values      */
+  void   *To_Dval;             /* To array of column distinct values   */
+  int     Ndv;                 /* Number of distinct values            */
+  int     Nbm;                 /* Number of ULONG in bitmap (XDB2)     */
   int     Buf_Type;            /* Internal data type                   */
   int     Clen;                /* Internal data size in chars (bytes)  */
   int     Poff;                /* Calculated offset for Packed tables  */

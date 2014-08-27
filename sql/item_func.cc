@@ -1,5 +1,5 @@
-/* Copyright (c) 2000, 2013, Oracle and/or its affiliates.
-   Copyright (c) 2009, 2013, Monty Program Ab.
+/* Copyright (c) 2000, 2014, Oracle and/or its affiliates.
+   Copyright (c) 2009, 2014, SkySQL Ab.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -593,7 +593,7 @@ my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
 }
 
 
-void Item_func::fix_num_length_and_dec()
+void Item_udf_func::fix_num_length_and_dec()
 {
   uint fl_length= 0;
   decimals=0;
@@ -609,11 +609,6 @@ void Item_func::fix_num_length_and_dec()
     max_length= float_length(NOT_FIXED_DEC);
   }
 }
-
-
-void Item_func_numhybrid::fix_num_length_and_dec()
-{}
-
 
 
 /**
@@ -803,9 +798,9 @@ bool Item_func_connection_id::fix_fields(THD *thd, Item **ref)
   function of two arguments.
 */
 
-void Item_num_op::find_num_type(void)
+void Item_num_op::fix_length_and_dec(void)
 {
-  DBUG_ENTER("Item_num_op::find_num_type");
+  DBUG_ENTER("Item_num_op::fix_length_and_dec");
   DBUG_PRINT("info", ("name %s", func_name()));
   DBUG_ASSERT(arg_count == 2);
   Item_result r0= args[0]->cast_to_int_type();
@@ -849,22 +844,26 @@ void Item_num_op::find_num_type(void)
   type depends only on the first argument)
 */
 
-void Item_func_num1::find_num_type()
+void Item_func_num1::fix_length_and_dec()
 {
-  DBUG_ENTER("Item_func_num1::find_num_type");
+  DBUG_ENTER("Item_func_num1::fix_length_and_dec");
   DBUG_PRINT("info", ("name %s", func_name()));
   switch (cached_result_type= args[0]->cast_to_int_type()) {
   case INT_RESULT:
+    max_length= args[0]->max_length;
     unsigned_flag= args[0]->unsigned_flag;
     break;
   case STRING_RESULT:
   case REAL_RESULT:
     cached_result_type= REAL_RESULT;
+    decimals= args[0]->decimals; // Preserve NOT_FIXED_DEC
     max_length= float_length(decimals);
     break;
   case TIME_RESULT:
     cached_result_type= DECIMAL_RESULT;
   case DECIMAL_RESULT:
+    decimals= args[0]->decimal_scale(); // Do not preserve NOT_FIXED_DEC
+    max_length= args[0]->max_length;
     break;
   case ROW_RESULT:
   case IMPOSSIBLE_RESULT:
@@ -876,20 +875,6 @@ void Item_func_num1::find_num_type()
                        cached_result_type == INT_RESULT ? "INT_RESULT" :
                        "--ILLEGAL!!!--")));
   DBUG_VOID_RETURN;
-}
-
-
-void Item_func_num1::fix_num_length_and_dec()
-{
-  decimals= args[0]->decimals;
-  max_length= args[0]->max_length;
-}
-
-
-void Item_func_numhybrid::fix_length_and_dec()
-{
-  fix_num_length_and_dec();
-  find_num_type();
 }
 
 
@@ -1116,7 +1101,9 @@ bool Item_func_hybrid_result_type::get_date(MYSQL_TIME *ltime,
   case INT_RESULT:
   {
     longlong value= int_op();
-    if (null_value || int_to_datetime_with_warn(value, ltime, fuzzydate,
+    bool neg= !unsigned_flag && value < 0;
+    if (null_value || int_to_datetime_with_warn(neg, neg ? -value : value,
+                                                ltime, fuzzydate,
                                                 field_name_or_null()))
       goto err;
     break;
@@ -1535,10 +1522,13 @@ my_decimal *Item_func_plus::decimal_op(my_decimal *decimal_value)
 */
 void Item_func_additive_op::result_precision()
 {
-  decimals= MY_MAX(args[0]->decimals, args[1]->decimals);
-  int arg1_int= args[0]->decimal_precision() - args[0]->decimals;
-  int arg2_int= args[1]->decimal_precision() - args[1]->decimals;
+  decimals= MY_MAX(args[0]->decimal_scale(), args[1]->decimal_scale());
+  int arg1_int= args[0]->decimal_precision() - args[0]->decimal_scale();
+  int arg2_int= args[1]->decimal_precision() - args[1]->decimal_scale();
   int precision= MY_MAX(arg1_int, arg2_int) + 1 + decimals;
+
+  DBUG_ASSERT(arg1_int >= 0);
+  DBUG_ASSERT(arg2_int >= 0);
 
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
@@ -1776,7 +1766,8 @@ void Item_func_mul::result_precision()
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= MY_MIN(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
+  decimals= MY_MIN(args[0]->decimal_scale() + args[1]->decimal_scale(),
+                DECIMAL_MAX_SCALE);
   uint est_prec = args[0]->decimal_precision() + args[1]->decimal_precision();
   uint precision= MY_MIN(est_prec, DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length_no_truncation(precision, decimals,
@@ -1830,8 +1821,20 @@ my_decimal *Item_func_div::decimal_op(my_decimal *decimal_value)
 
 void Item_func_div::result_precision()
 {
+  /*
+    We need to add args[1]->divisor_precision_increment(),
+    to properly handle the cases like this:
+      SELECT 5.05 / 0.014; -> 360.714286
+    i.e. when the divisor has a zero integer part
+    and non-zero digits appear only after the decimal point.
+    Precision in this example is calculated as
+      args[0]->decimal_precision()           +  // 3
+      args[1]->divisor_precision_increment() +  // 3
+      prec_increment                            // 4
+    which gives 10 decimals digits. 
+  */
   uint precision=MY_MIN(args[0]->decimal_precision() + 
-                     args[1]->decimals + prec_increment,
+                     args[1]->divisor_precision_increment() + prec_increment,
                      DECIMAL_MAX_PRECISION);
 
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
@@ -1839,7 +1842,7 @@ void Item_func_div::result_precision()
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= MY_MIN(args[0]->decimals + prec_increment, DECIMAL_MAX_SCALE);
+  decimals= MY_MIN(args[0]->decimal_scale() + prec_increment, DECIMAL_MAX_SCALE);
   max_length= my_decimal_precision_to_length_no_truncation(precision, decimals,
                                                            unsigned_flag);
 }
@@ -1961,9 +1964,11 @@ void Item_func_int_div::fix_length_and_dec()
 {
   Item_result argtype= args[0]->result_type();
   /* use precision ony for the data type it is applicable for and valid */
-  max_length=args[0]->max_length -
-    (argtype == DECIMAL_RESULT || argtype == INT_RESULT ?
-     args[0]->decimals : 0);
+  uint32 char_length= args[0]->max_char_length() -
+                      (argtype == DECIMAL_RESULT || argtype == INT_RESULT ?
+                       args[0]->decimals : 0);
+  fix_char_length(char_length > MY_INT64_NUM_DECIMAL_DIGITS ?
+                  MY_INT64_NUM_DECIMAL_DIGITS : char_length);
   maybe_null=1;
   unsigned_flag=args[0]->unsigned_flag | args[1]->unsigned_flag;
 }
@@ -2043,7 +2048,7 @@ my_decimal *Item_func_mod::decimal_op(my_decimal *decimal_value)
 
 void Item_func_mod::result_precision()
 {
-  decimals= MY_MAX(args[0]->decimals, args[1]->decimals);
+  decimals= MY_MAX(args[0]->decimal_scale(), args[1]->decimal_scale());
   max_length= MY_MAX(args[0]->max_length, args[1]->max_length);
 }
 
@@ -2099,18 +2104,12 @@ my_decimal *Item_func_neg::decimal_op(my_decimal *decimal_value)
 }
 
 
-void Item_func_neg::fix_num_length_and_dec()
-{
-  decimals= args[0]->decimals;
-  /* 1 add because sign can appear */
-  max_length= args[0]->max_length + 1;
-}
-
-
 void Item_func_neg::fix_length_and_dec()
 {
   DBUG_ENTER("Item_func_neg::fix_length_and_dec");
   Item_func_num1::fix_length_and_dec();
+  /* 1 add because sign can appear */
+  max_length= args[0]->max_length + 1;
 
   /*
     If this is in integer context keep the context as integer if possible
@@ -2417,8 +2416,12 @@ void Item_func_integer::fix_length_and_dec()
   decimals=0;
 }
 
-void Item_func_int_val::fix_num_length_and_dec()
+
+void Item_func_int_val::fix_length_and_dec()
 {
+  DBUG_ENTER("Item_func_int_val::fix_length_and_dec");
+  DBUG_PRINT("info", ("name %s", func_name()));
+
   ulonglong tmp_max_length= (ulonglong ) args[0]->max_length - 
     (args[0]->decimals ? args[0]->decimals + 1 : 0) + 2;
   max_length= tmp_max_length > (ulonglong) 4294967295U ?
@@ -2426,13 +2429,7 @@ void Item_func_int_val::fix_num_length_and_dec()
   uint tmp= float_length(decimals);
   set_if_smaller(max_length,tmp);
   decimals= 0;
-}
 
-
-void Item_func_int_val::find_num_type()
-{
-  DBUG_ENTER("Item_func_int_val::find_num_type");
-  DBUG_PRINT("info", ("name %s", func_name()));
   switch (cached_result_type= args[0]->cast_to_int_type())
   {
   case STRING_RESULT:
@@ -2956,7 +2953,7 @@ bool Item_func_min_max::get_date(MYSQL_TIME *ltime, ulonglong fuzzy_date)
   {
     ltime->time_type= MYSQL_TIMESTAMP_TIME;
     ltime->hour+= (ltime->month * 32 + ltime->day) * 24;
-    ltime->month= ltime->day= 0;
+    ltime->year= ltime->month= ltime->day= 0;
     if (adjust_time_range_with_warn(ltime,
                                     std::min<uint>(decimals, TIME_SECOND_PART_DIGITS)))
       return (null_value= true);
@@ -3887,12 +3884,6 @@ String *Item_func_udf_decimal::val_str(String *str)
   my_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, FALSE, &dec_buf);
   my_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, '0', str);
   return str;
-}
-
-
-void Item_func_udf_decimal::fix_length_and_dec()
-{
-  fix_num_length_and_dec();
 }
 
 
@@ -6098,61 +6089,6 @@ void Item_func_get_system_var::cleanup()
 }
 
 
-longlong Item_func_inet_aton::val_int()
-{
-  DBUG_ASSERT(fixed == 1);
-  uint byte_result = 0;
-  ulonglong result = 0;			// We are ready for 64 bit addresses
-  const char *p,* end;
-  char c = '.'; // we mark c to indicate invalid IP in case length is 0
-  char buff[36];
-  int dot_count= 0;
-
-  String *s, tmp(buff, sizeof(buff), &my_charset_latin1);
-  if (!(s = args[0]->val_str_ascii(&tmp)))       // If null value
-    goto err;
-  null_value=0;
-
-  end= (p = s->ptr()) + s->length();
-  while (p < end)
-  {
-    c = *p++;
-    int digit = (int) (c - '0');
-    if (digit >= 0 && digit <= 9)
-    {
-      if ((byte_result = byte_result * 10 + digit) > 255)
-	goto err;				// Wrong address
-    }
-    else if (c == '.')
-    {
-      dot_count++;
-      result= (result << 8) + (ulonglong) byte_result;
-      byte_result = 0;
-    }
-    else
-      goto err;					// Invalid character
-  }
-  if (c != '.')					// IP number can't end on '.'
-  {
-    /*
-      Handle short-forms addresses according to standard. Examples:
-      127		-> 0.0.0.127
-      127.1		-> 127.0.0.1
-      127.2.1		-> 127.2.0.1
-    */
-    switch (dot_count) {
-    case 1: result<<= 8; /* Fall through */
-    case 2: result<<= 8; /* Fall through */
-    }
-    return (result << 8) + (ulonglong) byte_result;
-  }
-
-err:
-  null_value=1;
-  return 0;
-}
-
-
 void Item_func_match::init_search(bool no_order)
 {
   DBUG_ENTER("Item_func_match::init_search");
@@ -6250,18 +6186,39 @@ bool Item_func_match::fix_fields(THD *thd, Item **ref)
 
   bool allows_multi_table_search= true;
   const_item_cache=0;
+  table= 0;
   for (uint i=1 ; i < arg_count ; i++)
   {
     item=args[i];
     if (item->type() == Item::REF_ITEM)
       args[i]= item= *((Item_ref *)item)->ref;
-    if (item->type() != Item::FIELD_ITEM)
+    /*
+      When running in PS mode, some Item_field's can already be replaced
+      to Item_func_conv_charset during PREPARE time. This is possible
+      in case of "MATCH (f1,..,fN) AGAINST (... IN BOOLEAN MODE)"
+      when running without any fulltext indexes and when fields f1..fN
+      have different character sets.
+      So we check for FIELD_ITEM only during prepare time and in non-PS mode,
+      and do not check in PS execute time.
+    */
+    if (!thd->stmt_arena->is_stmt_execute() &&
+        item->type() != Item::FIELD_ITEM)
     {
       my_error(ER_WRONG_ARGUMENTS, MYF(0), "AGAINST");
       return TRUE;
     }
-    allows_multi_table_search &= 
-      allows_search_on_non_indexed_columns(((Item_field *)item)->field->table);
+    /*
+      During the prepare-time execution of fix_fields() of a PS query some
+      Item_fields's could have been already replaced to Item_func_conv_charset
+      (by the call for agg_arg_charsets_for_comparison below()).
+      But agg_arg_charsets_for_comparison() is written in a way that
+      at least *one* of the Item_field's is not replaced.
+      This makes sure that "table" gets initialized during PS execution time.
+    */
+    if (item->type() == Item::FIELD_ITEM)
+      table= ((Item_field *)item)->field->table;
+
+    allows_multi_table_search &= allows_search_on_non_indexed_columns(table);
   }
 
   /*
@@ -6277,15 +6234,13 @@ bool Item_func_match::fix_fields(THD *thd, Item **ref)
     my_error(ER_WRONG_ARGUMENTS,MYF(0),"MATCH");
     return TRUE;
   }
-  table=((Item_field *)item)->field->table;
   if (!(table->file->ha_table_flags() & HA_CAN_FULLTEXT))
   {
     my_error(ER_TABLE_CANT_HANDLE_FT, MYF(0), table->file->table_type());
     return 1;
   }
   table->fulltext_searched=1;
-  return agg_item_collations_for_comparison(cmp_collation, func_name(),
-                                            args+1, arg_count-1, 0);
+  return agg_arg_charsets_for_comparison(cmp_collation, args+1, arg_count-1);
 }
 
 bool Item_func_match::fix_index()

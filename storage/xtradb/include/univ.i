@@ -44,10 +44,10 @@ Created 1/20/1994 Heikki Tuuri
 
 #define INNODB_VERSION_MAJOR	5
 #define INNODB_VERSION_MINOR	6
-#define INNODB_VERSION_BUGFIX	15
+#define INNODB_VERSION_BUGFIX	19
 
 #ifndef PERCONA_INNODB_VERSION
-#define PERCONA_INNODB_VERSION 63.0
+#define PERCONA_INNODB_VERSION 67.0
 #endif
 
 /* Enable UNIV_LOG_ARCHIVE in XtraDB */
@@ -447,17 +447,17 @@ macro ULINTPF. */
 # define UINT32PF	"%I32u"
 # define INT64PF	"%I64d"
 # define UINT64PF	"%I64u"
-# define UINT64PFx	"%016I64u"
+# define UINT64PFx	"%016I64x"
 # define DBUG_LSN_PF    "%llu"
 typedef __int64 ib_int64_t;
 typedef unsigned __int64 ib_uint64_t;
 typedef unsigned __int32 ib_uint32_t;
 #else
 /* Use the integer types and formatting strings defined in the C99 standard. */
-# define UINT32PF	"%"PRIu32
-# define INT64PF	"%"PRId64
-# define UINT64PF	"%"PRIu64
-# define UINT64PFx	"%016"PRIx64
+# define UINT32PF	"%" PRIu32
+# define INT64PF	"%" PRId64
+# define UINT64PF	"%" PRIu64
+# define UINT64PFx	"%016" PRIx64
 # define DBUG_LSN_PF    UINT64PF
 typedef int64_t ib_int64_t;
 typedef uint64_t ib_uint64_t;

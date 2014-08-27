@@ -88,18 +88,22 @@ class TDBODBC : public TDBASE {
   virtual PSZ  GetFile(PGLOBAL g);
   virtual void SetFile(PGLOBAL g, PSZ fn);
   virtual void ResetSize(void);
-  virtual int  GetAffectedRows(void) {return AftRows;}
+//virtual int  GetAffectedRows(void) {return AftRows;}
   virtual PSZ  GetServer(void) {return "ODBC";}
+  virtual int  Indexable(void) {return 2;}
 
   // Database routines
   virtual PCOL MakeCol(PGLOBAL g, PCOLDEF cdp, PCOL cprec, int n);
-  virtual int  GetProgMax(PGLOBAL g);
+  virtual int  Cardinality(PGLOBAL g);
   virtual int  GetMaxSize(PGLOBAL g);
+  virtual int  GetProgMax(PGLOBAL g);
   virtual bool OpenDB(PGLOBAL g);
   virtual int  ReadDB(PGLOBAL g);
   virtual int  WriteDB(PGLOBAL g);
   virtual int  DeleteDB(PGLOBAL g, int irc);
   virtual void CloseDB(PGLOBAL g);
+  virtual bool ReadKey(PGLOBAL g, OPVAL op, const void *key, int len)
+                      {return true;}
 
  protected:
   // Internal functions
