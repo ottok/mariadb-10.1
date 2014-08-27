@@ -1,6 +1,6 @@
 /*
-   Copyright (c) 2000, 2013, Oracle and/or its affiliates.
-   Copyright (c) 2010, 2013, Monty Program Ab.
+   Copyright (c) 2000, 2014, Oracle and/or its affiliates.
+   Copyright (c) 2010, 2014, SkySQL Ab.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -75,6 +75,7 @@ static bool prepare_blob_field(THD *thd, Create_field *sql_field);
 static bool check_engine(THD *, const char *, const char *, HA_CREATE_INFO *);
 static int mysql_prepare_create_table(THD *, HA_CREATE_INFO *, Alter_info *,
                                       uint *, handler *, KEY **, uint *, int);
+static uint blob_length_by_type(enum_field_types type);
 
 /**
   @brief Helper function for explain_filename
@@ -3812,7 +3813,6 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     CHARSET_INFO *ft_key_charset=0;  // for FULLTEXT
     for (uint column_nr=0 ; (column=cols++) ; column_nr++)
     {
-      uint length;
       Key_part_spec *dup_column;
 
       it.rewind();
@@ -3890,7 +3890,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	  }
           if (f_is_geom(sql_field->pack_flag) && sql_field->geom_type ==
               Field::GEOM_POINT)
-            column->length= 25;
+            column->length= MAX_LEN_GEOM_POINT_FIELD;
 	  if (!column->length)
 	  {
 	    my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.str);
@@ -3956,30 +3956,31 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       key_part_info->fieldnr= field;
       key_part_info->offset=  (uint16) sql_field->offset;
       key_part_info->key_type=sql_field->pack_flag;
-      length= sql_field->key_length;
+      uint key_part_length= sql_field->key_length;
 
       if (column->length)
       {
 	if (f_is_blob(sql_field->pack_flag))
 	{
-	  if ((length=column->length) > max_key_length ||
-	      length > file->max_key_part_length())
+	  key_part_length= MY_MIN(column->length,
+                               blob_length_by_type(sql_field->sql_type)
+                               * sql_field->charset->mbmaxlen);
+	  if (key_part_length > max_key_length ||
+	      key_part_length > file->max_key_part_length())
 	  {
-	    length=MY_MIN(max_key_length, file->max_key_part_length());
+	    key_part_length= MY_MIN(max_key_length, file->max_key_part_length());
 	    if (key->type == Key::MULTIPLE)
 	    {
 	      /* not a critical problem */
-	      char warn_buff[MYSQL_ERRMSG_SIZE];
-	      my_snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
-			  length);
-	      push_warning(thd, Sql_condition::WARN_LEVEL_WARN,
-			   ER_TOO_LONG_KEY, warn_buff);
+	      push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
+		           ER_TOO_LONG_KEY, ER(ER_TOO_LONG_KEY),
+		           key_part_length);
               /* Align key length to multibyte char boundary */
-              length-= length % sql_field->charset->mbmaxlen;
+              key_part_length-= key_part_length % sql_field->charset->mbmaxlen;
 	    }
 	    else
 	    {
-	      my_error(ER_TOO_LONG_KEY,MYF(0),length);
+	      my_error(ER_TOO_LONG_KEY, MYF(0), key_part_length);
 	      DBUG_RETURN(TRUE);
 	    }
 	  }
@@ -3987,9 +3988,9 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         // Catch invalid use of partial keys 
 	else if (!f_is_geom(sql_field->pack_flag) &&
                  // is the key partial? 
-                 column->length != length &&
+                 column->length != key_part_length &&
                  // is prefix length bigger than field length? 
-                 (column->length > length ||
+                 (column->length > key_part_length ||
                   // can the field have a partial key? 
                   !Field::type_can_have_key_part (sql_field->sql_type) ||
                   // a packed field can't be used in a partial key
@@ -3998,44 +3999,43 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                   ((file->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS) &&
                    // and is this a 'unique' key?
                    (key_info->flags & HA_NOSAME))))
-        {         
+        {
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
 	  DBUG_RETURN(TRUE);
 	}
 	else if (!(file->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS))
-	  length=column->length;
+	  key_part_length= column->length;
       }
-      else if (length == 0 && (sql_field->flags & NOT_NULL_FLAG))
+      else if (key_part_length == 0 && (sql_field->flags & NOT_NULL_FLAG))
       {
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), file->table_type(),
                  column->field_name.str);
 	  DBUG_RETURN(TRUE);
       }
-      if (length > file->max_key_part_length() && key->type != Key::FULLTEXT)
+      if (key_part_length > file->max_key_part_length() &&
+          key->type != Key::FULLTEXT)
       {
-        length= file->max_key_part_length();
+        key_part_length= file->max_key_part_length();
 	if (key->type == Key::MULTIPLE)
 	{
 	  /* not a critical problem */
-	  char warn_buff[MYSQL_ERRMSG_SIZE];
-	  my_snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
-		      length);
-	  push_warning(thd, Sql_condition::WARN_LEVEL_WARN,
-		       ER_TOO_LONG_KEY, warn_buff);
+	  push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
+		       ER_TOO_LONG_KEY, ER(ER_TOO_LONG_KEY),
+		       key_part_length);
           /* Align key length to multibyte char boundary */
-          length-= length % sql_field->charset->mbmaxlen;
+          key_part_length-= key_part_length % sql_field->charset->mbmaxlen;
 	}
 	else
 	{
-	  my_error(ER_TOO_LONG_KEY,MYF(0),length);
+	  my_error(ER_TOO_LONG_KEY, MYF(0), key_part_length);
 	  DBUG_RETURN(TRUE);
 	}
       }
-      key_part_info->length=(uint16) length;
+      key_part_info->length= (uint16) key_part_length;
       /* Use packed keys for long strings on the first column */
       if (!((*db_options) & HA_OPTION_NO_PACK_KEYS) &&
           !((create_info->table_options & HA_OPTION_NO_PACK_KEYS)) &&
-	  (length >= KEY_DEFAULT_PACK_LENGTH &&
+	  (key_part_length >= KEY_DEFAULT_PACK_LENGTH &&
 	   (sql_field->sql_type == MYSQL_TYPE_STRING ||
 	    sql_field->sql_type == MYSQL_TYPE_VARCHAR ||
 	    sql_field->pack_flag & FIELDFLAG_BLOB)))
@@ -4047,10 +4047,10 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	  key_info->flags|= HA_PACK_KEY;
       }
       /* Check if the key segment is partial, set the key flag accordingly */
-      if (length != sql_field->key_length)
+      if (key_part_length != sql_field->key_length)
         key_info->flags|= HA_KEY_HAS_PART_KEY_SEG;
 
-      key_length+=length;
+      key_length+= key_part_length;
       key_part_info++;
 
       /* Create the key name based on the first column (if not given) */
@@ -4971,7 +4971,7 @@ bool mysql_create_table(THD *thd, TABLE_LIST *create_table,
   const char *db= create_table->db;
   const char *table_name= create_table->table_name;
   bool is_trans= FALSE;
-  bool result= 0;
+  bool result;
   int create_table_mode;
   TABLE_LIST *pos_in_locked_tables= 0;
   MDL_ticket *mdl_ticket= 0;
@@ -4979,8 +4979,16 @@ bool mysql_create_table(THD *thd, TABLE_LIST *create_table,
 
   DBUG_ASSERT(create_table == thd->lex->query_tables);
 
+  /* Copy temporarily the statement flags to thd for lock_table_names() */
+  uint save_thd_create_info_options= thd->lex->create_info.options;
+  thd->lex->create_info.options|= create_info->options;
+
   /* Open or obtain an exclusive metadata lock on table being created  */
-  if (open_and_lock_tables(thd, create_table, FALSE, 0))
+  result= open_and_lock_tables(thd, create_table, FALSE, 0);
+
+  thd->lex->create_info.options= save_thd_create_info_options;
+
+  if (result)
   {
     /* is_error() may be 0 if table existed and we generated a warning */
     DBUG_RETURN(thd->is_error());
@@ -5275,7 +5283,14 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table,
     Thus by holding both these locks we ensure that our statement is
     properly isolated from all concurrent operations which matter.
   */
-  if (open_tables(thd, &thd->lex->query_tables, &not_used, 0))
+
+  /* Copy temporarily the statement flags to thd for lock_table_names() */
+  uint save_thd_create_info_options= thd->lex->create_info.options;
+  thd->lex->create_info.options|= create_info->options;
+  res= open_tables(thd, &thd->lex->query_tables, &not_used, 0);
+  thd->lex->create_info.options= save_thd_create_info_options;
+
+  if (res)
   {
     res= thd->is_error();
     goto err;
@@ -5434,7 +5449,7 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table,
           table->open_strategy= TABLE_LIST::OPEN_NORMAL;
 
           /*
-            In order for store_create_info() to work we need to open
+            In order for show_create_table() to work we need to open
             destination table if it is not already open (i.e. if it
             has not existed before). We don't need acquire metadata
             lock in order to do this as we already hold exclusive
@@ -5458,13 +5473,9 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table,
         if (!table->view)
         {
           int result __attribute__((unused))=
-            store_create_info(thd, table, &query,
-                              create_info, FALSE /* show_database */,
-                              MY_TEST(create_info->org_options &
-                                      HA_LEX_CREATE_REPLACE) ||
-                              create_info->table_was_deleted);
+            show_create_table(thd, table, &query, create_info, WITHOUT_DB_NAME);
 
-          DBUG_ASSERT(result == 0); // store_create_info() always return 0
+          DBUG_ASSERT(result == 0); // show_create_table() always return 0
           do_logging= FALSE;
           if (write_bin_log(thd, TRUE, query.ptr(), query.length()))
           {
@@ -5666,20 +5677,34 @@ handle_if_exists_options(THD *thd, TABLE *table, Alter_info *alter_info)
       {
         if (my_strcasecmp(system_charset_info,
               sql_field->field_name, (*f_ptr)->field_name) == 0)
+          goto drop_create_field;
+      }
+      {
+        /*
+          If in the ADD list there is a field with the same name,
+          remove the sql_field from the list.
+        */
+        List_iterator<Create_field> chk_it(alter_info->create_list);
+        Create_field *chk_field;
+        while ((chk_field= chk_it++) && chk_field != sql_field)
         {
-          push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-              ER_DUP_FIELDNAME, ER(ER_DUP_FIELDNAME),
-              sql_field->field_name);
-          it.remove();
-          if (alter_info->create_list.is_empty())
-          {
-            alter_info->flags&= ~Alter_info::ALTER_ADD_COLUMN;
-            if (alter_info->key_list.is_empty())
-              alter_info->flags&= ~(Alter_info::ALTER_ADD_INDEX |
-                                    Alter_info::ADD_FOREIGN_KEY);
-          }
-          break;
+          if (my_strcasecmp(system_charset_info,
+                sql_field->field_name, chk_field->field_name) == 0)
+            goto drop_create_field;
         }
+      }
+      continue;
+drop_create_field:
+      push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
+          ER_DUP_FIELDNAME, ER(ER_DUP_FIELDNAME),
+          sql_field->field_name);
+      it.remove();
+      if (alter_info->create_list.is_empty())
+      {
+        alter_info->flags&= ~Alter_info::ALTER_ADD_COLUMN;
+        if (alter_info->key_list.is_empty())
+          alter_info->flags&= ~(Alter_info::ALTER_ADD_INDEX |
+              Alter_info::ADD_FOREIGN_KEY);
       }
     }
   }
@@ -5780,6 +5805,26 @@ handle_if_exists_options(THD *thd, TABLE *table, Alter_info *alter_info)
           }
         }
       }
+
+      if (!remove_drop)
+      {
+        /*
+          Check if the name appears twice in the DROP list.
+        */
+        List_iterator<Alter_drop> chk_it(alter_info->drop_list);
+        Alter_drop *chk_drop;
+        while ((chk_drop= chk_it++) && chk_drop != drop)
+        {
+          if (drop->type == chk_drop->type &&
+              my_strcasecmp(system_charset_info,
+                            drop->name, chk_drop->name) == 0)
+          {
+            remove_drop= TRUE;
+            break;
+          }
+        }
+      }
+
       if (remove_drop)
       {
         push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
@@ -5800,7 +5845,6 @@ handle_if_exists_options(THD *thd, TABLE *table, Alter_info *alter_info)
     Key *key;
     List_iterator<Key> key_it(alter_info->key_list);
     uint n_key;
-    bool remove_key;
     const char *keyname;
     while ((key=key_it++))
     {
@@ -5817,7 +5861,6 @@ handle_if_exists_options(THD *thd, TABLE *table, Alter_info *alter_info)
         if (keyname == NULL)
           continue;
       }
-      remove_key= FALSE;
       if (key->type != Key::FOREIGN_KEY)
       {
         for (n_key=0; n_key < table->s->keys; n_key++)
@@ -5825,8 +5868,7 @@ handle_if_exists_options(THD *thd, TABLE *table, Alter_info *alter_info)
           if (my_strcasecmp(system_charset_info,
                 keyname, table->key_info[n_key].name) == 0)
           {
-            remove_key= TRUE;
-            break;
+            goto remove_key;
           }
         }
       }
@@ -5840,25 +5882,44 @@ handle_if_exists_options(THD *thd, TABLE *table, Alter_info *alter_info)
         {
           if (my_strcasecmp(system_charset_info, f_key->foreign_id->str,
                 key->name.str) == 0)
-            remove_key= TRUE;
-            break;
+            goto remove_key;
         }
       }
-      if (remove_key)
+
       {
-        push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-            ER_DUP_KEYNAME, ER(ER_DUP_KEYNAME), keyname);
-        key_it.remove();
-        if (key->type == Key::FOREIGN_KEY)
+        Key *chk_key;
+        List_iterator<Key> chk_it(alter_info->key_list);
+        const char *chkname;
+        while ((chk_key=chk_it++) && chk_key != key)
         {
-          /* ADD FOREIGN KEY appends two items. */
-          key_it.remove();
+          if ((chkname= chk_key->name.str) == NULL)
+          {
+            List_iterator<Key_part_spec> part_it(chk_key->columns);
+            Key_part_spec *kp;
+            if ((kp= part_it++))
+              chkname= kp->field_name.str;
+            if (keyname == NULL)
+              continue;
+          }
+          if (key->type == chk_key->type &&
+              my_strcasecmp(system_charset_info, keyname, chkname) == 0)
+            goto remove_key;
         }
-        if (alter_info->key_list.is_empty())
-          alter_info->flags&= ~(Alter_info::ALTER_ADD_INDEX |
-              Alter_info::ADD_FOREIGN_KEY);
-        break;
       }
+      continue;
+
+remove_key:
+      push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
+          ER_DUP_KEYNAME, ER(ER_DUP_KEYNAME), keyname);
+      key_it.remove();
+      if (key->type == Key::FOREIGN_KEY)
+      {
+        /* ADD FOREIGN KEY appends two items. */
+        key_it.remove();
+      }
+      if (alter_info->key_list.is_empty())
+        alter_info->flags&= ~(Alter_info::ALTER_ADD_INDEX |
+            Alter_info::ADD_FOREIGN_KEY);
     }
   }
   
@@ -6051,6 +6112,9 @@ static bool fill_alter_inplace_info(THD *thd,
     ha_alter_info->handler_flags|= Alter_inplace_info::ALTER_REMOVE_PARTITIONING;
   if (alter_info->flags & Alter_info::ALTER_ALL_PARTITION)
     ha_alter_info->handler_flags|= Alter_inplace_info::ALTER_ALL_PARTITION;
+  /* Check for: ALTER TABLE FORCE, ALTER TABLE ENGINE and OPTIMIZE TABLE. */
+  if (alter_info->flags & Alter_info::ALTER_RECREATE)
+    ha_alter_info->handler_flags|= Alter_inplace_info::RECREATE_TABLE;
 
   /*
     If we altering table with old VARCHAR fields we will be automatically
@@ -6734,12 +6798,8 @@ static bool is_inplace_alter_impossible(TABLE *table,
   if (table->s->tmp_table)
     DBUG_RETURN(true);
 
-
   /*
-    We also test if OPTIMIZE TABLE was given and was mapped to alter table.
-    In that case we always do full copy (ALTER_RECREATE is set in this case).
-
-    For the ALTER TABLE tbl_name ORDER BY ... we also always use copy
+    For the ALTER TABLE tbl_name ORDER BY ... we always use copy
     algorithm. In theory, this operation can be done in-place by some
     engine, but since a) no current engine does this and b) our current
     API lacks infrastructure for passing information about table ordering
@@ -6749,26 +6809,17 @@ static bool is_inplace_alter_impossible(TABLE *table,
     not supported for in-place in combination with other operations.
     Alone, it will be done by simple_rename_or_index_change().
   */
-  if (alter_info->flags & (Alter_info::ALTER_RECREATE |
-                           Alter_info::ALTER_ORDER |
+  if (alter_info->flags & (Alter_info::ALTER_ORDER |
                            Alter_info::ALTER_KEYS_ONOFF))
     DBUG_RETURN(true);
 
   /*
-    Test also that engine was not given during ALTER TABLE, or
-    we are force to run regular alter table (copy).
-    E.g. ALTER TABLE tbl_name ENGINE=MyISAM.
-    Note that in addition to checking flag in HA_CREATE_INFO we
-    also check HA_CREATE_INFO::db_type value. This is done
-    to cover cases in which engine is changed implicitly
-    (e.g. when non-partitioned table becomes partitioned).
-
-    Note that we do copy even if the table is already using the
-    given engine. Many users and tools depend on using ENGINE
-    to force a table rebuild.
+    If the table engine is changed explicitly (using ENGINE clause)
+    or implicitly (e.g. when non-partitioned table becomes
+    partitioned) a regular alter table (copy) needs to be
+    performed.
   */
-  if (create_info->db_type != table->s->db_type() ||
-      create_info->used_fields & HA_CREATE_USED_ENGINE)
+  if (create_info->db_type != table->s->db_type())
     DBUG_RETURN(true);
 
   /*
@@ -7238,6 +7289,9 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
 
   if (!(used_fields & HA_CREATE_USED_TRANSACTIONAL))
     create_info->transactional= table->s->transactional;
+
+  if (!(used_fields & HA_CREATE_USED_CONNECTION))
+    create_info->connect_string= table->s->connect_string;
 
   restore_record(table, s->default_values);     // Empty record for DEFAULT
 
@@ -8495,6 +8549,15 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   }
 
   /*
+    ALTER TABLE ... ENGINE to the same engine is a common way to
+    request table rebuild. Set ALTER_RECREATE flag to force table
+    rebuild.
+  */
+  if (create_info->db_type == table->s->db_type() &&
+      create_info->used_fields & HA_CREATE_USED_ENGINE)
+    alter_info->flags|= Alter_info::ALTER_RECREATE;
+
+  /*
     If the old table had partitions and we are doing ALTER TABLE ...
     engine= <new_engine>, the new table must preserve the original
     partitioning. This means that the new engine is still the
@@ -9462,12 +9525,14 @@ copy_data_between_tables(THD *thd, TABLE *from, TABLE *to,
     mysql_recreate_table()
     thd			Thread handler
     tables		Tables to recreate
+    table_copy          Recreate the table by using
+                        ALTER TABLE COPY algorithm
 
  RETURN
     Like mysql_alter_table().
 */
 
-bool mysql_recreate_table(THD *thd, TABLE_LIST *table_list)
+bool mysql_recreate_table(THD *thd, TABLE_LIST *table_list, bool table_copy)
 {
   HA_CREATE_INFO create_info;
   Alter_info alter_info;
@@ -9485,6 +9550,10 @@ bool mysql_recreate_table(THD *thd, TABLE_LIST *table_list)
   /* Force alter table to recreate table */
   alter_info.flags= (Alter_info::ALTER_CHANGE_COLUMN |
                      Alter_info::ALTER_RECREATE);
+
+  if (table_copy)
+    alter_info.requested_algorithm= Alter_info::ALTER_TABLE_ALGORITHM_COPY;
+
   DBUG_RETURN(mysql_alter_table(thd, NullS, NullS, &create_info,
                                 table_list, &alter_info, 0,
                                 (ORDER *) 0, 0));

@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2013, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1996, 2014, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2012, Facebook Inc.
 
 This program is free software; you can redistribute it and/or modify it under
@@ -42,6 +42,9 @@ Created 1/8/1996 Heikki Tuuri
 #include "ut0byte.h"
 #include "trx0types.h"
 #include "row0types.h"
+
+extern bool innodb_table_stats_not_found;
+extern bool innodb_index_stats_not_found;
 
 #ifndef UNIV_HOTBACKUP
 # include "sync0sync.h"
@@ -1435,6 +1438,28 @@ UNIV_INTERN
 void
 dict_mutex_exit_for_mysql(void);
 /*===========================*/
+
+/** Create a dict_table_t's stats latch or delay for lazy creation.
+This function is only called from either single threaded environment
+or from a thread that has not shared the table object with other threads.
+@param[in,out]	table	table whose stats latch to create
+@param[in]	enabled	if false then the latch is disabled
+and dict_table_stats_lock()/unlock() become noop on this table. */
+
+void
+dict_table_stats_latch_create(
+	dict_table_t*	table,
+	bool		enabled);
+
+/** Destroy a dict_table_t's stats latch.
+This function is only called from either single threaded environment
+or from a thread that has not shared the table object with other threads.
+@param[in,out]	table	table whose stats latch to destroy */
+
+void
+dict_table_stats_latch_destroy(
+	dict_table_t*	table);
+
 /**********************************************************************//**
 Lock the appropriate latch to protect a given table's statistics.
 table->id is used to pick the corresponding latch from a global array of
@@ -1443,20 +1468,16 @@ UNIV_INTERN
 void
 dict_table_stats_lock(
 /*==================*/
-	const dict_table_t*	table,		/*!< in: table */
-	ulint			latch_mode)	/*!< in: RW_S_LATCH or
-						RW_X_LATCH */
-	__attribute__((nonnull));
+	dict_table_t*	table,		/*!< in: table */
+	ulint		latch_mode);	/*!< in: RW_S_LATCH or RW_X_LATCH */
 /**********************************************************************//**
 Unlock the latch that has been locked by dict_table_stats_lock() */
 UNIV_INTERN
 void
 dict_table_stats_unlock(
 /*====================*/
-	const dict_table_t*	table,		/*!< in: table */
-	ulint			latch_mode)	/*!< in: RW_S_LATCH or
-						RW_X_LATCH */
-	__attribute__((nonnull));
+	dict_table_t*	table,		/*!< in: table */
+	ulint		latch_mode);	/*!< in: RW_S_LATCH or RW_X_LATCH */
 /********************************************************************//**
 Checks if the database name in two table names is the same.
 @return	TRUE if same db name */
@@ -1802,6 +1823,17 @@ const char*
 dict_tf_to_row_format_string(
 /*=========================*/
 	ulint	table_flag);		/*!< in: row format setting */
+/*****************************************************************//**
+Get index by first field of the index
+@return index which is having first field matches
+with the field present in field_index position of table */
+UNIV_INLINE
+dict_index_t*
+dict_table_get_index_on_first_col(
+/*==============================*/
+	const dict_table_t*	table,		/*!< in: table */
+	ulint			col_index);	/*!< in: position of column
+						in table */
 
 #endif /* !UNIV_HOTBACKUP */
 

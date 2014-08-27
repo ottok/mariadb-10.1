@@ -336,16 +336,7 @@ PDBUSER PlgMakeUser(PGLOBAL g)
     } // endif dbuserp
 
   memset(dbuserp, 0, sizeof(DBUSERBLK));
-//dbuserp->Act2 = g->Activityp;
-//#if defined(UNIX)
-//  dbuserp->LineLen = 160;
-//#else
-//  dbuserp->LineLen = 78;
-//#endif
-//dbuserp->Maxres = MAXRES;
-//dbuserp->Maxlin = MAXLIN;
-//dbuserp->Maxbmp = MAXBMP;
-//dbuserp->AlgChoice = AMOD_AUTO;
+  dbuserp->Maxbmp = MAXBMP;
   dbuserp->UseTemp = TMP_AUTO;
   dbuserp->Check = CHK_ALL;
   strcpy(dbuserp->Server, "CONNECT");
@@ -383,7 +374,7 @@ PCATLG PlgGetCatalog(PGLOBAL g, bool jump)
   } // end of PlgGetCatalog
 
 /***********************************************************************/
-/*  PlgGetCatalog: returns CATALOG class pointer.                      */
+/*  PlgGetDataPath: returns the default data path.                     */
 /***********************************************************************/
 char *PlgGetDataPath(PGLOBAL g)
   {
@@ -391,6 +382,31 @@ char *PlgGetDataPath(PGLOBAL g)
 
   return (cat) ? cat->GetDataPath() : NULL;
   } // end of PlgGetDataPath
+
+/***********************************************************************/
+/*  Extract from a path name the required component.                   */
+/*  This function assumes there is enough space in the buffer.         */
+/***********************************************************************/
+char *ExtractFromPath(PGLOBAL g, char *pBuff, char *FileName, OPVAL op)
+  {
+  char *drive = NULL, *direc = NULL, *fname = NULL, *ftype = NULL;
+
+  switch (op) {           // Determine which part to extract
+#if !defined(UNIX)
+    case OP_FDISK: drive = pBuff; break;
+#endif   // !UNIX
+    case OP_FPATH: direc = pBuff; break;
+    case OP_FNAME: fname = pBuff; break;
+    case OP_FTYPE: ftype = pBuff; break;
+    default:
+      sprintf(g->Message, MSG(INVALID_OPER), op, "ExtractFromPath");
+      return NULL;
+    } // endswitch op
+
+  // Now do the extraction
+  _splitpath(FileName, drive, direc, fname, ftype);
+  return pBuff;
+  } // end of PlgExtractFromPath
 
 /***********************************************************************/
 /*  Check the occurence and matching of a pattern against a string.    */
@@ -721,7 +737,7 @@ int ExtractDate(char *dts, PDTP pdp, int defy, int val[6])
           n += 100;
 
         val[0] = n;
-        numval = max(numval, 1);
+        numval = MY_MAX(numval, 1);
         break;
       case 1:
       case 2:
@@ -729,7 +745,7 @@ int ExtractDate(char *dts, PDTP pdp, int defy, int val[6])
       case 4:
       case 5:
         val[k] = n;
-        numval = max(numval, k + 1);
+        numval = MY_MAX(numval, k + 1);
         break;
       case -1:
         c = toupper(W[i][0]);
@@ -753,7 +769,7 @@ int ExtractDate(char *dts, PDTP pdp, int defy, int val[6])
           } /* endswitch c */
 
         val[1] = n;
-        numval = max(numval, 2);
+        numval = MY_MAX(numval, 2);
         break;
       case -6:
         c = toupper(W[i][0]);
@@ -812,6 +828,23 @@ FILE *PlugOpenFile(PGLOBAL g, LPCSTR fname, LPCSTR ftype)
 
   if (trace)
     htrc(" returning fop=%p\n", fop);
+
+  return (fop);
+  } // end of PlugOpenFile
+
+/***********************************************************************/
+/*  Close file routine: the purpose of this routine is to avoid        */
+/*  double closing that freeze the system on some Unix platforms.      */
+/***********************************************************************/
+FILE *PlugReopenFile(PGLOBAL g, PFBLOCK fp, LPCSTR md)
+  {
+  FILE *fop;
+
+  if ((fop = global_fopen(g, MSGID_OPEN_MODE_STRERROR, fp->Fname, md))) {
+    fp->Count = 1;
+    fp->Type = TYPE_FB_FILE;
+    fp->File = fop;
+    } /* endif fop */
 
   return (fop);
   } // end of PlugOpenFile
@@ -1225,7 +1258,7 @@ void *PlgDBrealloc(PGLOBAL g, void *area, MBLOCK& mp, size_t newsize)
 
     if ((mp.Sub = (newsize <= (maxsub >> 2)))) {
       mp.Memp = PlugSubAlloc(g, area, newsize);
-      memcpy(mp.Memp, m.Memp, min(m.Size, newsize));
+      memcpy(mp.Memp, m.Memp, MY_MIN(m.Size, newsize));
       PlgDBfree(m);    // Free the old block
     } else if (!(mp.Memp = realloc(mp.Memp, newsize))) {
       mp = m;          // Possible only if newsize > Size
@@ -1241,7 +1274,7 @@ void *PlgDBrealloc(PGLOBAL g, void *area, MBLOCK& mp, size_t newsize)
     mp.Size = newsize;
 
     if (PlgDBalloc(g, area, mp)) {
-      memcpy(mp.Memp, m.Memp, min(m.Size, newsize));
+      memcpy(mp.Memp, m.Memp, MY_MIN(m.Size, newsize));
       PlgDBfree(m);    // Free the old block
     } else {
       mp = m;          // No space to realloc, do nothing

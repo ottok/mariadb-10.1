@@ -392,17 +392,13 @@ bool mysql_derived_merge(THD *thd, LEX *lex, TABLE_LIST *derived)
     if (parent_lex->get_free_table_map(&map, &tablenr))
     {
       /* There is no enough table bits, fall back to materialization. */
-      derived->change_refs_to_fields();
-      derived->set_materialized_derived();
-      goto exit_merge;
+      goto unconditional_materialization;
     }
 
     if (dt_select->leaf_tables.elements + tablenr > MAX_TABLES)
     {
       /* There is no enough table bits, fall back to materialization. */
-      derived->change_refs_to_fields();
-      derived->set_materialized_derived();
-      goto exit_merge;
+      goto unconditional_materialization;
     }
 
     if (dt_select->options & OPTION_SCHEMA_TABLE)
@@ -469,10 +465,21 @@ bool mysql_derived_merge(THD *thd, LEX *lex, TABLE_LIST *derived)
     }
   }
 
+  if (!derived->merged_for_insert)
+    dt_select->first_cond_optimization= FALSE; // consider it optimized
 exit_merge:
   if (arena)
     thd->restore_active_arena(arena, &backup);
   DBUG_RETURN(res);
+
+unconditional_materialization:
+  derived->change_refs_to_fields();
+  derived->set_materialized_derived();
+  if (!derived->table || !derived->table->created)
+    res= mysql_derived_create(thd, lex, derived);
+  if (!res)
+    res= mysql_derived_fill(thd, lex, derived);
+  goto exit_merge;
 }
 
 
@@ -609,6 +616,7 @@ bool mysql_derived_prepare(THD *thd, LEX *lex, TABLE_LIST *derived)
   SELECT_LEX_UNIT *unit= derived->get_unit();
   DBUG_ENTER("mysql_derived_prepare");
   bool res= FALSE;
+  DBUG_PRINT("enter", ("unit 0x%lx", (ulong) unit));
 
   // Skip already prepared views/DT
   if (!unit || unit->prepared ||
@@ -617,9 +625,6 @@ bool mysql_derived_prepare(THD *thd, LEX *lex, TABLE_LIST *derived)
          (thd->lex->sql_command == SQLCOM_UPDATE_MULTI ||
           thd->lex->sql_command == SQLCOM_DELETE_MULTI))))
     DBUG_RETURN(FALSE);
-
-  Query_arena *arena, backup;
-  arena= thd->activate_stmt_arena_if_needed(&backup);
 
   SELECT_LEX *first_select= unit->first_select();
 
@@ -738,8 +743,6 @@ exit:
     if (derived->outer_join)
       table->maybe_null= 1;
   }
-  if (arena)
-    thd->restore_active_arena(arena, &backup);
   DBUG_RETURN(res);
 }
 

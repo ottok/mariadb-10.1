@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2013, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1996, 2014, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2012, Facebook Inc.
 
 This program is free software; you can redistribute it and/or modify it under
@@ -65,7 +65,10 @@ dict_mem_table_create(
 				the table is placed */
 	ulint		n_cols,	/*!< in: number of columns */
 	ulint		flags,	/*!< in: table flags */
-	ulint		flags2)	/*!< in: table flags2 */
+	ulint		flags2,	/*!< in: table flags2 */
+	bool		nonshared)/*!< in: whether the table object is a dummy
+				one that does not need the initialization of
+				locking-related fields. */
 {
 	dict_table_t*	table;
 	mem_heap_t*	heap;
@@ -95,12 +98,23 @@ dict_mem_table_create(
 
 	ut_d(table->magic_n = DICT_TABLE_MAGIC_N);
 
-#ifndef UNIV_HOTBACKUP
-	table->autoinc_lock = static_cast<ib_lock_t*>(
-		mem_heap_alloc(heap, lock_get_size()));
+	/* true means that the stats latch will be enabled -
+	dict_table_stats_lock() will not be noop. */
+	dict_table_stats_latch_create(table, true);
 
-	mutex_create(autoinc_mutex_key,
-		     &table->autoinc_mutex, SYNC_DICT_AUTOINC_MUTEX);
+#ifndef UNIV_HOTBACKUP
+
+	if (!nonshared) {
+
+		table->autoinc_lock = static_cast<ib_lock_t*>(
+			mem_heap_alloc(heap, lock_get_size()));
+
+		mutex_create(autoinc_mutex_key,
+			     &table->autoinc_mutex, SYNC_DICT_AUTOINC_MUTEX);
+	} else {
+
+		table->autoinc_lock = NULL;
+	}
 
 	table->autoinc = 0;
 
@@ -150,8 +164,14 @@ dict_mem_table_free(
 		}
 	}
 #ifndef UNIV_HOTBACKUP
-	mutex_free(&(table->autoinc_mutex));
+	if (table->autoinc_lock) {
+
+		mutex_free(&(table->autoinc_mutex));
+	}
 #endif /* UNIV_HOTBACKUP */
+
+	dict_table_stats_latch_destroy(table);
+
 	ut_free(table->name);
 	mem_heap_free(table->heap);
 }

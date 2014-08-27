@@ -122,6 +122,7 @@ public:
         expand_varchar_update_needed(false),
         expand_fixed_update_needed(false),
         expand_blob_update_needed(false),
+        optimize_needed(false),
         table_kc_info(NULL),
         altered_table_kc_info(NULL) {
     }
@@ -141,6 +142,7 @@ public:
     bool expand_varchar_update_needed;
     bool expand_fixed_update_needed;
     bool expand_blob_update_needed;
+    bool optimize_needed;
     Dynamic_array<uint> changed_fields;
     KEY_AND_COL_INFO *table_kc_info;
     KEY_AND_COL_INFO *altered_table_kc_info;
@@ -218,6 +220,11 @@ static bool change_type_is_supported(TABLE *table, TABLE *altered_table, Alter_i
 // The ha_alter_info->handler_flags can not be trusted.  This function maps the bogus handler flags to something we like.
 static ulong fix_handler_flags(THD *thd, TABLE *table, TABLE *altered_table, Alter_inplace_info *ha_alter_info) {
     ulong handler_flags = ha_alter_info->handler_flags;
+
+#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099
+    // This is automatically supported, hide the flag from later checks
+    handler_flags &= ~Alter_inplace_info::ALTER_PARTITIONED;
+#endif
 
     // workaround for fill_alter_inplace_info bug (#5193)
     // the function erroneously sets the ADD_INDEX and DROP_INDEX flags for a column addition that does not
@@ -414,9 +421,12 @@ enum_alter_inplace_result ha_tokudb::check_if_supported_inplace_alter(TABLE *alt
     } else
     if (only_flags(ctx->handler_flags, Alter_inplace_info::CHANGE_CREATE_OPTION)) {
         HA_CREATE_INFO *create_info = ha_alter_info->create_info;
+#if TOKU_INCLUDE_OPTION_STRUCTS
+        // set the USED_ROW_FORMAT flag for use later in this file for changes in the table's 
+        // compression
         if (create_info->option_struct->row_format != table_share->option_struct->row_format)
-          create_info->used_fields|= HA_CREATE_USED_ROW_FORMAT;
-
+            create_info->used_fields |= HA_CREATE_USED_ROW_FORMAT;
+#endif
         // alter auto_increment
         if (only_flags(create_info->used_fields, HA_CREATE_USED_AUTO)) {
             // do a sanity check that the table is what we think it is
@@ -431,7 +441,13 @@ enum_alter_inplace_result ha_tokudb::check_if_supported_inplace_alter(TABLE *alt
                 result = HA_ALTER_INPLACE_EXCLUSIVE_LOCK;
             }
         }
+    } 
+#if TOKU_OPTIMIZE_WITH_RECREATE
+    else if (only_flags(ctx->handler_flags, Alter_inplace_info::RECREATE_TABLE + Alter_inplace_info::ALTER_COLUMN_DEFAULT)) {
+        ctx->optimize_needed = true;
+        result = HA_ALTER_INPLACE_NO_LOCK_AFTER_PREPARE;
     }
+#endif
 
     if (result != HA_ALTER_INPLACE_NOT_SUPPORTED && table->s->null_bytes != altered_table->s->null_bytes &&
         (tokudb_debug & TOKUDB_DEBUG_ALTER_TABLE)) {
@@ -485,7 +501,11 @@ bool ha_tokudb::inplace_alter_table(TABLE *altered_table, Alter_inplace_info *ha
         assert(error == 0);
 
         // Set the new compression
-        enum toku_compression_method method = row_type_to_compression_method((srv_row_format_t)create_info->option_struct->row_format);
+#if TOKU_INCLUDE_OPTION_STRUCTS
+        toku_compression_method method = row_format_to_toku_compression_method((srv_row_format_t) create_info->option_struct->row_format);
+#else
+        toku_compression_method method = row_type_to_toku_compression_method(create_info->row_type);
+#endif
         uint32_t curr_num_DBs = table->s->keys + tokudb_test(hidden_primary_key);
         for (uint32_t i = 0; i < curr_num_DBs; i++) {
             db = share->key_file[i];
@@ -507,12 +527,20 @@ bool ha_tokudb::inplace_alter_table(TABLE *altered_table, Alter_inplace_info *ha
     if (error == 0 && ctx->expand_blob_update_needed) 
         error = alter_table_expand_blobs(altered_table, ha_alter_info);
 
-    if (error == 0 && ctx->reset_card)
-        tokudb::set_card_from_status(share->status_block, ctx->alter_txn, table->s, altered_table->s);
+    if (error == 0 && ctx->reset_card) {
+        error = tokudb::set_card_from_status(share->status_block, ctx->alter_txn, table->s, altered_table->s);
+    }
+    if (error == 0 && ctx->optimize_needed) {
+        error = do_optimize(ha_thd());
+    }
 
 #if (50600 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50699) || \
     (50700 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50799)
+#if WITH_PARTITION_STORAGE_ENGINE
     if (error == 0 && (TOKU_PARTITION_WRITE_FRM_DATA || altered_table->part_info == NULL)) {
+#else
+    if (error == 0) {
+#endif
         error = write_frm_data(share->status_block, ctx->alter_txn, altered_table->s->path.str);
     }
 #endif
@@ -716,12 +744,19 @@ bool ha_tokudb::commit_inplace_alter_table(TABLE *altered_table, Alter_inplace_i
 
     if (commit) {
 #if (50613 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50699) || \
-    (50700 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50799)
+    (50700 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50799) || \
+    (100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099)
         if (ha_alter_info->group_commit_ctx) {
             ha_alter_info->group_commit_ctx = NULL;
         }
 #endif
+#if (50500 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50599) || \
+    (100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099)
+#if WITH_PARTITION_STORAGE_ENGINE
         if (TOKU_PARTITION_WRITE_FRM_DATA || altered_table->part_info == NULL) {
+#else
+        if (true) {
+#endif
             int error = write_frm_data(share->status_block, ctx->alter_txn, altered_table->s->path.str);
             if (error) {
                 commit = false; 
@@ -729,11 +764,12 @@ bool ha_tokudb::commit_inplace_alter_table(TABLE *altered_table, Alter_inplace_i
                 print_error(error, MYF(0));
             }
         }
+#endif
     }
 
     if (!commit) {
         // abort the alter transaction NOW so that any alters are rolled back. this allows the following restores to work.
-        tokudb_trx_data *trx = (tokudb_trx_data *) thd_data_get(thd, tokudb_hton->slot);
+        tokudb_trx_data *trx = (tokudb_trx_data *) thd_get_ha_data(thd, tokudb_hton);
         assert(ctx->alter_txn == trx->stmt);
         assert(trx->tokudb_lock_count > 0);
         // for partitioned tables, we use a single transaction to do all of the partition changes.  the tokudb_lock_count

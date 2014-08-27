@@ -1,11 +1,11 @@
 /************* TabMySQL C++ Program Source Code File (.CPP) *************/
 /* PROGRAM NAME: TABMYSQL                                               */
 /* -------------                                                        */
-/*  Version 1.7                                                         */
+/*  Version 1.9                                                         */
 /*                                                                      */
 /* AUTHOR:                                                              */
 /* -------                                                              */
-/*  Olivier BERTRAND                                      2007-2013     */
+/*  Olivier BERTRAND                                      2007-2014     */
 /*                                                                      */
 /* WHAT THIS PROGRAM DOES:                                              */
 /* -----------------------                                              */
@@ -61,12 +61,17 @@
 #include "tabmysql.h"
 #include "valblk.h"
 #include "tabutil.h"
+#include "ha_connect.h"
 
 #if defined(_CONSOLE)
 void PrintResult(PGLOBAL, PSEM, PQRYRES);
 #endif   // _CONSOLE
 
 extern "C" int   trace;
+
+// Used to check whether a MYSQL table is created on itself
+bool CheckSelf(PGLOBAL g, TABLE_SHARE *s, const char *host,
+                      const char *db, char *tab, const char *src, int port);
 
 /* -------------- Implementation of the MYSQLDEF class --------------- */
 
@@ -83,10 +88,11 @@ MYSQLDEF::MYSQLDEF(void)
   Username = NULL;
   Password = NULL;
   Portnumber = 0;
-  Isview = FALSE;
-  Bind = FALSE;
-  Delayed = FALSE;
-  Xsrc = FALSE;
+  Isview = false;
+  Bind = false;
+  Delayed = false;
+  Xsrc = false;
+  Huge = false;
   } // end of MYSQLDEF constructor
 
 /***********************************************************************/
@@ -107,7 +113,7 @@ bool MYSQLDEF::GetServerInfo(PGLOBAL g, const char *server_name)
     } // endif server_name
 
   // get_server_by_name() clones the server if exists and allocates
-	// copies of strings in the supplied mem_root
+  // copies of strings in the supplied mem_root
   if (!(server= get_server_by_name(mem, server_name, &server_buffer))) {
     DBUG_PRINT("info", ("get_server_by_name returned > 0 error condition!"));
     /* need to come up with error handling */
@@ -179,7 +185,7 @@ bool MYSQLDEF::ParseURL(PGLOBAL g, char *url, bool b)
     // connection name of either "server" or "server/table"
     // ok, so we do a little parsing, but not completely!
     if ((Tabname= strchr(url, '/'))) {
-      // If there is a single '/' in the connection string, 
+      // If there is a single '/' in the connection string,
       // this means the user is specifying a table name
       *Tabname++= '\0';
 
@@ -189,8 +195,7 @@ bool MYSQLDEF::ParseURL(PGLOBAL g, char *url, bool b)
 
     } else
       // Otherwise, straight server name, 
-      // use tablename of federatedx table as remote table name
-      Tabname= Name;
+      Tabname = (b) ? GetStringCatInfo(g, "Tabname", Name) : NULL;
 
     if (trace)
       htrc("server: %s  Tabname: %s", url, Tabname);
@@ -259,7 +264,7 @@ bool MYSQLDEF::ParseURL(PGLOBAL g, char *url, bool b)
           } // endif /
 
         } // endif Tabname
-        
+
       } // endif database
 
     if ((sport = strchr(Hostname, ':')))
@@ -268,22 +273,22 @@ bool MYSQLDEF::ParseURL(PGLOBAL g, char *url, bool b)
     // For unspecified values, get the values of old style options
     // but only if called from MYSQLDEF, else set them to NULL
     Portnumber = (sport && sport[0]) ? atoi(sport) 
-               : (b) ? Cat->GetIntCatInfo("Port", GetDefaultPort()) : 0;
+               : (b) ? GetIntCatInfo("Port", GetDefaultPort()) : 0;
 
     if (Username[0] == 0)
-      Username = (b) ? Cat->GetStringCatInfo(g, "User", "*") : NULL;
+      Username = (b) ? GetStringCatInfo(g, "User", "*") : NULL;
 
     if (Hostname[0] == 0)
-      Hostname = (b) ? Cat->GetStringCatInfo(g, "Host", "localhost") : NULL;
+      Hostname = (b) ? GetStringCatInfo(g, "Host", "localhost") : NULL;
 
     if (!Database || !*Database)
-      Database = (b) ? Cat->GetStringCatInfo(g, "Database", "*") : NULL;
+      Database = (b) ? GetStringCatInfo(g, "Database", "*") : NULL;
 
     if (!Tabname || !*Tabname)
-      Tabname = (b) ? Cat->GetStringCatInfo(g, "Tabname", Name) : NULL;
+      Tabname = (b) ? GetStringCatInfo(g, "Tabname", Name) : NULL;
 
     if (!Password)
-      Password = (b) ? Cat->GetStringCatInfo(g, "Password", NULL) : NULL;
+      Password = (b) ? GetStringCatInfo(g, "Password", NULL) : NULL;
     } // endif URL
 
 #if 0
@@ -308,37 +313,37 @@ bool MYSQLDEF::DefineAM(PGLOBAL g, LPCSTR am, int poff)
 
   if (stricmp(am, "MYPRX")) {
     // Normal case of specific MYSQL table
-    url = Cat->GetStringCatInfo(g, "Connect", NULL);
+    url = GetStringCatInfo(g, "Connect", NULL);
 
-    if (!url || !*url) { 
+    if (!url || !*url) {
       // Not using the connection URL
-      Hostname = Cat->GetStringCatInfo(g, "Host", "localhost");
-      Database = Cat->GetStringCatInfo(g, "Database", "*");
-      Tabname = Cat->GetStringCatInfo(g, "Name", Name); // Deprecated
-      Tabname = Cat->GetStringCatInfo(g, "Tabname", Tabname);
-      Username = Cat->GetStringCatInfo(g, "User", "*");
-      Password = Cat->GetStringCatInfo(g, "Password", NULL);
-      Portnumber = Cat->GetIntCatInfo("Port", GetDefaultPort());
+      Hostname = GetStringCatInfo(g, "Host", "localhost");
+      Database = GetStringCatInfo(g, "Database", "*");
+      Tabname = GetStringCatInfo(g, "Name", Name); // Deprecated
+      Tabname = GetStringCatInfo(g, "Tabname", Tabname);
+      Username = GetStringCatInfo(g, "User", "*");
+      Password = GetStringCatInfo(g, "Password", NULL);
+      Portnumber = GetIntCatInfo("Port", GetDefaultPort());
       Server = Hostname;
     } else if (ParseURL(g, url))
       return true;
 
-    Bind = !!Cat->GetIntCatInfo("Bind", 0);
-    Delayed = !!Cat->GetIntCatInfo("Delayed", 0);
+    Bind = !!GetIntCatInfo("Bind", 0);
+    Delayed = !!GetIntCatInfo("Delayed", 0);
   } else {
     // MYSQL access from a PROXY table 
-    Database = Cat->GetStringCatInfo(g, "Database", "*");
-    Isview = Cat->GetBoolCatInfo("View", FALSE);
+    Database = GetStringCatInfo(g, "Database", "*");
+    Isview = GetBoolCatInfo("View", false);
 
     // We must get other connection parms from the calling table
     Remove_tshp(Cat);
-    url = Cat->GetStringCatInfo(g, "Connect", NULL);
+    url = GetStringCatInfo(g, "Connect", NULL);
 
     if (!url || !*url) { 
-      Hostname = Cat->GetStringCatInfo(g, "Host", "localhost");
-      Username = Cat->GetStringCatInfo(g, "User", "*");
-      Password = Cat->GetStringCatInfo(g, "Password", NULL);
-      Portnumber = Cat->GetIntCatInfo("Port", GetDefaultPort());
+      Hostname = GetStringCatInfo(g, "Host", "localhost");
+      Username = GetStringCatInfo(g, "User", "*");
+      Password = GetStringCatInfo(g, "Password", NULL);
+      Portnumber = GetIntCatInfo("Port", GetDefaultPort());
       Server = Hostname;
     } else {
       char *locdb = Database;
@@ -352,17 +357,22 @@ bool MYSQLDEF::DefineAM(PGLOBAL g, LPCSTR am, int poff)
     Tabname = Name;
   } // endif am
 
-  if ((Srcdef = Cat->GetStringCatInfo(g, "Srcdef", NULL)))
+  if ((Srcdef = GetStringCatInfo(g, "Srcdef", NULL))) {
+    Read_Only = true;
     Isview = true;
+  } else if (CheckSelf(g, Hc->GetTable()->s, Hostname, Database,
+                       Tabname, Srcdef, Portnumber))
+    return true;
 
   // Used for Update and Delete
-  Qrystr = Cat->GetStringCatInfo(g, "Query_String", "?");
-  Quoted = Cat->GetIntCatInfo("Quoted", 0);
+  Qrystr = GetStringCatInfo(g, "Query_String", "?");
+  Quoted = GetIntCatInfo("Quoted", 0);
 
   // Specific for command executing tables
-  Xsrc = Cat->GetBoolCatInfo("Execsrc", false);
-  Mxr = Cat->GetIntCatInfo("Maxerr", 0);
-  return FALSE;
+  Xsrc = GetBoolCatInfo("Execsrc", false);
+  Mxr = GetIntCatInfo("Maxerr", 0);
+  Huge = GetBoolCatInfo("Huge", false);
+  return false;
   } // end of DefineAM
 
 /***********************************************************************/
@@ -395,11 +405,12 @@ TDBMYSQL::TDBMYSQL(PMYDEF tdp) : TDBASE(tdp)
     Pwd = tdp->Password;
     Server = tdp->Server;
     Qrystr = tdp->Qrystr;
-    Quoted = max(0, tdp->Quoted);
+    Quoted = MY_MAX(0, tdp->Quoted);
     Port = tdp->Portnumber;
     Isview = tdp->Isview;
     Prep = tdp->Bind;
     Delayed = tdp->Delayed;
+    Myc.m_Use = tdp->Huge;
   } else {
     Host = NULL;
     Database = NULL;
@@ -411,15 +422,15 @@ TDBMYSQL::TDBMYSQL(PMYDEF tdp) : TDBASE(tdp)
     Qrystr = NULL;
     Quoted = 0;
     Port = 0;
-    Isview = FALSE;
-    Prep = FALSE;
-    Delayed = FALSE;
+    Isview = false;
+    Prep = false;
+    Delayed = false;
   } // endif tdp
 
   Bind = NULL;
   Query = NULL;
   Qbuf = NULL;
-  Fetched = FALSE;
+  Fetched = false;
   m_Rc = RC_FX;
   AftRows = 0;
   N = -1;
@@ -433,7 +444,7 @@ TDBMYSQL::TDBMYSQL(PGLOBAL g, PTDBMY tdbp) : TDBASE(tdbp)
   Tabname = tdbp->Tabname;
   Srcdef = tdbp->Srcdef;
   User = tdbp->User;
-  Pwd =  tdbp->Pwd; 
+  Pwd =  tdbp->Pwd;
   Qrystr = tdbp->Qrystr;
   Quoted = tdbp->Quoted;
   Port = tdbp->Port;
@@ -481,16 +492,16 @@ PCOL TDBMYSQL::MakeCol(PGLOBAL g, PCOLDEF cdp, PCOL cprec, int n)
 /*  Note: when implementing EOM filtering, column only used in local   */
 /*  filter should be removed from column list.                         */
 /***********************************************************************/
-bool TDBMYSQL::MakeSelect(PGLOBAL g)
+bool TDBMYSQL::MakeSelect(PGLOBAL g, bool mx)
   {
   char   *tk = "`";
-  int     rank = 0;
-  bool    b = FALSE;
+  int     len = 0, rank = 0;
+  bool    b = false;
   PCOL    colp;
 //PDBUSER dup = PlgGetUser(g);
 
   if (Query)
-    return FALSE;        // already done
+    return false;        // already done
 
   if (Srcdef) {
     Query = Srcdef;
@@ -506,12 +517,12 @@ bool TDBMYSQL::MakeSelect(PGLOBAL g)
       if (!colp->IsSpecial()) {
 //      if (colp->IsSpecial()) {
 //        strcpy(g->Message, MSG(NO_SPEC_COL));
-//        return TRUE;
+//        return true;
 //      } else {
         if (b)
           strcat(Query, ", ");
         else
-          b = TRUE;
+          b = true;
 
         strcat(strcat(strcat(Query, tk), colp->GetName()), tk);
         ((PMYCOL)colp)->Rank = rank++;
@@ -526,16 +537,24 @@ bool TDBMYSQL::MakeSelect(PGLOBAL g)
   } // endif ncol
 
   strcat(strcat(strcat(strcat(Query, " FROM "), tk), Tabname), tk);
+  len = strlen(Query);
 
-  if (To_CondFil)
-    strcat(strcat(Query, " WHERE "), To_CondFil->Body);
+  if (To_CondFil) {
+    if (!mx) {
+      strcat(strcat(Query, " WHERE "), To_CondFil->Body);
+      len = strlen(Query) + 1;
+    } else
+      len += (strlen(To_CondFil->Body) + 256);
+
+  } else
+    len += (mx ? 256 : 1);
 
   if (trace)
     htrc("Query=%s\n", Query);
 
   // Now we know how much to suballocate
-  PlugSubAlloc(g, NULL, strlen(Query) + 1);
-  return FALSE;
+  PlugSubAlloc(g, NULL, len);
+  return false;
   } // end of MakeSelect
 
 /***********************************************************************/
@@ -546,17 +565,17 @@ bool TDBMYSQL::MakeInsert(PGLOBAL g)
   char *colist, *valist = NULL;
   char *tk = "`";
   int   len = 0, qlen = 0;
-  bool  b = FALSE;
+  bool  b = false;
   PCOL  colp;
 
   if (Query)
-    return FALSE;        // already done
+    return false;        // already done
 
   for (colp = Columns; colp; colp = colp->GetNext())
     if (!colp->IsSpecial()) {
 //    if (colp->IsSpecial()) {
 //      strcpy(g->Message, MSG(NO_SPEC_COL));
-//      return TRUE;
+//      return true;
 //    } else {
       len += (strlen(colp->GetName()) + 4);
       ((PMYCOL)colp)->Rank = Nparm++;
@@ -572,7 +591,7 @@ bool TDBMYSQL::MakeInsert(PGLOBAL g)
 #else   // !MYSQL_PREPARED_STATEMENTS
     strcpy(g->Message, "Prepared statements not used (not supported)");
     PushWarning(g, this);
-    Prep = FALSE;
+    Prep = false;
 #endif  // !MYSQL_PREPARED_STATEMENTS 
     } // endif Prep
 
@@ -581,7 +600,7 @@ bool TDBMYSQL::MakeInsert(PGLOBAL g)
       strcat(colist, ", ");
       if (Prep) strcat(valist, ",");
     } else
-      b = TRUE;
+      b = true;
 
     strcat(strcat(strcat(colist, tk), colp->GetName()), tk);
 
@@ -592,9 +611,7 @@ bool TDBMYSQL::MakeInsert(PGLOBAL g)
       else
         qlen += colp->GetLength();
 
-    } // endif Prep
-
-    if (Prep)
+    } else    // Prep
       strcat(valist, "?");
 
     } // endfor colp
@@ -619,7 +636,7 @@ bool TDBMYSQL::MakeInsert(PGLOBAL g)
     Qbuf = (char *)PlugSubAlloc(g, NULL, qlen);
     } // endelse Prep
 
-  return FALSE;
+  return false;
   } // end of MakeInsert
 
 /***********************************************************************/
@@ -636,7 +653,7 @@ int TDBMYSQL::MakeCommand(PGLOBAL g)
 
 
     // Make a lower case copy of the originale query
-    qrystr = (char*)PlugSubAlloc(g, NULL, strlen(Qrystr) + 1);
+    qrystr = (char*)PlugSubAlloc(g, NULL, strlen(Qrystr) + 5);
     strlwr(strcpy(qrystr, Qrystr));
 
     // Check whether the table name is equal to a keyword
@@ -656,6 +673,7 @@ int TDBMYSQL::MakeCommand(PGLOBAL g)
         strcat(Query, Tabname);
 
       strcat(Query, Qrystr + (p - qrystr) + strlen(name));
+      strlwr(strcpy(qrystr, Query));
     } else {
       sprintf(g->Message, "Cannot use this %s command",
                    (Mode == MODE_UPDATE) ? "UPDATE" : "DELETE");
@@ -729,33 +747,50 @@ int TDBMYSQL::MakeDelete(PGLOBAL g)
 #endif // 0
 
 /***********************************************************************/
-/*  XCV GetMaxSize: returns the maximum number of rows in the table.   */
+/*  MYSQL Cardinality: returns the number of rows in the table.        */
+/***********************************************************************/
+int TDBMYSQL::Cardinality(PGLOBAL g)
+{
+  if (!g)
+    return (Mode == MODE_ANY && !Srcdef) ? 1 : 0;
+
+  if (Cardinal < 0 && Mode == MODE_ANY && !Srcdef) {
+    // Info command, we must return the exact table row number
+    char   query[96];
+    MYSQLC myc;
+
+    if (myc.Open(g, Host, Database, User, Pwd, Port))
+      return -1;
+
+    strcpy(query, "SELECT COUNT(*) FROM ");
+
+    if (Quoted > 0)
+      strcat(strcat(strcat(query, "`"), Tabname), "`");
+    else
+      strcat(query, Tabname);
+
+    Cardinal = myc.GetTableSize(g, query);
+    myc.Close();
+  } else
+    Cardinal = 10;    // To make MySQL happy
+
+  return Cardinal;
+} // end of Cardinality
+
+/***********************************************************************/
+/*  MYSQL GetMaxSize: returns the maximum number of rows in the table. */
 /***********************************************************************/
 int TDBMYSQL::GetMaxSize(PGLOBAL g)
   {
   if (MaxSize < 0) {
-#if 0
-    if (MakeSelect(g))
-      return -2;
+    if (Mode == MODE_DELETE)
+      // Return 0 in mode DELETE in case of delete all.
+      MaxSize = 0;
+    else if (!Cardinality(NULL))
+      MaxSize = 10;   // To make MySQL happy
+    else if ((MaxSize = Cardinality(g)) < 0)
+      MaxSize = 12;   // So we can see an error occured
 
-    if (!Myc.Connected()) {
-      if (Myc.Open(g, Host, Database, User, Pwd, Port))
-        return -1;
-
-      } // endif connected
-
-    if ((MaxSize = Myc.GetResultSize(g, Query)) < 0) {
-      Myc.Close();
-      return -3;
-      } // endif MaxSize
-
-    // FIXME: Columns should be known when Info calls GetMaxSize
-    if (!Columns)
-      Query = NULL;     // Must be remade when columns are known
-#endif // 0
-
-    // Return 0 in mode DELETE in case of delete all.
-    MaxSize = (Mode == MODE_DELETE) ? 0 : 10;   // To make MySQL happy
     } // endif MaxSize
 
   return MaxSize;
@@ -833,9 +868,9 @@ bool TDBMYSQL::OpenDB(PGLOBAL g)
   /*********************************************************************/
   /*  Allocate whatever is used for getting results.                   */
   /*********************************************************************/
-  if (Mode == MODE_READ) {
-    if (!MakeSelect(g))
-      m_Rc = Myc.ExecSQL(g, Query);
+  if (Mode == MODE_READ || Mode == MODE_READX) {
+    MakeSelect(g, Mode == MODE_READX);
+    m_Rc = (Mode == MODE_READ) ? Myc.ExecSQL(g, Query) : RC_OK;
 
 #if 0
     if (!Myc.m_Res || !Myc.m_Fields) {
@@ -870,11 +905,12 @@ bool TDBMYSQL::OpenDB(PGLOBAL g)
       } // endif MakeInsert
 
     if (m_Rc != RC_FX) {
+      int  rc;
       char cmd[64];
       int  w;
 
       sprintf(cmd, "ALTER TABLE `%s` DISABLE KEYS", Tabname);
-      m_Rc = Myc.ExecSQL(g, cmd, &w);
+      rc = Myc.ExecSQL(g, cmd, &w);   // may fail for some engines
       } // endif m_Rc
 
   } else
@@ -897,9 +933,9 @@ bool TDBMYSQL::SetColumnRanks(PGLOBAL g)
   {
   for (PCOL colp = Columns; colp; colp = colp->GetNext())
     if (((PMYCOL)colp)->FindRank(g))
-      return TRUE;
+      return true;
 
-  return FALSE;
+  return false;
   } // end of SetColumnRanks
 
 /***********************************************************************/
@@ -995,6 +1031,36 @@ int TDBMYSQL::SendCommand(PGLOBAL g)
   } // end of SendCommand
 
 /***********************************************************************/
+/*  Data Base indexed read routine for MYSQL access method.            */
+/***********************************************************************/
+bool TDBMYSQL::ReadKey(PGLOBAL g, OPVAL op, const void *key, int len)
+{
+  int  oldlen = strlen(Query);
+
+  if (!key || op == OP_NEXT ||
+        Mode == MODE_UPDATE || Mode == MODE_DELETE)
+    return false;
+  else if (op == OP_FIRST) {
+    if (To_CondFil)
+      strcat(strcat(Query, " WHERE "), To_CondFil->Body);
+
+  } else {
+    if (Myc.m_Res)
+      Myc.FreeResult();
+
+    To_Def->GetHandler()->MakeKeyWhere(g, Query, op, "`", key, len);
+
+    if (To_CondFil)
+      strcat(strcat(strcat(Query, " AND ("), To_CondFil->Body), ")");
+
+  } // endif's op
+
+  m_Rc = Myc.ExecSQL(g, Query);
+  Query[oldlen] = 0;
+  return (m_Rc == RC_FX) ? true : false;
+} // end of ReadKey
+
+/***********************************************************************/
 /*  Data Base read routine for MYSQL access method.                    */
 /***********************************************************************/
 int TDBMYSQL::ReadDB(PGLOBAL g)
@@ -1041,13 +1107,13 @@ int TDBMYSQL::WriteDB(PGLOBAL g)
   // Make the Insert command value list
   for (PCOL colp = Columns; colp; colp = colp->GetNext()) {
     if (!colp->GetValue()->IsNull()) {
-      if (colp->GetResultType() == TYPE_STRING || 
+      if (colp->GetResultType() == TYPE_STRING ||
           colp->GetResultType() == TYPE_DATE)
         strcat(Qbuf, "'");
 
       strcat(Qbuf, colp->GetValue()->GetCharString(buf));
 
-      if (colp->GetResultType() == TYPE_STRING || 
+      if (colp->GetResultType() == TYPE_STRING ||
           colp->GetResultType() == TYPE_DATE)
         strcat(Qbuf, "'");
 
@@ -1069,7 +1135,7 @@ int TDBMYSQL::DeleteDB(PGLOBAL g, int irc)
   {
   if (irc == RC_FX)
     // Send the DELETE (all) command to the remote table
-    return (SendCommand(g) == RC_FX) ? RC_FX : RC_OK;              
+    return (SendCommand(g) == RC_FX) ? RC_FX : RC_OK;
   else
     return RC_OK;                 // Ignore
 
@@ -1089,7 +1155,7 @@ void TDBMYSQL::CloseDB(PGLOBAL g)
       dup->Step = "Enabling indexes";
       sprintf(cmd, "ALTER TABLE `%s` ENABLE KEYS", Tabname);
       Myc.m_Rows = -1;      // To execute the query
-      m_Rc = Myc.ExecSQL(g, cmd, &w);
+      m_Rc = Myc.ExecSQL(g, cmd, &w);  // May fail for some engines
       } // endif m_Rc
 
     Myc.Close();
@@ -1134,9 +1200,13 @@ MYSQLCOL::MYSQLCOL(PCOLDEF cdp, PTDB tdbp, PCOL cprec, int i, PSZ am)
 MYSQLCOL::MYSQLCOL(MYSQL_FIELD *fld, PTDB tdbp, int i, PSZ am)
         : COLBLK(NULL, tdbp, i)
   {
+  const char *chset = get_charset_name(fld->charsetnr);
+  char  v = (!strcmp(chset, "binary")) ? 'B' : 0;
+
   Name = fld->name;
+  Opt = 0;
   Precision = Long = fld->length;
-  Buf_Type = MYSQLtoPLG(fld->type);
+  Buf_Type = MYSQLtoPLG(fld->type, &v);
   strcpy(Format.Type, GetFormatType(Buf_Type));
   Format.Length = Long;
   Format.Prec = fld->decimals;
@@ -1192,7 +1262,7 @@ bool MYSQLCOL::SetBuffer(PGLOBAL g, PVAL value, bool ok, bool check)
   {
   if (!(To_Val = value)) {
     sprintf(g->Message, MSG(VALUE_ERROR), Name);
-    return TRUE;
+    return true;
   } else if (Buf_Type == value->GetType()) {
     // Values are of the (good) column type
     if (Buf_Type == TYPE_DATE) {
@@ -1212,12 +1282,12 @@ bool MYSQLCOL::SetBuffer(PGLOBAL g, PVAL value, bool ok, bool check)
     if (check) {
       sprintf(g->Message, MSG(TYPE_VALUE_ERR), Name,
               GetTypeName(Buf_Type), GetTypeName(value->GetType()));
-      return TRUE;
+      return true;
       } // endif check
 
  newval:
     if (InitValue(g))         // Allocate the matching value block
-      return TRUE;
+      return true;
 
   } // endif's Value, Buf_Type
 
@@ -1228,7 +1298,7 @@ bool MYSQLCOL::SetBuffer(PGLOBAL g, PVAL value, bool ok, bool check)
 
   // Set the Column
   Status = (ok) ? BUF_EMPTY : BUF_NO;
-  return FALSE;
+  return false;
   } // end of SetBuffer
 
 /***********************************************************************/
@@ -1276,7 +1346,7 @@ void MYSQLCOL::ReadColumn(PGLOBAL g)
 
       longjmp(g->jumper[g->jump_level], 11);
     } else
-      tdbp->Fetched = TRUE;
+      tdbp->Fetched = true;
 
   if ((buf = ((PTDBMY)To_Tdb)->Myc.GetCharField(Rank))) {
     if (trace > 1)
@@ -1313,7 +1383,7 @@ void MYSQLCOL::WriteColumn(PGLOBAL g)
   /*  Do convert the column value if necessary.                        */
   /*********************************************************************/
   if (Value != To_Val)
-    Value->SetValue_pval(To_Val, FALSE);   // Convert the inserted value
+    Value->SetValue_pval(To_Val, false);   // Convert the inserted value
 
 #if defined(MYSQL_PREPARED_STATEMENTS)
   if (((PTDBMY)To_Tdb)->Prep) {
@@ -1333,7 +1403,7 @@ void MYSQLCOL::WriteColumn(PGLOBAL g)
 /***********************************************************************/
 /*  Implementation of the TDBMYEXC class.                              */
 /***********************************************************************/
-TDBMYEXC::TDBMYEXC(PMYDEF tdp) : TDBMYSQL(tdp) 
+TDBMYEXC::TDBMYEXC(PMYDEF tdp) : TDBMYSQL(tdp)
 {
   Cmdlist = NULL;
   Cmdcol = NULL;
@@ -1448,7 +1518,7 @@ bool TDBMYEXC::OpenDB(PGLOBAL g)
 
   Use = USE_OPEN;       // Do it now in case we are recursively called
 
-  if (Mode != MODE_READ) {
+  if (Mode != MODE_READ && Mode != MODE_READX) {
     strcpy(g->Message, "No INSERT/DELETE/UPDATE of MYSQL EXEC tables");
     return true;
     } // endif Mode
@@ -1485,7 +1555,7 @@ int TDBMYEXC::ReadDB(PGLOBAL g)
   if (Cmdlist) {
     // Process query to send
     int rc;
-  
+
     do {
       Query = Cmdlist->Cmd;
 
@@ -1505,7 +1575,7 @@ int TDBMYEXC::ReadDB(PGLOBAL g)
         case RC_INFO:
           Shw = true;
         } // endswitch rc
-  
+
       Cmdlist = (Nerr > Mxr) ? NULL : Cmdlist->Next;
       } while (rc == RC_INFO);
 
@@ -1602,11 +1672,11 @@ void MYXCOL::WriteColumn(PGLOBAL g)
 /***********************************************************************/
 TDBMCL::TDBMCL(PMYDEF tdp) : TDBCAT(tdp)
   {
-  Host = tdp->Hostname;  
-  Db   = tdp->Database;    
-  Tab  = tdp->Tabname;    
-  User = tdp->Username;  
-  Pwd  = tdp->Password;   
+  Host = tdp->Hostname;
+  Db   = tdp->Database;
+  Tab  = tdp->Tabname;
+  User = tdp->Username;
+  Pwd  = tdp->Password;
   Port = tdp->Portnumber;
   } // end of TDBMCL constructor
 
@@ -1615,5 +1685,5 @@ TDBMCL::TDBMCL(PMYDEF tdp) : TDBCAT(tdp)
 /***********************************************************************/
 PQRYRES TDBMCL::GetResult(PGLOBAL g)
   {
-  return MyColumns(g, Host, Db, User, Pwd, Tab, NULL, Port, false);
-	} // end of GetResult
+  return MyColumns(g, NULL, Host, Db, User, Pwd, Tab, NULL, Port, false);
+  } // end of GetResult

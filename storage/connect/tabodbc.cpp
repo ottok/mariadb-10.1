@@ -100,22 +100,31 @@ ODBCDEF::ODBCDEF(void)
 /***********************************************************************/
 bool ODBCDEF::DefineAM(PGLOBAL g, LPCSTR am, int poff)
   {
-  Desc = Connect = Cat->GetStringCatInfo(g, "Connect", "");
-  Tabname = Cat->GetStringCatInfo(g, "Name",
+  Desc = Connect = GetStringCatInfo(g, "Connect", NULL);
+
+  if (!Connect && !Catfunc) {
+    sprintf(g->Message, "Missing connection for ODBC table %s", Name);
+    return true;
+    } // endif Connect
+
+  Tabname = GetStringCatInfo(g, "Name",
                  (Catfunc & (FNC_TABLE | FNC_COL)) ? NULL : Name);
-  Tabname = Cat->GetStringCatInfo(g, "Tabname", Tabname);
-  Tabschema = Cat->GetStringCatInfo(g, "Dbname", NULL);
-  Tabschema = Cat->GetStringCatInfo(g, "Schema", Tabschema);
-  Tabcat = Cat->GetStringCatInfo(g, "Qualifier", NULL);
-  Tabcat = Cat->GetStringCatInfo(g, "Catalog", Tabcat);
-  Srcdef = Cat->GetStringCatInfo(g, "Srcdef", NULL);
-  Qrystr = Cat->GetStringCatInfo(g, "Query_String", "?");
-  Sep = Cat->GetStringCatInfo(g, "Separator", NULL);
-  Catver = Cat->GetIntCatInfo("Catver", 2);
-  Xsrc = Cat->GetBoolCatInfo("Execsrc", FALSE);
-  Maxerr = Cat->GetIntCatInfo("Maxerr", 0);
-  Maxres = Cat->GetIntCatInfo("Maxres", 0);
-  Quoted = Cat->GetIntCatInfo("Quoted", 0);
+  Tabname = GetStringCatInfo(g, "Tabname", Tabname);
+  Tabschema = GetStringCatInfo(g, "Dbname", NULL);
+  Tabschema = GetStringCatInfo(g, "Schema", Tabschema);
+  Tabcat = GetStringCatInfo(g, "Qualifier", NULL);
+  Tabcat = GetStringCatInfo(g, "Catalog", Tabcat);
+
+  if ((Srcdef = GetStringCatInfo(g, "Srcdef", NULL)))
+    Read_Only = true;
+
+  Qrystr = GetStringCatInfo(g, "Query_String", "?");
+  Sep = GetStringCatInfo(g, "Separator", NULL);
+  Catver = GetIntCatInfo("Catver", 2);
+  Xsrc = GetBoolCatInfo("Execsrc", FALSE);
+  Maxerr = GetIntCatInfo("Maxerr", 0);
+  Maxres = GetIntCatInfo("Maxres", 0);
+  Quoted = GetIntCatInfo("Quoted", 0);
   Options = ODBConn::noOdbcDialog;
   Pseudo = 2;    // FILID is Ok but not ROWID
   return false;
@@ -178,7 +187,7 @@ TDBODBC::TDBODBC(PODEF tdp) : TDBASE(tdp)
     Qrystr = tdp->Qrystr;
     Sep = tdp->GetSep();
     Options = tdp->Options;
-    Quoted = max(0, tdp->GetQuoted());
+    Quoted = MY_MAX(0, tdp->GetQuoted());
     Rows = tdp->GetElemt();
     Catver = tdp->Catver;
   } else {
@@ -655,40 +664,58 @@ void TDBODBC::ResetSize(void)
   } // end of ResetSize
 
 /***********************************************************************/
+/*  ODBC Cardinality: returns table size in number of rows.            */
+/***********************************************************************/
+int TDBODBC::Cardinality(PGLOBAL g)
+  {
+  if (!g)
+    return (Mode == MODE_ANY && !Srcdef) ? 1 : 0;
+
+  if (Cardinal < 0 && Mode == MODE_ANY && !Srcdef) {
+    // Info command, we must return the exact table row number
+    char     qry[96], tbn[64];
+    ODBConn *ocp = new(g) ODBConn(g, this);
+
+    if (ocp->Open(Connect, Options) < 1)
+      return -1;
+
+    // Table name can be encoded in UTF-8
+    Decode(TableName, tbn, sizeof(tbn));
+    strcpy(qry, "SELECT COUNT(*) FROM ");
+
+    if (Quote)
+      strcat(strcat(strcat(qry, Quote), tbn), Quote);
+    else
+      strcat(qry, tbn);
+
+    // Allocate a Count(*) column (must not use the default constructor)
+    Cnp = new(g) ODBCCOL;
+    Cnp->InitValue(g);
+
+    if ((Cardinal = ocp->GetResultSize(qry, Cnp)) < 0)
+      return -3;
+
+    ocp->Close();
+  } else
+    Cardinal = 10;    // To make MySQL happy
+
+  return Cardinal;
+  } // end of Cardinality
+
+/***********************************************************************/
 /*  ODBC GetMaxSize: returns table size estimate in number of lines.   */
 /***********************************************************************/
 int TDBODBC::GetMaxSize(PGLOBAL g)
   {
   if (MaxSize < 0) {
-    // Make MariaDB happy
-    MaxSize = (Mode == MODE_DELETE) ? 0 : 10;
-#if 0
-    // This is unuseful and takes time
-    if (Srcdef) {
-      // Return a reasonable guess
-      MaxSize = 100;
-      return MaxSize;
-      } // endif Srcdef
+    if (Mode == MODE_DELETE)
+      // Return 0 in mode DELETE in case of delete all.
+      MaxSize = 0;
+    else if (!Cardinality(NULL))
+      MaxSize = 10;   // To make MySQL happy
+    else if ((MaxSize = Cardinality(g)) < 0)
+      MaxSize = 12;   // So we can see an error occured
 
-    if (!Ocp)
-      Ocp = new(g) ODBConn(g, this);
-
-    if (!Ocp->IsOpen())
-      if (Ocp->Open(Connect, Options) < 1)
-        return -1;
-
-    if (!Count && !(Count = MakeSQL(g, true)))
-      return -2;
-
-    if (!Cnp) {
-      // Allocate a Count(*) column (must not use the default constructor)
-      Cnp = new(g) ODBCCOL;
-      Cnp->InitValue(g);
-      } // endif Cnp
-
-    if ((MaxSize = Ocp->GetResultSize(Count, Cnp)) < 0)
-      return -3;
-#endif // 0
     } // endif MaxSize
 
   return MaxSize;
@@ -752,7 +779,7 @@ bool TDBODBC::OpenDB(PGLOBAL g)
   /*********************************************************************/
   /*  Make the command and allocate whatever is used for getting results.                   */
   /*********************************************************************/
-  if (Mode == MODE_READ) {
+  if (Mode == MODE_READ || Mode == MODE_READX) {
     if ((Query = MakeSQL(g, false))) {
       for (PODBCCOL colp = (PODBCCOL)Columns; colp;
                     colp = (PODBCCOL)colp->GetNext())
@@ -1315,7 +1342,7 @@ bool TDBXDBC::OpenDB(PGLOBAL g)
 
   Use = USE_OPEN;       // Do it now in case we are recursively called
 
-  if (Mode != MODE_READ) {
+  if (Mode != MODE_READ && Mode != MODE_READX) {
     strcpy(g->Message, "No INSERT/DELETE/UPDATE of XDBC tables");
     return true;
     } // endif Mode

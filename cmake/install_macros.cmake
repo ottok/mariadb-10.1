@@ -38,7 +38,9 @@ FUNCTION (INSTALL_DEBUG_SYMBOLS)
     STRING(REPLACE ".dll" ".pdb" pdb_location ${pdb_location})
     STRING(REPLACE ".lib" ".pdb" pdb_location ${pdb_location})
     IF(CMAKE_GENERATOR MATCHES "Visual Studio")
-      STRING(REPLACE "${CMAKE_CFG_INTDIR}" "\${CMAKE_INSTALL_CONFIG_NAME}" pdb_location ${pdb_location})
+      STRING(REPLACE
+        "${CMAKE_CFG_INTDIR}" "\${CMAKE_INSTALL_CONFIG_NAME}"
+        pdb_location ${pdb_location})
     ENDIF()
 	
     set(comp "")
@@ -60,7 +62,11 @@ FUNCTION (INSTALL_DEBUG_SYMBOLS)
     IF(NOT comp)
       SET(comp Debuginfo_archive_only) # not in MSI
     ENDIF()
-    INSTALL(FILES ${pdb_location} DESTINATION ${ARG_INSTALL_LOCATION} COMPONENT ${comp})
+	IF(type MATCHES "STATIC")
+	  # PDB for static libraries might be unsupported http://public.kitware.com/Bug/view.php?id=14600
+	  SET(opt OPTIONAL)
+	ENDIF()
+    INSTALL(FILES ${pdb_location} DESTINATION ${ARG_INSTALL_LOCATION} COMPONENT ${comp} ${opt})
   ENDFOREACH()
   ENDIF()
 ENDFUNCTION()
@@ -384,19 +390,21 @@ FUNCTION(INSTALL_MYSQL_TEST from to)
       DESTINATION "${INSTALL_MYSQLTESTDIR}/${to}"
       USE_SOURCE_PERMISSIONS
       COMPONENT Test
-      PATTERN "var/" EXCLUDE
+      PATTERN "var" EXCLUDE
       PATTERN "lib/My/SafeProcess" EXCLUDE
       PATTERN "lib/t*" EXCLUDE
       PATTERN "CPack" EXCLUDE
       PATTERN "CMake*" EXCLUDE
+      PATTERN "cmake_install.cmake" EXCLUDE
       PATTERN "mtr.out*" EXCLUDE
       PATTERN ".cvsignore" EXCLUDE
       PATTERN "*.am" EXCLUDE
       PATTERN "*.in" EXCLUDE
+      PATTERN "Makefile" EXCLUDE
       PATTERN "*.vcxproj" EXCLUDE
       PATTERN "*.vcxproj.filters" EXCLUDE
       PATTERN "*.vcxproj.user" EXCLUDE
-      PATTERN "CTest" EXCLUDE
+      PATTERN "CTest*" EXCLUDE
       PATTERN "*~" EXCLUDE
     )
   ENDIF()

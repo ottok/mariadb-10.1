@@ -349,6 +349,21 @@ class Item_func_trim :public Item_str_func
 protected:
   String tmp_value;
   String remove;
+  String *trimmed_value(String *res, uint32 offset, uint32 length)
+  {
+    tmp_value.set(*res, offset, length);
+    /*
+      Make sure to return correct charset and collation:
+      TRIM(0x000000 FROM _ucs2 0x0061)
+      should set charset to "binary" rather than to "ucs2".
+    */
+    tmp_value.set_charset(collation.collation);
+    return &tmp_value;
+  }
+  String *non_trimmed_value(String *res)
+  {
+    return trimmed_value(res, 0, res->length());
+  }
 public:
   Item_func_trim(Item *a,Item *b) :Item_str_func(a,b) {}
   Item_func_trim(Item *a) :Item_str_func(a) {}
@@ -880,21 +895,6 @@ class Item_func_export_set: public Item_str_func
   const char *func_name() const { return "export_set"; }
 };
 
-class Item_func_inet_ntoa : public Item_str_func
-{
-public:
-  Item_func_inet_ntoa(Item *a) :Item_str_func(a)
-    {
-    }
-  String* val_str(String* str);
-  const char *func_name() const { return "inet_ntoa"; }
-  void fix_length_and_dec() 
-  { 
-    decimals= 0; 
-    fix_length_and_charset(3 * 8 + 7, default_charset()); 
-    maybe_null= 1;
-  }
-};
 
 class Item_func_quote :public Item_str_func
 {

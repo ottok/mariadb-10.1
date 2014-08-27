@@ -385,7 +385,7 @@ static void test (const char *directory, bool is_error) {
     }
 
     FTLOADER bl;
-    FT_HANDLE *XCALLOC_N(N_DEST_DBS, brts);
+    FT_HANDLE *XCALLOC_N(N_DEST_DBS, fts);
     DB* *XCALLOC_N(N_DEST_DBS, dbs);
     const char **XMALLOC_N(N_DEST_DBS, new_fnames_in_env);
     for (int i=0; i<N_DEST_DBS; i++) {
@@ -407,12 +407,12 @@ static void test (const char *directory, bool is_error) {
 					       ct,
 					       (generate_row_for_put_func)NULL,
 					       (DB*)NULL,
-					       N_DEST_DBS, brts, dbs,
+					       N_DEST_DBS, fts, dbs,
 					       new_fnames_in_env,
 					       bt_compare_functions,
 					       "tempxxxxxx",
 					       *lsnp,
-                                               nullptr, true, 0, false);
+                                               nullptr, true, 0, false, true);
 	assert(r==0);
     }
 
@@ -500,11 +500,6 @@ static void test (const char *directory, bool is_error) {
 	    assert(cthunk.n_read == N_RECORDS);
 	}
     }
-    //printf("%s:%d Destroying\n", __FILE__, __LINE__);
-    {
-	int r = queue_destroy(bl->primary_rowset_queue);
-	assert(r==0);
-    }
     {
 	int r = queue_destroy(q);
 	assert(r==0);
@@ -522,7 +517,7 @@ static void test (const char *directory, bool is_error) {
     destroy_dbufio_fileset(bfs);
     toku_free(fnames);
     toku_free(fds);
-    toku_free(brts);
+    toku_free(fts);
     toku_free(dbs);
     toku_free(new_fnames_in_env);
     toku_free(bt_compare_functions);

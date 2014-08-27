@@ -837,6 +837,8 @@ static void handle_no_active_connection(struct st_command* command,
 #define EMB_SEND_QUERY 1
 #define EMB_READ_QUERY_RESULT 2
 #define EMB_END_CONNECTION 3
+#define EMB_PREPARE_STMT 4
+#define EMB_EXECUTE_STMT 5
 
 /* workaround for MySQL BUG#57491 */
 #undef MY_WME
@@ -872,10 +874,18 @@ pthread_handler_t connection_thread(void *arg)
       case EMB_END_CONNECTION:
         goto end_thread;
       case EMB_SEND_QUERY:
-        cn->result= mysql_send_query(cn->mysql, cn->cur_query, cn->cur_query_len);
+        cn->result= mysql_send_query(cn->mysql,
+                                     cn->cur_query, cn->cur_query_len);
         break;
       case EMB_READ_QUERY_RESULT:
         cn->result= mysql_read_query_result(cn->mysql);
+        break;
+      case EMB_PREPARE_STMT:
+        cn->result= mysql_stmt_prepare(cn->stmt,
+                                       cn->cur_query, cn->cur_query_len);
+        break;
+      case EMB_EXECUTE_STMT:
+        cn->result= mysql_stmt_execute(cn->stmt);
         break;
       default:
         DBUG_ASSERT(0);
@@ -939,9 +949,37 @@ static int do_read_query_result(struct st_connection *cn)
 {
   DBUG_ASSERT(cn->has_thread);
   wait_query_thread_done(cn);
+  if (cn->result)
+    goto exit_func;
+
   signal_connection_thd(cn, EMB_READ_QUERY_RESULT);
   wait_query_thread_done(cn);
 
+exit_func:
+  return cn->result;
+}
+
+
+static int do_stmt_prepare(struct st_connection *cn, const char *q, int q_len)
+{
+  /* The cn->stmt is already set. */
+  if (!cn->has_thread)
+    return mysql_stmt_prepare(cn->stmt, q, q_len);
+  cn->cur_query= q;
+  cn->cur_query_len= q_len;
+  signal_connection_thd(cn, EMB_PREPARE_STMT);
+  wait_query_thread_done(cn);
+  return cn->result;
+}
+
+
+static int do_stmt_execute(struct st_connection *cn)
+{
+  /* The cn->stmt is already set. */
+  if (!cn->has_thread)
+    return mysql_stmt_execute(cn->stmt);
+  signal_connection_thd(cn, EMB_EXECUTE_STMT);
+  wait_query_thread_done(cn);
   return cn->result;
 }
 
@@ -979,6 +1017,8 @@ static void init_connection_thd(struct st_connection *cn)
 #define init_connection_thd(X)    do { } while(0)
 #define do_send_query(cn,q,q_len) mysql_send_query(cn->mysql, q, q_len)
 #define do_read_query_result(cn) mysql_read_query_result(cn->mysql)
+#define do_stmt_prepare(cn, q, q_len) mysql_stmt_prepare(cn->stmt, q, q_len)
+#define do_stmt_execute(cn) mysql_stmt_execute(cn->stmt)
 
 #endif /*EMBEDDED_LIBRARY*/
 
@@ -8078,11 +8118,12 @@ void handle_no_error(struct st_command *command)
   error - function will not return
 */
 
-void run_query_stmt(MYSQL *mysql, struct st_command *command,
+void run_query_stmt(struct st_connection *cn, struct st_command *command,
                     char *query, int query_len, DYNAMIC_STRING *ds,
                     DYNAMIC_STRING *ds_warnings)
 {
   MYSQL_RES *res= NULL;     /* Note that here 'res' is meta data result set */
+  MYSQL *mysql= cn->mysql;
   MYSQL_STMT *stmt;
   DYNAMIC_STRING ds_prepare_warnings;
   DYNAMIC_STRING ds_execute_warnings;
@@ -8092,11 +8133,11 @@ void run_query_stmt(MYSQL *mysql, struct st_command *command,
   /*
     Init a new stmt if it's not already one created for this connection
   */
-  if(!(stmt= cur_con->stmt))
+  if(!(stmt= cn->stmt))
   {
     if (!(stmt= mysql_stmt_init(mysql)))
       die("unable to init stmt structure");
-    cur_con->stmt= stmt;
+    cn->stmt= stmt;
   }
 
   /* Init dynamic strings for warnings */
@@ -8109,7 +8150,7 @@ void run_query_stmt(MYSQL *mysql, struct st_command *command,
   /*
     Prepare the query
   */
-  if (mysql_stmt_prepare(stmt, query, query_len))
+  if (do_stmt_prepare(cn, query, query_len))
   {
     handle_error(command,  mysql_stmt_errno(stmt),
                  mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), ds);
@@ -8144,7 +8185,7 @@ void run_query_stmt(MYSQL *mysql, struct st_command *command,
   /*
     Execute the query
   */
-  if (mysql_stmt_execute(stmt))
+  if (do_stmt_execute(cn))
   {
     handle_error(command, mysql_stmt_errno(stmt),
                  mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), ds);
@@ -8279,7 +8320,7 @@ end:
   if (mysql->reconnect)
   {
     mysql_stmt_close(stmt);
-    cur_con->stmt= NULL;
+    cn->stmt= NULL;
   }
 
   DBUG_VOID_RETURN;
@@ -8536,7 +8577,7 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
   if (ps_protocol_enabled &&
       complete_query &&
       match_re(&ps_re, query))
-    run_query_stmt(mysql, command, query, query_len, ds, &ds_warnings);
+    run_query_stmt(cn, command, query, query_len, ds, &ds_warnings);
   else
     run_query_normal(cn, command, flags, query, query_len,
 		     ds, &ds_warnings);
@@ -8949,6 +8990,10 @@ int main(int argc, char **argv)
                  128, 0, 0, get_var_key, 0, var_free, MYF(0)))
     die("Variable hash initialization failed");
 
+  {
+    char path_separator[]= { FN_LIBCHAR, 0 };
+    var_set_string("SYSTEM_PATH_SEPARATOR", path_separator);
+  }
   var_set_string("MYSQL_SERVER_VERSION", MYSQL_SERVER_VERSION);
   var_set_string("MYSQL_SYSTEM_TYPE", SYSTEM_TYPE);
   var_set_string("MYSQL_MACHINE_TYPE", MACHINE_TYPE);
@@ -9869,36 +9914,34 @@ struct st_regex
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
                 char *string, int icase);
 
+bool parse_re_part(char *start_re, char *end_re,
+                   char **p, char *end, char **buf)
+{
+  if (*start_re != *end_re)
+  {
+    switch ((*start_re= *(*p)++)) {
+    case '(': *end_re= ')'; break;
+    case '[': *end_re= ']'; break;
+    case '{': *end_re= '}'; break;
+    case '<': *end_re= '>'; break;
+    default: *end_re= *start_re;
+    }
+  }
 
+  while (*p < end && **p != *end_re)
+  {
+    if ((*p)[0] == '\\' && *p + 1 < end && (*p)[1] == *end_re)
+      (*p)++;
 
-/*
-  Finds the next (non-escaped) '/' in the expression.
-  (If the character '/' is needed, it can be escaped using '\'.)
-*/
+    *(*buf)++= *(*p)++;
+  }
+  *(*buf)++= 0;
 
-#define PARSE_REGEX_ARG                         \
-  while (p < expr_end)                          \
-  {                                             \
-    char c= *p;                                 \
-    if (c == '/')                               \
-    {                                           \
-      if (last_c == '\\')                       \
-      {                                         \
-        buf_p[-1]= '/';                         \
-      }                                         \
-      else                                      \
-      {                                         \
-        *buf_p++ = 0;                           \
-        break;                                  \
-      }                                         \
-    }                                           \
-    else                                        \
-      *buf_p++ = c;                             \
-                                                \
-    last_c= c;                                  \
-    p++;                                        \
-  }                                             \
-                                                \
+  (*p)++;
+
+  return *p > end;
+}
+
 /*
   Initializes the regular substitution expression to be used in the
   result output of test.
@@ -9910,10 +9953,9 @@ struct st_replace_regex* init_replace_regex(char* expr)
 {
   struct st_replace_regex* res;
   char* buf,*expr_end;
-  char* p;
+  char* p, start_re, end_re= 1;
   char* buf_p;
   uint expr_len= strlen(expr);
-  char last_c = 0;
   struct st_regex reg;
 
   /* my_malloc() will die on fail with MY_FAE */
@@ -9931,44 +9973,32 @@ struct st_replace_regex* init_replace_regex(char* expr)
   {
     bzero(&reg,sizeof(reg));
     /* find the start of the statement */
-    while (p < expr_end)
-    {
-      if (*p == '/')
-        break;
+    while (my_isspace(charset_info, *p) && p < expr_end)
       p++;
-    }
 
-    if (p == expr_end || ++p == expr_end)
+    if (p >= expr_end)
     {
       if (res->regex_arr.elements)
         break;
       else
         goto err;
     }
-    /* we found the start */
+
+    start_re= 0;
     reg.pattern= buf_p;
+    if (parse_re_part(&start_re, &end_re, &p, expr_end, &buf_p))
+      goto err;
 
-    /* Find first argument -- pattern string to be removed */
-    PARSE_REGEX_ARG
-
-      if (p == expr_end || ++p == expr_end)
-        goto err;
-
-    /* buf_p now points to the replacement pattern terminated with \0 */
     reg.replace= buf_p;
-
-    /* Find second argument -- replace string to replace pattern */
-    PARSE_REGEX_ARG
-
-      if (p == expr_end)
-        goto err;
-
-    /* skip the ending '/' in the statement */
-    p++;
+    if (parse_re_part(&start_re, &end_re, &p, expr_end, &buf_p))
+      goto err;
 
     /* Check if we should do matching case insensitive */
     if (p < expr_end && *p == 'i')
+    {
+      p++;
       reg.icase= 1;
+    }
 
     /* done parsing the statement, now place it in regex_arr */
     if (insert_dynamic(&res->regex_arr,(uchar*) &reg))

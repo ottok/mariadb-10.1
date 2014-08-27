@@ -43,6 +43,8 @@ typedef struct _colinfo {
   int    Key;
   int    Precision;
   int    Scale;
+  int    Opt;
+  int    Freq;
   char  *Remark;
   char  *Datefmt;
   char  *Fieldfmt;
@@ -71,16 +73,6 @@ class DllExport CATALOG {
   // Methods
   virtual void    Reset(void) {}
   virtual void    SetDataPath(PGLOBAL g, const char *path) {}
-  virtual bool    GetBoolCatInfo(PSZ what, bool bdef) {return bdef;}
-  virtual bool    SetIntCatInfo(PSZ what, int ival) {return false;}
-  virtual int     GetIntCatInfo(PSZ what, int idef) {return idef;}
-  virtual int     GetSizeCatInfo(PSZ what, PSZ sdef) {return 0;}
-  virtual int     GetCharCatInfo(PSZ what, PSZ sdef, char *buf, int size)
-                                {strncpy(buf, sdef, size); return size;} 
-  virtual char   *GetStringCatInfo(PGLOBAL g, PSZ what, PSZ sdef)
-                                {return sdef;}
-  virtual int     GetColCatInfo(PGLOBAL g, PTABDEF defp) {return -1;}
-  virtual bool    GetIndexInfo(PGLOBAL g, PTABDEF defp) {return true;}
   virtual bool    CheckName(PGLOBAL g, char *name) {return true;}
   virtual bool    ClearName(PGLOBAL g, PSZ name) {return true;}
   virtual PRELDEF MakeOneTableDesc(PGLOBAL g, LPCSTR name, LPCSTR am) {return NULL;}
@@ -92,7 +84,7 @@ class DllExport CATALOG {
   virtual bool    TestCond(PGLOBAL g, const char *name, const char *type)
                                 {return true;}
   virtual bool    DropTable(PGLOBAL g, PSZ name, bool erase) {return true;}
-  virtual PTDB    GetTable(PGLOBAL g, PTABLE tablep, 
+  virtual PTDB    GetTable(PGLOBAL g, PTABLE tablep,
                            MODE mode = MODE_READ, LPCSTR type = NULL)
                                 {return NULL;}
   virtual void    TableNames(PGLOBAL g, char *buffer, int maxbuf, int info[]) {}

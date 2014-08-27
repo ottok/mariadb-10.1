@@ -1,5 +1,5 @@
-# Copyright (c) 2006, 2013, Oracle and/or its affiliates.
-# Copyright (c) 2008, 2013, Monty Program Ab
+# Copyright (c) 2006, 2014, Oracle and/or its affiliates.
+# Copyright (c) 2008, 2014, Monty Program Ab
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,14 @@ endif()
 # (cannot use NEW, not everyone is on cmake-2.8.12 yet)
 IF(POLICY CMP0022)
   CMAKE_POLICY(SET CMP0022 OLD)
+ENDIF()
+
+# We use the LOCATION target property (CMP0026)
+# and get_target_property() for non-existent targets (CMP0045)
+IF(CMAKE_VERSION VERSION_EQUAL "3.0.0" OR
+   CMAKE_VERSION VERSION_GREATER "3.0.0")
+ CMAKE_POLICY(SET CMP0026 OLD)
+ CMAKE_POLICY(SET CMP0045 OLD)
 ENDIF()
 
 MESSAGE(STATUS "Running cmake version ${CMAKE_VERSION}")
@@ -61,6 +69,7 @@ IF(UNIX AND NOT APPLE)
   # Compiling with PIC speeds up embedded build, on PIC sensitive systems 
   # Predefine it to OFF in release builds, because of the performance penalty
   SET(WITH_PIC ${WITH_PIC_DEFAULT} CACHE BOOL "Compile with PIC.")
+  MARK_AS_ADVANCED(WITH_PIC)
 ENDIF()
 
 # Optionally set project name, e.g.
@@ -265,6 +274,12 @@ IF (ENABLE_GCOV AND NOT WIN32 AND NOT APPLE)
   SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
 ENDIF()
 
+MY_CHECK_C_COMPILER_FLAG(-ggdb3 HAVE_GGDB3)
+IF(HAVE_GGDB3)
+  SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3")
+  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3")
+ENDIF(HAVE_GGDB3)
+
 OPTION(ENABLED_LOCAL_INFILE
  "If we should should enable LOAD DATA LOCAL by default" ${IF_WIN})
 MARK_AS_ADVANCED(ENABLED_LOCAL_INFILE)
@@ -298,16 +313,11 @@ ENDIF()
 # safemalloc can be enabled and disabled independently
 SET(WITH_SAFEMALLOC "AUTO" CACHE STRING "Use safemalloc memory debugger. Will result in slower execution. Options are: ON OFF AUTO.")
 
-# force -DUSE_MYSYS_NEW unless already done by HAVE_CXX_NEW
-IF(HAVE_CXX_NEW)
-  SET(DUSE_MYSYS_NEW "-DUSE_MYSYS_NEW")
-ENDIF()
-
 IF(WITH_SAFEMALLOC MATCHES "ON")
-  ADD_DEFINITIONS( -DSAFEMALLOC ${DUSE_MYSYS_NEW})
+  ADD_DEFINITIONS( -DSAFEMALLOC)
 ELSEIF(WITH_SAFEMALLOC MATCHES "AUTO" AND NOT WIN32 AND NOT WITH_VALGRIND)
   SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DSAFEMALLOC")
-  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSAFEMALLOC ${DUSE_MYSYS_NEW}")
+  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSAFEMALLOC")
 ENDIF()
 
 # Set commonly used variables
@@ -331,18 +341,24 @@ IF(INSTALL_SYSCONFDIR)
   SET(DEFAULT_SYSCONFDIR "${INSTALL_SYSCONFDIR}")
 ENDIF()
 
-OPTION(TMPDIR
-"PATH to MySQL TMP dir. If unspecified, defaults to P_tmpdir in <stdio.h>" OFF)
-IF(TMPDIR)
+SET(TMPDIR ""
+  CACHE PATH
+  "PATH to MySQL TMP dir. Defaults to the P_tmpdir macro in <stdio.h>")
+IF(TMPDIR STREQUAL "")
+  # Do not quote it, to refer to the P_tmpdir macro.
+  SET(DEFAULT_TMPDIR "P_tmpdir")
+ELSE()
   # Quote it, to make it a const char string.
   SET(DEFAULT_TMPDIR "\"${TMPDIR}\"")
-ELSE()
-  # Do not quote it, to refer to the P_tmpdir macro in <stdio.h>.
-  SET(DEFAULT_TMPDIR "P_tmpdir")
 ENDIF()
 
 # Run platform tests
 INCLUDE(configure.cmake)
+
+# force -DUSE_MYSYS_NEW unless already done by HAVE_CXX_NEW
+IF(NOT HAVE_CXX_NEW)
+  ADD_DEFINITIONS(-DUSE_MYSYS_NEW)
+ENDIF()
 
 # Find header files from the bundled libraries
 # (jemalloc, yassl, readline, pcre, etc)
@@ -380,6 +396,11 @@ ELSEIF(MYSQL_MAINTAINER_MODE MATCHES "AUTO")
   SET(CMAKE_CXX_FLAGS_DEBUG "${MY_MAINTAINER_CXX_WARNINGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 ENDIF()
 
+IF(CMAKE_CROSSCOMPILING)
+  SET(IMPORT_EXECUTABLES "IMPORTFILE-NOTFOUND" CACHE FILEPATH "Path to import_executables.cmake from a native build")
+  INCLUDE(${IMPORT_EXECUTABLES})
+ENDIF()
+
 IF(WITH_UNIT_TESTS)
  ENABLE_TESTING()
  ADD_SUBDIRECTORY(unittest/mytap)
@@ -387,11 +408,13 @@ IF(WITH_UNIT_TESTS)
  ADD_SUBDIRECTORY(unittest/examples)
  ADD_SUBDIRECTORY(unittest/mysys)
  ADD_SUBDIRECTORY(unittest/my_decimal)
- ADD_SUBDIRECTORY(unittest/sql)
+ IF(NOT WITHOUT_SERVER)
+   ADD_SUBDIRECTORY(unittest/sql)
+ ENDIF()
 ENDIF()
 
 IF(NOT WITHOUT_SERVER)
-SET (MYSQLD_STATIC_PLUGIN_LIBS "" CACHE INTERNAL "")
+ SET (MYSQLD_STATIC_PLUGIN_LIBS "" CACHE INTERNAL "")
  # Add storage engines and plugins.
  CONFIGURE_PLUGINS()
 ENDIF()
@@ -426,7 +449,6 @@ IF(NOT WITHOUT_SERVER)
   IF(EXISTS ${CMAKE_SOURCE_DIR}/internal/CMakeLists.txt)
     ADD_SUBDIRECTORY(internal)
   ENDIF()
-  ADD_SUBDIRECTORY(packaging/rpm-uln)
   ADD_SUBDIRECTORY(packaging/rpm-oel)
 ENDIF()
 
@@ -442,6 +464,13 @@ IF(WIN32)
   ADD_SUBDIRECTORY(win/packaging)
 ENDIF()
 ADD_SUBDIRECTORY(packaging/solaris)
+
+IF(NOT CMAKE_CROSSCOMPILING)
+  SET(EXPORTED comp_err comp_sql factorial gen_lex_hash)
+  # minimal target to build only binaries for export
+  ADD_CUSTOM_TARGET(import_executables DEPENDS ${EXPORTED})
+  EXPORT(TARGETS ${EXPORTED} FILE ${CMAKE_BINARY_DIR}/import_executables.cmake)
+ENDIF()
 
 CONFIGURE_FILE(config.h.cmake   ${CMAKE_BINARY_DIR}/include/my_config.h)
 CONFIGURE_FILE(config.h.cmake   ${CMAKE_BINARY_DIR}/include/config.h)
@@ -474,7 +503,7 @@ ADD_CUSTOM_TARGET(INFO_BIN ALL
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-INSTALL_DOCUMENTATION(README TODO CREDITS COPYING COPYING.LESSER
+INSTALL_DOCUMENTATION(README CREDITS COPYING COPYING.LESSER EXCEPTIONS-CLIENT
                       COMPONENT Readme)
 INSTALL_DOCUMENTATION(${CMAKE_BINARY_DIR}/Docs/INFO_SRC
                       ${CMAKE_BINARY_DIR}/Docs/INFO_BIN)

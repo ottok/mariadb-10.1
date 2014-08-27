@@ -2,11 +2,11 @@
 /*                                                                     */
 /* PROGRAM NAME: PLUGUTIL                                              */
 /* -------------                                                       */
-/*  Version 2.7                                                        */
+/*  Version 2.8                                                        */
 /*                                                                     */
 /* COPYRIGHT:                                                          */
 /* ----------                                                          */
-/*  (C) Copyright to the author Olivier BERTRAND          1993-2012    */
+/*  (C) Copyright to the author Olivier BERTRAND          1993-2014    */
 /*                                                                     */
 /* WHAT THIS PROGRAM DOES:                                             */
 /* -----------------------                                             */
@@ -115,11 +115,6 @@ void htrc(char const *fmt, ...)
   va_list ap;
   va_start (ap, fmt);
 
-//if (trace == 0 || (trace == 1 && !debug) || !fmt) {
-//  printf("In %s wrong trace=%d debug=%p fmt=%p\n",
-//    __FILE__, trace, debug, fmt);
-//  trace = 0;
-//  } // endif trace
 
 //if (trace == 1)
 //  vfprintf(debug, fmt, ap);
@@ -139,7 +134,7 @@ PGLOBAL PlugInit(LPCSTR Language, uint worksize)
   PGLOBAL g;
 
   if (trace > 1)
-    htrc("PlugInit: Language='%s'\n", 
+    htrc("PlugInit: Language='%s'\n",
           ((!Language) ? "Null" : (char*)Language));
 
   if (!(g = malloc(sizeof(GLOBAL)))) {
@@ -150,6 +145,7 @@ PGLOBAL PlugInit(LPCSTR Language, uint worksize)
     g->Trace = 0;
     g->Createas = 0;
     g->Alchecked = 0;
+    g->Mrr = 0;
     g->Activityp = g->ActivityStart = NULL;
     g->Xchk = NULL;
     strcpy(g->Message, "");
@@ -255,7 +251,20 @@ LPCSTR PlugSetPath(LPSTR pBuff, LPCSTR prefix, LPCSTR FileName, LPCSTR defpath)
     strcpy(pBuff, FileName); // FileName includes absolute path
     return pBuff;
   } // endif
+  
+#if !defined(WIN32)
+  if (*FileName == '~') {
+    if (_fullpath(pBuff, FileName, _MAX_PATH)) {
+      if (trace > 1)
+        htrc("pbuff='%s'\n", pBuff);
 
+     return pBuff;
+    } else
+      return FileName;     // Error, return unchanged name
+      
+    } // endif FileName  
+#endif   // !WIN32
+  
   if (strcmp(prefix, ".") && !PlugIsAbsolutePath(defpath))
   {
     char tmp[_MAX_PATH];
@@ -290,7 +299,7 @@ LPCSTR PlugSetPath(LPSTR pBuff, LPCSTR prefix, LPCSTR FileName, LPCSTR defpath)
     case '/':
       break;
     default:
-      // This supposes that defdir ends with a SLASH 
+      // This supposes that defdir ends with a SLASH
       strcpy(direc, strcat(defdir, direc));
     } // endswitch
 
@@ -313,13 +322,13 @@ LPCSTR PlugSetPath(LPSTR pBuff, LPCSTR prefix, LPCSTR FileName, LPCSTR defpath)
 /***********************************************************************/
 /*  PlugGetMessage: get a message from the message file.               */
 /***********************************************************************/
-char *PlugReadMessage(PGLOBAL g, int mid, char *m) 
+char *PlugReadMessage(PGLOBAL g, int mid, char *m)
   {
   char  msgfile[_MAX_PATH], msgid[32], buff[256];
   char *msg;
   FILE *mfile = NULL;
 
-  GetPrivateProfileString("Message", msglang, "Message\\english.msg", 
+  GetPrivateProfileString("Message", msglang, "Message\\english.msg",
                                      msgfile, _MAX_PATH, plgini);
 
   if (!(mfile = fopen(msgfile, "rt"))) {
@@ -369,7 +378,7 @@ char *PlugReadMessage(PGLOBAL g, int mid, char *m)
 /***********************************************************************/
 /*  PlugGetMessage: get a message from the resource string table.      */
 /***********************************************************************/
-char *PlugGetMessage(PGLOBAL g, int mid) 
+char *PlugGetMessage(PGLOBAL g, int mid)
   {
   char *msg;
 
@@ -434,7 +443,7 @@ void *PlugAllocMem(PGLOBAL g, uint size)
       htrc("Memory of %u allocated at %p\n", size, areap);
     else
       htrc("PlugAllocMem: %s\n", g->Message);
-      
+
     } // endif trace
 
   return (areap);
@@ -477,10 +486,9 @@ void *PlugSubAlloc(PGLOBAL g, void *memp, size_t size)
   size = ((size + 7) / 8) * 8;       /* Round up size to multiple of 8 */
   pph = (PPOOLHEADER)memp;
 
-#if defined(DEBUG2) || defined(DEBUG3)
- htrc("SubAlloc in %p size=%d used=%d free=%d\n",
-  memp, size, pph->To_Free, pph->FreeBlk);
-#endif
+  if (trace > 2)
+    htrc("SubAlloc in %p size=%d used=%d free=%d\n",
+          memp, size, pph->To_Free, pph->FreeBlk);
 
   if ((uint)size > pph->FreeBlk) {   /* Not enough memory left in pool */
     char     *pname = "Work";
@@ -489,9 +497,8 @@ void *PlugSubAlloc(PGLOBAL g, void *memp, size_t size)
       "Not enough memory in %s area for request of %u (used=%d free=%d)",
                           pname, (uint) size, pph->To_Free, pph->FreeBlk);
 
-#if defined(DEBUG2) || defined(DEBUG3)
- htrc("%s\n", g->Message);
-#endif
+    if (trace)
+      htrc("PlugSubAlloc: %s\n", g->Message);
 
     longjmp(g->jumper[g->jump_level], 1);
     } /* endif size OS32 code */
@@ -502,10 +509,11 @@ void *PlugSubAlloc(PGLOBAL g, void *memp, size_t size)
   memp = MakePtr(memp, pph->To_Free); /* Points to suballocated block  */
   pph->To_Free += size;               /* New offset of pool free block */
   pph->FreeBlk -= size;               /* New size   of pool free block */
-#if defined(DEBUG2) || defined(DEBUG3)
- htrc("Done memp=%p used=%d free=%d\n",
-  memp, pph->To_Free, pph->FreeBlk);
-#endif
+
+  if (trace > 2)
+    htrc("Done memp=%p used=%d free=%d\n",
+          memp, pph->To_Free, pph->FreeBlk);
+
   return (memp);
   } /* end of PlugSubAlloc */
 
@@ -514,7 +522,7 @@ void *PlugSubAlloc(PGLOBAL g, void *memp, size_t size)
 /***********************************************************************/
 char *PlugDup(PGLOBAL g, const char *str)
   {
-  char  *buf; 
+  char  *buf;
   size_t len;
 
   if (str && (len = strlen(str))) {

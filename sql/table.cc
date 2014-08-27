@@ -1774,13 +1774,25 @@ int TABLE_SHARE::init_from_binary_frm_image(THD *thd, bool write,
         key_part= keyinfo->key_part;
 	for (i=0 ; i < keyinfo->user_defined_key_parts ;i++)
 	{
-	  uint fieldnr= key_part[i].fieldnr;
-	  if (!fieldnr ||
-	      share->field[fieldnr-1]->null_ptr ||
-	      share->field[fieldnr-1]->key_length() !=
-	      key_part[i].length)
+          DBUG_ASSERT(key_part[i].fieldnr > 0);
+          // Table field corresponding to the i'th key part.
+          Field *table_field= share->field[key_part[i].fieldnr - 1];
+
+          /*
+            If the key column is of NOT NULL BLOB type, then it
+            will definitly have key prefix. And if key part prefix size
+            is equal to the BLOB column max size, then we can promote
+            it to primary key.
+          */
+          if (!table_field->real_maybe_null() &&
+              table_field->type() == MYSQL_TYPE_BLOB &&
+              table_field->field_length == key_part[i].length)
+            continue;
+
+	  if (table_field->real_maybe_null() ||
+	      table_field->key_length() != key_part[i].length)
 	  {
-	    primary_key=MAX_KEY;		// Can't be used
+	    primary_key= MAX_KEY;		// Can't be used
 	    break;
 	  }
 	}
@@ -3436,6 +3448,24 @@ uint calculate_key_len(TABLE *table, uint key, const uchar *buf,
   return length;
 }
 
+#ifndef DBUG_OFF
+/**
+  Verifies that database/table name is in lowercase, when it should be
+
+  This is supposed to be used only inside DBUG_ASSERT()
+*/
+bool ok_for_lower_case_names(const char *name)
+{
+  if (!lower_case_table_names || !name)
+    return true;
+
+  char buf[SAFE_NAME_LEN];
+  strmake_buf(buf, name);
+  my_casedn_str(files_charset_info, buf);
+  return strcmp(name, buf) == 0;
+}
+#endif
+
 /*
   Check if database name is valid
 
@@ -3997,7 +4027,7 @@ void TABLE::init(THD *thd, TABLE_LIST *tl)
   status= STATUS_NO_RECORD;
   insert_values= 0;
   fulltext_searched= 0;
-  file->ha_start_of_new_statement();
+  file->ft_handler= 0;
   reginfo.impossible_range= 0;
   created= TRUE;
   cond_selectivity= 1.0;
@@ -4192,7 +4222,8 @@ bool TABLE_LIST::create_field_translation(THD *thd)
 
   while ((item= it++))
   {
-    transl[field_count].name= item->name;
+    DBUG_ASSERT(item->name && item->name[0]);
+    transl[field_count].name= thd->strdup(item->name);
     transl[field_count++].item= item;
   }
   field_translation= transl;
@@ -5033,6 +5064,10 @@ void TABLE_LIST::set_check_merged()
 
 void TABLE_LIST::set_check_materialized()
 {
+  DBUG_ENTER("TABLE_LIST::set_check_materialized");
+  SELECT_LEX_UNIT *derived= this->derived;
+  if (view)
+    derived= &view->unit;
   DBUG_ASSERT(derived);
   if (!derived->first_select()->exclude_from_table_unique_test)
     derived->set_unique_exclude();
@@ -5045,6 +5080,7 @@ void TABLE_LIST::set_check_materialized()
                 derived->first_select()->first_inner_unit()->first_select()->
                 exclude_from_table_unique_test);
   }
+  DBUG_VOID_RETURN;
 }
 
 TABLE *TABLE_LIST::get_real_join_table()
@@ -7042,6 +7078,27 @@ bool TABLE_LIST::change_refs_to_fields()
   return FALSE;
 }
 
+
+void TABLE_LIST::set_lock_type(THD *thd, enum thr_lock_type lock)
+{
+  if (check_stack_overrun(thd, STACK_MIN_SIZE, (uchar *)&lock))
+    return;
+  /* we call it only when table is opened and it is "leaf" table*/
+  DBUG_ASSERT(table);
+  lock_type= lock;
+  /* table->file->get_table() can be 0 for derived tables */
+  if (table->file && table->file->get_table())
+    table->file->set_lock_type(lock);
+  if (is_merged_derived())
+  {
+    for (TABLE_LIST *table= get_single_select()->get_table_list();
+         table;
+         table= table->next_local)
+    {
+      table->set_lock_type(thd, lock);
+    }
+  }
+}
 
 uint TABLE_SHARE::actual_n_key_parts(THD *thd)
 {

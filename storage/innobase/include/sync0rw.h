@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2011, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1995, 2014, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2008, Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
@@ -108,14 +108,8 @@ extern ib_mutex_t		rw_lock_list_mutex;
 #ifdef UNIV_SYNC_DEBUG
 /* The global mutex which protects debug info lists of all rw-locks.
 To modify the debug info list of an rw-lock, this mutex has to be
-
 acquired in addition to the mutex protecting the lock. */
-extern ib_mutex_t		rw_lock_debug_mutex;
-extern os_event_t	rw_lock_debug_event;	/*!< If deadlock detection does
-					not get immediately the mutex it
-					may wait for this event */
-extern ibool		rw_lock_debug_waiters;	/*!< This is set to TRUE, if
-					there may be waiters for the event */
+extern os_fast_mutex_t		rw_lock_debug_mutex;
 #endif /* UNIV_SYNC_DEBUG */
 
 /** Counters for RW locks. */
@@ -141,7 +135,7 @@ extern	mysql_pfs_key_t	trx_i_s_cache_lock_key;
 extern	mysql_pfs_key_t	trx_purge_latch_key;
 extern	mysql_pfs_key_t	index_tree_rw_lock_key;
 extern	mysql_pfs_key_t	index_online_log_key;
-extern	mysql_pfs_key_t	dict_table_stats_latch_key;
+extern	mysql_pfs_key_t	dict_table_stats_key;
 extern  mysql_pfs_key_t trx_sys_rw_lock_key;
 extern  mysql_pfs_key_t hash_table_rw_lock_key;
 #endif /* UNIV_PFS_RWLOCK */
@@ -180,6 +174,9 @@ unlocking, not the corresponding function. */
 
 # define rw_lock_s_lock_gen(M, P)				\
 	rw_lock_s_lock_func((M), (P), __FILE__, __LINE__)
+
+# define rw_lock_s_lock_gen_nowait(M, P)			\
+	rw_lock_s_lock_low((M), (P), __FILE__, __LINE__)
 
 # define rw_lock_s_lock_nowait(M, F, L)				\
 	rw_lock_s_lock_low((M), 0, (F), (L))
@@ -242,6 +239,9 @@ unlocking, not the corresponding function. */
 
 # define rw_lock_s_lock_gen(M, P)				\
 	pfs_rw_lock_s_lock_func((M), (P), __FILE__, __LINE__)
+
+# define rw_lock_s_lock_gen_nowait(M, P)			\
+	pfs_rw_lock_s_lock_low((M), (P), __FILE__, __LINE__)
 
 # define rw_lock_s_lock_nowait(M, F, L)				\
 	pfs_rw_lock_s_lock_low((M), 0, (F), (L))

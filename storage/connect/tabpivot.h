@@ -18,12 +18,13 @@ class PIVAID : public CSORT {
   friend class SRCCOL;
  public:
   // Constructor
-  PIVAID(const char *tab,   const char *src,  const char *picol,
-         const char *fncol, const char *host, const char *db,
-         const char *user,  const char *pwd,  int port);
+  PIVAID(const char *tab,   const char *src,   const char *picol,
+         const char *fncol, const char *skcol, const char *host, 
+         const char *db,    const char *user,  const char *pwd,  int port);
 
   // Methods
   PQRYRES MakePivotColumns(PGLOBAL g);
+  bool    SkipColumn(PCOLRES crp, char *skc);
 
   // The sorting function
   virtual int  Qcompare(int *, int *);
@@ -40,6 +41,7 @@ class PIVAID : public CSORT {
   char   *Tabsrc;                   // SQL of source table
   char   *Picol;                    // Pivot column name
   char   *Fncol;                    // Function column name
+  char   *Skcol;                    // Skipped columns
   PVBLK   Rblkp;                    // The value block of the pivot column
   int     Port;                     // MySQL port number
   }; // end of class PIVAID
@@ -103,6 +105,7 @@ class TDBPIVOT : public TDBPRX {
 
   // Database routines
   virtual PCOL MakeCol(PGLOBAL g, PCOLDEF cdp, PCOL cprec, int n);
+  virtual int  Cardinality(PGLOBAL g) {return (g) ? 10 : 0;}
   virtual int  GetMaxSize(PGLOBAL g);
   virtual bool OpenDB(PGLOBAL g);
   virtual int  ReadDB(PGLOBAL g);
@@ -191,6 +194,6 @@ class SRCCOL : public PRXCOL {
 
 PQRYRES PivotColumns(PGLOBAL g, const char *tab,   const char *src,
                                 const char *picol, const char *fncol,
-                                const char *host,  const char *db,   
-                                const char *user,  const char *pwd,  
-                                int port);
+                                const char *skcol, const char *host,
+                                const char *db,    const char *user,
+                                const char *pwd,   int port);

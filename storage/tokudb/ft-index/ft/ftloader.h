@@ -105,7 +105,7 @@ int toku_ft_loader_open (FTLOADER *bl,
 			  generate_row_for_put_func g,
 			  DB *src_db,
 			  int N,
-			  FT_HANDLE brts[/*N*/], DB* dbs[/*N*/],
+			  FT_HANDLE ft_hs[/*N*/], DB* dbs[/*N*/],
 			  const char * new_fnames_in_env[/*N*/],
 			  ft_compare_func bt_compare_functions[/*N*/],
 			  const char *temp_file_template,
@@ -113,7 +113,8 @@ int toku_ft_loader_open (FTLOADER *bl,
                           TOKUTXN txn,
                           bool reserve_memory,
                           uint64_t reserve_memory_size,
-                          bool compress_intermediates);
+                          bool compress_intermediates,
+                          bool allow_puts);
 
 int toku_ft_loader_put (FTLOADER bl, DBT *key, DBT *val);
 
