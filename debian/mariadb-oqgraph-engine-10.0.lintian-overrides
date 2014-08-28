@@ -1,2 +1,0 @@
-# OK, newer Debian should support xz
-mariadb-oqgraph-engine-10.0: data.tar.xz-member-without-dpkg-pre-depends

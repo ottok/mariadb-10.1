@@ -15,7 +15,6 @@ mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_myisam_innodb.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_11.result
-mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/collections/default.weekly
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_5_innodb.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_4_myisam.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_7_myisam.result
