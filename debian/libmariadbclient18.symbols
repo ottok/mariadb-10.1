@@ -71,6 +71,9 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  mariadb_dyncol_val_double@libmariadbclient_18 10.0.9
  mariadb_dyncol_val_long@libmariadbclient_18 10.0.9
  mariadb_dyncol_val_str@libmariadbclient_18 10.0.9
+ my_charset_bin@libmariadbclient_18 10.0.13
+ my_charset_latin1@libmariadbclient_18 10.0.13
+ my_charset_utf8_general_ci@libmariadbclient_18 10.0.13
  my_end@libmariadbclient_18 10.0.10
  my_free@libmariadbclient_18 10.0.10
  my_init@libmariadbclient_16 10.0.9
@@ -81,6 +84,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  my_memdup@libmariadbclient_18 10.0.10
  my_print_help@libmariadbclient_16 10.0.9
  my_print_help@libmariadbclient_18 10.0.9
+ my_progname@libmariadbclient_18 10.0.13
  my_realloc@libmariadbclient_18 10.0.10
  my_strdup@libmariadbclient_18 10.0.10
  myodbc_remove_escape@libmariadbclient_16 10.0.9
