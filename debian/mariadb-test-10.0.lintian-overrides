@@ -1,5 +1,3 @@
-# in modern Debian this xz support exists, this should not matter anymore
-mariadb-test-10.0: data.tar.xz-member-without-dpkg-pre-depends
 # OK, embedded has same source
 mariadb-test-10.0: embedded-library usr/bin/mysql_client_test: libmysqlclient
 mariadb-test-10.0: embedded-library usr/bin/mysql_client_test_embedded: libmysqlclient

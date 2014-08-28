@@ -7,8 +7,6 @@
 #        * <old-preinst> abort-upgrade <new-version>
 #
 
-# TODO: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=526464
-
 . /usr/share/debconf/confmodule
 
 if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi

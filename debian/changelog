@@ -1,6 +1,6 @@
 mariadb-10.0 (10.0.13-1) unstable; urgency=low
 
-  * New upstream release.
+  * New upstream release. (Closes: #757026)
   * Fixed wrongly applied fix of MDEV-5957
   * d/control: Removed Provides: libmysqlclient-dev (Closes: #759309)
   * d/control: Removed Provides: libmysqld-dev with same motivation

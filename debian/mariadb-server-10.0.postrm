@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-# TODO: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=526464
-
 # It is possible that Debconf has already been removed, too.
 if [ -f /usr/share/debconf/confmodule ]; then
   . /usr/share/debconf/confmodule
@@ -62,7 +60,7 @@ if [ "$1" = "purge" -a ! \( -x /usr/sbin/mysqld -o -L /usr/sbin/mysqld \) ]; the
     # else we ran into big trouble on the next install!
     rm -f /etc/mysql/debian.cnf
     rm -rf /var/lib/mysql
-    rm -rf /var/run/mysqld
+    rm -rf /var/run/mysqld # this directory is created by the init script, don't leave behind
     userdel mysql || true
   fi
 
@@ -80,9 +78,6 @@ if [ "$1" = purge ] && [ -e /usr/share/debconf/confmodule ]; then
 fi
 # (normally) End automatically added section
 
-if [ "$1" = "purge" ] ; then
-     rm -f /etc/apparmor.d/force-complain/usr.sbin.mysqld >/dev/null 2>&1 || true
-fi
 # no DEBHELPER here, "update-rc.d remove" fails if mysql-server-5.1 is installed
 
 exit 0

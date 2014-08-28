@@ -4,10 +4,3 @@ mariadb-client-10.0: embedded-library usr/bin/mysqldump: libmysqlclient
 mariadb-client-10.0: embedded-library usr/bin/mysqlimport: libmysqlclient
 mariadb-client-10.0: embedded-library usr/bin/mysqlshow: libmysqlclient
 mariadb-client-10.0: embedded-library usr/bin/mysqlslap: libmysqlclient
-# OK, newer Debian should support xz
-mariadb-client-10.0: data.tar.xz-member-without-dpkg-pre-depends
-# Symlink to mysqlcheck, which does have a manpage
-mariadb-client-10.0: binary-without-manpage usr/bin/innochecksum
-mariadb-client-10.0: binary-without-manpage usr/bin/mysqlanalyze
-mariadb-client-10.0: binary-without-manpage usr/bin/mysqloptimize
-mariadb-client-10.0: binary-without-manpage usr/bin/mysqlrepair
