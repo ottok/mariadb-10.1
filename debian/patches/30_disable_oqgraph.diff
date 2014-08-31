@@ -1,0 +1,21 @@
+Description: Disable OQGraph temporairly
+ OQGraph does not build on latest Debian sid with
+ libboost-dev 1.55.0.2 and libjudy-dev 1.0.5-3
+ and MariaDB version 10.0.13 or earlier.
+ Re-enable OQGraph either the libs or the MariaDB
+ code that uses the libs improve.
+ .
+Author: Otto Kekäläinen <otto@seravo.fi>
+Last-Update: 2014-08-21
+
+--- mariadb-10.0-10.0.13.orig/storage/oqgraph/CMakeLists.txt
++++ mariadb-10.0-10.0.13/storage/oqgraph/CMakeLists.txt
+@@ -1,5 +1,8 @@
+ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+ 
++MESSAGE(STATUS "OQGraph disabled for this Debian build")
++RETURN()
++
+ MESSAGE(STATUS "Configuring OQGraph")
+ FIND_PACKAGE(Boost)
+ IF(NOT Boost_FOUND)
