@@ -7,7 +7,7 @@ mariadb-10.0 (10.0.13-1) unstable; urgency=low
 
  -- Otto Kekäläinen <otto@seravo.fi>  Thu, 28 Aug 2014 00:39:02 +0300
 
-mariadb-10.0 (10.0.10-1) unstable; urgency=low
+mariadb-10.0 (10.0.10-1) experimental; urgency=low
 
   * Initial Upload (Closes: #740473)
 
