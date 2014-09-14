@@ -11,7 +11,7 @@ debian.cnf file contains the right password, e.g. by setting a new one
 * WHAT TO DO AFTER UPGRADES:
 ============================
 The privilege tables are automatically updated so all there is left is read
-the changelogs on dev.mysql.com to see if any changes affect custom apps.
+the changelogs on mariadb.com to see if any changes affect custom apps.
 
 * WHAT TO DO AFTER INSTALLATION:
 ================================
@@ -19,30 +19,10 @@ The MySQL manual describes certain steps to do at this stage in a separate
 chapter.  They are not necessary as the Debian packages does them
 automatically.
 
-The only thing that is left over for the admin is 
+The only thing that is left over for the admin is
  - setting the passwords
  - creating new users and databases
  - read the rest of this text
-
-* DOWNGRADING TO 4.0 or 4.1:
-============================
-Unsupported. Period.
-But if you do and get problems or make interesting experiences, mail me, it
-might help others.
-Ok, if you really want, I would recommend to "mysqldump --opt" all tables,
-then purge 4.1, delete /var/lib/mysql, install 4.0 and insert the dumps.  Be
-carefully, though, with the "mysql" table, you might not simply overwrite that
-one as the password for the mysql "debian-sys-maint" user is stored in
-/etc/mysql/debian.cnf and needed by /etc/init.d/ to start mysql and check if
-it's alive. 
-
-* SOME APPLICATION CAN NO LONGER CONNECT:
-=========================================
-This application is probably linked against libmysqlclient12 or below and
-somebody has created a mysql user with new-style passwords.
-The old_passwords=1 option in /etc/mysql/my.cnf might help. If not the
-application that inserted the user has to be changed or the application that
-tries to connect updated to libmysqlclient14 or -15.
 
 * NETWORKING:
 =============
@@ -84,19 +64,6 @@ script, too.
 	[client]
 	user		= your-mysql-username
 	password	= enter-your-good-new-password-here
-
-* BIG_ROWS FOR EVEN MORE ROWS IN A TABLE:
-=========================================
-If you ever run out of rows in a table there is the possibility of building
-the package with "-DBIG_ROWS" which, according to a MySQL employee on
-packagers@lists.mysql.com should lead to a 64bit row index (I guess > 2^32
-rows) but also to an approx. 5% performance loss.
-
-* BerkeleyDB Storage Engine
-===========================
-Support for BerkeleyDB has been removed in 5.1, and consequently both the
-have-bdb and skip-bdb configuration options will cause the server to fail. 
-Removing the options from /etc/mysql/my.cnf will fix this problem.
 
 * FURTHER NOTES ON REPLICATION
 ===============================

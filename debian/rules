@@ -65,8 +65,6 @@ else
     TESTSUITE_FAIL_CMD:=true
 endif
 
-SHARED_LIBS_DIR := $(TMP)/usr/lib/$(DEB_HOST_MULTIARCH)/
-
 BUILDDIR := builddir
 builddir = $(BUILDDIR)
 
