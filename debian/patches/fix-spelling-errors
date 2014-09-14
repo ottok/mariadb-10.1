@@ -1,0 +1,26 @@
+Description: Fix spelling errors
+Author: Otto Kekäläinen <otto@seravo.fi>
+Last-Update: 2014-09-14
+
+--- mariadb-10.0-10.0.13.orig/storage/connect/tabxml.cpp
++++ mariadb-10.0-10.0.13/storage/connect/tabxml.cpp
+@@ -1493,7 +1493,7 @@ void XMULCOL::ReadColumn(PGLOBAL g)
+ 
+       if (N > Tdbp->Limit) {
+         N = Tdbp->Limit;
+-        sprintf(g->Message, "Mutiple values limited to %d", Tdbp->Limit);
++        sprintf(g->Message, "Multiple values limited to %d", Tdbp->Limit);
+         PushWarning(g, Tdbp);
+         } // endif N
+ 
+--- mariadb-10.0-10.0.13.orig/man/mysqldump.1
++++ mariadb-10.0-10.0.13/man/mysqldump.1
+@@ -1261,7 +1261,7 @@ to point the slave to the correct master
+ .\" max-allowed-packet option: mysqldump
+ \fB\-\-max\-allowed\-packet=\fR\fB\fIlength\fR\fR
+ .sp
+-Sets the maximum packet length to send to or recieve from server\&.
++Sets the maximum packet length to send to or receive from server\&.
+ .RE
+ .sp
+ .RS 4
