@@ -178,7 +178,7 @@ override_dh_auto_install:
 	       $(TMP)/usr/share/mysql/mysql-log-rotate \
 	       $(TMP)/usr/share/mysql/mysql.server \
 	       $(TMP)/usr/share/mysql/binary-configure
-	nm -n $(BUILDDIR)/sql/mysqld |gzip -9 > $(TMP)/usr/share/doc/mariadb-server-10.0/mysqld.sym.gz
+	nm -n $(BUILDDIR)/sql/mysqld |gzip -n -9 > $(TMP)/usr/share/doc/mariadb-server-10.0/mysqld.sym.gz
 	# Below didn't work, use more explicit command above
 	# nm -n $(BUILDDIR)/sql/mysqld |gzip -9 > debian/mysqld.sym.gz
 	mkdir -p $(TMP)/etc/mysql/conf.d/
