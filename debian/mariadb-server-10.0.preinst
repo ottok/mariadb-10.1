@@ -46,17 +46,22 @@ stop_server() {
 
 ################################ main() ##########################
 
-# Show warning if old data exists
-if [ -d $DATADIR ]; then
-  db_input high mariadb-server/oneway_migration || true
-  db_go
-  db_get mariadb-server/oneway_migration || true
-  if [ "$RET" = "false" ]; then
-    echo "Aborting MariaDB installation." 1>&2
-    db_stop
-    exit 1
+# Show upgrade warning if old data exists
+# Designed for scenarios where users upgrade form MySQL 5.5 or 5.6 or MariaDB 5.5
+for i in `ls $DATADIR/debian-*.flag 2>/dev/null`; do
+  found_version=`echo $i | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
+  if dpkg --compare-versions "10.0" '>>' "$found_version"; then
+    db_fset mariadb-server/oneway_migration seen false || true
+    db_input high mariadb-server/oneway_migration || true
+    db_go
+    db_get mariadb-server/oneway_migration || true
+    if [ "$RET" = "false" ]; then
+      echo "Aborting MariaDB installation." 1>&2
+      db_stop
+      exit 1
+    fi
   fi
-fi
+done
 # Notice the uses of "|| true"  to  prevent  the  script  from  dying
 # For details see man page debconf-devel(7)
 
