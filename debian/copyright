@@ -145,17 +145,13 @@ Copyright:
  2007-2008, Monty Taylor <mordred@inaugust.com>
  2008, Devin Carraway <devin@debian.org>
  2008, Steffen Joeris <white@debian.org>
+ 2009, Canonical Ltd
  2010, Xavier Oswald <xoswald@debian.org>
  2011, Clint Byrum <clint@ubuntu.com>
  2011, Ondřej Surý <ondrej@debian.org>
  2012, Nicholas Bamber <nicholas@periapt.co.uk>
  2013, Kristian Nielsen <knielsen@askmonty.org>
- 2013, Otto Kekäläinen <otto@seravo.fi>
-License: GPL-2+
-
-Files: debian/*
-Copyright:
- 2009, Canonical Ltd
+ 2013-2014, Otto Kekäläinen <otto@seravo.fi>
 License: GPL-2+
 
 Files: debian/additions/mysqlreport*
@@ -175,7 +171,6 @@ Files:
  include/probes_mysql_nodtrace.h
  libmysqld/resource.h
  mysql-test/*
- regex/*
  storage/ndb/bin/*
  storage/ndb/demos/*
  support-files/binary-configure.sh
@@ -191,8 +186,7 @@ Files:
 Copyright: UNKNOWN
 Comment: These files fall under the blanket license specified in the file
  COPYING and README
-License: GPL-2
- GPLv2 Disclaimer
+ GPLv2 Disclaimer:
  For the avoidance of doubt, except that if any license choice
  other than GPL or LGPL is available it will apply instead,
  Oracle elects to use only the General Public License version 2
@@ -200,6 +194,7 @@ License: GPL-2
  license versions is made available with the language indicating
  that GPLv2 or any later version may be used, or where a choice
  of which version of the GPL is applied is otherwise unspecified.
+License: GPL-2
 
 Files: BUILD/*
  client/*
@@ -233,7 +228,6 @@ Files: BUILD/*
  mysql-test/lib/My/SafeProcess/Base.pm
  mysql-test/lib/My/SafeProcess/safe_kill_win.cc
  mysql-test/lib/My/SafeProcess/safe_process.cc
- mysql-test/lib/My/SafeProcess/safe_process.pl
  mysql-test/lib/My/SafeProcess/safe_process_win.cc
  mysql-test/lib/My/SysInfo.pm
  mysql-test/lib/My/Test.pm
@@ -260,7 +254,7 @@ Files: BUILD/*
  mysys/*
  packaging/WiX/ca/*
  plugin/audit_null/*
- plugin/auth/*
+ plugin/auth_*
  plugin/daemon_example/*
  plugin/fulltext/*
  scripts/*
@@ -285,6 +279,7 @@ Copyright: 1979-2008 MySQL AB
            1995-2010 Sun Microsystems Inc
            1994-1997,2000-2012 Oracle and/or its affiliates
            2010 Kristian Nielsen and Monty Program AB
+           2010 Sergei Golubchik and Monty Program Ab
            2008-2011 Monty Program AB
 License: GPL-2
 
@@ -294,7 +289,7 @@ License: unlimited-free-doc
  This file is free documentation; the Free Software Foundation gives
  unlimited permission to copy, distribute and modify it.
 
-Files: extra/yassl*COPYING
+Files: extra/yassl/COPYING*
 Copyright: 1989, 1991 Free Software Foundation, Inc
 License: GPL-verbatim
  Everyone is permitted to copy and distribute verbatim copies
@@ -343,10 +338,6 @@ Copyright:
  2008-2011 Monty Program Ab
 License: GPL-2
 
-Files: storage/pbxt/*
-Copyright: 2005-2007 PrimeBase Technologies GmbH
-License: GPL-2
-
 Files: storage/xtradb/*
 Copyright:
   1994-2013 Oracle and/or its affiliates
@@ -376,7 +367,7 @@ License: BSD-4-clause
 
 Files: cmd-line-utils/libedit/np/wcsdup.c
 Copyright: 2006 Aleksey Cheusov
-License:
+License: public-domain
  This material is provided "as is", with absolutely no warranty expressed
  or implied. Any use is at your own risk.
  .
@@ -533,7 +524,6 @@ Copyright: 1984,1989-1990,2000-2006 Free Software Foundation, Inc.
 License: GPL-2+
 
 Files: storage/innobase/include/pars0grm.h
- storage/innobase/pars/pars0grm.c
 Copyright: 1995-2009 Innobase Oy.
  1984,1989-1990,2000-2004 Free Software Foundation Inc.
 License: GPL-2
@@ -720,35 +710,6 @@ Files: tests/mail_to_db.pl
 Copyright: 1998 Abandoned TCX DataKonsult AB & Monty Program KB & Detron HB
 License: public-domain
  This file is public domain and comes with NO WARRANTY of any kind
-
-Files: dbug/dbug_analyze.c
-Copyright: 1987 June Binayak Banerjee
-License: public-domain
- This program may be freely distributed under the same terms and
- conditions as Fred Fish's Dbug package.
-
-Files: mysys/sha1.c
-Copyright:
- 2002, 2004, 2006 MySQL AB
- 2001 The Internet Society
-License: GPL-2
-
-Files: regex/regexp.c
-Copyright: 1986 University of Toronto
-License: BSD-like
- Permission is granted to anyone to use this software for any
- purpose on any computer system, and to redistribute it freely,
- subject to the following restrictions:
- .
- 1. The author is not responsible for the consequences of use of
-        this software, no matter how awful, even if they arise
-    from defects in it.
- .
- 2. The origin of this software must not be misrepresented, either
-    by explicit claim or by omission.
- .
- 3. Altered versions must be plainly marked as such, and must not
-    be misrepresented as being the original software.
 
 Files: scripts/mysqlaccess.conf
 Copyright: 1997, Yves.Carlier@rug.ac.be
