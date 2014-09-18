@@ -31,7 +31,7 @@ Package: libmariadbclient18
 Section: libs
 Architecture: any
 Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
-Pre-Depends: multiarch-support, ${misc:Pre-Depends}
+Pre-Depends: ${misc:Pre-Depends}
 Conflicts: mariadb-galera-server-5.5,
            mariadb-server-5.1,
            mariadb-server-5.2,
@@ -49,7 +49,7 @@ Description: MariaDB database client library
 Package: libmariadbd-dev
 Architecture: any
 Section: libdevel
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Depends: libmariadbclient-dev (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
@@ -66,7 +66,7 @@ Description: MariaDB embedded database development files
 Package: libmariadbclient-dev
 Architecture: any
 Section: libdevel
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Depends: libmariadbclient18 (= ${binary:Version}),
          zlib1g-dev,
          ${misc:Depends},
