@@ -23,7 +23,7 @@
        ;;
      *)
        echo "Internal program error (non-fatal):" \
-@@ -794,6 +793,13 @@ then
+@@ -795,6 +794,13 @@ then
  fi
  
  #
