@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.13-1) experimental; urgency=low
+mariadb-10.0 (10.0.13-1) UNRELEASED; urgency=low
 
   * New upstream release. (Closes: #757026)
   * Fixed wrongly applied fix of MDEV-5957
