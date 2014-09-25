@@ -1,23 +1,22 @@
-# Translation of mysql-dfsg-5.1 debconf template to Swedish
-# Copyright (C) 2009 Martin Bagge <brother@bsnet.se>
-# This file is distributed under the same license as the mysql-dfsg-5.1 package.
-# 
+# Translation of mariadb-10.0 debconf template to Swedish
+# Copyright (C) 2014 Martin Bagge <brother@bsnet.se>
+# This file is distributed under the same license as the mariadb-10.0 package.
+#
 # Andreas Henriksson <andreas@fatal.se>, 2007
-# Martin Bagge <brother@bsnet.se>, 2009
+# Martin Bagge <brother@bsnet.se>, 2009, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1 5.0.21-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2013-09-09 12:48+0300\n"
-"PO-Revision-Date: 2009-09-08 21:42+0100\n"
-"Last-Translator: Martin Bagge <brother@bsnet.se>\n"
+"PO-Revision-Date: 2014-09-25 10:20+0100\n"
+"Last-Translator: Martin Bagge / brother <brother@bsnet.se>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
-"Language: sv\n"
+"Language: Swedish\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Swedish\n"
-"X-Poedit-Country: Sweden\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #. Type: boolean
 #. Description
@@ -161,10 +160,6 @@ msgstr "Du bör kontrollera kontots lösenord efter installationen av paketet."
 #. Type: error
 #. Description
 #: ../mariadb-server-10.0.templates:7001
-#, fuzzy
-#| msgid ""
-#| "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
-#| "more information."
 msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
@@ -182,7 +177,7 @@ msgstr "Fel vid inmatning av lösenord"
 #. Description
 #: ../mariadb-server-10.0.templates:8001
 msgid "The two passwords you entered were not the same. Please try again."
-msgstr "De två lösenorden du angav stämde inte överrens. Prova igen."
+msgstr "De två lösenorden du angav stämde inte överens. Prova igen."
 
 #. Type: error
 #. Description
@@ -200,13 +195,13 @@ msgid ""
 msgstr ""
 "Stödet för NDB-kluster har tagits bort i MySQL-5.1. Migrera till det nya "
 "paketet mysql-cluster och ta bort alla rader som inleds med \"ndb\" från "
-"alla inställlningsfiler i /etc/mysql/."
+"alla inställningsfiler i /etc/mysql/."
 
 #. Type: boolean
 #. Description
 #: ../mariadb-server-10.0.templates:10001
 msgid "Really migrate to MariaDB?"
-msgstr ""
+msgstr "Verkligen byta till MariaDB?"
 
 #. Type: boolean
 #. Description
@@ -215,6 +210,8 @@ msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
 msgstr ""
+"MariaDB ersätter MySQL rakt av. Den kommer att använda din nuvarande "
+"inställningsfil (my.cnf) och de databaser som finns tillgängliga."
 
 #. Type: boolean
 #. Description
@@ -224,6 +221,10 @@ msgid ""
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
+"Observera att MariaDB har några ytterligare utvecklade funktioner som inte "
+"finns i MySQL. Att gå tillbaka till MySQL är inte garanterat något som "
+"kommer att fungera, åtminstone inte automatiskt som är fallet från MySQL "
+"till MariaDB."
 
 #~ msgid "Start the MariaDB server on boot?"
 #~ msgstr "Ska MariaDB startas vid systemets uppstart?"
