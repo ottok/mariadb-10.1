@@ -1,7 +1,6 @@
 kfreebsd_tests.patch
 kfreebsd-peercred.patch
 hppa_invalid_operands.patch
-disable_oqgraph.patch
 scripts__mysql_create_system_tables__no_test.patch
 scripts__mysqld_safe.sh__signals.patch
 scripts__mysql_install_db.sh__no_test.patch

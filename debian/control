@@ -9,7 +9,9 @@ Build-Depends: bison,
                debhelper (>= 9),
                dh-apparmor,
                libaio-dev [linux-any],
+               libboost-dev,
                libjemalloc-dev [linux-any],
+               libjudy-dev,
                libncurses5-dev (>= 5.0-6~),
                libpam0g-dev,
                libpcre3-dev,
@@ -286,3 +288,14 @@ Description: Connect storage engine for MariaDB
  connections to ODBC tables and remote MySQL tables, as well as a number of
  other interesting features.
  This package contains the Connect plugin for MariaDB.
+
+Package: mariadb-oqgraph-engine-10.0
+Architecture: any
+Depends: libjudydebian1,
+         mariadb-server-10.0|mariadb-galera-server-10.0,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: OQGraph storage engine for MariaDB
+ The OQGraph engine is a computation engine plugin for handling hierarchies
+ (trees) and graphs (friend-of-a-friend, etc) cleanly through standard SQL.
+ This package contains the OQGraph plugin for MariaDB.
