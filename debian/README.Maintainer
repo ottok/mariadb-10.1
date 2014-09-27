@@ -119,11 +119,11 @@ If there are any rejects, inspect the files and update the patches.
 ### Maintaining symbols file for libmariadbclient18 et al ###
 
 Update symbols file:
-  dpkg-gensymbols -plibmariadbclient18 -Idebian/libmariadbclient18.symbols
--Pdebian/libmariadbclient18
--edebian/libmariadbclient18/usr/lib/mysql/plugin/mysql_clear_password.so
--edebian/libmariadbclient18/usr/lib/mysql/plugin/dialog.so
--edebian/libmariadbclient18/usr/lib/x86_64-linux-gnu/libmariadbclient.so.18.0.0
+  dpkg-gensymbols -plibmariadbclient18 -Idebian/libmariadbclient18.symbols \
+-Pdebian/libmariadbclient18 \
+-edebian/libmariadbclient18/usr/lib/mysql/plugin/mysql_clear_password.so \
+-edebian/libmariadbclient18/usr/lib/mysql/plugin/dialog.so \
+-edebian/libmariadbclient18/usr/lib/x86_64-linux-gnu/libmariadbclient.so.18.0.0 \
 > symbols.patch
 
   patch debian/libmariadbclient18.symbols symbols.patch

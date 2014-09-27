@@ -222,6 +222,7 @@ libmariadbclient.so.18 libmariadbclient18 #MINVER#
  mysql_num_fields@libmariadbclient_18 5.5.36
  mysql_num_rows@libmariadbclient_16 5.5.36
  mysql_num_rows@libmariadbclient_18 5.5.36
+ mysql_options4@libmariadbclient_18 10.0.14
  mysql_options@libmariadbclient_16 5.5.36
  mysql_options@libmariadbclient_18 5.5.36
  mysql_ping@libmariadbclient_16 5.5.36

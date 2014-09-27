@@ -3,7 +3,8 @@ mariadb-10.0 (10.0.14-1) UNRELEASED; urgency=low
   * New upstream release. (Closes: #757026)
   * d/control: Removed Provides: libmysqlclient-dev (Closes: #759309)
   * d/control: Removed Provides: libmysqld-dev with same motivation
-  * Updated Swedish translation by Martin Bagge and Anders Jonsson (Closes: #762795)
+  * Updated Swedish translation by Martin Bagge
+    and Anders Jonsson (Closes: #762795)
   * Updated Spanish translation by Javier Fernandez-Sanguino (Closes: #762751)
 
  -- Otto Kekäläinen <otto@seravo.fi>  Thu, 28 Aug 2014 00:39:02 +0300
