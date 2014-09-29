@@ -150,6 +150,10 @@ Copyright:
  2013-2014, Otto Kekäläinen <otto@seravo.fi>
 License: GPL-2+
 
+Files: plugin/feedback/*
+Copyright: 2010 Sergei Golubchik and Monty Program Ab
+License: GPL-2+
+
 Files: debian/additions/mysqlreport*
 Copyright: 2006-2008, Daniel Nichter <public@codenode.com>
 License: GPL-2+
@@ -271,12 +275,17 @@ Files: BUILD/*
  tests/*
  unittest/*
  vio/*
-Copyright: 1979-2008 MySQL AB
+Copyright: 1979-2009 MySQL AB
            1995-2010 Sun Microsystems Inc
            1994-1997,2000-2014 Oracle and/or its affiliates
            2010 Kristian Nielsen and Monty Program AB
-           2010 Sergei Golubchik and Monty Program Ab
-           2008-2011,2012-2013 Monty Program AB
+           2010,2013 Sergei Golubchik and Monty Program Ab
+           2008-2011,2012-2014 Monty Program AB
+           2008-2014 SykSQL Ab
+           2004-2011 Olivier Bertrand
+           2008-2014 Kentoku Shiba
+           2013 Sergey Vojtovich and MariaDB Foundation
+           2006 MySQL AB & MySQL Finland AB & TCX DataKonsult AB
 License: GPL-2
 
 Files: extra/*/INSTALL
@@ -313,15 +322,18 @@ Files: storage/innobase/*
 Copyright:
  1994-2011 Sergei A. Golubchik
  1996 Michael Widenius
- 1994-2012 Oracle and/or its affiliates
+ 1994-2014 Oracle and/or its affiliates
  2008-2009 Google Inc
- 2009, Sun Microsystems, Inc
+ 2009 Sun Microsystems, Inc
  2009 Percona Inc
+ 2013, 2014 SkySQL Ab
+ 2012 Facebook Inc
 License: GPL-2
 
 Files: storage/maria/*
 Copyright:
  2008-2009 Sun Microsystems, Inc
+ 2008 Sun AB
  2006 MySQL Finland AB
  2006 TCX DataKonsult AB
  2003-2008 MySQL AB
@@ -332,13 +344,16 @@ Copyright:
  2006 Ramil Kalimullin
  2006 Alexey Botchkov
  2008-2011 Monty Program Ab
+ 2006 MySQL AB & MySQL Finland AB & TCX DataKonsult AB
 License: GPL-2
 
 Files: storage/xtradb/*
 Copyright:
-  1994-2014 Oracle and/or its affiliates
+  1994-2014 Oracle and/or its affiliate
+  2011-2013 Orcale Corpn
   1994-2013 Innobase Oy
-  2008 Google Inc
+  2008-2009 Google Inc
+  2009-2010,2012 Facebook Inc
 License: GPL-2
 
 Files: storage/innobase/COPYING.Google
@@ -440,7 +455,7 @@ Files: client/completion_hash.h
  scripts/mysqld_multi.sh
  mysql-test/mysql-stress-test.pl
  mysql-test/std_data/checkDBI_DBD-mysql.pl
-Copyright: 2000-2012 Oracle and/or its affiliates
+Copyright: 2000-2013 Oracle and/or its affiliates
            2000-2007 MySQL AB
            2009 Sun Microsystems Inc
 License: LGPL
@@ -652,13 +667,13 @@ License: GPL-2
 
 Files: */CMakeLists.txt
 Copyright:
- 2006-2011, Oracle and/or its affiliates
+ 2006-2011,2013 Oracle and/or its affiliates
  2009, 2010 Sun Microsystems, Inc
- 2006 MySQL AB
+ 2006,2007 MySQL AB
 License: GPL-2
 
 Files: storage/ndb/test/ndbnet/*
-Copyright: 2004 MySQL AB
+Copyright: 2004-2005 MySQL AB
 License: LGPL
 
 Files: strings/ctype-win1250ch.c
@@ -715,6 +730,10 @@ Files: debian/additions/innotop/*
 Copyright: 2006-2009, Baron Schwartz <baron@xaprb.com>
 License: GPL-2 or Artistic
 
+Files: debian/additions/innotop/mysqlreport*
+Copyright: 2006-2008 Daniel Nichter <public@codenode.com>
+License: GPL2+
+
 Files: include/mysql_version.h.in
 Copyright: 1996, 1999, 2001 MySQL AB
 License: public-domain
@@ -730,7 +749,7 @@ Copyright: 2007-2014 Tokutek, Inc
 License: GPL-2
 
 Files: zlib/CMakeLists.txt
-Copyright: 2006, 2013, Oracle and/or its affiliates
+Copyright: 2006, 2014, Oracle and/or its affiliates
 License: GPL-2
 
 License: GPL-2
