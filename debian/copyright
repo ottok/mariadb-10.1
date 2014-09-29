@@ -579,12 +579,12 @@ License: public-domain
  .
  .
  This previously copyrighted work has been placed into the  public
- domain	by  the  author  and  may be freely used for any purpose
+ domain by  the  author  and  may be freely used for any purpose
  private or commercial.
  .
  Because of the number of inquiries I was receiving about the  use
  of this product in commercially developed works I have decided to
- simply make it public domain to further its unrestricted use.	I
+ simply make it public domain to further its unrestricted use. I
  specifically  would  be  most happy to see this material become a
  part of the standard Unix distributions by AT&T and the  Berkeley
  Computer  Science  Research Group, and a standard part of the GNU
@@ -593,7 +593,7 @@ License: public-domain
  I would appreciate it, as a courtesy, if this notice is  left  in
  all copies and derivative works.  Thank you.
  .
- The author makes no warranty of any kind  with	respect  to  this
+ The author makes no warranty of any kind  with respect  to  this
  product  and  explicitly disclaims any implied warranties of mer-
  chantability or fitness for any particular purpose.
 
@@ -724,6 +724,10 @@ Copyright:
  2007 Antony T Curtis
  2008-2009 Patrick Galbraith
 License: BSD-3-clause
+
+Files: storage/tokudb/*
+Copyright: 2007-2013 Tokutek, Inc
+License: GPL-2
 
 Files: zlib/CMakeLists.txt
 Copyright: 2006, 2013, Oracle and/or its affiliates
