@@ -124,8 +124,8 @@ Comment:
 
 Files: *
 Copyright:
- 2000, 2012, Oracle and/or its affiliates. All rights reserved.
- 2008-2013 Monty Program Ab
+ 2000-2012, Oracle and/or its affiliates. All rights reserved.
+ 2008-2013 Monty Program AB
 License: GPL-2
 
 Files: debian/*
@@ -273,10 +273,10 @@ Files: BUILD/*
  vio/*
 Copyright: 1979-2008 MySQL AB
            1995-2010 Sun Microsystems Inc
-           1994-1997,2000-2012 Oracle and/or its affiliates
+           1994-1997,2000-2014 Oracle and/or its affiliates
            2010 Kristian Nielsen and Monty Program AB
            2010 Sergei Golubchik and Monty Program Ab
-           2008-2011 Monty Program AB
+           2008-2011,2012-2013 Monty Program AB
 License: GPL-2
 
 Files: extra/*/INSTALL
@@ -336,7 +336,7 @@ License: GPL-2
 
 Files: storage/xtradb/*
 Copyright:
-  1994-2013 Oracle and/or its affiliates
+  1994-2014 Oracle and/or its affiliates
   1994-2013 Innobase Oy
   2008 Google Inc
 License: GPL-2
@@ -634,7 +634,7 @@ Copyright: 1997-2000 - Kungliga Tekniska Högskolan
 License: BSD-3-clause
 
 Files: storage/ndb/test/include/getarg.h
-Copyright: 2003 MySQL AB
+Copyright: 2003-2005 MySQL AB
  1997-1999 Kungliga Tekniska Högskolan
 License: BSD-3-clause or GPL-2
 
@@ -726,7 +726,7 @@ Copyright:
 License: BSD-3-clause
 
 Files: storage/tokudb/*
-Copyright: 2007-2013 Tokutek, Inc
+Copyright: 2007-2014 Tokutek, Inc
 License: GPL-2
 
 Files: zlib/CMakeLists.txt
