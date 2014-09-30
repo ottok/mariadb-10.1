@@ -1,0 +1,62 @@
+Description: Fix maria.maria-no-logging test failure
+ Backported fix done by upstream that will be included
+ in next release (10.0.15).
+Author: Otto Kekäläinen <otto@seravo.fi>
+Bug: https://mariadb.atlassian.net/browse/MDEV-5120
+Last-Update: 2014-09-30
+
+=== modified file 'include/maria.h'
+--- old/include/maria.h        2014-02-19 10:05:15 +0000
++++ new/include/maria.h        2014-09-30 17:31:14 +0000
+@@ -23,12 +23,10 @@
+ extern "C" {
+ #endif
+ #include <my_base.h>
+-#include <my_sys.h>
+ #include <m_ctype.h>
+ #include "my_compare.h"
+ #include "ft_global.h"
+ #include <myisamchk.h>
+-#include <mysql/plugin.h>
+ 
+ #define MARIA_CANNOT_ROLLBACK
+
+ 
+=== modified file 'storage/maria/ha_maria.cc'
+--- old/storage/maria/ha_maria.cc        2014-08-07 16:06:56 +0000
++++ new/storage/maria/ha_maria.cc        2014-09-30 17:31:14 +0000
+@@ -21,7 +21,7 @@
+ #endif
+ 
+ #define MYSQL_SERVER 1
+-#include <mysql/plugin.h>
++#include <my_global.h>
+ #include <m_ctype.h>
+ #include <my_dir.h>
+ #include <myisampack.h>
+
+=== modified file 'storage/maria/unittest/ma_maria_log_cleanup.c'
+--- old/storage/maria/unittest/ma_maria_log_cleanup.c        2013-09-14 01:09:36 +0000
++++ new/storage/maria/unittest/ma_maria_log_cleanup.c        2014-09-30 17:31:14 +0000
+@@ -14,7 +14,6 @@
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+ 
+ #include "../maria_def.h"
+-#include <my_dir.h>
+ #ifdef _WIN32
+ #include <direct.h> /* rmdir */
+ #endif
+
+=== modified file 'storage/maria/unittest/test_file.c'
+--- old/storage/maria/unittest/test_file.c        2011-04-25 15:22:25 +0000
++++ new/storage/maria/unittest/test_file.c        2014-09-30 17:31:14 +0000
+@@ -13,7 +13,7 @@
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+ 
+-#include <tap.h>
++#include <tap.h>                                /* Includes my_global.h */
+ #include <my_sys.h>
+ #include <my_dir.h>
+ #include "test_file.h"
+

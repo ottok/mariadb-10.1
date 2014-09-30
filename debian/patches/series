@@ -6,6 +6,7 @@ scripts__mysql_config__libs.patch
 mysql-test__db_test.patch
 replace_dash_with_bash_mbug675185.patch
 extend_default_test_timeout_for_tokudb.patch
+fix-maria-no-logging.patch
 remove_rename_mariadb-server_files_in.patch
 innodb_simulate_comp_test_speedup.patch
 fix-spelling-errors.patch
