@@ -294,12 +294,14 @@ Files: storage/oqgraph/*
 Copyright:
  2007-2013 Arjen G Lentz & Antony T Curtis for Open Query
  2000-2006 MySQL AB
-License: GPL-2
+License: GPL-2+
 
-Files: storage/oqgraph/graphcore.*
+Files: storage/oqgraph/ha_oqgraph.*
+ storage/oqgraph/oqgraph_probes.d
 Copyright:
  2007-2013 Arjen G Lentz & Antony T Curtis for Open Query
-License: GPL-2+
+ 2000-2006 MySQL AB
+License: GPL-2
 
 Files: extra/*/INSTALL
 Copyright: 1994-1996, 1999-2002, 2004-2006, Free Software Foundation, Inc.
@@ -342,6 +344,11 @@ Copyright:
  2013, 2014 SkySQL Ab
  2012 Facebook Inc
 License: GPL-2
+
+Files: storage/innobase/ut/ut0crc32.cc
+Copyright: 2009, 2010 Facebook, Inc.
+           2011, Oracle and/or its affiliates.
+License: GPL-2 and BSD-2-clause
 
 Files: storage/maria/*
 Copyright:
@@ -452,7 +459,6 @@ Files: client/completion_hash.h
  strings/strxnmov.c
  strings/ctype-uca.c
  strings/ctype-ucs2.c
- strings/strend.c
  strings/ctype-utf8.c
  support-files/MacOSX/postflight.sh
  support-files/MacOSX/preflight.sh
@@ -549,25 +555,69 @@ Copyright: 1984,1989-1990,2000-2006 Free Software Foundation, Inc.
 License: GPL-2+
 
 Files: storage/innobase/include/pars0grm.h
+ storage/innobase/pars/pars0grm.cc
 Copyright: 1995-2009 Innobase Oy.
  1984,1989-1990,2000-2004 Free Software Foundation Inc.
-License: GPL-2
- As a special exception, when this file is copied by Bison into a
- Bison output file, you may use that output file without restriction.
- This special exception was added by the Free Software Foundation
- in version 1.24 of Bison.
+License: GPL-2+-with-bison-exception
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2, or (at your option)
+ any later version.
  .
- This program is free software; you can redistribute it and/or modify it under
- the terms of the GNU General Public License as published by the Free Software
- Foundation; version 2 of the License.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
  .
- This program is distributed in the hope that it will be useful, but WITHOUT
- ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
  .
- You should have received a copy of the GNU General Public License along with
- this program; if not, write to the Free Software Foundation, Inc.,
- 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+ As a special exception, you may create a larger work that contains
+ part or all of the Bison parser skeleton and distribute that work
+ under terms of your choice, so long as that work isn't itself a
+ parser generator using the skeleton or a modified version thereof
+ as a parser skeleton.  Alternatively, if you modify or redistribute
+ the parser skeleton itself, you may (at your option) remove this
+ special exception, which will cause the skeleton and the resulting
+ Bison output files to be licensed under the GNU General Public
+ License without this special exception.
+ .
+ This special exception was added by the Free Software Foundation in
+ version 2.2 of Bison.
+
+Files: storage/innobase/fts/fts0pars.cc
+ storage/innobase/fts/fts0pars.cc
+ storage/innobase/include/fts0pars.h
+Copyright: 1984, 1989-1990, 2000-2006  Free Software Foundation, Inc.
+License: GPL-3+-with-bison-exception
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ .
+ As a special exception, you may create a larger work that contains
+ part or all of the Bison parser skeleton and distribute that work
+ under terms of your choice, so long as that work isn't itself a
+ parser generator using the skeleton or a modified version thereof
+ as a parser skeleton.  Alternatively, if you modify or redistribute
+ the parser skeleton itself, you may (at your option) remove this
+ special exception, which will cause the skeleton and the resulting
+ Bison output files to be licensed under the GNU General Public
+ License without this special exception.
+ .
+ This special exception was added by the Free Software Foundation in
+ version 2.2 of Bison.
+
 
 Files: include/t_ctype.h
  strings/t_ctype.h
@@ -575,6 +625,22 @@ Copyright: 2000 MySQL AB
  1998 Theppitak Karoonboonyanan
  1998-1999 Pruet Boonma
 License: GPL-2
+
+Files: strings/strend.c
+Copyright: Richard A. O'Keefe.
+   2000 TXT DataKonsult Ab & Monty Program Ab
+   2009-2011, Monty Program Ab
+License: BSD-2-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+ .
+  2. Redistributions in binary form must the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
 
 Files: cmd-line-utils/libedit/np/strlcat.c
  cmd-line-utils/libedit/np/strlcpy.c
@@ -670,6 +736,11 @@ License: BSD-3-clause or GPL-2
 Files: plugin/handler_socket/*
 Copyright:
  2010 DeNA Co.,Ltd.
+License: BSD-3-clause
+
+Files: pcre/*
+Copyright: 1997-2014 University of Cambridge
+           2003-2014 Google Inc.
 License: BSD-3-clause
 
 Files: plugin/semisync/*
@@ -770,6 +841,64 @@ Files: storage/tokudb/*
 Copyright: 2007-2014 Tokutek, Inc
 License: GPL-2
 
+Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/ltmain.sh
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/depcomp
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/config.guess
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/compile
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzless.in
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/config.sub
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzdiff.in
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt_int.h
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/Makefile.am
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzmore.in
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzgrep.in
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/extra/scanlzma/scanlzma.c
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/missing
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/libtool.m4
+Copyright: 1987-2009 Free Software Foundation, Inc.
+ 1992,1993 Jean-loup Gailly
+ Andrew Dudman
+ Lasse Collin
+ 2006 Timo Lindfors
+ 1996 Fran,cois Pinard <pinard@iro.umontreal.ca>
+ 1996 Gordon Matzigkeit
+License: GPL-2+
+
+Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/acx_pthread.m4
+Copyright:  2007 Steven G. Johnson <stevenj@alum.mit.edu>
+License: GPL-3+
+
+Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt.*
+Copyright:  1987-2009 Free Software Foundation, Inc.
+License: LGPL-2.1+
+
+Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/install-sh
+Copyright: Copyright (C) 1994 X Consortium
+License: MIT/X11
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to
+ deal in the Software without restriction, including without limitation the
+ rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ sell copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNEC-
+ TION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ .
+ Except as contained in this notice, the name of the X Consortium shall not
+ be used in advertising or otherwise to promote the sale, use or other deal-
+ ings in this Software without prior written authorization from the X Consor-
+ tium.
+ .
+ FSF changes to this file are in the public domain.
+
 Files: zlib/CMakeLists.txt
 Copyright: 2006, 2014, Oracle and/or its affiliates
 License: GPL-2
@@ -808,6 +937,25 @@ License: GPL-2+
  .
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+License: LGPL-2.1+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation; either version 2.1, or (at your option)
+ any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+ .
+ You should have received a copy of the GNU Lesser General Public License along
+ with this program; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+ .
+ On Debian and systems the full text of the GNU Library General Public
+ License version 2.1 can be found in the file
+ `/usr/share/common-licenses/LGPL-2.1`
 
 License: LGPL
  This library is free software; you can redistribute it and/or
