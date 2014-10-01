@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.14-1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.14-1) experimental; urgency=low
 
   * New upstream release. (Closes: #757026)
   * d/control: Removed Provides: libmysqlclient-dev (Closes: #759309)
