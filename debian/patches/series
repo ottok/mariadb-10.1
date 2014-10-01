@@ -1,4 +1,5 @@
 kfreebsd_tests.patch
+disable-buggy-tokudb-tests.patch
 scripts__mysql_create_system_tables__no_test.patch
 scripts__mysqld_safe.sh__signals.patch
 scripts__mysql_install_db.sh__no_test.patch
