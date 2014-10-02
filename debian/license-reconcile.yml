@@ -2,7 +2,9 @@ Rules:
  rules:
   -
    Glob: storage/maria/ma_commit.c storage/maria/trnman.h storage/maria/trnman_public.h storage/maria/unittest/trnman-t.c include/waiting_threads.h unittest/mysys/waiting_threads-t.c mysys/waiting_threads.c storage/maria/trnman.c include/maria.h
-   Copyright: MySQL AB, 2008-2009 Sun Microsystems, Inc
+   Copyright:
+    - MySQL AB,
+    - 2008-2009 Sun Microsystems, Inc
   -
    Glob: storage/connect/*
    Copyright: 1993-2014 Olivier Bertrand
@@ -10,10 +12,30 @@ Rules:
    Glob: storage/connect/inihandl.c
    VerifyLicense: LGPL-2.1+
   -
+   Glob: mysys/waiting_threads.c
+   Copyright:
+      - 2011, 2013, Monty Program Ab,
+      - 2008 MySQL AB,
+      - 2008-2009 Sun Microsystems, Inc
+  -
+   Glob: storage/innobase/ut/ut0crc32.cc
+   License: GPL-2 and BSD-2-clause
+  -
+   Glob: storage/oqgraph/graphcore-graph.h storage/oqgraph/graphcore.h storage/oqgraph/graphcore-graph.cc \
+    storage/oqgraph/graphcore-types.h storage/oqgraph/graphcore-config.h storage/oqgraph/graphcore.cc \
+    storage/oqgraph/oqgraph_judy.* storage/oqgraph/oqgraph_shim.* storage/oqgraph/oqgraph_trunk.*
+   License: GPL-2+
+  -
+   Glob: storage/maria/ma_rt_index.c storage/maria/ma_rt_mbr.c storage/maria/ma_sp_defs.h storage/maria/ma_rt_index.h storage/maria/ma_rt_mbr.h
+   Copyright: MySQL AB, Ramil Kalimullin, MySQL Finland AB
+  -
    Glob: extra/yassl*COPYING
    Contains: Everyone is permitted to copy and distribute verbatim copies
    CopyrightExtract: &extract Copyright\s+\([Cc]\)\s(\Y+[\w\s,]+)\.
    License: GPL-verbatim
+  -
+   Glob: storage/connect/CMakeLists.txt
+   VerifyLicense: GPL-2
   -
    Glob: storage/innobase/COPYING.*
    CopyrightExtract: *extract

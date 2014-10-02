@@ -280,6 +280,7 @@ Copyright: 1979-2009 MySQL AB
            1994-1997,2000-2014 Oracle and/or its affiliates
            2010 Kristian Nielsen
            2012 MariaDB Services
+           2013 MariaDB Foundation.
            2010,2013 Sergei Golubchik
            1985,1995,2008-2011,2012-2014 Monty Program AB
            2008-2014 SykSQL Ab
@@ -290,11 +291,30 @@ Copyright: 1979-2009 MySQL AB
            2012 Michael Widenius
 License: GPL-2
 
+Files: include/ma_dyncol.h include/queues.h mysys/ma_dyncol.c mysys/queues.c
+Copyright: 2010,2011,2013 Monty Program Ab
+ 2011,2012 Oleksandr Byelkin
+License: BSD-2-clause
+
+
+Files: client/async_example.c
+Copyright: 2011 Kristian Nielsen and Monty Program Ab
+License: LGPL-2.1+
+
 Files: storage/oqgraph/*
 Copyright:
  2007-2013 Arjen G Lentz & Antony T Curtis for Open Query
  2000-2006 MySQL AB
 License: GPL-2+
+
+Files: storage/connect/connect.cc
+Copyright: 2004-2012 Olivier Bertrand
+License: GPL-2+
+
+Files: storage/connect/inihandl.c
+Copyright: 1993 Miguel de Icaza
+ 1996 Alexandre Julliard
+License: LGPL2.1+
 
 Files: storage/oqgraph/ha_oqgraph.*
  storage/oqgraph/oqgraph_probes.d
@@ -479,6 +499,10 @@ Copyright: 2000-2013 Oracle and/or its affiliates
            2000-2007 MySQL AB
            2009 Sun Microsystems Inc
 License: LGPL
+
+Files: BUILD/util.sh
+Copyright: 2010 Kristian Nielsen and Monty Program AB
+License: GPL-2
 
 Files: storage/archive/azio.c
  storage/archive/azlib.h
