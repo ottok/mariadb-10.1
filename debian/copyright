@@ -289,6 +289,8 @@ Copyright: 1979-2009 MySQL AB
            2013 Sergey Vojtovich and MariaDB Foundation
            2006 MySQL AB & MySQL Finland AB & TCX DataKonsult AB
            2012 Michael Widenius
+           2010-2011 DeNA Co.,Ltd.
+           2011 Kentoku SHIBA
 License: GPL-2
 
 Files: extra/yassl/COPYING* extra/yassl/taocrypt/COPYING*
@@ -443,7 +445,8 @@ Copyright:
   1994-2013 Innobase Oy
   2008-2009 Google Inc
   2009-2010,2012 Facebook Inc
-  2011-2012 Percona Inc
+  2009-2012 Percona Inc
+  2013, 2014, SkySQL Ab
 License: GPL-2
 
 Files: storage/innobase/ut/ut0crc32.cc storage/xtradb/ut/ut0crc32.cc
