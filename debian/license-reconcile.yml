@@ -1,6 +1,15 @@
 Rules:
  rules:
   -
+   Glob: storage/maria/ma_commit.c storage/maria/trnman.h storage/maria/trnman_public.h storage/maria/unittest/trnman-t.c include/waiting_threads.h unittest/mysys/waiting_threads-t.c mysys/waiting_threads.c storage/maria/trnman.c include/maria.h
+   Copyright: MySQL AB, 2008-2009 Sun Microsystems, Inc
+  -
+   Glob: storage/connect/*
+   Copyright: 1993-2014 Olivier Bertrand
+  -
+   Glob: storage/connect/inihandl.c
+   VerifyLicense: LGPL-2.1+
+  -
    Glob: extra/yassl*COPYING
    Contains: Everyone is permitted to copy and distribute verbatim copies
    CopyrightExtract: &extract Copyright\s+\([Cc]\)\s(\Y+[\w\s,]+)\.
