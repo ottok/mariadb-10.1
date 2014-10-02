@@ -6,11 +6,43 @@ Rules:
     - MySQL AB,
     - 2008-2009 Sun Microsystems, Inc
   -
+   Glob:  storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/install-sh
+   License: MIT/X11
+  -
    Glob: storage/connect/*
    Copyright: 1993-2014 Olivier Bertrand
   -
+   Glob: client/async_example.c include/my_context.h mysys/my_context.c storage/connect/inihandl.c \
+    storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt.c storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt.in.h \
+    storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt1.c storage/connect/inihandl.c \
+    tests/nonblock-wrappers.h tests/async_queries.c sql-common/mysql_async.c
+   License: LGPL-2.1+
+  -
+   Glob: mysys/my_port.c
+   License: LGPL-2
+  -
+   Glob: debian/additions/innotop/*
+   License: GPL-2 or Artistic
+  -
+   Glob: storage/innobase/include/pars0grm.h storage/innobase/pars/pars0grm.cc \
+    storage/xtradb/include/pars0grm.h storage/xtradb/pars/pars0grm.cc
+   License: GPL-2+-with-bison-exception
+  -
+   Glob: storage/innobase/fts/fts0pars.cc sql/sql_yacc.cc sql/sql_yacc.h storage/innobase/include/fts0pars.h  \
+    storage/xtradb/fts/fts0pars.cc storage/xtradb/include/fts0pars.h
+   License: GPL-3+-with-bison-exception
+  -
    Glob: storage/connect/inihandl.c
    VerifyLicense: LGPL-2.1+
+  -
+   Glob: storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/acx_pthread.m4
+   License: GPL-3+
+  -
+   Glob: plugin/auth_pam/testing/pam_mariadb_mtr.c
+   License: public-domain
+  -
+   Glob: plugin/locale_info/locale_info.cc plugin/qc_info/qc_info.cc
+   License: BSD-3-clause
   -
    Glob: mysys/waiting_threads.c
    Copyright:
@@ -18,12 +50,15 @@ Rules:
       - 2008 MySQL AB,
       - 2008-2009 Sun Microsystems, Inc
   -
-   Glob: storage/innobase/ut/ut0crc32.cc
+   Glob: storage/innobase/ut/ut0crc32.cc storage/xtradb/ut/ut0crc32.cc
    License: GPL-2 and BSD-2-clause
   -
    Glob: storage/oqgraph/graphcore-graph.h storage/oqgraph/graphcore.h storage/oqgraph/graphcore-graph.cc \
     storage/oqgraph/graphcore-types.h storage/oqgraph/graphcore-config.h storage/oqgraph/graphcore.cc \
-    storage/oqgraph/oqgraph_judy.* storage/oqgraph/oqgraph_shim.* storage/oqgraph/oqgraph_trunk.*
+    storage/oqgraph/oqgraph_judy.* storage/oqgraph/oqgraph_shim.* storage/oqgraph/oqgraph_thunk.*
+   License: GPL-2+
+  -
+   Glob: include/maria.h include/myisamchk.h
    License: GPL-2+
   -
    Glob: storage/maria/ma_rt_index.c storage/maria/ma_rt_mbr.c storage/maria/ma_sp_defs.h storage/maria/ma_rt_index.h storage/maria/ma_rt_mbr.h

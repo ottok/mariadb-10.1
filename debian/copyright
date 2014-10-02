@@ -280,7 +280,7 @@ Copyright: 1979-2009 MySQL AB
            1994-1997,2000-2014 Oracle and/or its affiliates
            2010 Kristian Nielsen
            2012 MariaDB Services
-           2013 MariaDB Foundation.
+           2013 MariaDB Foundation
            2010,2013 Sergei Golubchik
            1985,1995,2008-2011,2012-2014 Monty Program AB
            2008-2014 SykSQL Ab
@@ -291,11 +291,67 @@ Copyright: 1979-2009 MySQL AB
            2012 Michael Widenius
 License: GPL-2
 
+Files: extra/yassl/COPYING* extra/yassl/taocrypt/COPYING*
+Copyright: 1989, 1991 Free Software Foundation, Inc
+License: GPL-verbatim
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+Files: include/maria.h include/myisamchk.h
+Copyright: 2006-2008 MySQL AB
+ 2008-2009 Sun Microsystems, Inc
+ 2009, 2013, Monty Program Ab
+License: GPL-2+
+
+Files: plugin/auth_pam/testing/pam_mariadb_mtr.c
+Copyright: none
+License: public-domain
+  This code is in the public domain and has no copyright.
+
+Files:  plugin/locale_info/locale_info.cc
+Copyright: 2013, Spaempresarial - Brazil, Roberto Spadim
+License: BSD-3-clause
+
+Files:  plugin/qc_info/qc_info.cc
+Copyright:  2008, Roland Bouman
+License: BSD-3-clause
+
+Files: tests/async_queries.c tests/nonblock-wrappers.h  sql-common/mysql_async.c
+Copyright: 2011 Kristian Nielsen and Monty Program Ab
+License: LGPL-2.1+
+
 Files: include/ma_dyncol.h include/queues.h mysys/ma_dyncol.c mysys/queues.c
+ unittest/mysys/ma_dyncol-t.c
 Copyright: 2010,2011,2013 Monty Program Ab
  2011,2012 Oleksandr Byelkin
 License: BSD-2-clause
 
+Files: include/my_context.h mysys/my_context.c
+Copyright: 2011,2012 Kristian Nielsen and Monty Program Ab
+License: LGPL-2.1+
+
+Files: mysys/my_port.c
+Copyright: 2002 MySQL AB
+License: LGPL-2
+
+Files: mysys/my_safehash.*
+Copyright: 2003-2007 MySQL AB
+License: GPL-2+
+
+Files: strings/bmove_upp.c strings/is_prefix.c strings/llstr.c
+ strings/longlong2str.c strings/strcont.c strings/strfill.c strings/strmov.c
+ strings/strnmov.c strings/bchange.c strings/int2str.c strings/my_strtoll10.c
+ strings/str2int.c strings/strappend.c strings/strcend.c
+Copyright: 2009-2013, Monty Program Ab
+           2000,2003 TXT DataKonsult Ab & Monty Program Ab
+License: BSD-2-clause
+
+Files: strings/strxmov.c  strings/strxnmov.c strings/strxnmov.c  strings/strxmov.c
+ strings/strnlen.c
+Copyright: 2009-2011, Monty Program Ab
+           2000 TXT DataKonsult Ab & Monty Program Ab
+           Richard A. O'Keefe
+License: BSD-2-clause
 
 Files: client/async_example.c
 Copyright: 2011 Kristian Nielsen and Monty Program Ab
@@ -314,7 +370,7 @@ License: GPL-2+
 Files: storage/connect/inihandl.c
 Copyright: 1993 Miguel de Icaza
  1996 Alexandre Julliard
-License: LGPL2.1+
+License: LGPL-2.1+
 
 Files: storage/oqgraph/ha_oqgraph.*
  storage/oqgraph/oqgraph_probes.d
@@ -328,12 +384,6 @@ Copyright: 1994-1996, 1999-2002, 2004-2006, Free Software Foundation, Inc.
 License: unlimited-free-doc
  This file is free documentation; the Free Software Foundation gives
  unlimited permission to copy, distribute and modify it.
-
-Files: extra/yassl/COPYING*
-Copyright: 1989, 1991 Free Software Foundation, Inc
-License: GPL-verbatim
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.
 
 Files: mysql-test/lib/mtr_misc.pl
  mysql-test/lib/My/SafeProcess.pm
@@ -353,6 +403,10 @@ Copyright:
  Sergei A. Golubchik
 License: GPL-2
 
+Files: storage/myisam/ft_myisam.c
+Copyright: 2000 MySQL AB & MySQL Finland AB & TCX DataKonsult AB
+License: GPL-2+
+
 Files: storage/innobase/*
 Copyright:
  1994-2011 Sergei A. Golubchik
@@ -364,11 +418,6 @@ Copyright:
  2013, 2014 SkySQL Ab
  2012 Facebook Inc
 License: GPL-2
-
-Files: storage/innobase/ut/ut0crc32.cc
-Copyright: 2009, 2010 Facebook, Inc.
-           2011, Oracle and/or its affiliates.
-License: GPL-2 and BSD-2-clause
 
 Files: storage/maria/*
 Copyright:
@@ -397,11 +446,16 @@ Copyright:
   2011-2012 Percona Inc
 License: GPL-2
 
-Files: storage/innobase/COPYING.Google
+Files: storage/innobase/ut/ut0crc32.cc storage/xtradb/ut/ut0crc32.cc
+Copyright: 2009, 2010 Facebook, Inc.
+           2011 Oracle and/or its affiliates.
+License: GPL-2 and BSD-2-clause
+
+Files: storage/innobase/COPYING.Google storage/xtradb/COPYING.Google
 Copyright: 2008 Google Inc
 License: BSD-3-clause
 
-Files: storage/innobase/COPYING.Percona
+Files: storage/innobase/COPYING.Percona storage/xtradb/COPYING.Percona
 Copyright: 2008-2009 Percona Inc
 License: BSD-3-clause
 
@@ -475,8 +529,6 @@ Files: client/completion_hash.h
  storage/ndb/test/run-test/make-html-reports.sh
  storage/ndb/test/run-test/make-index.sh
  storage/ndb/test/run-test/ndb-autotest.sh
- strings/strxmov.c
- strings/strxnmov.c
  strings/ctype-uca.c
  strings/ctype-ucs2.c
  strings/ctype-utf8.c
@@ -573,13 +625,13 @@ Copyright: 1996 Abandoned TCX DataKonsult AB & Monty Program KB & Detron HB
 License: public-domain
  This file is public domain and comes with NO WARRANTY of any kind
 
-Files: sql/sql_yacc.cc
- sql/sql_yacc.h
-Copyright: 1984,1989-1990,2000-2006 Free Software Foundation, Inc.
-License: GPL-2+
+Files: sql/sql_yacc.cc sql/sql_yacc.h storage/xtradb/fts/fts0pars.cc
+ storage/xtradb/include/fts0pars.h
+Copyright: 1984,1989-1990,2000-2011 Free Software Foundation, Inc.
+License: GPL-3+-with-bison-exception
 
-Files: storage/innobase/include/pars0grm.h
- storage/innobase/pars/pars0grm.cc
+Files: storage/innobase/include/pars0grm.h storage/xtradb/include/pars0grm.h
+ storage/xtradb/pars/pars0grm.cc storage/innobase/pars/pars0grm.cc
 Copyright: 1995-2009 Innobase Oy.
  1984,1989-1990,2000-2004 Free Software Foundation Inc.
 License: GPL-2+-with-bison-exception
@@ -878,7 +930,7 @@ Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/ltmain.sh
  storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzgrep.in
  storage/tokudb/ft-index/third_party/xz-4.999.9beta/extra/scanlzma/scanlzma.c
  storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/missing
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/libtool.m4
+ storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/*
 Copyright: 1987-2009 Free Software Foundation, Inc.
  1992,1993 Jean-loup Gailly
  Andrew Dudman
@@ -892,9 +944,13 @@ Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/acx_pthread.m4
 Copyright:  2007 Steven G. Johnson <stevenj@alum.mit.edu>
 License: GPL-3+
 
-Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt.*
-Copyright:  1987-2009 Free Software Foundation, Inc.
+Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt*
+Copyright: 1987-2009 Free Software Foundation, Inc.
 License: LGPL-2.1+
+
+Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt_int.h
+Copyright: 1989-1994,1996-1999,2001,2003,2004 Free Software Foundation, Inc.
+License: GPL-2+
 
 Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/install-sh
 Copyright: Copyright (C) 1994 X Consortium
