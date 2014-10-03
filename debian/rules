@@ -51,9 +51,7 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
 # Add support for verbose builds
-ifneq (,$(filter verbose,$(DEB_BUILD_OPTIONS)))
-    MAKEFLAGS += VERBOSE=1
-endif
+MAKEFLAGS += VERBOSE=1
 
 MAKE_TEST_TARGET:=test-force
 ifneq ($(findstring fulltest,$(DEB_BUILD_OPTIONS)),)

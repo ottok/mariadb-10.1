@@ -1,6 +1,8 @@
 mariadb-10.0 (10.0.14-2) UNRELEASED; urgency=low
 
-  * 
+  [ Tobias Frost ]
+  * Fix two lintian warnings in d/copyright (missing "-" between GPL and 2)
+  * Always be verbose when building the package and show compiler args
 
  -- Otto Kekäläinen <otto@seravo.fi>  Wed, 01 Oct 2014 22:00:11 +0300
 
