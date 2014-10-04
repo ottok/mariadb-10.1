@@ -6,6 +6,7 @@ mariadb-10.0 (10.0.14-2) UNRELEASED; urgency=low
 
   [ Otto Kekäläinen ]
   * Updated German translation by Chris Leick (Closes: #763952)
+  * Updated Dutch translation by Frans Spiesschaert (Closes: #764013)
 
  -- Otto Kekäläinen <otto@seravo.fi>  Wed, 01 Oct 2014 22:00:11 +0300
 
