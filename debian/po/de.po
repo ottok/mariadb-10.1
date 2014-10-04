@@ -1,30 +1,20 @@
-# translation of mysql-dfsg-5.1_5.1.37-1_de.po to Deutsch
-#
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans#
-#    Developers do not need to manually edit POT or PO files.
-#
+# German translation of mariadb-10.0 10.0.13-1
 # Alwin Meschede <ameschede@gmx.de>, 2006, 2007.
 # Thomas Mueller <thomas.mueller@tmit.eu>, 2009.
+# Chris Leick <c.leick@vollbio.de>, 2014.
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: mysql-dfsg-5.1_5.1.37-1_de\n"
+"Project-Id-Version: mariadb 10.0.13-1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2013-09-09 12:48+0300\n"
-"PO-Revision-Date: 2009-08-27 22:41+0200\n"
-"Last-Translator: Thomas Mueller <thomas.mueller@tmit.eu>\n"
+"PO-Revision-Date: 2014-10-04 08:12+0100\n"
+"Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: german <debian-l10n-german@lists.debian.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
 "Plural-Forms:  nplurals=2; plural=(n != 1);\n"
 
 #. Type: boolean
@@ -112,7 +102,7 @@ msgid ""
 "the data should be kept."
 msgstr ""
 "Falls geplant ist, nur eine höhere Version von MariaDB zu installieren oder "
-"ein anderes mariadb-server-Paket dieses bereits benutzt, sollten die Daten "
+"ein anderes MariaDB-Server-Paket dieses bereits benutzt, sollten die Daten "
 "behalten werden."
 
 #. Type: password
@@ -173,15 +163,11 @@ msgstr ""
 #. Type: error
 #. Description
 #: ../mariadb-server-10.0.templates:7001
-#, fuzzy
-#| msgid ""
-#| "Please read the /usr/share/doc/mariadb-server-5.1/README.Debian file for "
-#| "more information."
 msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
 msgstr ""
-"Für weitere Informationen lesen Sie /usr/share/doc/mariadb-server-5.1/README."
+"Für weitere Informationen lesen Sie /usr/share/doc/mariadb-server-10.0/README."
 "Debian."
 
 #. Type: error
@@ -221,7 +207,7 @@ msgstr ""
 #. Description
 #: ../mariadb-server-10.0.templates:10001
 msgid "Really migrate to MariaDB?"
-msgstr ""
+msgstr "Möchten Sie wirklich auf MariaDB migrieren?"
 
 #. Type: boolean
 #. Description
@@ -230,6 +216,8 @@ msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
 msgstr ""
+"MariaDB ist eine einspielbarer Ersatz für MySQL. Es wird Ihre aktuelle "
+"Konfigurationsdatei (my.cnf) und Ihre aktuellen Datenbanken verwenden."
 
 #. Type: boolean
 #. Description
@@ -239,14 +227,6 @@ msgid ""
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
-
-#~ msgid "Start the MariaDB server on boot?"
-#~ msgstr "Soll der MariaDB-Server automatisch beim Booten starten?"
-
-#~ msgid ""
-#~ "The MariaDB server can be launched automatically at boot time or manually "
-#~ "with the '/etc/init.d/mysql start' command."
-#~ msgstr ""
-#~ "Der MariaDB-Dienst kann entweder automatisch beim Systemstart oder "
-#~ "manuell durch Eingabe des Befehls »/etc/init.d/mysql start« gestartet "
-#~ "werden."
+"Beachten Sie, dass MariaDB über einige erweiterte Funktionalitäten verfügt, "
+"die es in MySQL nicht gibt. Ein Rückmigration klappt daher nicht immer, "
+"zumindest nicht automatisch, wie das Migrieren von MySQL auf MariaDB."
