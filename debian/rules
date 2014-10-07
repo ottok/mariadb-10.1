@@ -120,6 +120,7 @@ endif
 	    $(USE_STATIC_MYSQLD) \
 	    -$(MAKEFLAGS) \
 	    $(TOKUDB_OPT) \
+	    -DWITH_SSL=bundled \
 	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
 	    -DSYSTEM_TYPE="debian-$(DEB_BUILD_GNU_SYSTEM)" \
