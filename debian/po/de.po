@@ -29,7 +29,7 @@ msgstr "Möchten Sie wirklich eine ältere Version einspielen?"
 msgid "A file named /var/lib/mysql/debian-*.flag exists on this system."
 msgstr ""
 "Auf diesem System existiert eine Datei mit dem Namen /var/lib/mysql/debian-*."
-"flag"
+"flag."
 
 #. Type: boolean
 #. Description
@@ -39,7 +39,7 @@ msgid ""
 "version has been installed previously."
 msgstr ""
 "Diese Datei ist ein Hinweis darauf, dass früher ein MariaDB-Server-Paket mit "
-"einer höheren Version installiert war."
+"einer höheren Version installiert wurde."
 
 #. Type: boolean
 #. Description
@@ -49,7 +49,7 @@ msgid ""
 "able to use the current databases."
 msgstr ""
 "Es kann nicht garantiert werden, dass die gegenwärtig zu installierende "
-"Version dessen Daten benutzen kann."
+"Version dessen Datenbanken benutzen kann."
 
 #. Type: note
 #. Description
@@ -64,8 +64,8 @@ msgid ""
 "Using MariaDB under NIS/YP requires a mysql user account to be added on the "
 "local system with:"
 msgstr ""
-"Falls MariaDB mit NIS/YP genutzt wird, ist ein »mysql«-Benutzerkonto auf dem "
-"lokalen System notwendig:"
+"Falls MariaDB mit NIS/YP genutzt wird, muss ein »mysql«-Benutzerkonto auf dem "
+"lokalen System hinzugefügt werden mit:"
 
 #. Type: note
 #. Description
@@ -101,15 +101,15 @@ msgid ""
 "recent version or if a different mariadb-server package is already using it, "
 "the data should be kept."
 msgstr ""
-"Falls geplant ist, nur eine höhere Version von MariaDB zu installieren oder "
-"ein anderes MariaDB-Server-Paket dieses bereits benutzt, sollten die Daten "
-"behalten werden."
+"Falls geplant ist, das MariaDB-Paket zu entfernen, um lediglich "
+"eine höhere Version zu installieren oder ein anderes mariadb-server-Paket "
+"die Daten benutzt, sollten diese beibehalten werden."
 
 #. Type: password
 #. Description
 #: ../mariadb-server-10.0.templates:5001
 msgid "New password for the MariaDB \"root\" user:"
-msgstr "Neues Passwort für den MariaDB »root«-Benutzer:"
+msgstr "Neues Passwort für den MariaDB-»root«-Benutzer:"
 
 #. Type: password
 #. Description
@@ -118,14 +118,14 @@ msgid ""
 "While not mandatory, it is highly recommended that you set a password for "
 "the MariaDB administrative \"root\" user."
 msgstr ""
-"Obwohl es nicht zwingend erforderlich ist, wird nachdrücklich empfohlen für "
-"den administrativen MariaDB »root«-Benutzer ein Passwort zu setzen."
+"Obwohl es nicht zwingend erforderlich ist, wird nachdrücklich empfohlen, für "
+"den administrativen MariaDB-»root«-Benutzer ein Passwort zu setzen."
 
 #. Type: password
 #. Description
 #: ../mariadb-server-10.0.templates:5001
 msgid "If this field is left blank, the password will not be changed."
-msgstr "Wenn dieses Feld freigelassen wird, wird das Passwort nicht geändert."
+msgstr "Wenn Sie dieses Feld leer lassen, wird das Passwort nicht geändert."
 
 #. Type: password
 #. Description
@@ -137,7 +137,8 @@ msgstr "Wiederholen Sie das Passwort für den MariaDB-»root«-Benutzer:"
 #. Description
 #: ../mariadb-server-10.0.templates:7001
 msgid "Unable to set password for the MariaDB \"root\" user"
-msgstr "Konnte für den MariaDB-»root«-Benutzer kein Passwort setzen"
+msgstr ""
+"Passwort für den MariaDB-»root«-Benutzer konnte nicht gesetzt werden"
 
 #. Type: error
 #. Description
@@ -147,9 +148,9 @@ msgid ""
 "user. This may have happened because the account already has a password, or "
 "because of a communication problem with the MariaDB server."
 msgstr ""
-"Beim setzen des Passworts für den administrativen MariaDB-Benutzer ist ein "
+"Beim Setzen des Passworts für den administrativen MariaDB-Benutzer ist ein "
 "Fehler aufgetreten. Dies könnte daran liegen, dass der Benutzer bereits ein "
-"Passwort hat oder dass es ein Problem mit der Kommunikation mit dem MariaDB-"
+"Passwort hat oder dass es ein Problem bei der Kommunikation mit dem MariaDB-"
 "Server gibt."
 
 #. Type: error
@@ -199,8 +200,8 @@ msgid ""
 "config files below /etc/mysql/."
 msgstr ""
 "MySQL-5.1 bietet keine NDB-Clusterunterstützung mehr. Bitte migrieren Sie "
-"Ihr System zum neuen »mysql-cluster«-Paket und entfernen Sie alle Zeilen, "
-"die mit »ndb« beginnen aus allen Konfigurationsdateien im Verzeichnis /etc/"
+"Ihr System auf das neue »mysql-cluster«-Paket und entfernen Sie alle Zeilen, "
+"die mit »ndb« beginnen, aus allen Konfigurationsdateien im Verzeichnis /etc/"
 "mysql/."
 
 #. Type: boolean
@@ -216,7 +217,7 @@ msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
 msgstr ""
-"MariaDB ist eine einspielbarer Ersatz für MySQL. Es wird Ihre aktuelle "
+"MariaDB ist ein einspielbarer Ersatz für MySQL. Es wird Ihre aktuelle "
 "Konfigurationsdatei (my.cnf) und Ihre aktuellen Datenbanken verwenden."
 
 #. Type: boolean
@@ -228,5 +229,5 @@ msgid ""
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
 "Beachten Sie, dass MariaDB über einige erweiterte Funktionalitäten verfügt, "
-"die es in MySQL nicht gibt. Ein Rückmigration klappt daher nicht immer, "
-"zumindest nicht automatisch, wie das Migrieren von MySQL auf MariaDB."
+"die es in MySQL nicht gibt. Eine Rückmigration klappt daher nicht immer, "
+"zumindest nicht automatisch wie das Migrieren von MySQL auf MariaDB."
