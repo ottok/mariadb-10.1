@@ -12,6 +12,10 @@ mariadb-10.0 (10.0.14-2) UNRELEASED; urgency=low
     bundled YaSSL instead (Closes: #761911)
   * Fixed debconf value saving (Closes: #761452)
   * Re-enabled TokuDB after backporting upstream fix in MDEV-6815
+  * Removed libmariadbclient packages that provided the Debian-only
+    libmariadbclient.so library that nobody used. Instead developers are
+    encouraged to use the libraries from the package libmariadb-client-lgpl
+    instead (Closes: #739452) (Closes: #742172).
 
  -- Otto Kekäläinen <otto@seravo.fi>  Wed, 01 Oct 2014 22:00:11 +0300
 
