@@ -5,6 +5,7 @@ mariadb-10.0 (10.0.14-2) unstable; urgency=low
   * Always be verbose when building the package and show compiler args
 
   [ Otto Kekäläinen ]
+  * Upload to unstable
   * Updated German translation by Chris Leick and Holger Wansing
     (Closes: #763952)
   * Updated Dutch translation by Frans Spiesschaert (Closes: #764013)
