@@ -1,3 +1,10 @@
+mariadb-10.0 (10.0.14-3) unstable; urgency=low
+
+  * Added patch d/username-in-tests-replace.patch to fix
+    test failure (Closes: #769212).
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Wed, 12 Nov 2014 15:00:11 +0300
+
 mariadb-10.0 (10.0.14-2) unstable; urgency=low
 
   [ Tobias Frost ]

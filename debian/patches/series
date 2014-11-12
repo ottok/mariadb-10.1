@@ -1,3 +1,4 @@
+username-in-tests-replace.patch
 kfreebsd_tests.patch
 disable-buggy-tokudb-tests.patch
 scripts__mysql_create_system_tables__no_test.patch
