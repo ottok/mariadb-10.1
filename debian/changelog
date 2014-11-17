@@ -1,3 +1,13 @@
+mariadb-10.0 (10.0.14-4) unstable; urgency=low
+
+  * Updated patch d/username-in-tests-replace.patch to fix the
+    obfuscation done by anti-spam measures in the MariaDB
+    commit message view (Closes: #769865).
+  * Unified indentantion to two spaces in init file for easier
+    debugging of #609537
+
+ -- Otto Kekäläinen <otto@seravo.fi> Mon, 17 Nov 2014 11:45:11 +0200
+
 mariadb-10.0 (10.0.14-3) unstable; urgency=low
 
   * Added patch d/username-in-tests-replace.patch to fix

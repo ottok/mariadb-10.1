@@ -31,9 +31,9 @@ Last-Update: 2014-11-12
  
  --write_file $MYSQLTEST_VARDIR/tmp/peercred_test.txt
 ---replace_result $USER USER
-+--let $replace1=$USER at localhost
++--let $replace1=$USER@localhost
 +--let $replace2=$USER@%
-+--replace_result $replace1 "USER at localhost" $replace2 "USER@%"
++--replace_result $replace1 "USER@localhost" $replace2 "USER@%"
  select user(), current_user(), database();
  EOF
  
