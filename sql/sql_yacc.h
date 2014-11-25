@@ -1333,7 +1333,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 896 "/home/buildbot/bzr/build/sql/sql_yacc.yy"
+#line 897 "/home/buildbot/bzr/build/sql/sql_yacc.yy"
 
   int  num;
   ulong ulong_num;
@@ -1342,6 +1342,7 @@ typedef union YYSTYPE
   LEX_STRING lex_str;
   LEX_STRING *lex_str_ptr;
   LEX_SYMBOL symbol;
+  LEX_TYPE lex_type;
   Table_ident *table;
   char *simple_string;
   Item *item;
@@ -1396,7 +1397,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 1400 "/home/buildbot/bzr/build/mkdist/sql/sql_yacc.h"
+#line 1401 "/home/buildbot/bzr/build/mkdist/sql/sql_yacc.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
