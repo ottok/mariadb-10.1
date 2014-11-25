@@ -161,7 +161,8 @@ Architecture: any
 Suggests: mailx, mariadb-test, tinyca
 Recommends: libhtml-template-perl
 Pre-Depends: adduser (>= 3.40), debconf, mariadb-common
-Depends: libdbi-perl,
+Depends: bsdutils,
+         libdbi-perl,
          lsb-base (>= 3.0-10),
          mariadb-client-10.0 (>= ${source:Version}),
          mariadb-server-core-10.0 (>= ${binary:Version}),

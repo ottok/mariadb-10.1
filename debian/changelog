@@ -1,3 +1,18 @@
+mariadb-10.0 (10.0.15-1) unstable; urgency=low
+
+  * New upstream release, includes fixes for the following security issues:
+    - CVE-2014-6507
+    - CVE-2014-6491
+    - CVE-2014-6500
+    - CVE-2014-6469
+    - CVE-2014-6555
+    - CVE-2014-6559
+    - CVE-2014-6494
+    - CVE-2014-6496
+    - CVE-2014-6464
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Tue, 25 Nov 2014 21:45:43 +0200
+
 mariadb-10.0 (10.0.14-4) unstable; urgency=low
 
   * Updated patch d/username-in-tests-replace.patch to fix the
