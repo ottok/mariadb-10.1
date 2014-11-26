@@ -91,12 +91,14 @@ Breaks: mariadb-client-5.5,
         mysql-client,
         mysql-client-5.5,
         mysql-client-5.6,
-        virtual-mysql-client
+        virtual-mysql-client,
+        mariadb-server-10.0 (<< 10.0.13-1~)
 Replaces: mariadb-client-5.5,
           mysql-client,
           mysql-client-5.5,
           mysql-client-5.6,
-          virtual-mysql-client
+          virtual-mysql-client,
+          mariadb-server-10.0 (<< 10.0.13-1~)
 Provides: virtual-mysql-client
 Description: MariaDB database client binaries
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database

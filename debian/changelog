@@ -5,6 +5,11 @@ mariadb-10.0 (10.0.16-1~exp4) experimental; urgency=low
     emit an error code if mariadb-common is upgraded before mysql-common is.
   * Add patch to enhance build reproducibility
 
+  [ Arnaud Fontaine ]
+  * d/control: innochecksum manpage has been moved to mariadb-client-10.0 in
+    10.0.13-1 (ba97056), thus add Breaks/Replaces in mariadb-client-10.0
+    against mariadb-server-10.0 << 10.0.13-1~.
+
  -- Otto Kekäläinen <otto@seravo.fi>  Sun, 08 Feb 2015 10:03:39 +0200
 
 mariadb-10.0 (10.0.16-1~exp3) experimental; urgency=low
