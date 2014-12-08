@@ -26,6 +26,11 @@ ifneq ($(ARCH), amd64)
     TOKUDB_OPT:=-DWITHOUT_TOKUDB=true
 endif
 
+# Skip Mroonga if arch is not amd64
+ifneq ($(ARCH), amd64)
+    MROONGA_OPT:=-DWITHOUT_MROONGA=true
+endif
+
 export MYSQL_BUILD_CC=$(DEB_HOST_GNU_TYPE)-gcc
 export MYSQL_BUILD_CXX=$(DEB_HOST_GNU_TYPE)-g++
 
@@ -103,6 +108,7 @@ override_dh_auto_configure:
 	    $(USE_STATIC_MYSQLD) \
 	    -$(MAKEFLAGS) \
 	    $(TOKUDB_OPT) \
+	    $(MROONGA_OPT) \
 	    -DWITH_SSL=bundled \
 	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
@@ -132,6 +138,9 @@ override_dh_auto_install:
 	
 	# If TokuDB plugin was built add it to the server install list.
 	[ ! -f $(BUILDDIR)/usr/lib/mysql/plugin/ha_tokudb.so ] || echo 'usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/conf.d/tokudb.cnf\nusr/bin/tokuftdump\nusr/share/doc/mariadb-server-10.0/README-TOKUDB\nusr/share/doc/mariadb-server-10.0/README.md' >> debian/mariadb-server-10.0.install
+	
+	# If Mroonga plugin was built add it to the server install list.
+	[ ! -f $(BUILDDIR)/usr/lib/mysql/plugin/ha_mroonga.so ] || echo 'usr/lib/mysql/plugin/ha_mroonga.so' >> debian/mariadb-server-10.0.install
 	
 	# If libthrift-dev was available (manually installed, as it is not in Debian)
 	# and ha_cassandra.so was thus built add it to the server install list.

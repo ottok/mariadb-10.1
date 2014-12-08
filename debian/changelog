@@ -1,5 +1,9 @@
 mariadb-10.0 (10.0.15-1) unstable; urgency=low
 
+  [ Arnaud Fontaine ]
+  * Bump libpcre3-dev Build-Depends to >= 2:8.35-3.2~ (Closes: #767903).
+
+  [ Otto Kekäläinen }
   * New upstream release, includes fixes for the following security issues:
     - CVE-2014-6507
     - CVE-2014-6491
@@ -10,11 +14,10 @@ mariadb-10.0 (10.0.15-1) unstable; urgency=low
     - CVE-2014-6494
     - CVE-2014-6496
     - CVE-2014-6464
+  * Disable on non-amd64 platforms the new Mroonga storage engine which
+    was introduced in the new upstream release.
   * Allow mariadb-server-10.0 to overwrite file man1/mysql_plugin.1.gz in
     mysql-client-5.5 with breaks and replaces (Closes: #771213).
-
-  [ Arnaud Fontaine ]
-  * Bump libpcre3-dev Build-Depends to >= 2:8.35-3.2~. Closes: #767903.
 
  -- Otto Kekäläinen <otto@seravo.fi>  Tue, 25 Nov 2014 21:45:43 +0200
 
