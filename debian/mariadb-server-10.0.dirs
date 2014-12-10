@@ -1,7 +1,1 @@
-etc/init.d
-etc/logrotate.d
-etc/mysql/conf.d
-usr/bin
-usr/share/mysql
-usr/share/doc/mariadb-server-10.0
 var/lib/mysql-upgrade
