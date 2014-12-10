@@ -17,20 +17,6 @@ DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_SYSTEM ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_SYSTEM)
 DEBVERSION := $(shell dpkg-parsechangelog | awk '/^Version: / { print $$2 }' | sed 's/^.*-//' )
 
-ifneq (,$(filter $(ARCH), i386 kfreebsd-i386 hurd-i386))
-    TAOCRYPT_OPT="-DTAOCRYPT_DISABLE_X86ASM"
-endif
-
-# Skip TokuDB if arch is not amd64
-ifneq ($(ARCH), amd64)
-    TOKUDB_OPT:=-DWITHOUT_TOKUDB=true
-endif
-
-# Skip Mroonga if arch is not amd64
-ifneq ($(ARCH), amd64)
-    MROONGA_OPT:=-DWITHOUT_MROONGA=true
-endif
-
 export MYSQL_BUILD_CC=$(DEB_HOST_GNU_TYPE)-gcc
 export MYSQL_BUILD_CXX=$(DEB_HOST_GNU_TYPE)-g++
 
@@ -48,11 +34,25 @@ RELEASE := $(shell lsb_release -r -s)
 # at https://www.debian.org/doc/debian-policy/ch-source.html#s-debianrules-options
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
     NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-    # Placeholder code to implement max cpu count value checking
-    # if [$(NUMJOBS) > $(shell if [ -f /proc/cpuinfo ] ; then grep -c processor.* /proc/cpuinfo ; else echo 1 ; fi)]
-    #  then NUMJOBS = 0
-    # fi
+    # Even though at later point the MAKEFLAGS variable will end up
+    # having the -j option without a parameter, in test builds it has been
+    # confirmed that the NUMJOBS really doeas has an effect via MAKEFLAGS magic.
+    # MAKEFLAGS magic will later also add the -jobserver option.
     MAKEFLAGS += -j $(NUMJOBS)
+endif
+
+ifneq (,$(filter $(ARCH), i386 kfreebsd-i386 hurd-i386))
+    TAOCRYPT_OPT="-DTAOCRYPT_DISABLE_X86ASM"
+endif
+
+# Skip TokuDB if arch is not amd64
+ifneq ($(ARCH), amd64)
+    CMAKEFLAGS += =-DWITHOUT_TOKUDB=true
+endif
+
+# Skip Mroonga if arch is not amd64
+ifneq ($(ARCH), amd64)
+    CMAKEFLAGS += -DWITHOUT_MROONGA=true
 endif
 
 # Add support for verbose builds
@@ -106,9 +106,7 @@ override_dh_auto_configure:
 	    	CXXFLAGS=$${MYSQL_BUILD_CXXFLAGS:-"-O3 -DBIG_JOINS=1 -felide-constructors -fno-exceptions -fno-rtti -fno-strict-aliasing ${TAOCRYPT_OPT}"} \
 	    cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(USE_STATIC_MYSQLD) \
-	    -$(MAKEFLAGS) \
-	    $(TOKUDB_OPT) \
-	    $(MROONGA_OPT) \
+	    $(CMAKEFLAGS) \
 	    -DWITH_SSL=bundled \
 	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
@@ -116,12 +114,13 @@ override_dh_auto_configure:
 	    -DBUILD_CONFIG=mysql_release \
 	    -DINSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH) \
 	    -DINSTALL_PLUGINDIR=lib/mysql/plugin \
-		-DDEB=1 ..'
+	    -DDEB=1 ..'
 	touch $@
 
 # This is needed, otherwise 'make test' will run before binaries have been built
 override_dh_auto_build:
 	@echo "RULES.$@"
+	@echo "MAKEFLAGS: $(value MAKEFLAGS)"
 	cd $(builddir) && $(MAKE)
 	touch $@
 
