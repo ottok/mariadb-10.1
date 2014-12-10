@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: templates\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2007-05-01 13:04+0300\n"
 "Last-Translator: Ossama M. Khayat <okhayat@yahoo.com>\n"
 "Language-Team: Arabic <support@arabeyes.org>\n"
@@ -181,8 +181,8 @@ msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
 msgstr ""
-"الرجاء قراءة الملف /usr/share/doc/mariadb-server-10.0/README.Debian للمزيد من "
-"المعلومات."
+"الرجاء قراءة الملف /usr/share/doc/mariadb-server-10.0/README.Debian للمزيد "
+"من المعلومات."
 
 #. Type: error
 #. Description
@@ -196,30 +196,15 @@ msgstr ""
 msgid "The two passwords you entered were not the same. Please try again."
 msgstr ""
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr ""
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -227,43 +212,14 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
 
-#~ msgid "Start the MariaDB server on boot?"
-#~ msgstr "تشغيل خادم MariaDB عند الإقلاع؟"
 
-#~ msgid ""
-#~ "The MariaDB server can be launched automatically at boot time or manually "
-#~ "with the '/etc/init.d/mysql start' command."
-#~ msgstr ""
-#~ "يمكن تشغيل خادم MariaDB آلياً وقت الإقلاع أو يدوياً باستخدام الأمر '/etc/"
-#~ "init.d/mysql start'."
 
-#~ msgid ""
-#~ "To use MariaDB, the following entries for users and groups should be "
-#~ "added to the system:"
-#~ msgstr ""
-#~ "كي تستخدم MariaDB، يجب إضافة المُدخلات التالية الخاصة بالمستخدمين "
-#~ "والمجموعات إلى النظام:"
 
-#~ msgid ""
-#~ "Support MySQL connections from hosts running Debian \"sarge\" or older?"
-#~ msgstr ""
-#~ "هل تريد دعم اتصالات MySQL من الأجهزة التي تعمل على ديبيان \"sarge\" أو "
-#~ "أقدم؟"
 
-#~ msgid ""
-#~ "In old versions of MySQL clients on Debian, passwords were not stored "
-#~ "securely. This has been improved since then, however clients (such as "
-#~ "PHP) from hosts running Debian 3.1 Sarge will not be able to connect to "
-#~ "recent accounts or accounts whose password have been changed."
-#~ msgstr ""
-#~ "في إصدارات عملاء MySQL القديمة من ديبيان، لم تكن كلمات المرور تحفظ بشكل "
-#~ "آمن. ولقد حل هذه المشكلة بعدها، غير أن العملاء (مثل PHP) المتصلين من "
-#~ "أجهزة تعمل على ديبيان Sarge 3.1 لن يكونوا قادرين على الاتصال باستخدام "
-#~ "الحسابات الحديثة أو الحسابات التي تم تغيير كلمة مرورها."

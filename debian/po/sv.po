@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1 5.0.21-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2014-09-25 10:20+0100\n"
 "Last-Translator: Martin Bagge / brother <brother@bsnet.se>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
@@ -179,33 +179,15 @@ msgstr "Fel vid inmatning av lösenord"
 msgid "The two passwords you entered were not the same. Please try again."
 msgstr "De två lösenorden du angav stämde inte överens. Prova igen."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr "NDB-kluster används inte"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr ""
-"Stödet för NDB-kluster har tagits bort i MySQL-5.1. Migrera till det nya "
-"paketet mysql-cluster och ta bort alla rader som inleds med \"ndb\" från "
-"alla inställningsfiler i /etc/mysql/."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr "Verkligen byta till MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -215,7 +197,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -226,19 +208,7 @@ msgstr ""
 "kommer att fungera, åtminstone inte automatiskt som är fallet från MySQL "
 "till MariaDB."
 
-#~ msgid "Start the MariaDB server on boot?"
-#~ msgstr "Ska MariaDB startas vid systemets uppstart?"
 
-#~ msgid ""
-#~ "The MariaDB server can be launched automatically at boot time or manually "
-#~ "with the '/etc/init.d/mysql start' command."
-#~ msgstr ""
-#~ "MariaDB-servern kan startas vid systemets uppstart eller manuellt med "
-#~ "kommandot \"/etc/init.d/mysql start\"."
 
-#~ msgid ""
-#~ "To use MySQL, the following entries for users and groups should be added "
-#~ "to the system:"
-#~ msgstr ""
-#~ "För att använda MySQL måste följande användare och grupper läggas till i "
-#~ "systemet:"
+
+

@@ -41,7 +41,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1_5.0.24-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2014-09-24 23:52+0200\n"
 "Last-Translator: Javier Fernández-Sanguino <jfs@debian.org>\n"
 "Language-Team: Debian l10 Spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -69,7 +69,9 @@ msgstr ""
 msgid ""
 "Such a file is an indication that a mariadb-server package with a higher "
 "version has been installed previously."
-msgstr "Este fichero indica que se instaló previamente una versión superior del paquete mariadb-server."
+msgstr ""
+"Este fichero indica que se instaló previamente una versión superior del "
+"paquete mariadb-server."
 
 #. Type: boolean
 #. Description
@@ -93,7 +95,9 @@ msgstr "Nota importante para los usuarios de NIS/YP"
 msgid ""
 "Using MariaDB under NIS/YP requires a mysql user account to be added on the "
 "local system with:"
-msgstr "Para utilizar MariaDB bajo NIS/YP es necesario añadir una cuenta de usuario mysql en el sistema local con:"
+msgstr ""
+"Para utilizar MariaDB bajo NIS/YP es necesario añadir una cuenta de usuario "
+"mysql en el sistema local con:"
 
 #. Type: note
 #. Description
@@ -194,7 +198,9 @@ msgstr ""
 msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
-msgstr "Consulte /usr/share/doc/mariadb-server-10.0/README.Debian para más información."
+msgstr ""
+"Consulte /usr/share/doc/mariadb-server-10.0/README.Debian para más "
+"información."
 
 #. Type: error
 #. Description
@@ -206,183 +212,55 @@ msgstr "Error en la entrada de contraseña"
 #. Description
 #: ../mariadb-server-10.0.templates:8001
 msgid "The two passwords you entered were not the same. Please try again."
-msgstr "Las contraseñas introducidas no coinciden. Por favor, inténtelo de nuevo."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr "Parece que no se está utilizando NDB Cluster"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr "MySQL-5.1 ya no provee soporte de clúster NDB. Por favor, migre al nuevo paquete mysql-cluster y elimine todas las líneas que comiencen por «nbd» de todos los ficheros de configuración bajo /etc/mysql."
+msgstr ""
+"Las contraseñas introducidas no coinciden. Por favor, inténtelo de nuevo."
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr "¿Realmente desea migrar a MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
-msgstr "MariaDB es un reemplazo de MySQL. Utilizará su archivo de configuración actual (my.cnf) y sus bases de datos actuales."
+msgstr ""
+"MariaDB es un reemplazo de MySQL. Utilizará su archivo de configuración "
+"actual (my.cnf) y sus bases de datos actuales."
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
-msgstr "Tenga en cuenta que MariaDB tiene algunas funcionalidades avanzadas que no existen en MySQL. Por ello, la marcha atrás a MySQL no siempre funcionará o, al menos, no será tan automática como la migración de MySQL a MariaDB."
+msgstr ""
+"Tenga en cuenta que MariaDB tiene algunas funcionalidades avanzadas que no "
+"existen en MySQL. Por ello, la marcha atrás a MySQL no siempre funcionará o, "
+"al menos, no será tan automática como la migración de MySQL a MariaDB."
 
-#~ msgid "Start the MariaDB server on boot?"
-#~ msgstr "¿Debería ejecutarse el servidor MariaDB al iniciarse el sistema?"
 
-#~ msgid ""
-#~ "The MariaDB server can be launched automatically at boot time or manually "
-#~ "with the '/etc/init.d/mysql start' command."
-#~ msgstr ""
-#~ "El servidor MariaDB puede iniciarse en el momento de arranque del sistema "
-#~ "o manualmente si escribe la orden «/etc/init.d/mysql start»."
 
-#~ msgid ""
-#~ "To use MariaDB, the following entries for users and groups should be "
-#~ "added to the system:"
-#~ msgstr ""
-#~ "Deben añadirse las siguientes entradas para usuarios y grupos en el "
-#~ "sistema para poder utilizar MariaDB:"
 
-#~ msgid "Cannot upgrade if ISAM tables are present!"
-#~ msgstr "¡No se puede actualizar si ya hay tablas ISAM!"
 
-#~ msgid ""
-#~ "Recent versions of MySQL can no longer use the old ISAM table format and "
-#~ "it is necessary to convert your tables to e.g. MyISAM before upgrading by "
-#~ "using \"mysql_convert_table_format\" or \"ALTER TABLE x ENGINE=MyISAM\". "
-#~ "The installation of mysql-server-5.1 will now abort. In case your old "
-#~ "mysql-server-4.1 gets removed nevertheless just reinstall it to convert "
-#~ "those tables."
-#~ msgstr ""
-#~ "Las versiones recientes de MySQL ya no soportan el antiguo formato de "
-#~ "tabla ISAM. Antes de realizar la actualización es necesario convertir sus "
-#~ "tablas a por ejemplo, MyISAM, usando «mysql_convert_table_format» o "
-#~ "«ALTER TABLE x ENGINE=MyISAM». Se va a interrumpir ahora la instalación "
-#~ "de mysql-server-5.1. Si aún así su mysql-server-4.1 se elimina aún así, "
-#~ "puede reinstalarlo para convertir ese tipo de tablas."
 
-#~ msgid ""
-#~ "Support MySQL connections from hosts running Debian \"sarge\" or older?"
-#~ msgstr ""
-#~ "¿Soportar las conexiones MySQL establecidadas desde sistemas que ejecutan "
-#~ "Debian Sarge o versiones anteriores?"
 
-#~ msgid ""
-#~ "In old versions of MySQL clients on Debian, passwords were not stored "
-#~ "securely. This has been improved since then, however clients (such as "
-#~ "PHP) from hosts running Debian 3.1 Sarge will not be able to connect to "
-#~ "recent accounts or accounts whose password have been changed."
-#~ msgstr ""
-#~ "No era muy segura la forma en la que se almacenaban las contraseñas en "
-#~ "versiones anteriores del cliente de MySQL en Debian. Este problema se ha "
-#~ "mejorado posteriormente con el inconveniente, sin embargo, de que "
-#~ "clientes (por ejemplo, PHP) en sistemas que ejecutan Debian 3.1 «Sarge» "
-#~ "no podrán conectarse a cuentas que son nuevas o a las que se le haya "
-#~ "cambiado la contraseña."
 
-#~ msgid ""
-#~ "To use mysql you must install an equivalent user and group to the "
-#~ "following and ensure yourself that /var/lib/mysql has the right "
-#~ "permissions (the uid/gid may be different)."
-#~ msgstr ""
-#~ "Para utilizar mysql debe instalar un usuario y grupo equivalente al "
-#~ "siguiente y asegurarse de que /var/lib/mysql tiene los permisos correctos "
-#~ "(los valores del «uid» y del «gid» pueden ser diferentes)."
 
-#~ msgid ""
-#~ "/etc/passwd:      mysql:x:100:101:MySQL Server:/var/lib/mysql:/bin/false"
-#~ msgstr ""
-#~ "/etc/passwd:      mysql:x:100:101:MySQL Server:/var/lib/mysql:/bin/false"
 
-#~ msgid "/etc/group:       mysql:x:101:"
-#~ msgstr "/etc/group:       mysql:x:101:"
 
-#~ msgid "/var/lib/mysql:   drwxr-xr-x   mysql    mysql"
-#~ msgstr "/var/lib/mysql:   drwxr-xr-x   mysql    mysql"
 
-#~ msgid "Remove the databases used by all MySQL versions?"
-#~ msgstr ""
-#~ "¿Eliminar las bases de datos utilizadas por todas las versiones de MySQL?"
 
-#~ msgid ""
-#~ "If you do not provide a password no changes will be made to the account."
-#~ msgstr ""
-#~ "No se hará ningún cambio en la cuenta si no introduce una contraseña."
 
-#~ msgid ""
-#~ "When installation finishes, you should verify that the account is "
-#~ "properly protected with a password (see README.Debian for more "
-#~ "information)."
-#~ msgstr ""
-#~ "Debería confirmar que la contraseña está correctamente protegida con una "
-#~ "contraseña cuando termine la instalación (consulte el fichero README."
-#~ "Debian si desea más información)."
 
-#~ msgid "Install Hints"
-#~ msgstr "Sugerencias para la instalación"
 
-#~ msgid ""
-#~ "On upgrades from MySQL 3.23, as shipped with Debian Woody, symlinks in "
-#~ "place of /var/lib/mysql or /var/log/mysql gets accidently removed and "
-#~ "have manually be restored."
-#~ msgstr ""
-#~ "Al actualizar a la versión de MySQL 3.23, la vrsión proporcionada en "
-#~ "Debian Woody, se eliminan de manera accidental, los enlaces simbólicos a "
-#~ "«/var/lib/mysql» o «/var/log/mysql» y tienen que restaurarse manualmente."
 
-#~ msgid ""
-#~ "MySQL will only install if you have a non-numeric hostname that is "
-#~ "resolvable via the /etc/hosts file. E.g. if the \"hostname\" command "
-#~ "returns \"myhostname\" then there must be a line like \"10.0.0.1 "
-#~ "myhostname\"."
-#~ msgstr ""
-#~ "Sólo se instalará MySQL si tiene un nombre de equipo que no sea una "
-#~ "dirección IP y pueda resolverse a través del archivo /etc/hosts. Por "
-#~ "ejemplo, si la orden «hostname» devuelve «MiNombreEquipo» entonces deberá "
-#~ "existir una línea «10.0.0.1 MiNombreEquipo» en dicho archivo."
 
-#~ msgid ""
-#~ "A new mysql user \"debian-sys-maint\" will be created. This mysql account "
-#~ "is used in the start/stop and cron scripts. Don't delete."
-#~ msgstr ""
-#~ "Se creará un nuevo usuario «debian-sys-maint». Esta cuenta de mysql se "
-#~ "utilizará en los scripts de inicio y parada y en los scripts «cron». No "
-#~ "la elimine."
 
-#~ msgid ""
-#~ "Please remember to set a PASSWORD for the MySQL root user! If you use a /"
-#~ "root/.my.cnf, always write the \"user\" and the \"password\" lines in "
-#~ "there, never only the password!"
-#~ msgstr ""
-#~ "¡Por favor, recuerde crear una CONTRASEÑA para el usuario «root» de "
-#~ "MySQL! ¡Si utiliza /root/.my.cnf debe escribir las líneas «user» y "
-#~ "«password» en dicho archivo, no incluya sólo la contraseña!"
 
-#~ msgid ""
-#~ "Should I remove the complete /var/lib/mysql directory tree which is used "
-#~ "by all MySQL versions, not necessarily only the one you are about to "
-#~ "purge?"
-#~ msgstr ""
-#~ "¿Debería eliminar el árbol de directorio /var/lib/mysql completo? Tenga "
-#~ "en cuenta que lo utilizan todas las versiones de MySQL y no sólo la que "
-#~ "está a punto de purgar."
+
+

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mariadb 10.0.13-1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2014-10-04 08:12+0100\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: german <debian-l10n-german@lists.debian.org>\n"
@@ -64,8 +64,8 @@ msgid ""
 "Using MariaDB under NIS/YP requires a mysql user account to be added on the "
 "local system with:"
 msgstr ""
-"Falls MariaDB mit NIS/YP genutzt wird, muss ein »mysql«-Benutzerkonto auf dem "
-"lokalen System hinzugefügt werden mit:"
+"Falls MariaDB mit NIS/YP genutzt wird, muss ein »mysql«-Benutzerkonto auf "
+"dem lokalen System hinzugefügt werden mit:"
 
 #. Type: note
 #. Description
@@ -101,9 +101,9 @@ msgid ""
 "recent version or if a different mariadb-server package is already using it, "
 "the data should be kept."
 msgstr ""
-"Falls geplant ist, das MariaDB-Paket zu entfernen, um lediglich "
-"eine höhere Version zu installieren oder ein anderes mariadb-server-Paket "
-"die Daten benutzt, sollten diese beibehalten werden."
+"Falls geplant ist, das MariaDB-Paket zu entfernen, um lediglich eine höhere "
+"Version zu installieren oder ein anderes mariadb-server-Paket die Daten "
+"benutzt, sollten diese beibehalten werden."
 
 #. Type: password
 #. Description
@@ -137,8 +137,7 @@ msgstr "Wiederholen Sie das Passwort für den MariaDB-»root«-Benutzer:"
 #. Description
 #: ../mariadb-server-10.0.templates:7001
 msgid "Unable to set password for the MariaDB \"root\" user"
-msgstr ""
-"Passwort für den MariaDB-»root«-Benutzer konnte nicht gesetzt werden"
+msgstr "Passwort für den MariaDB-»root«-Benutzer konnte nicht gesetzt werden"
 
 #. Type: error
 #. Description
@@ -168,8 +167,8 @@ msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
 msgstr ""
-"Für weitere Informationen lesen Sie /usr/share/doc/mariadb-server-10.0/README."
-"Debian."
+"Für weitere Informationen lesen Sie /usr/share/doc/mariadb-server-10.0/"
+"README.Debian."
 
 #. Type: error
 #. Description
@@ -185,34 +184,15 @@ msgstr ""
 "Die beiden von Ihnen eingegebenen Passwörter sind nicht identisch. Bitte "
 "erneut versuchen."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr "NDB-Cluster scheint gerade benutzt zu werden"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr ""
-"MySQL-5.1 bietet keine NDB-Clusterunterstützung mehr. Bitte migrieren Sie "
-"Ihr System auf das neue »mysql-cluster«-Paket und entfernen Sie alle Zeilen, "
-"die mit »ndb« beginnen, aus allen Konfigurationsdateien im Verzeichnis /etc/"
-"mysql/."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr "Möchten Sie wirklich auf MariaDB migrieren?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -222,7 +202,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -231,3 +211,5 @@ msgstr ""
 "Beachten Sie, dass MariaDB über einige erweiterte Funktionalitäten verfügt, "
 "die es in MySQL nicht gibt. Eine Rückmigration klappt daher nicht immer, "
 "zumindest nicht automatisch wie das Migrieren von MySQL auf MariaDB."
+
+

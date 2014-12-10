@@ -65,15 +65,6 @@ done
 # Notice the uses of "|| true"  to  prevent  the  script  from  dying
 # For details see man page debconf-devel(7)
 
-# Abort if an NDB cluster is in use.
-if egrep -qi -r '^[^#]*ndb.connectstring|^[[:space:]]*\[[[:space:]]*ndb_mgmd' /etc/mysql/; then
-  db_fset mysql-server/no_upgrade_when_using_ndb seen false || true
-  db_input high mysql-server/no_upgrade_when_using_ndb || true
-  db_go
-  db_stop
-  exit 1
-fi
-
 # Safe the user from stupidities.
 show_downgrade_warning=0
 for i in `ls $DATADIR/debian-*.flag 2>/dev/null`; do

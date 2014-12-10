@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mariadb-10.0 10.0.13 italian debconf templates\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2014-08-30 18:35+0200\n"
 "Last-Translator: Luca Monducci <luca.mo@tiscali.it>\n"
 "Language-Team: Italian <debian-l10n-italian@lists.debian.org>\n"
@@ -178,33 +178,15 @@ msgstr "Errore di inserimento della password"
 msgid "The two passwords you entered were not the same. Please try again."
 msgstr "Le due password inserite sono diverse. Riprovare."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr "È in uso NDB Cluster"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr ""
-"MySQL-5.1 non fornisce più il supporto per NDB Cluster. Migrare al nuovo "
-"pacchetto mysql-cluster e rimuovere tutte le righe che iniziano per \"ndb\" "
-"da ogni file di configurazione sotto /etc/mysql/."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr "Migrare a MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -214,7 +196,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -223,3 +205,5 @@ msgstr ""
 "Notare che MariaDB dispone di alcune funzionalità avanzate che non esistono "
 "in MySQL, di conseguenza non sempre funziona la migrazione all'indietro "
 "verso MySQL, o almeno non è automatica come la migrazione da MySQL a MariaDB."
+
+

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2014-09-28 17:01+0100\n"
 "Last-Translator: Miguel Figueiredo <elmig@debianpt.org>\n"
 "Language-Team: Portuguese <traduz@debianpt.org>\n"
@@ -181,33 +181,15 @@ msgstr ""
 "As duas palavras-passe que introduziu não são iguais. Por favor tente "
 "novamente."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr "Parece estar em uso o NDB Cluster"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr ""
-"MySQL-5.1 já não disponibiliza suporte para NDB Cluster. Por favor migre "
-"para o novo pacote mysql-cluster e remova as linhas que começam com \"ndb\" "
-"de todos os ficheiros de configuração em /etc/mysql/."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr "Realmente migrar para MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -217,7 +199,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -228,91 +210,18 @@ msgstr ""
 "funcionar, pelo menos não automaticamente como a migração de MySQL para "
 "MariaDB."
 
-#~ msgid "Start the MariaDB server on boot?"
-#~ msgstr "Iniciar o servidor MariaDB no arranque?"
 
-#~ msgid ""
-#~ "The MariaDB server can be launched automatically at boot time or manually "
-#~ "with the '/etc/init.d/mysql start' command."
-#~ msgstr ""
-#~ "O MariaDB pode ser automaticamente lançado no arranque ou manualmente "
-#~ "através do comando '/etc/init.d/mysql start'."
 
-#~ msgid ""
-#~ "To use MariaDB, the following entries for users and groups should be "
-#~ "added to the system:"
-#~ msgstr ""
-#~ "Para utilizar o MariaDB, têm de ser acrescentadas as seguintes entradas "
-#~ "para os utilizadores e grupos:"
 
-#~ msgid "Cannot upgrade if ISAM tables are present!"
-#~ msgstr "Não é possível actualizar se estiverem presentes tabelas ISAM!"
 
-#~ msgid ""
-#~ "Recent versions of MySQL can no longer use the old ISAM table format and "
-#~ "it is necessary to convert your tables to e.g. MyISAM before upgrading by "
-#~ "using \"mysql_convert_table_format\" or \"ALTER TABLE x ENGINE=MyISAM\". "
-#~ "The installation of mysql-server-5.1 will now abort. In case your old "
-#~ "mysql-server-4.1 gets removed nevertheless just reinstall it to convert "
-#~ "those tables."
-#~ msgstr ""
-#~ "As versões recentes de MySQL já não podem utilizar o antigo formato de "
-#~ "tabelas ISAM e é por isso necessário converter as suas tabelas pra e.g. "
-#~ "MyISAM antes da actualização, utilizando \"mysql_convert_table_format\" "
-#~ "ou \"ALTER TABLE x ENGINE=MyISAM\". A instalação de mysql-server-5.1 irá "
-#~ "agora ser cancelada. Se o seu antigo mysql-server-4.1 for removido apenas "
-#~ "reinstale para converter essas tabelas."
 
-#~ msgid ""
-#~ "Support MySQL connections from hosts running Debian \"sarge\" or older?"
-#~ msgstr ""
-#~ "Suportar ligações MySQL de máquinas que corram Debian \"sarge\" ou mais "
-#~ "antigos?"
 
-#~ msgid ""
-#~ "In old versions of MySQL clients on Debian, passwords were not stored "
-#~ "securely. This has been improved since then, however clients (such as "
-#~ "PHP) from hosts running Debian 3.1 Sarge will not be able to connect to "
-#~ "recent accounts or accounts whose password have been changed."
-#~ msgstr ""
-#~ "Nas versões antigas de clientes de MySQL em Debian, as palavras-passe não "
-#~ "eram guardadas de forma segura. Isto foi melhorado desde aí, no entanto "
-#~ "os clientes (como o PHP) de máquinas que corram Debian 3.1 Sarge não irão "
-#~ "conseguir ligar-se a contas novas ou cuja palavra-passe foi alterada."
 
-#~ msgid ""
-#~ "To use mysql you must install an equivalent user and group to the "
-#~ "following and ensure yourself that /var/lib/mysql has the right "
-#~ "permissions (the uid/gid may be different)."
-#~ msgstr ""
-#~ "Para utilizar mysql e instalar um utilizador e grupo equivalentes para o "
-#~ "seguinte e assegurar-se que /var/lib/mysql têm as permissões correctas (o "
-#~ "uid/gid podem ser diferentes)."
 
-#~ msgid ""
-#~ "/etc/passwd:      mysql:x:100:101:MySQL Server:/var/lib/mysql:/bin/false"
-#~ msgstr ""
-#~ "/etc/passwd:      mysql:x:100:101:MySQL Server:/var/lib/mysql:/bin/false"
 
-#~ msgid "/etc/group:       mysql:x:101:"
-#~ msgstr "/etc/group:       mysql:x:101:"
 
-#~ msgid "/var/lib/mysql:   drwxr-xr-x   mysql    mysql"
-#~ msgstr "/var/lib/mysql:   drwxr-xr-x   mysql    mysql"
 
-#~ msgid "Remove the databases used by all MySQL versions?"
-#~ msgstr "Remover as bases de dados utilizadas por todas as versões de MySQL?"
 
-#~ msgid ""
-#~ "If you do not provide a password no changes will be made to the account."
-#~ msgstr ""
-#~ "Se não disponibilizar uma password não serão feitas alterações nesta "
-#~ "conta."
 
-#~ msgid ""
-#~ "When installation finishes, you should verify that the account is "
-#~ "properly protected with a password (see README.Debian for more "
-#~ "information)."
-#~ msgstr ""
-#~ "Quando terminar a instalação, deve verificar se a conta está devidamente "
-#~ "protegida com uma password (para mais informações veja README.Debian)."
+
+

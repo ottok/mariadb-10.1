@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mariadb-10.0\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2014-09-29 08:58+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
@@ -181,33 +181,15 @@ msgstr "Chyba při zadávání hesla"
 msgid "The two passwords you entered were not the same. Please try again."
 msgstr "Zadaná hesla nejsou stejná. Zkuste to prosím znovu."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr "Zdá se, že je používán NDB Cluster"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr ""
-"MySQL-5.1 již nepodporuje NDB Cluster. Přejděte prosím na nový balík mysql-"
-"cluster a ze všech konfiguračních souborů v /etc/mysql/ odstraňte řádky "
-"začínající „ndb“."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr "Opravdu migrovat na MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -217,7 +199,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -227,130 +209,22 @@ msgstr ""
 "návrat zpět k MySQL nemusí fungovat (alespoň ne tak autoamticky, jako "
 "migrace z MySQL na MariaDB)."
 
-#~ msgid "Start the MariaDB server on boot?"
-#~ msgstr "Spustit MariaDB server při startu systému?"
 
-#~ msgid ""
-#~ "The MariaDB server can be launched automatically at boot time or manually "
-#~ "with the '/etc/init.d/mysql start' command."
-#~ msgstr ""
-#~ "MariaDB se může spouštět automaticky při startu systému, nebo ručně "
-#~ "příkazem '/etc/init.d/mysql start'."
 
-#~ msgid ""
-#~ "To use MariaDB, the following entries for users and groups should be "
-#~ "added to the system:"
-#~ msgstr ""
-#~ "Abyste mohli MariaDB používat, musíte v systému založit následující "
-#~ "uživatele a skupiny:"
 
-#~ msgid "Cannot upgrade if ISAM tables are present!"
-#~ msgstr "Aktualizace nelze provést pokud jsou přítomny tabulky ISAM!"
 
-#~ msgid ""
-#~ "Recent versions of MySQL can no longer use the old ISAM table format and "
-#~ "it is necessary to convert your tables to e.g. MyISAM before upgrading by "
-#~ "using \"mysql_convert_table_format\" or \"ALTER TABLE x ENGINE=MyISAM\". "
-#~ "The installation of mysql-server-5.1 will now abort. In case your old "
-#~ "mysql-server-4.1 gets removed nevertheless just reinstall it to convert "
-#~ "those tables."
-#~ msgstr ""
-#~ "Poslední verze MySQL již nemohou používat starý formát tabulek ISAM a "
-#~ "před aktualizací je nutné převést tyto tabulky např. do formátu MyISAM "
-#~ "pomocí \"mysql_convert_table_format\" nebo \"ALTER TABLE x ENGINE=MyISAM"
-#~ "\". Instalace mysql-server-5.1 se nyní přeruší. V případě, že se mezitím "
-#~ "odinstaloval původní mysql-server-4.1, jednoduše jej znovu nainstalujte a "
-#~ "tabulky převeďte."
 
-#~ msgid ""
-#~ "Support MySQL connections from hosts running Debian \"sarge\" or older?"
-#~ msgstr ""
-#~ "Podporovat MySQL připojení z počítačů používajících Debian Sarge nebo "
-#~ "starší?"
 
-#~ msgid ""
-#~ "In old versions of MySQL clients on Debian, passwords were not stored "
-#~ "securely. This has been improved since then, however clients (such as "
-#~ "PHP) from hosts running Debian 3.1 Sarge will not be able to connect to "
-#~ "recent accounts or accounts whose password have been changed."
-#~ msgstr ""
-#~ "Způsob, jakým se dříve ukládala hesla, nebyl příliš bezpečný. To se nyní "
-#~ "zlepšilo, ale nevýhodou je, že se klienti z Debianu 3.1 Sarge (např. PHP) "
-#~ "nebudou moci připojit na nové účty, nebo na účty, u nichž se heslo "
-#~ "změnilo."
 
-#~ msgid ""
-#~ "To use mysql you must install an equivalent user and group to the "
-#~ "following and ensure yourself that /var/lib/mysql has the right "
-#~ "permissions (the uid/gid may be different)."
-#~ msgstr ""
-#~ "Abyste mohli mysql používat, musíte do následujících souborů přidat "
-#~ "ekvivalentního uživatele a skupinu a zajistit, že /var/lib/mysql má "
-#~ "správná práva (uid/gid se mohou lišit)."
 
-#~ msgid "Remove the databases used by all MySQL versions?"
-#~ msgstr "Odstranit databáze používané všemi verzemi MySQL?"
 
-#~ msgid ""
-#~ "If you do not provide a password no changes will be made to the account."
-#~ msgstr "Nezadáte-li heslo, žádné změny se s účtem neprovedou."
 
-#~ msgid ""
-#~ "When installation finishes, you should verify that the account is "
-#~ "properly protected with a password (see README.Debian for more "
-#~ "information)."
-#~ msgstr ""
-#~ "Po skončení instalace byste měli ověřit, že je účet chráněn heslem (více "
-#~ "informací naleznete v souboru README.Debian)."
 
-#~ msgid "Update Hints"
-#~ msgstr "Poznámky k aktualizaci"
 
-#~ msgid ""
-#~ "You have to run \"mysql_upgrade\" after the upgrade, else tables can be  "
-#~ "corrupted! This script also enhances the privilege tables but is not  "
-#~ "supposed to give any user more rights that he had before,"
-#~ msgstr ""
-#~ "Po aktualizaci ještě musíte spustit \"mysql_upgrade\", protože jinak by "
-#~ "se tabulky mohly narušit! Tento skript také rozšiřuje tabulky privilegií, "
-#~ "ovšem neměl by uživatelům přidat více práv, než měli dosud."
 
-#~ msgid "Please also read http://www.mysql.com/doc/en/Upgrade.html"
-#~ msgstr "Také si přečtěte http://www.mysql.com/doc/en/Upgrade.html"
 
-#~ msgid ""
-#~ "MySQL will only install if you have a non-numeric hostname that is "
-#~ "resolvable via the /etc/hosts file. E.g. if the \"hostname\" command "
-#~ "returns \"myhostname\" then there must be a line like \"10.0.0.1 "
-#~ "myhostname\"."
-#~ msgstr ""
-#~ "MySQL se nainstaluje pouze v případě, že používáte nenumerické jméno "
-#~ "počítače, které se dá přeložit přes soubor /etc/hosts. Např. když příkaz "
-#~ "\"hostname\" vrátí \"diamond\", tak v /etc/hosts musí existovat obdobný "
-#~ "řádek jako \"10.0.0.1 diamond\"."
 
-#~ msgid ""
-#~ "A new mysql user \"debian-sys-maint\" will be created. This mysql account "
-#~ "is used in the start/stop and cron scripts. Don't delete."
-#~ msgstr ""
-#~ "Bude vytvořen nový mysql uživatel \"debian-sys-maint\". Tento mysql účet "
-#~ "se používá ve startovacích, ukončovacích a cronových skriptech. Nemažte "
-#~ "jej."
 
-#~ msgid ""
-#~ "Please remember to set a PASSWORD for the MySQL root user! If you use a /"
-#~ "root/.my.cnf, always write the \"user\" and the \"password\" lines in "
-#~ "there, never only the password!"
-#~ msgstr ""
-#~ "Nezapomeňte nastavit heslo pro účet administrátora MySQL! Používáte-li /"
-#~ "root/.my.cnf, vždy zde zadejte jak řádek \"user\", tak řádek \"password"
-#~ "\". Nikdy zde nezadávejte jenom heslo!"
 
-#~ msgid ""
-#~ "Should I remove the complete /var/lib/mysql directory tree which is used "
-#~ "by all MySQL versions, not necessarily only the one you are about to "
-#~ "purge?"
-#~ msgstr ""
-#~ "Mám odstranit kompletní adresářový strom /var/lib/mysql, který se používá "
-#~ "pro všechny verze MySQL, tedy ne nutně pouze pro verzi, kterou se "
-#~ "chystáte vyčistit?"
+
+

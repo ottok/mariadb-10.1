@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mariadb 10.0_10.0.32-1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2013-09-09 12:48+0300\n"
+"POT-Creation-Date: 2014-12-10 22:09+0200\n"
 "PO-Revision-Date: 2014-01-07 07:18+0400\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
@@ -162,7 +162,8 @@ msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
 msgstr ""
-"Подробности смотрите в файле /usr/share/doc/mariadb-server-10.0/README.Debian."
+"Подробности смотрите в файле /usr/share/doc/mariadb-server-10.0/README."
+"Debian."
 
 #. Type: error
 #. Description
@@ -176,33 +177,15 @@ msgstr "Ошибка ввода пароля"
 msgid "The two passwords you entered were not the same. Please try again."
 msgstr "Два введённых пароля не одинаковы. Повторите ввод."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid "NDB Cluster seems to be in use"
-msgstr "NDB Cluster уже используется"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:9001
-msgid ""
-"MySQL-5.1 no longer provides NDB Cluster support. Please migrate to the new "
-"mysql-cluster package and remove all lines starting with \"ndb\" from all "
-"config files below /etc/mysql/."
-msgstr ""
-"MySQL-5.1 больше не поддерживает NDB Cluster. Переходите на новый пакет "
-"mysql-cluster и удалите все строки, начинающиеся с «ndb», из всех файлов "
-"настройки в каталоге /etc/mysql/."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid "Really migrate to MariaDB?"
 msgstr "Хотите перейти на MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -212,7 +195,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:10001
+#: ../mariadb-server-10.0.templates:9001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -222,12 +205,6 @@ msgstr ""
 "MySQL, и поэтому обратный переход на MySQL не всегда может быть выполнен, по "
 "крайней мере, не в автоматическом режиме как с MySQL на MariaDB."
 
-#~ msgid "Start the MariaDB server on boot?"
-#~ msgstr "Запускать MariaDB при загрузке системы?"
 
-#~ msgid ""
-#~ "The MariaDB server can be launched automatically at boot time or manually "
-#~ "with the '/etc/init.d/mysql start' command."
-#~ msgstr ""
-#~ "Сервер MariaDB можно запускать автоматически при загрузке системы или "
-#~ "вручную по команде '/etc/init.d/mysql start'."
+
+
