@@ -8,27 +8,26 @@ export DEB_BUILD_HARDENING=1
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/buildflags.mk
 
-TMP:=$(CURDIR)/debian/tmp/
-
 ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
 ARCH_OS := $(shell dpkg-architecture -qDEB_BUILD_ARCH_OS)
+BUILDDIR := builddir
 DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_SYSTEM ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_SYSTEM)
 DEBVERSION := $(shell dpkg-parsechangelog | awk '/^Version: / { print $$2 }' | sed 's/^.*-//' )
-
-export MYSQL_BUILD_CC=$(DEB_HOST_GNU_TYPE)-gcc
-export MYSQL_BUILD_CXX=$(DEB_HOST_GNU_TYPE)-g++
-
 DEB_SOURCE_PACKAGE ?= $(strip $(shell egrep '^Source: ' debian/control | cut -f 2 -d ':'))
 DEB_VERSION ?= $(shell dpkg-parsechangelog | egrep '^Version:' | cut -f 2 -d ' ')
 DEB_NOEPOCH_VERSION ?= $(shell echo $(DEB_VERSION) | cut -d: -f2-)
 DEB_UPSTREAM_VERSION ?= $(shell echo $(DEB_NOEPOCH_VERSION) | sed 's/-[^-]*$$//')
 DEB_UPSTREAM_VERSION_MAJOR_MINOR := $(shell echo $(DEB_UPSTREAM_VERSION) | sed -r -n 's/^([0-9]+\.[0-9]+).*/\1/p')
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-
 DISTRIBUTION := $(shell lsb_release -i -s)
 RELEASE := $(shell lsb_release -r -s)
+TMP:=$(CURDIR)/debian/tmp
+
+
+export MYSQL_BUILD_CC=$(DEB_HOST_GNU_TYPE)-gcc
+export MYSQL_BUILD_CXX=$(DEB_HOST_GNU_TYPE)-g++
 
 # Parallel build support as adviced
 # at https://www.debian.org/doc/debian-policy/ch-source.html#s-debianrules-options
@@ -41,6 +40,8 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
     MAKEFLAGS += -j $(NUMJOBS)
 endif
 
+# This is removed in mysql-5.6 and a candidate for removal in MariaDB too
+USE_ASSEMBLER:=--enable-assembler
 ifneq (,$(filter $(ARCH), i386 kfreebsd-i386 hurd-i386))
     TAOCRYPT_OPT="-DTAOCRYPT_DISABLE_X86ASM"
 endif
@@ -65,23 +66,12 @@ ifneq ($(findstring fulltest,$(DEB_BUILD_OPTIONS)),)
     MAKE_TEST_TARGET:=test-bt
 endif
 
-USE_ASSEMBLER:=--enable-assembler
-
 ifneq (,$(filter $(ARCH), amd64 kfreebsd-amd64 i386 kfreebsd-i386 ia64 s390 s390x))
     TESTSUITE_FAIL_CMD:=exit 1
 else
     TESTSUITE_FAIL_CMD:=true
 endif
 
-BUILDDIR := builddir
-builddir = $(BUILDDIR)
-
-# This causes seg11 crashes if LDAP is used for groups in /etc/nsswitch.conf
-# so it is disabled by default although, according to MySQL, it brings >10%
-# performance gain if enabled. See #299382.
-ifeq ($(STATIC_MYSQLD), 1)
-    USE_STATIC_MYSQLD:=--with-mysqld-ldflags=-all-static
-endif
 
 override_dh_auto_clean:
 	@echo "RULES.$@"
@@ -98,14 +88,13 @@ override_dh_auto_configure:
 	@echo "RULES.$@"
 	dh_testdir
 	
-	( test -d $(builddir) || mkdir $(builddir) ) && cd $(builddir) && \
+	( test -d $(BUILDDIR) || mkdir $(BUILDDIR) ) && cd $(BUILDDIR) && \
 	sh -c  'PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
 	    	CC=$${MYSQL_BUILD_CC:-gcc} \
 		CFLAGS=$${MYSQL_BUILD_CFLAGS:-"-O2 -DBIG_JOINS=1 -fno-strict-aliasing ${TAOCRYPT_OPT}"} \
 	    	CXX=$${MYSQL_BUILD_CXX:-g++} \
 	    	CXXFLAGS=$${MYSQL_BUILD_CXXFLAGS:-"-O3 -DBIG_JOINS=1 -felide-constructors -fno-exceptions -fno-rtti -fno-strict-aliasing ${TAOCRYPT_OPT}"} \
 	    cmake -DCMAKE_INSTALL_PREFIX=/usr \
-	    $(USE_STATIC_MYSQLD) \
 	    $(CMAKEFLAGS) \
 	    -DWITH_SSL=bundled \
 	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
@@ -121,13 +110,13 @@ override_dh_auto_configure:
 override_dh_auto_build:
 	@echo "RULES.$@"
 	@echo "MAKEFLAGS: $(value MAKEFLAGS)"
-	cd $(builddir) && $(MAKE)
+	cd $(BUILDDIR) && $(MAKE)
 	touch $@
 
 override_dh_auto_test:
 	@echo "RULES.$@"
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	cd $(builddir) && $(MAKE) $(MAKE_TEST_TARGET) || $(TESTSUITE_FAIL_CMD) ;
+	cd $(BUILDDIR) && $(MAKE) $(MAKE_TEST_TARGET) || $(TESTSUITE_FAIL_CMD) ;
 endif
 
 override_dh_auto_install:
@@ -141,57 +130,32 @@ override_dh_auto_install:
 	# If Mroonga plugin was built add it to the server install list.
 	[ ! -f $(BUILDDIR)/usr/lib/mysql/plugin/ha_mroonga.so ] || echo 'usr/lib/mysql/plugin/ha_mroonga.so' >> debian/mariadb-server-10.0.install
 	
-	# If libthrift-dev was available (manually installed, as it is not in Debian)
-	# and ha_cassandra.so was thus built add it to the server install list.
+	# If libthrift-dev was available (manually installed, as it is
+	# not in Debian) and ha_cassandra.so was thus built add it to
+	# the server install list.
 	[ ! -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || echo 'usr/lib/mysql/plugin/ha_cassandra.so' >> debian/mariadb-server-10.0.install
 	
-	mkdir -p $(TMP)/etc/mysql/conf.d/
-	cp debian/additions/mysqld_safe_syslog.cnf $(TMP)/etc/mysql/conf.d/
-	
-	# make install (trailing slash needed for innobase)
-	cd $(builddir) && $(MAKE) install DESTDIR=$(TMP)/
-	
-	# After installing, remove rpath to make lintian happy.
-	set +e; \
-	find ./debian/tmp/ -type f -print0 \
-		| xargs -0 --no-run-if-empty chrpath -k 2>/dev/null \
-		| fgrep RPATH= \
-		| cut -d: -f 1 \
-		| xargs --no-run-if-empty chrpath -d; \
-	set -e
-	
-	# libmysqlclient-dev: forgotten header file since 3.23.25?
-	cp $(BUILDDIR)/include/my_config.h $(TMP)/usr/include/mysql/
-	cp include/my_dir.h $(TMP)/usr/include/mysql/
-	
-	# mariadb-common: MariaDB-specific config stuff.
-	install -d $(TMP)/etc/mysql/conf.d
-	install -m 0644 debian/additions/mariadb.cnf $(TMP)/etc/mysql/conf.d/mariadb.cnf
+	# make install
+	cd $(BUILDDIR) && $(MAKE) install DESTDIR=$(TMP)
 	
 	# mariadb-server
+	# INBO_BIN is generated at build time and must thus be installed like this
+	install -D -m 0644 $(BUILDDIR)/Docs/INFO_BIN $(TMP)/usr/share/doc/mariadb-server-10.0/INFO_BIN
 	rm -vf $(TMP)/usr/share/mysql/mi_test_all* \
 	       $(TMP)/usr/share/mysql/mysql-log-rotate \
 	       $(TMP)/usr/share/mysql/mysql.server \
 	       $(TMP)/usr/share/mysql/binary-configure
 	nm -n $(BUILDDIR)/sql/mysqld |gzip -n -9 > $(TMP)/usr/share/doc/mariadb-server-10.0/mysqld.sym.gz
-	# Below didn't work, use more explicit command above
-	# nm -n $(BUILDDIR)/sql/mysqld |gzip -9 > debian/mysqld.sym.gz
-	mkdir -p $(TMP)/etc/mysql/conf.d/
-	install -m 0755 debian/additions/echo_stderr $(TMP)/usr/share/mysql/
-	install -m 0755 debian/additions/debian-start $(TMP)/etc/mysql/
-	install -m 0755 debian/additions/debian-start.inc.sh $(TMP)/usr/share/mysql/
-	mkdir -p $(TMP)/usr/share/doc/mariadb-server-10.0
-	install -m 0644 $(builddir)/Docs/INFO_SRC $(TMP)/usr/share/doc/mariadb-server-10.0/INFO_SRC
-	install -m 0644 $(builddir)/Docs/INFO_BIN $(TMP)/usr/share/doc/mariadb-server-10.0/INFO_BIN
 	
-	# install AppArmor profile
+	# rename and install AppArmor profile
 	install -D -m 644 debian/apparmor-profile $(TMP)/etc/apparmor.d/usr.sbin.mysqld
 	
-	# install Apport hook
+	# rename and install Apport hook
 	install -D -m 644 debian/mariadb-server-10.0.py $(TMP)/usr/share/apport/package-hooks/source_mariadb-10.0.py
 	
 	# mariadb-test
 	mv $(TMP)/usr/mysql-test $(TMP)/usr/share/mysql
+	
 	touch $@
 
 override_dh_installlogrotate-arch:
@@ -204,6 +168,9 @@ override_dh_installinit-arch:
 
 override_dh_installcron-arch:
 	dh_installcron --name mysql-server
+
+get-orig-source:
+	uscan --force-download --verbose
 
 %:
 	dh $@ --parallel
