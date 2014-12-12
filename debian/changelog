@@ -1,3 +1,12 @@
+mariadb-10.0 (10.0.15-2) unstable; urgency=low
+
+  * Updated gbp.conf to use this jessie branch
+  * Fix mariadb-server-10.0.postinst so that the flag removal will not emit
+    an error code if there are no previous debian-*.flag files. This will
+    fix a dpkg issue cought by piuparts testing.
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 12 Dec 2014 14:07:50 +0200
+
 mariadb-10.0 (10.0.15-1) unstable; urgency=low
 
   [ Arnaud Fontaine ]
