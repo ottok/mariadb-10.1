@@ -1,0 +1,21 @@
+Author: Kristian Nielsen <knielsen@knielsen-hq.org>
+Subject: Fix for FTBFS on mips, mipsel, powerpc introduced in 10.0.15
+ Backported by Otto Kekäläinen from 10.0.16
+Last-Update: 2014-12-12
+
+=== modified file 'sql/rpl_parallel.cc'
+--- a/sql/rpl_parallel.cc	2014-12-01 12:53:57 +0000
++++ b/sql/rpl_parallel.cc	2014-12-12 12:48:04 +0000
+@@ -1123,9 +1123,9 @@ rpl_parallel_thread::inuse_relaylog_refc
+   inuse_relaylog *ir= accumulated_ir_last;
+   if (ir)
+   {
+-    my_atomic_rwlock_wrlock(&ir->rli->inuse_relaylog_atomic_lock);
++    my_atomic_rwlock_wrlock(&ir->inuse_relaylog_atomic_lock);
+     my_atomic_add64(&ir->dequeued_count, accumulated_ir_count);
+-    my_atomic_rwlock_wrunlock(&ir->rli->inuse_relaylog_atomic_lock);
++    my_atomic_rwlock_wrunlock(&ir->inuse_relaylog_atomic_lock);
+     accumulated_ir_count= 0;
+     accumulated_ir_last= NULL;
+   }
+
