@@ -46,11 +46,13 @@ stop_server() {
 
 ################################ main() ##########################
 
+this_version = 10.0
+
 # Show upgrade warning if old data exists
 # Designed for scenarios where users upgrade form MySQL 5.5 or 5.6 or MariaDB 5.5
 for i in `ls $DATADIR/debian-*.flag 2>/dev/null`; do
   found_version=`echo $i | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
-  if dpkg --compare-versions "10.0" '>>' "$found_version"; then
+  if dpkg --compare-versions "$this_version" '>>' "$found_version"; then
     db_fset mariadb-server/oneway_migration seen false || true
     db_input high mariadb-server/oneway_migration || true
     db_go
@@ -69,21 +71,21 @@ done
 show_downgrade_warning=0
 for i in `ls $DATADIR/debian-*.flag 2>/dev/null`; do
   found_version=`echo $i | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
-  if dpkg --compare-versions "10.0" '<<' "$found_version"; then
+  if dpkg --compare-versions "$this_version" '<<' "$found_version"; then
     show_downgrade_warning=1
     break;
   fi
 done
 if [ "$show_downgrade_warning" = 1 ]; then
-  db_fset mariadb-server-10.0/really_downgrade seen false || true
-  db_input critical mariadb-server-10.0/really_downgrade || true
+  db_fset mariadb-server-$this_version/really_downgrade seen false || true
+  db_input critical mariadb-server-$this_version/really_downgrade || true
   db_go
-  db_get mariadb-server-10.0/really_downgrade || true
+  db_get mariadb-server-$this_version/really_downgrade || true
   if [ "$RET" = "true" ]; then
     rm -f $DATADIR/debian-*.flag
   else
-    echo "Aborting downgrade from (at least) $found_version to 10.0." 1>&2
-    echo "If are sure you want to downgrade to 10.0, remove the file" 1>&2
+    echo "Aborting downgrade from (at least) $found_version to $this_version." 1>&2
+    echo "If are sure you want to downgrade to $this_version, remove the file" 1>&2
     echo "$DATADIR/debian-*.flag and try installing again." 1>&2
     db_stop
     exit 1
@@ -102,7 +104,7 @@ fi
 
 #
 # Now we have to ensure the following state:
-# /etc/passwd: mysql:x:100:101:MySQL Server:/var/lib/mysql:/bin/false
+# /etc/passwd: mysql:x:100:101:MySQL Server:/nonexistent:/bin/false
 # /etc/group:  mysql:x:101:
 #
 # Sadly there could any state be present on the system so we have to
@@ -123,7 +125,8 @@ if ! getent passwd mysql >/dev/null; then
 	  --system \
           --disabled-login \
 	  --ingroup mysql \
-	  --home $DATADIR \
+	  --no-create-home \
+	  --home /nonexistent \
 	  --gecos "MySQL Server" \
 	  --shell /bin/false \
 	  mysql  >/dev/null

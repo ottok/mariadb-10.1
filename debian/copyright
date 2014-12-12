@@ -906,10 +906,6 @@ Files: debian/additions/innotop/*
 Copyright: 2006-2009, Baron Schwartz <baron@xaprb.com>
 License: GPL-2 or Artistic
 
-Files: debian/additions/innotop/mysqlreport*
-Copyright: 2006-2008 Daniel Nichter <public@codenode.com>
-License: GPL-2+
-
 Files: include/mysql_version.h.in
 Copyright: 1996, 1999, 2001 MySQL AB
 License: public-domain

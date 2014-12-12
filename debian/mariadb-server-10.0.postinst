@@ -64,68 +64,26 @@ set +e; invoke stop; set -e
 
 case "$1" in
   configure)
-    mysql_datadir=/usr/share/mysql
-    mysql_statedir=/var/lib/mysql
-    mysql_rundir=/var/run/mysqld
-    mysql_logdir=/var/log
+    mysql_statedir=/usr/share/mysql
+    mysql_datadir=/var/lib/mysql
+    mysql_logdir=/var/log/mysql
     mysql_cfgdir=/etc/mysql
-    mysql_newlogdir=/var/log/mysql
     mysql_upgradedir=/var/lib/mysql-upgrade
-
-    # first things first, if the following symlink exists, it is a preserved
-    # copy the old data dir from a mysql upgrade that would have otherwise
-    # been replaced by an empty mysql dir.  this should restore it.
-    for dir in DATADIR LOGDIR; do
-        if [ "$dir" = "DATADIR" ]; then targetdir=$mysql_statedir; else targetdir=$mysql_newlogdir; fi
-        savelink="$mysql_upgradedir/$dir.link"
-        if [ -L "$savelink" ]; then
-            # If the targetdir was a symlink before we upgraded it is supposed
-            # to be either still be present or not existing anymore now.
-            if [ -L "$targetdir" ]; then
-                rm "$savelink"
-            elif [ ! -d "$targetdir" ]; then
-                mv "$savelink" "$targetdir"
-            else
-                # this should never even happen, but just in case...
-                mysql_tmp=`mktemp -d -t mysql-symlink-restore-XXXXXX`
-                echo "this is very strange!  see $mysql_tmp/README..." >&2
-                mv "$targetdir" "$mysql_tmp"
-                cat << EOF > "$mysql_tmp/README"
-
-if you're reading this, it's most likely because you had replaced /var/lib/mysql
-with a symlink, then upgraded to a new version of mysql, and then dpkg
-removed your symlink (see #182747 and others).  the mysql packages noticed
-that this happened, and as a workaround have restored it.  however, because
-/var/lib/mysql seems to have been re-created in the meantime, and because
-we don't want to rm -rf something we don't know as much about, we are going
-to leave this unexpected directory here. If your database looks normal,
-and this is not a symlink to your database, you should be able to blow
-this all away.
-
-EOF
-            fi
-        fi
-	rmdir $mysql_upgradedir 2>/dev/null || true
-    done
 
     # Ensure the existence and right permissions for the database and
     # log files.
-    if [ ! -d "$mysql_statedir"       -a ! -L "$mysql_statedir"       ]; then mkdir "$mysql_statedir"; fi
-    if [ ! -d "$mysql_statedir/mysql" -a ! -L "$mysql_statedir/mysql" ]; then mkdir "$mysql_statedir/mysql"; fi
-    if [ ! -d "$mysql_newlogdir"      -a ! -L "$mysql_newlogdir"      ]; then mkdir "$mysql_newlogdir"; fi
+    if [ ! -d "$mysql_statedir" -a ! -L "$mysql_statedir"]; then mkdir "$mysql_statedir"; fi
+    if [ ! -d "$mysql_datadir"  -a ! -L "$mysql_datadir" ]; then mkdir "$mysql_datadir" ; fi
+    if [ ! -d "$mysql_logdir"   -a ! -L "$mysql_logdir"  ]; then mkdir "$mysql_logdir"  ; fi
     # When creating an ext3 jounal on an already mounted filesystem like e.g.
     # /var/lib/mysql, you get a .journal file that is not modifyable by chown.
-    # The mysql_datadir must not be writable by the mysql user under any
+    # The mysql_statedir must not be writable by the mysql user under any
     # circumstances as it contains scripts that are executed by root.
     set +e
-    chown -R 0:0 $mysql_datadir
-    chown -R mysql $mysql_statedir
-    chown -R mysql:adm $mysql_newlogdir;	chmod 2750 $mysql_newlogdir;
-    for i in log err; do
-      touch             $mysql_logdir/mysql.$i
-      chown mysql:adm   $mysql_logdir/mysql.$i
-      chmod 0640        $mysql_logdir/mysql.$i
-    done
+    chown -R 0:0 $mysql_statedir
+    chown -R mysql $mysql_datadir
+    chown -R mysql:adm $mysql_logdir
+    chmod 2750 $mysql_logdir
     set -e
 
     # This is important to avoid dataloss when there is a removed
@@ -134,9 +92,9 @@ EOF
     db_set mysql-server/postrm_remove_database false || true
 
     # Clean up old flags before setting new one
-    rm -f $mysql_statedir/debian-*.flag
+    rm -f $mysql_datadir/debian-*.flag
     # Flag data dir to avoid downgrades
-    touch $mysql_statedir/debian-10.0.flag
+    touch $mysql_datadir/debian-10.0.flag
 
     # initiate databases. Output is not allowed by debconf :-(
     # This will fail if we are upgrading an existing database; in this case
