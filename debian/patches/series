@@ -9,4 +9,5 @@ remove_rename_mariadb-server_files_in.patch
 innodb_simulate_comp_test_speedup.patch
 fix-spelling-errors.patch
 fix-kfreebsd-mtr-multi_source.gtid.patch
+fix-mips-mipsel-powerpc-build.patch
 mroonga-disable-switch.patch
