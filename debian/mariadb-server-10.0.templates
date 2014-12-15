@@ -19,7 +19,7 @@ _Description: Really proceed with downgrade?
  There is no guarantee that the version you're currently installing
  will be able to use the current databases.
 
-Template: mysql-server-10.0/nis_warning
+Template: mariadb-server-10.0/nis_warning
 Type: note
 #flag:translate!:3,5
 _Description: Important note for NIS/YP users
@@ -33,7 +33,7 @@ _Description: Important note for NIS/YP users
  .
   /var/lib/mysql: drwxr-xr-x   mysql    mysql
 
-Template: mysql-server-10.0/postrm_remove_databases
+Template: mariadb-server-10.0/postrm_remove_databases
 Type: boolean
 Default: false
 _Description: Remove all MariaDB databases?
@@ -44,7 +44,7 @@ _Description: Remove all MariaDB databases?
  recent version or if a different mariadb-server package is already
  using it, the data should be kept.
 
-Template: mysql-server/root_password
+Template: mariadb-server/root_password
 Type: password
 _Description: New password for the MariaDB "root" user:
  While not mandatory, it is highly recommended that you set a password
@@ -52,11 +52,11 @@ _Description: New password for the MariaDB "root" user:
  .
  If this field is left blank, the password will not be changed.
 
-Template: mysql-server/root_password_again
+Template: mariadb-server/root_password_again
 Type: password
 _Description: Repeat password for the MariaDB "root" user:
 
-Template: mysql-server/error_setting_password
+Template: mariadb-server/error_setting_password
 Type: error
 _Description: Unable to set password for the MariaDB "root" user
  An error occurred while setting the password for the MariaDB
@@ -69,7 +69,7 @@ _Description: Unable to set password for the MariaDB "root" user
  Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file
  for more information.
 
-Template: mysql-server/password_mismatch
+Template: mariadb-server/password_mismatch
 Type: error
 _Description: Password input error
  The two passwords you entered were not the same. Please try again.

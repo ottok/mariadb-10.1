@@ -30,7 +30,7 @@ test_passwordless_root_login() {
 # call with $1 = "online" to connect to the server, otherwise it bootstraps
 set_mysql_rootpw() {
        # forget we ever saw the password.  don't use reset to keep the seen status
-       db_set mysql-server/root_password ""
+       db_set mariadb-server/root_password ""
 
        tfile=`mktemp`
        if [ ! -f "$tfile" ]; then
@@ -89,7 +89,7 @@ case "$1" in
     # This is important to avoid dataloss when there is a removed
     # mysql-server version from Woody lying around which used the same
     # data directory and then somewhen gets purged by the admin.
-    db_set mysql-server/postrm_remove_database false || true
+    db_set mariadb-server/postrm_remove_database false || true
 
     # Clean up old flags before setting new one
     rm -f $mysql_datadir/debian-*.flag
@@ -180,7 +180,7 @@ case "$1" in
     # Upgrade password column format before the root password gets set.
     echo "$password_column_fix_query"                        | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
 
-    db_get mysql-server/root_password && rootpw="$RET"
+    db_get mariadb-server/root_password && rootpw="$RET"
     if ! set_mysql_rootpw; then
         password_error="yes"
     fi
@@ -206,9 +206,9 @@ esac
 # fails for any other reason, nothing happens.
 if [ "$1" = "configure" ]; then
        if test_passwordless_root_login; then
-               db_input medium mysql-server/root_password || true
+               db_input medium mariadb-server/root_password || true
                db_go
-               db_get mysql-server/root_password && rootpw="$RET"
+               db_get mariadb-server/root_password && rootpw="$RET"
 
                if ! set_mysql_rootpw "online"; then
                        password_error="yes"
@@ -216,7 +216,7 @@ if [ "$1" = "configure" ]; then
        fi
 
        if [ "$password_error" = "yes" ]; then
-               db_input high mysql-server/error_setting_password || true
+               db_input high mariadb-server/error_setting_password || true
                db_go
        fi
 
