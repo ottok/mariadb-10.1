@@ -1,3 +1,10 @@
+mariadb-10.0 (10.0.15-3) unstable; urgency=low
+
+  * Fixed an if-structure in the init script so that the return value will be 
+    correct and not mess up invoke-rc.d (Closes: #773282).
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Sun, 21 Dec 2014 03:14:15 +0200
+
 mariadb-10.0 (10.0.15-2) unstable; urgency=low
 
   * Fix mariadb-server-10.0.postinst so that the flag removal will not emit
