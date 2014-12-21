@@ -119,7 +119,9 @@ case "${1:-''}" in
       log_end_msg 0
       # Now start mysqlcheck or whatever the admin wants.
       output=$(/etc/mysql/debian-start)
-      [ -n "$output" ] && log_action_msg "$output"
+      if [ -n "$output" ]; then
+        log_action_msg "$output"
+      fi
     else
       log_end_msg 1
       log_failure_msg "Please take a look at the syslog"
