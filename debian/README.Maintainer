@@ -25,7 +25,7 @@ multi-target chroot usage check out how http://labs.seravo.fi/~otto/mariadb-repo
 uses git-buildpackage with pbuilder.
 
 If the build fails the easiest way to clean up before a new run is
-  git clean -f -d && git reset --hard
+  git clean -fdx && git reset --hard
 
 
 ### Tip ###
@@ -132,6 +132,24 @@ liscensecheck has a lot of cruft and the original copyright file already had
 those cleaned up.
 
 
+### Maintaining changelog ###
+
+Easiest way to update changelog is to run
+
+  git-dch -a
+
+It will add all git commit messages to the changelog. It compares all commits
+up till the last git tag, so remember to tag all releases correctly.
+
+
+### Maintaining release branches ###
+
+There is now a jessie branch. Add to it (e.g. git cherry-pick from master branch)
+only the most necessary changes and build from it to make new releases for Jessie.
+The file gbp.conf in the jessie branch makes sure correct upstream and packaging
+branches are used.
+
+
 ### Quality control ###
 
 Run wrap-and-sort to style contents in debian/*
@@ -152,7 +170,8 @@ These are good to have as environment variables (replace values with your own)
   export DEBEMAIL DEBFULLNAME
 
 The run the commands to automatically change version and upload
-  backportpackage -u ppa:mysql-ubuntu/mariadb -d precise -r *.dsc -S ~ppa1 -y
+  backportpackage -u ppa:mysql-ubuntu/mariadb-10.0 -d precise -r *.dsc -S ~ppa1 -y
+
 
 ## Uploading to Ubuntu security releases ##
 
@@ -167,6 +186,7 @@ patches in another commits, so that it would be easy to produce a patch file
 that Ubuntu security team can apply upon the mix of previous debian/ contents
 from Ubuntu archive and updated others from upstream. This would allow to use
 git-buildpackage to produce test builds instead of plain 'fakeroot dpkg-buildpackage'.
+
 
 ## Comparison to other distributions ##
 
@@ -183,6 +203,7 @@ Arch Linux:
   * https://projects.archlinux.org/svntogit/packages.git/?h=packages/mariadb
 Mageia:
   * http://svnweb.mageia.org/packages/cauldron/mariadb/current/
+
 
 ## Notes about hard to fix bugs ##
 
