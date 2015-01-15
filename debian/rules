@@ -96,6 +96,7 @@ override_dh_auto_configure:
 	    	CXXFLAGS=$${MYSQL_BUILD_CXXFLAGS:-"-O3 -DBIG_JOINS=1 -felide-constructors -fno-exceptions -fno-rtti -fno-strict-aliasing ${TAOCRYPT_OPT}"} \
 	    cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(CMAKEFLAGS) \
+	    -DWITH_LIBWRAP=no \
 	    -DWITH_SSL=bundled \
 	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
