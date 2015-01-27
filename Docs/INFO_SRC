@@ -1,8 +1,8 @@
-revision-id: sergii@pisem.net-20141121192039-d0lv6cj96kg5pw02
-date: 2014-11-21 20:20:39 +0100
-build-date: 2014-11-21 22:02:58 +0100
-revno: 4506
+revision-id: psergey@askmonty.org-20150125151625-ws9svxbjcv1wwte9
+date: 2015-01-25 16:16:25 +0100
+build-date: 2015-01-25 16:21:41 +0100
+revno: 4588
 branch-nick: 10.0
 
 
-MySQL source 10.0.15
+MySQL source 10.0.16
