@@ -1,15 +1,23 @@
-mariadb-10.0 (10.0.15-4) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.16-1) unstable; urgency=low
 
   [ Julien Muchembled ]
   * Fix inclusion of Mroonga & TokuDB plugins in mariadb-server-10.0
 
   [ Otto Kekäläinen ]
+  * Imported Upstream version 10.0.16. Inludes fixes for the following security
+    vulnerabilities:
+    - CVE-2015-0411
+    - CVE-2015-0382
+    - CVE-2015-0381
+    - CVE-2015-0432
+    - CVE-2014-6568
+    - CVE-2015-0374
 
- -- Otto Kekäläinen <otto@seravo.fi>  Tue, 23 Dec 2014 00:50:03 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Tue, 27 Jan 2015 20:51:03 +0200
 
 mariadb-10.0 (10.0.15-3) unstable; urgency=low
 
-  * Fixed an if-structure in the init script so that the return value will be 
+  * Fixed an if-structure in the init script so that the return value will be
     correct and not mess up invoke-rc.d (Closes: #773282).
 
  -- Otto Kekäläinen <otto@seravo.fi>  Sun, 21 Dec 2014 03:14:15 +0200
