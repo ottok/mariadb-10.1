@@ -1,3 +1,16 @@
+mariadb-10.0 (10.0.16-1~exp1) experimental; urgency=low
+
+  * New upstream release. Inludes fixes for the following security
+    vulnerabilities:
+    - CVE-2015-0411
+    - CVE-2015-0382
+    - CVE-2015-0381
+    - CVE-2015-0432
+    - CVE-2014-6568
+    - CVE-2015-0374
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Tue, 27 Jan 2015 17:04:21 +0200
+
 mariadb-10.0 (10.0.15-2~exp1) experimental; urgency=low
 
   * Fix mariadb-server-10.0.postinst so that the flag removal will not emit
