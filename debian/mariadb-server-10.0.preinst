@@ -46,7 +46,7 @@ stop_server() {
 
 ################################ main() ##########################
 
-this_version = 10.0
+this_version=10.0
 
 # Show upgrade warning if old data exists
 # Designed for scenarios where users upgrade form MySQL 5.5 or 5.6 or MariaDB 5.5

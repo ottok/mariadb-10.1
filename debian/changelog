@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.16-1~exp2) experimental; urgency=low
+
+  * Fix typo in preinstall script (Closes: #776494).
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Wed, 28 Jan 2015 20:57:23 +0200
+
 mariadb-10.0 (10.0.16-1~exp1) experimental; urgency=low
 
   * New upstream release. Inludes fixes for the following security
