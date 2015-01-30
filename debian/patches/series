@@ -9,3 +9,4 @@ remove_rename_mariadb-server_files_in.patch
 innodb_simulate_comp_test_speedup.patch
 fix-spelling-errors.patch
 mroonga-disable-switch.patch
+new_valid_certs.patch
