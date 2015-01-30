@@ -13,6 +13,7 @@ mariadb-10.0 (10.0.16-1) unstable; urgency=low
     - CVE-2014-6568
     - CVE-2015-0374
   * Backported new cacert.pem etc from 5.5 the replace the expired ones.
+  * Update the mail.ssl test to match new cacert.pem
 
  -- Otto Kekäläinen <otto@seravo.fi>  Tue, 03 Feb 2015 08:51:03 +0200
 
