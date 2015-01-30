@@ -1,6 +1,7 @@
 mariadb-10.0 (10.0.16-1~exp2) experimental; urgency=low
 
   * Fix typo in preinstall script (Closes: #776494).
+  * Backported new cacert.pem etc from 5.5 the replace the expired ones.
 
  -- Otto Kekäläinen <otto@seravo.fi>  Wed, 28 Jan 2015 20:57:23 +0200
 
