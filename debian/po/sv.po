@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1 5.0.21-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2014-12-10 22:09+0200\n"
+"POT-Creation-Date: 2015-01-31 14:00+0200\n"
 "PO-Revision-Date: 2014-09-25 10:20+0100\n"
 "Last-Translator: Martin Bagge / brother <brother@bsnet.se>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
@@ -104,43 +104,15 @@ msgstr ""
 "en nyare version eller om en annan mariadb-server redan använder filerna ska "
 "de inte raderas."
 
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "New password for the MariaDB \"root\" user:"
-msgstr "Nytt lösenord för MariaDBs \"root\"-användare:"
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"While not mandatory, it is highly recommended that you set a password for "
-"the MariaDB administrative \"root\" user."
-msgstr ""
-"Det är inte obligatoriskt men starkt rekommenderat att du sätter ett "
-"lösenord för MariaDBs administrativa \"root\"-användare."
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "If this field is left blank, the password will not be changed."
-msgstr "Om detta fält lämnas tom kommer lösenordet inte att ändras."
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:6001
-msgid "Repeat password for the MariaDB \"root\" user:"
-msgstr "Repetera lösenordet för MariaDBs \"root\"-användare:"
-
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Unable to set password for the MariaDB \"root\" user"
 msgstr "Kunde inte sätta lösenord för MariaDBs \"root\"-användare"
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "An error occurred while setting the password for the MariaDB administrative "
 "user. This may have happened because the account already has a password, or "
@@ -153,13 +125,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid "You should check the account's password after the package installation."
 msgstr "Du bör kontrollera kontots lösenord efter installationen av paketet."
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
@@ -167,27 +139,15 @@ msgstr ""
 "Läs filen /usr/share/doc/mariadb-server-10.0/README.Debian för mer "
 "information."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:8001
-msgid "Password input error"
-msgstr "Fel vid inmatning av lösenord"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:8001
-msgid "The two passwords you entered were not the same. Please try again."
-msgstr "De två lösenorden du angav stämde inte överens. Prova igen."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid "Really migrate to MariaDB?"
 msgstr "Verkligen byta till MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -197,7 +157,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -208,7 +168,24 @@ msgstr ""
 "kommer att fungera, åtminstone inte automatiskt som är fallet från MySQL "
 "till MariaDB."
 
+#~ msgid "New password for the MariaDB \"root\" user:"
+#~ msgstr "Nytt lösenord för MariaDBs \"root\"-användare:"
 
+#~ msgid ""
+#~ "While not mandatory, it is highly recommended that you set a password for "
+#~ "the MariaDB administrative \"root\" user."
+#~ msgstr ""
+#~ "Det är inte obligatoriskt men starkt rekommenderat att du sätter ett "
+#~ "lösenord för MariaDBs administrativa \"root\"-användare."
 
+#~ msgid "If this field is left blank, the password will not be changed."
+#~ msgstr "Om detta fält lämnas tom kommer lösenordet inte att ändras."
 
+#~ msgid "Repeat password for the MariaDB \"root\" user:"
+#~ msgstr "Repetera lösenordet för MariaDBs \"root\"-användare:"
 
+#~ msgid "Password input error"
+#~ msgstr "Fel vid inmatning av lösenord"
+
+#~ msgid "The two passwords you entered were not the same. Please try again."
+#~ msgstr "De två lösenorden du angav stämde inte överens. Prova igen."

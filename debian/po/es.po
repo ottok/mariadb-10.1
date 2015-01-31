@@ -41,7 +41,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1_5.0.24-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2014-12-10 22:09+0200\n"
+"POT-Creation-Date: 2015-01-31 14:00+0200\n"
 "PO-Revision-Date: 2014-09-24 23:52+0200\n"
 "Last-Translator: Javier Fernández-Sanguino <jfs@debian.org>\n"
 "Language-Team: Debian l10 Spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -137,43 +137,15 @@ msgstr ""
 "MariaDB más reciente o si hay un paquete «mariadb-server» distinto que los "
 "está utilizando."
 
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "New password for the MariaDB \"root\" user:"
-msgstr "Nueva contraseña para el usuario «root» de MariaDB:"
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"While not mandatory, it is highly recommended that you set a password for "
-"the MariaDB administrative \"root\" user."
-msgstr ""
-"Se recomienda que configure una contraseña para el usuario "
-"«root» (administrador) de MariaDB, aunque no es obligatorio."
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "If this field is left blank, the password will not be changed."
-msgstr "No se modificará la contraseña si deja este campo en blanco."
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:6001
-msgid "Repeat password for the MariaDB \"root\" user:"
-msgstr "Repita la contraseña para el usuario «root» de MariaDB:"
-
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Unable to set password for the MariaDB \"root\" user"
 msgstr "No se pudo fijar la contraseña para el usuario «root» de MariaDB"
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "An error occurred while setting the password for the MariaDB administrative "
 "user. This may have happened because the account already has a password, or "
@@ -186,7 +158,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid "You should check the account's password after the package installation."
 msgstr ""
 "Debería comprobar la contraseña de la cuenta después de la instalación del "
@@ -194,7 +166,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
@@ -202,28 +174,15 @@ msgstr ""
 "Consulte /usr/share/doc/mariadb-server-10.0/README.Debian para más "
 "información."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:8001
-msgid "Password input error"
-msgstr "Error en la entrada de contraseña"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:8001
-msgid "The two passwords you entered were not the same. Please try again."
-msgstr ""
-"Las contraseñas introducidas no coinciden. Por favor, inténtelo de nuevo."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid "Really migrate to MariaDB?"
 msgstr "¿Realmente desea migrar a MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -233,7 +192,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -243,24 +202,25 @@ msgstr ""
 "existen en MySQL. Por ello, la marcha atrás a MySQL no siempre funcionará o, "
 "al menos, no será tan automática como la migración de MySQL a MariaDB."
 
+#~ msgid "New password for the MariaDB \"root\" user:"
+#~ msgstr "Nueva contraseña para el usuario «root» de MariaDB:"
 
+#~ msgid ""
+#~ "While not mandatory, it is highly recommended that you set a password for "
+#~ "the MariaDB administrative \"root\" user."
+#~ msgstr ""
+#~ "Se recomienda que configure una contraseña para el usuario "
+#~ "«root» (administrador) de MariaDB, aunque no es obligatorio."
 
+#~ msgid "If this field is left blank, the password will not be changed."
+#~ msgstr "No se modificará la contraseña si deja este campo en blanco."
 
+#~ msgid "Repeat password for the MariaDB \"root\" user:"
+#~ msgstr "Repita la contraseña para el usuario «root» de MariaDB:"
 
+#~ msgid "Password input error"
+#~ msgstr "Error en la entrada de contraseña"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#~ msgid "The two passwords you entered were not the same. Please try again."
+#~ msgstr ""
+#~ "Las contraseñas introducidas no coinciden. Por favor, inténtelo de nuevo."

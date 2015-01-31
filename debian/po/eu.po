@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2014-12-10 22:09+0200\n"
+"POT-Creation-Date: 2015-01-31 14:00+0200\n"
 "PO-Revision-Date: 2009-07-29 11:59+0200\n"
 "Last-Translator: Piarres Beobide <pi@beobide.net>\n"
 "Language-Team: Euskara <debian-l10n-eu@lists.debian.org>\n"
@@ -109,45 +109,15 @@ msgstr ""
 "bazara, edo beste mariadb-server pakete bat berau erabiltzen ari bada, "
 "datuak mantendu egin beharko lirateke."
 
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "New password for the MariaDB \"root\" user:"
-msgstr "MariaDB \"root\" erabiltzailearen pasahitz berria:"
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"While not mandatory, it is highly recommended that you set a password for "
-"the MariaDB administrative \"root\" user."
-msgstr ""
-"Derrigorrezkoa ez denean, oso gomendagarria da MariaDB administratzaile "
-"\"root\" erabiltzaileari pasahitz bat ezartzea."
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-#, fuzzy
-#| msgid "If that field is left blank, the password will not be changed."
-msgid "If this field is left blank, the password will not be changed."
-msgstr "Eremua hau zurian utziaz gero ez da pasahitza aldatuko."
-
-#. Type: password
-#. Description
-#: ../mariadb-server-10.0.templates:6001
-msgid "Repeat password for the MariaDB \"root\" user:"
-msgstr "Errepikatu MariaDB \"root\" erabiltzailearen pasahitza:"
-
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Unable to set password for the MariaDB \"root\" user"
 msgstr "Ezin da MariaDB \"root\" erabiltzailearen pasahitza ezarri"
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "An error occurred while setting the password for the MariaDB administrative "
 "user. This may have happened because the account already has a password, or "
@@ -159,14 +129,14 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 msgid "You should check the account's password after the package installation."
 msgstr ""
 "Kontuaren pasahitza egiaztatu beharko zenuke paketea instalatu aurretik."
 
 #. Type: error
 #. Description
-#: ../mariadb-server-10.0.templates:7001
+#: ../mariadb-server-10.0.templates:5001
 #, fuzzy
 #| msgid ""
 #| "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
@@ -178,27 +148,15 @@ msgstr ""
 "Mesedez irakurri /usr/share/doc/mariadb-server-10.0/README.Debian fitxategia "
 "xehetasun gehiagorako."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:8001
-msgid "Password input error"
-msgstr "Pasahitz sarrera errorea"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:8001
-msgid "The two passwords you entered were not the same. Please try again."
-msgstr "Idatzi dituzun bi pasahitzak ez dira berdina. Mesedez saiatu berriz."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid "Really migrate to MariaDB?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -206,15 +164,34 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:9001
+#: ../mariadb-server-10.0.templates:6001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
 
+#~ msgid "New password for the MariaDB \"root\" user:"
+#~ msgstr "MariaDB \"root\" erabiltzailearen pasahitz berria:"
+
+#~ msgid ""
+#~ "While not mandatory, it is highly recommended that you set a password for "
+#~ "the MariaDB administrative \"root\" user."
+#~ msgstr ""
+#~ "Derrigorrezkoa ez denean, oso gomendagarria da MariaDB administratzaile "
+#~ "\"root\" erabiltzaileari pasahitz bat ezartzea."
 
 #, fuzzy
+#~| msgid "If that field is left blank, the password will not be changed."
+#~ msgid "If this field is left blank, the password will not be changed."
+#~ msgstr "Eremua hau zurian utziaz gero ez da pasahitza aldatuko."
 
+#~ msgid "Repeat password for the MariaDB \"root\" user:"
+#~ msgstr "Errepikatu MariaDB \"root\" erabiltzailearen pasahitza:"
 
+#~ msgid "Password input error"
+#~ msgstr "Pasahitz sarrera errorea"
 
+#~ msgid "The two passwords you entered were not the same. Please try again."
+#~ msgstr ""
+#~ "Idatzi dituzun bi pasahitzak ez dira berdina. Mesedez saiatu berriz."
