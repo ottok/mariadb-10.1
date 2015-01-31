@@ -44,18 +44,6 @@ _Description: Remove all MariaDB databases?
  recent version or if a different mariadb-server package is already
  using it, the data should be kept.
 
-Template: mariadb-server/root_password
-Type: password
-_Description: New password for the MariaDB "root" user:
- While not mandatory, it is highly recommended that you set a password
- for the MariaDB administrative "root" user.
- .
- If this field is left blank, the password will not be changed.
-
-Template: mariadb-server/root_password_again
-Type: password
-_Description: Repeat password for the MariaDB "root" user:
-
 Template: mariadb-server/error_setting_password
 Type: error
 _Description: Unable to set password for the MariaDB "root" user
@@ -69,11 +57,6 @@ _Description: Unable to set password for the MariaDB "root" user
  Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file
  for more information.
 
-Template: mariadb-server/password_mismatch
-Type: error
-_Description: Password input error
- The two passwords you entered were not the same. Please try again.
-
 Template: mariadb-server/oneway_migration
 Type: boolean
 Default: true
@@ -84,4 +67,3 @@ _Description: Really migrate to MariaDB?
  Note that MariaDB has some enhanced features, which do not exist in MySQL
  and thus migration back to MySQL might not always work, at least not as
  automatically as migrating from MySQL to MariaDB.
-

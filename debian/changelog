@@ -1,6 +1,10 @@
 mariadb-10.0 (10.0.16-1~exp3) experimental; urgency=low
 
   * Update the mail.ssl test to match new cacert.pem
+  * Stop asking and setting a database root user password. Instead enable
+    the auth_socket plugin and let unix user root access MariaDB without
+    a separate password. Admins using sudo or cron scripts can use the
+    same access too, and there is no debian-sys-maint password either anymore.
 
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 30 Jan 2015 18:52:55 +0200
 

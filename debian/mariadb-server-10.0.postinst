@@ -29,8 +29,6 @@ test_passwordless_root_login() {
 
 # call with $1 = "online" to connect to the server, otherwise it bootstraps
 set_mysql_rootpw() {
-       # forget we ever saw the password.  don't use reset to keep the seen status
-       db_set mariadb-server/root_password ""
 
        tfile=`mktemp`
        if [ ! -f "$tfile" ]; then
@@ -178,12 +176,11 @@ case "$1" in
     echo "$install_plugins"                                  | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
     set -e
     # overly complicated here but ensures a plugin unix_socket is installed and is idpotent if already installed
-    echo "SET sql_log_bin=0; USE mysql; DELIMITER //; CREATE PROCEDURE debian_plugin_install(IN plugin_name CHAR(50), IN soname CHAR(50)) BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND  EXECUTE 
-inst_plug; set @plugin_name=plugin_name; set @soname=soname ;set @install_plugin=CONCAT(\"INSTALL PLUGIN \",@plugin_name,\" SONAME '\", @soname, \"'\");PREPARE inst_plug FROM @install_plugin ; 
+    echo "SET sql_log_bin=0; USE mysql; DELIMITER //; CREATE PROCEDURE debian_plugin_install(IN plugin_name CHAR(50), IN soname CHAR(50)) BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND  EXECUTE
+inst_plug; set @plugin_name=plugin_name; set @soname=soname ;set @install_plugin=CONCAT(\"INSTALL PLUGIN \",@plugin_name,\" SONAME '\", @soname, \"'\");PREPARE inst_plug FROM @install_plugin ;
 select PLUGIN_NAME INTO @a from  information_schema.plugins where PLUGIN_NAME=@plugin_name AND PLUGIN_STATUS='ACTIVE' AND PLUGIN_TYPE='AUTHENTICATION' AND PLUGIN_LIBRARY LIKE concat(@soname,'%'
 ); DEALLOCATE PREPARE inst_plug; END// CALL debian_plugin_install('unix_socket', 'auth_socket') // DROP PROCEDURE debian_plugin_install//" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
 
-     db_get mariadb-server/root_password && rootpw="$RET"
      if ! set_mysql_rootpw; then
          password_error="yes"
          # restore old config file if exists
@@ -212,10 +209,6 @@ esac
 # fails for any other reason, nothing happens.
 if [ "$1" = "configure" ]; then
        if test_passwordless_root_login; then
-               db_input medium mariadb-server/root_password || true
-               db_go
-               db_get mariadb-server/root_password && rootpw="$RET"
-
                if ! set_mysql_rootpw "online"; then
                        password_error="yes"
                fi
