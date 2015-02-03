@@ -1,1 +1,2 @@
-debian/additions/mariadb.cnf etc/mysql/conf.d
+debian/additions/mariadb.cnf etc/mysql/
+debian/additions/mariadb.conf.d etc/mysql/

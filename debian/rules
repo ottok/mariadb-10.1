@@ -87,7 +87,7 @@ override_dh_prep:
 override_dh_auto_configure:
 	@echo "RULES.$@"
 	dh_testdir
-	
+
 	( test -d $(BUILDDIR) || mkdir $(BUILDDIR) ) && cd $(BUILDDIR) && \
 	sh -c  'PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
 	    	CC=$${MYSQL_BUILD_CC:-gcc} \
@@ -123,21 +123,21 @@ override_dh_auto_install:
 	@echo "RULES.$@"
 	dh_testdir
 	dh_testroot
-	
+
 	# If TokuDB plugin was built add it to the server install list.
-	[ ! -f $(BUILDDIR)/storage/tokudb/ha_tokudb.so ] || echo 'usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/conf.d/tokudb.cnf\nusr/bin/tokuftdump\nusr/share/doc/mariadb-server-10.0/README-TOKUDB\nusr/share/doc/mariadb-server-10.0/README.md' >> debian/mariadb-server-10.0.install
-	
+	[ ! -f $(BUILDDIR)/storage/tokudb/ha_tokudb.so ] || echo 'usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/mariadb.conf.d/tokudb.cnf\nusr/bin/tokuftdump\nusr/share/doc/mariadb-server-10.0/README-TOKUDB\nusr/share/doc/mariadb-server-10.0/README.md' >> debian/mariadb-server-10.0.install
+
 	# If Mroonga plugin was built add it to the server install list.
 	[ ! -f $(BUILDDIR)/storage/mroonga/ha_mroonga.so ] || echo 'usr/lib/mysql/plugin/ha_mroonga.so' >> debian/mariadb-server-10.0.install
-	
+
 	# If libthrift-dev was available (manually installed, as it is
 	# not in Debian) and ha_cassandra.so was thus built add it to
 	# the server install list.
 	[ ! -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || echo 'usr/lib/mysql/plugin/ha_cassandra.so' >> debian/mariadb-server-10.0.install
-	
+
 	# make install
 	cd $(BUILDDIR) && $(MAKE) install DESTDIR=$(TMP)
-	
+
 	# mariadb-server
 	# INBO_BIN is generated at build time and must thus be installed like this
 	install -D -m 0644 $(BUILDDIR)/Docs/INFO_BIN $(TMP)/usr/share/doc/mariadb-server-10.0/INFO_BIN
@@ -146,16 +146,16 @@ override_dh_auto_install:
 	       $(TMP)/usr/share/mysql/mysql.server \
 	       $(TMP)/usr/share/mysql/binary-configure
 	nm -n $(BUILDDIR)/sql/mysqld |gzip -n -9 > $(TMP)/usr/share/doc/mariadb-server-10.0/mysqld.sym.gz
-	
+
 	# rename and install AppArmor profile
 	install -D -m 644 debian/apparmor-profile $(TMP)/etc/apparmor.d/usr.sbin.mysqld
-	
+
 	# rename and install Apport hook
 	install -D -m 644 debian/mariadb-server-10.0.py $(TMP)/usr/share/apport/package-hooks/source_mariadb-10.0.py
-	
+
 	# mariadb-test
 	mv $(TMP)/usr/mysql-test $(TMP)/usr/share/mysql
-	
+
 	touch $@
 
 override_dh_installlogrotate-arch:

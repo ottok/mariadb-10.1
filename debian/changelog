@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.16-1~exp4) experimental; urgency=low
+
+  * Follow to new /etc/mysql/my.cnf management scheme
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Tue, 03 Feb 2015 23:11:20 +0200
+
 mariadb-10.0 (10.0.16-1~exp3) experimental; urgency=low
 
   * Update the mail.ssl test to match new cacert.pem
