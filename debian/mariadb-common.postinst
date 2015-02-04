@@ -11,8 +11,8 @@ case "$1" in
     then
       /usr/share/mysql-common/configure-symlinks install mariadb "/etc/mysql/mariadb.cnf"
     else
-      mv /etc/mysql/my.cnf /etc/mysql/my.cnf.old
-      ln -s /etc/mysql/mariadb.cnf /etc/mysql/my.cnf
+      echo "Notice: configure-symlinks trigger could not be called."
+      echo "Please manually make /etc/mysql/my.cnf a symlink that points to mariadb.cnf."
     fi
   ;;
 
