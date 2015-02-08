@@ -1,8 +1,11 @@
 mariadb-10.0 (10.0.16-1~exp4) experimental; urgency=low
 
   * Follow to new /etc/mysql/my.cnf management scheme
+  * Remove the my.cnf move command as it increases complexity too much and might
+    emit an error code if mariadb-common is upgraded before mysql-common is.
+  * Add patch to enhance build reproducibility
 
- -- Otto Kekäläinen <otto@seravo.fi>  Tue, 03 Feb 2015 23:11:20 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Sun, 08 Feb 2015 10:03:39 +0200
 
 mariadb-10.0 (10.0.16-1~exp3) experimental; urgency=low
 
