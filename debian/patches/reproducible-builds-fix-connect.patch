@@ -1,0 +1,21 @@
+Description: Connect engine builds are not "reproducible"
+ Debian has introduced a concept of "reproducible" builds — a build that one
+ can reproduce, repeating the build with same options and getting identical —
+ byte per byte — binaries. See https://wiki.debian.org/ReproducibleBuilds/About
+ Connect engine uses __DATE__ and __TIME__ macros, which fails reproducible
+ builds
+Author: Sergei Golubchik <serg@mariadb.org>
+Bug: https://mariadb.atlassian.net/browse/MDEV-7554
+
+=== modified file 'storage/connect/ha_connect.cc'
+--- old/storage/connect/ha_connect.cc       2015-01-20 00:21:56 +0000
++++ new/storage/connect/ha_connect.cc       2015-02-06 18:05:16 +0000
+@@ -171,7 +171,7 @@
+
+ extern "C" {
+        char  version[]= "Version 1.03.0006 January 13, 2015";
+-       char  compver[]= "Version 1.03.0006 " __DATE__ " "  __TIME__;
++       char  compver[]= "Version 1.03.0006";
+
+ #if defined(WIN32)
+        char slash= '\\';
