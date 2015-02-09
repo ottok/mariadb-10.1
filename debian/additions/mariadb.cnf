@@ -1,9 +1,10 @@
 # The MariaDB configuration file
 #
 # The MariaDB/MySQL tools read configuration files in the following order:
-# - "/etc/mysql/mariadb.cnf" (this file) to set global defaults,
-# - "/etc/mysql/mariadb.conf.d/*.cnf" to set global options.
-# - "~/.my.cnf" to set user-specific options.
+# 1. "/etc/mysql/mariadb.cnf" (this file) to set global defaults,
+# 2. "/etc/mysql/conf.d/*.cnf" to set global options.
+# 3. "/etc/mysql/mariadb.conf.d/*.cnf" to set MariaDB-only options.
+# 4. "~/.my.cnf" to set user-specific options.
 #
 # If the same option is defined multiple times, the last one will apply.
 #
@@ -12,4 +13,5 @@
 # --print-defaults to see which it would actually understand and use.
 
 # Import all .cnf files from configuration directory
+!includedir /etc/mysql/conf.d/
 !includedir /etc/mysql/mariadb.conf.d/
