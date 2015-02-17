@@ -1,3 +1,4 @@
+usr/bin/innochecksum
 usr/sbin/mysqld
 usr/share/mysql/charsets
 usr/share/mysql/czech
