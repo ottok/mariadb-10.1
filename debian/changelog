@@ -1,5 +1,9 @@
 mariadb-10.0 (10.0.17-1) unstable; urgency=low
 
+  [ Robie Basak ]
+  * Move innochecksum back to mariadb-server-core-10.0 to align with other
+    variants (LP: #1421520).
+
   [ Jan Wagner ]
   * Adding mysqld_multi.server_lsb-header.patch, provides LSB headers for
     example initscript (Closes: #778762)
