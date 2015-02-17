@@ -126,7 +126,7 @@ case "$1" in
     if [ ! -e "$dc" -o -n "`fgrep debian-sys-maint $dc 2>/dev/null`" ]; then
         if [ ! -d "$mysql_cfgdir" ]; then install -o 0 -g 0 -m 0755 -d $mysql_cfgdir; fi
         if [ -e "$dc" ]; then
-          oldconf=`mktemp --tmpdir $mysql_cfgdir -t debian_old_config.XXXXXX`
+          oldconf=`mktemp --tmpdir=$mysql_cfgdir -t debian_old_config.XXXXXX`
           cp $dc $oldconf
         else
           oldconf=''
