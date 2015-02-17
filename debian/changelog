@@ -2,6 +2,7 @@ mariadb-10.0 (10.0.16-2~exp1) UNRELEASED; urgency=medium
 
   * Move innochecksum back to mariadb-server-core-10.0 to align with other
     variants (LP: #1421520).
+  * Fix typo in mariadb-server-10.0.postinst.
 
  -- Robie Basak <robie.basak@ubuntu.com>  Tue, 17 Feb 2015 17:52:26 +0000
 

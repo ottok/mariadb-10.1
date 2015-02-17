@@ -69,7 +69,7 @@ case "$1" in
 
     # Ensure the existence and right permissions for the database and
     # log files.
-    if [ ! -d "$mysql_statedir" -a ! -L "$mysql_statedir"]; then mkdir "$mysql_statedir"; fi
+    if [ ! -d "$mysql_statedir" -a ! -L "$mysql_statedir" ]; then mkdir "$mysql_statedir"; fi
     if [ ! -d "$mysql_datadir"  -a ! -L "$mysql_datadir" ]; then mkdir "$mysql_datadir" ; fi
     if [ ! -d "$mysql_logdir"   -a ! -L "$mysql_logdir"  ]; then mkdir "$mysql_logdir"  ; fi
     # When creating an ext3 jounal on an already mounted filesystem like e.g.
