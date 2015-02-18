@@ -12,6 +12,8 @@ mariadb-10.0 (10.0.17-1) unstable; urgency=low
 
   [ Otto Kekäläinen ]
   * New upstream release
+  * Remove /var/log/mysql.log from logrotate. Everything should be inside
+    the mysql directory (/var/log/mysql/) and not directly on plain /var/log
 
  -- Otto Kekäläinen <otto@seravo.fi>  Sun, 05 Apr 2015 23:59:55 +0300
 
