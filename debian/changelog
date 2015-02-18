@@ -1,14 +1,12 @@
 mariadb-10.0 (10.0.16-2~exp1) UNRELEASED; urgency=medium
 
+  [ Robie Basak ]
   * Move innochecksum back to mariadb-server-core-10.0 to align with other
     variants (LP: #1421520).
   * Fix typo in mariadb-server-10.0.postinst.
   * Fix typo in postinst mktemp call (LP: #1420831).
 
- -- Robie Basak <robie.basak@ubuntu.com>  Tue, 17 Feb 2015 17:52:26 +0000
-
-mariadb-10.0 (10.0.16-1~exp4) experimental; urgency=low
-
+  [ Otto Kekäläinen ]
   * Follow to new /etc/mysql/my.cnf management scheme
   * Remove the my.cnf move command as it increases complexity too much and might
     emit an error code if mariadb-common is upgraded before mysql-common is.
