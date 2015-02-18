@@ -11,6 +11,8 @@ mariadb-10.0 (10.0.16-2~exp1) UNRELEASED; urgency=medium
   * Remove the my.cnf move command as it increases complexity too much and might
     emit an error code if mariadb-common is upgraded before mysql-common is.
   * Add patch to enhance build reproducibility
+  * Remove /var/log/mysql.log from logrotate. Everything should be inside
+    the mysql directory (/var/log/mysql/) and not directly on plain /var/log
 
   [ Arnaud Fontaine ]
   * d/control: innochecksum manpage has been moved to mariadb-client-10.0 in
