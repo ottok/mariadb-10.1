@@ -13,3 +13,4 @@ new_valid_certs.patch
 new_valid_certs_test_fix.patch
 reproducible-builds-fix-connect.patch
 mysqld_multi_confd.patch
+mysqld_multi.server_lsb-header.patch
