@@ -1,5 +1,12 @@
 mariadb-10.0 (10.0.16-2) UNRELEASED; urgency=low
 
+  [ Jan Wagner ]
+  * Adding mysqld_multi.server_lsb-header.patch, provides LSB headers for
+    example initscript (Closes: #778762)
+  * Adding mysqld_multi_confd.patch, makes mysqld_multi reading conf.d
+    (Closes: #778761)
+
+  [ Otto Kekäläinen ]
   * Add patch to enhance build reproducibility
 
  -- Otto Kekäläinen <otto@seravo.fi>  Sun, 08 Feb 2015 10:38:28 +0200
