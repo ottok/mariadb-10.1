@@ -1,5 +1,11 @@
 mariadb-10.0 (10.0.16-2~exp1) UNRELEASED; urgency=medium
 
+  [ Jan Wagner ]
+  * Adding mysqld_multi.server_lsb-header.patch, provides LSB headers for
+    example initscript (Closes: #778762)
+  * Adding mysqld_multi_confd.patch, makes mysqld_multi reading conf.d
+    (Closes: #778761)
+
   [ Robie Basak ]
   * Move innochecksum back to mariadb-server-core-10.0 to align with other
     variants (LP: #1421520).
