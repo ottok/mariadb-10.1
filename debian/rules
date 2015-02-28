@@ -48,7 +48,7 @@ endif
 
 # Skip TokuDB if arch is not amd64
 ifneq ($(ARCH), amd64)
-    CMAKEFLAGS += =-DWITHOUT_TOKUDB=true
+    CMAKEFLAGS += -DWITHOUT_TOKUDB=true
 endif
 
 # Skip Mroonga if arch is not amd64
