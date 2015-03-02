@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+set -x
+
 . /usr/share/debconf/confmodule
 
 if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
@@ -151,15 +153,26 @@ case "$1" in
     chown 0:0 $dc
     chmod 0600 $dc
 
-    # update privilege tables
+    # Update privilege tables
     password_column_fix_query=`/bin/echo -e \
         "USE mysql;\n" \
         "SET sql_log_bin=0;\n" \
         "ALTER TABLE user CHANGE Password Password char(41) character set latin1 collate latin1_bin DEFAULT '' NOT NULL;"`
 
-    replace_query="USE mysql; SET sql_mode='', sql_log_bin=0; DROP USER 'debian-sys-maint'@'localhost';"
+    # Upgrade password column format before the root password gets set.
+    # NOTE: Lines like this apparently really need to be formatted this way
+    # for mysqld to process the correclty (;-delimiter, newlines etc)
+    echo "$password_column_fix_query" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
 
-    # Engines supported by etch should be installed per default. The query sequence is supposed
+    # Replace old maintenance user with auth_socket usage if migrating
+    replace_query=`/bin/echo -e \
+        "USE mysql;\n" \
+        "SET sql_mode='', sql_log_bin=0;\n" \
+        "DROP USER 'debian-sys-maint'@'localhost';"`
+    # WARNING: This line might yield "The MariaDB server is running with
+    # the --skip-grant-tables option so it cannot execute this statement"
+
+    # Some plugins should installed per default. The query sequence is supposed
     # to be aborted if the CREATE TABLE fails due to an already existent table in which case the
     # admin might already have chosen to remove one or more plugins. Newlines are necessary.
     install_plugins=`/bin/echo -e \
@@ -167,19 +180,13 @@ case "$1" in
         "SET sql_log_bin=0;\n" \
         "CREATE TABLE IF NOT EXISTS plugin (name char(64) COLLATE utf8_bin NOT NULL DEFAULT '', " \
         "  dl char(128) COLLATE utf8_bin NOT NULL DEFAULT '', " \
-        "  PRIMARY KEY (name)) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='MySQL plugins';" `
+        "  PRIMARY KEY (name)) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='MySQL plugins';\n" \
+        "INSTALL PLUGIN unix_socket SONAME 'auth_socket';\n"`
 
-    # Upgrade password column format before the root password gets set.
-    echo "$password_column_fix_query"                        | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
-    # install unix_socket plugin but ignore if already there
+    # Install plugins and ignore if already there
     set +e
-    echo "$install_plugins"                                  | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
+    echo "$install_plugins" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
     set -e
-    # overly complicated here but ensures a plugin unix_socket is installed and is idpotent if already installed
-    echo "SET sql_log_bin=0; USE mysql; DELIMITER //; CREATE PROCEDURE debian_plugin_install(IN plugin_name CHAR(50), IN soname CHAR(50)) BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND  EXECUTE
-inst_plug; set @plugin_name=plugin_name; set @soname=soname ;set @install_plugin=CONCAT(\"INSTALL PLUGIN \",@plugin_name,\" SONAME '\", @soname, \"'\");PREPARE inst_plug FROM @install_plugin ;
-select PLUGIN_NAME INTO @a from  information_schema.plugins where PLUGIN_NAME=@plugin_name AND PLUGIN_STATUS='ACTIVE' AND PLUGIN_TYPE='AUTHENTICATION' AND PLUGIN_LIBRARY LIKE concat(@soname,'%'
-); DEALLOCATE PREPARE inst_plug; END// CALL debian_plugin_install('unix_socket', 'auth_socket') // DROP PROCEDURE debian_plugin_install//" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
 
      if ! set_mysql_rootpw; then
          password_error="yes"
@@ -189,7 +196,7 @@ select PLUGIN_NAME INTO @a from  information_schema.plugins where PLUGIN_NAME=@p
          [ -e $oldconf ] && rm -f $oldconf
          # purge debian-sys-maint user
          set +e
-         echo "$replace_query"                                    | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
+         echo "$replace_query" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
          set -e
     fi
   ;;
