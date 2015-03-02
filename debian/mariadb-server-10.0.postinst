@@ -21,7 +21,7 @@ invoke() {
   fi
 }
 
-MYSQL_BOOTSTRAP="/usr/sbin/mysqld --bootstrap --user=mysql --skip-grant-tables --default-storage-engine=myisam --plugin-load-add=auth_socket"
+MYSQL_BOOTSTRAP="/usr/sbin/mysqld --bootstrap --user=mysql --disable-log-bin --skip-grant-tables --default-storage-engine=myisam --plugin-load-add=auth_socket"
 
 test_passwordless_root_login() {
        mysql --no-defaults -u root -h localhost </dev/null >/dev/null 2>&1
@@ -100,7 +100,7 @@ case "$1" in
     # Debian: beware of the bashisms...
     # Debian: can safely run on upgrades with existing databases
     set +e
-    bash /usr/bin/mysql_install_db --rpm --user=mysql 2>&1 | $ERR_LOGGER
+    bash /usr/bin/mysql_install_db --rpm --user=mysql --disable-log-bin 2>&1 | $ERR_LOGGER
     set -e
 
     ## On every reconfiguration the maintenance user is recreated.
