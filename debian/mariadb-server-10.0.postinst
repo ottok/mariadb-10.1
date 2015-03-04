@@ -29,20 +29,26 @@ test_passwordless_root_login() {
        mysql --no-defaults -u root -h localhost </dev/null >/dev/null 2>&1
 }
 
-# call with $1 = "online" to connect to the server, otherwise it bootstraps
+# This function resets the root@localhost user password and enable the
+# usage of the unix_socket plugin for it.
+# Call with $1 = "online" to connect to the server, otherwise it bootstraps
 set_mysql_rootpw() {
 
-       tfile=`mktemp`
+       tfile="$(mktemp)"
        if [ ! -f "$tfile" ]; then
                return 1
        fi
 
-       # this avoids us having to call "test" or "[" on $rootpw
+       # The reset_root statement is used to verify that the unix_socket plugin
+       # is active before resetting the root@localhost password ; if the plugin
+       # is not active, it will fail with "ERROR 1065 (42000): Query was empty"
+
+       # This avoids us having to call "test" or "[" on $rootpw
        cat << EOF > $tfile
-USE mysql;
 SET sql_log_bin=0;
-UPDATE user SET password="", plugin="unix_socket" WHERE user='root';
-FLUSH PRIVILEGES;
+SET @reset_root=IF( (SELECT 1 FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='unix_socket' AND PLUGIN_STATUS='ACTIVE' AND PLUGIN_TYPE='AUTHENTICATION' AND PLUGIN_LIBRARY LIKE CONCAT('auth_socket','%') )=1, "UPDATE mysql.user SET Password='', Plugin='unix_socket' WHERE User='root' AND Host='localhost'", '');
+PREPARE reset_root FROM @reset_root;
+EXECUTE reset_root;
 EOF
        if [ "$1" = "online" ]; then
                mysql --no-defaults -u root -h localhost <$tfile >/dev/null
@@ -51,7 +57,7 @@ EOF
                $MYSQL_BOOTSTRAP <$tfile
                retval=$?
        fi
-       rm -f $tfile
+       rm -f "$tfile"
        return $retval
 }
 
