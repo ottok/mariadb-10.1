@@ -1,3 +1,10 @@
+mariadb-10.0 (10.0.17-1~exp2) UNRELEASED; urgency=low
+
+  * d/control: Related to innochecksum manpage move, also break/replace
+    the mysql-client-5.5/6 packages (Closes: #779873)
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 06 Mar 2015 16:42:21 +0200
+
 mariadb-10.0 (10.0.17-1~exp1) experimental; urgency=low
 
   [ Jan Wagner ]
