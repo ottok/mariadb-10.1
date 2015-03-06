@@ -113,11 +113,15 @@ Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
 Conflicts: mariadb-galera-server-5.5, mysql-server-5.5, mysql-server-5.6
 Breaks: mariadb-client-10.0 (<< ${source:Version}),
         mariadb-server-core-5.5,
+        mysql-client-5.5,
+        mysql-client-5.6,
         mysql-server-core-5.5,
         mysql-server-core-5.6,
         virtual-mysql-server-core
 Replaces: mariadb-client-10.0 (<< ${source:Version}),
           mariadb-server-core-5.5,
+          mysql-client-5.5,
+          mysql-client-5.6,
           mysql-server-core-5.5,
           mysql-server-core-5.6,
           virtual-mysql-server-core
