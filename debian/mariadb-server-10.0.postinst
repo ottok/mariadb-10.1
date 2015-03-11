@@ -154,6 +154,8 @@ case "$1" in
         echo "password = "                                                 >>$dc
         echo "socket   = $mysql_rundir/mysqld.sock"                        >>$dc
         echo "basedir  = /usr"                                             >>$dc
+    else
+      oldconf=''
     fi
     # If this dir chmod go+w then the admin did it. But this file should not.
     chown 0:0 $dc
