@@ -132,7 +132,7 @@ case "$1" in
     # recreate the credentials file if not present or with debian-sys-maint
     # still there
     dc=$mysql_cfgdir/debian.cnf;
-    if [ ! -e "$dc" -o 'grep -sq "^[^#]*user[^#=]*=[^#=]*debian-sys-maint" '"$dc" ]; then
+    if [ ! -e "$dc" -o 'grep -sq "^\s*user\s*=\s*debian-sys-maint\s*$" '"$dc" ]; then
         if [ ! -d "$mysql_cfgdir" ]; then install -o 0 -g 0 -m 0755 -d $mysql_cfgdir; fi
         if [ -e "$dc" ]; then
           oldconf=`mktemp --tmpdir=$mysql_cfgdir -t debian_old_config.XXXXXX`
