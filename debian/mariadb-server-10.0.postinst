@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-set -x
-
 . /usr/share/debconf/confmodule
 
 if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
