@@ -226,6 +226,16 @@ if [ "$1" = "configure" ]; then
                if ! set_mysql_rootpw "online"; then
                        password_error="yes"
                fi
+               # if there are no users with a hostname grant we can use skip-name-resolve
+               # this improves response time, especially if there are hosts connecting that don't
+               # have a reverse DNS resolution.
+               if [ -z `mysql --no-defaults -u root -h localhost -e \
+   "select host from mysql.user where not is_ipv6(host) and not is_ipv4(host) and host!='localhost' limit 1"` ];
+               then
+                       umask 066
+                       echo -e "[mariadb]\nskip-name-resolve" > $mysql_cfgdir/mariadb.conf.d/skip-name-resolve.cnf
+                       umask 022
+               fi
        fi
 
        if [ "$password_error" = "yes" ]; then
