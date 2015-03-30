@@ -52,6 +52,9 @@ EOF
                mysql --no-defaults -u root -h localhost <$tfile >/dev/null
                retval=$?
        else
+               # purge off the root@127.0.0.1 / root@::1 entries created by
+               # mysql_install_db and double check they have no authention
+               echo "DELETE FROM mysql.user WHERE User='root' AND Host!='localhost' AND Password='' AND Plugin='';" >> $tfile
                $MYSQL_BOOTSTRAP <$tfile
                retval=$?
        fi
