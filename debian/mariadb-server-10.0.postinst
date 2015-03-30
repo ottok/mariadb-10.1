@@ -39,9 +39,8 @@ set_mysql_rootpw() {
 
        # - The mysqld statement is like that in mysql_install_db because the
        #   server is not already running. This has some implications:
-       # 	- The amount of newlines and semicolons in the query is important!
-       #   - GRANT is not possible with --skip-grant-tables and "INSERT
-       #     (user,host..) VALUES" is not --ansi compliant
+       # - GRANT is not possible with --skip-grant-tables and "INSERT
+       #   (user,host..) VALUES" is not --ansi compliant but will have to do.
 
        # The reset_root statement is used to verify that the unix_socket plugin
        # is active before resetting the root@localhost password ; if the plugin
