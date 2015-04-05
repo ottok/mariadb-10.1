@@ -1,10 +1,11 @@
-mariadb-10.0 (10.0.17-1~exp2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.17-1~exp2) experimental; urgency=low
 
   * d/control: Related to innochecksum manpage move, also break/replace
     the mysql-client-5.5/6 packages (Closes: #779873)
   * Add automatic fallback to the new /etc/mysql/my.cnf management scheme
     for cases where mysql-common/configure-symlinks is not yet available
     and users complain the installation ends up broken.
+  * New release confirmed to build with GCC-5 (Closes: #777996)
 
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 06 Mar 2015 16:42:21 +0200
 
