@@ -3,10 +3,10 @@ Description: Remove upstream debian/* handling that is obsolete
 
 --- old/CMakeLists.txt	2014-01-29 20:55:56.499842093 +0200
 +++ new/CMakeLists.txt	2014-01-31 17:12:27.633594128 +0200
-@@ -484,12 +484,6 @@
- CONFIGURE_FILE(
-     ${CMAKE_SOURCE_DIR}/cmake/info_macros.cmake.in ${CMAKE_BINARY_DIR}/info_macros.cmake @ONLY)
- 
+@@ -460,12 +460,6 @@ CONFIGURE_FILE(
+     ${CMAKE_SOURCE_DIR}/cmake/info_macros.cmake.in
+     ${CMAKE_BINARY_DIR}/info_macros.cmake @ONLY)
+
 -IF(DEB)
 -  CONFIGURE_FILE(
 -    ${CMAKE_SOURCE_DIR}/debian/mariadb-server-10.0.files.in
