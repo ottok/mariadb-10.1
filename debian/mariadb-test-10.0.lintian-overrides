@@ -23,4 +23,5 @@ mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_8_innodb.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_5_myisam.result
 mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_4_innodb.result
-
+mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/plugin/oqgraph/oqgraph/maintainer-general-record.sh
+mariadb-test-10.0: executable-not-elf-or-script usr/share/mysql/mysql-test/lib/generate-ssl-certs.sh

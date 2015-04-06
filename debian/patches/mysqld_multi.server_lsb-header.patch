@@ -1,3 +1,5 @@
+Description: Provides LSB headers for example initscript (Closes: #778762)
+Author: Jan Wagner <waja@cyconet.org>
 --- a/support-files/mysqld_multi.server.sh
 +++ b/support-files/mysqld_multi.server.sh
 @@ -14,8 +14,24 @@
