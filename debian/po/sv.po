@@ -1,22 +1,22 @@
 # Translation of mariadb-10.0 debconf template to Swedish
-# Copyright (C) 2014 Martin Bagge <brother@bsnet.se>
+# Copyright (C) 2015 Martin Bagge <brother@bsnet.se>
 # This file is distributed under the same license as the mariadb-10.0 package.
 #
 # Andreas Henriksson <andreas@fatal.se>, 2007
-# Martin Bagge <brother@bsnet.se>, 2009, 2014
+# Martin Bagge <brother@bsnet.se>, 2009, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1 5.0.21-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2015-01-31 14:00+0200\n"
-"PO-Revision-Date: 2014-09-25 10:20+0100\n"
+"PO-Revision-Date: 2015-04-01 18:11+0100\n"
 "Last-Translator: Martin Bagge / brother <brother@bsnet.se>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
-"Language: Swedish\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.7.3\n"
 
 #. Type: boolean
 #. Description
@@ -143,7 +143,7 @@ msgstr ""
 #. Description
 #: ../mariadb-server-10.0.templates:6001
 msgid "Really migrate to MariaDB?"
-msgstr "Verkligen byta till MariaDB?"
+msgstr "Ska migreringen till MariaDB fortsätta?"
 
 #. Type: boolean
 #. Description
@@ -152,8 +152,9 @@ msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
 msgstr ""
-"MariaDB ersätter MySQL rakt av. Den kommer att använda din nuvarande "
-"inställningsfil (my.cnf) och de databaser som finns tillgängliga."
+"MariaDB är en ersättare för MySQL som helt och hållet fyller platsen efter "
+"MySQL. Den kommer att använda din nuvarande inställningsfil (my.cnf) och "
+"nuvarande databaser."
 
 #. Type: boolean
 #. Description
@@ -163,29 +164,6 @@ msgid ""
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
-"Observera att MariaDB har några ytterligare utvecklade funktioner som inte "
-"finns i MySQL. Att gå tillbaka till MySQL är inte garanterat något som "
-"kommer att fungera, åtminstone inte automatiskt som är fallet från MySQL "
-"till MariaDB."
-
-#~ msgid "New password for the MariaDB \"root\" user:"
-#~ msgstr "Nytt lösenord för MariaDBs \"root\"-användare:"
-
-#~ msgid ""
-#~ "While not mandatory, it is highly recommended that you set a password for "
-#~ "the MariaDB administrative \"root\" user."
-#~ msgstr ""
-#~ "Det är inte obligatoriskt men starkt rekommenderat att du sätter ett "
-#~ "lösenord för MariaDBs administrativa \"root\"-användare."
-
-#~ msgid "If this field is left blank, the password will not be changed."
-#~ msgstr "Om detta fält lämnas tom kommer lösenordet inte att ändras."
-
-#~ msgid "Repeat password for the MariaDB \"root\" user:"
-#~ msgstr "Repetera lösenordet för MariaDBs \"root\"-användare:"
-
-#~ msgid "Password input error"
-#~ msgstr "Fel vid inmatning av lösenord"
-
-#~ msgid "The two passwords you entered were not the same. Please try again."
-#~ msgstr "De två lösenorden du angav stämde inte överens. Prova igen."
+"Observera att det finns ett antal förbättrade funktioner som inte finns i "
+"MySQL, att gå tillbaka till MySQL är därför inte garanterat fungerande. "
+"Åtminstone med samma automatik som från MySQL till MariaDB."
