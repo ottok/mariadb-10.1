@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.17-1~exp3) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.17-2~exp1) UNRELEASED; urgency=low
 
   * Cleanup in d/copyright
 
