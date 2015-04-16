@@ -1,6 +1,8 @@
 mariadb-10.0 (10.0.17-2~exp1) UNRELEASED; urgency=low
 
   * Cleanup in d/copyright
+  * Make the mariadb-common depends versioned to guarantee that latest
+    config files are installed
 
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 10 Apr 2015 23:15:53 +0300
 
