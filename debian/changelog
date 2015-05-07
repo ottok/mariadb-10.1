@@ -1,10 +1,20 @@
-mariadb-10.0 (10.0.17-2~exp1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.18-1~exp1) experimental; urgency=low
 
+  * New upstream release. Includes fixes for the following security
+    vulnerabilities:
+    - CVE-2014-8964 bundled PCRE contained heap-based buffer overflow
+      vulnerability that allowed the server to crash or have other unspecified
+      impact via a crafted regular expression made possible with the
+      REGEXP_SUBSTR function (MDEV-8006).
+    - CVE-2015-0501
+    - CVE-2015-2571
+    - CVE-2015-0505
+    - CVE-2015-0499
   * Cleanup in d/copyright
   * Make the mariadb-common depends versioned to guarantee that latest
     config files are installed
 
- -- Otto Kekäläinen <otto@seravo.fi>  Fri, 10 Apr 2015 23:15:53 +0300
+ -- Otto Kekäläinen <otto@seravo.fi>  Thu, 07 May 2015 23:21:20 +0300
 
 mariadb-10.0 (10.0.17-1~exp2) experimental; urgency=low
 
@@ -43,7 +53,12 @@ mariadb-10.0 (10.0.17-1~exp1) experimental; urgency=low
   * Add patch to enhance build reproducibility
   * Remove /var/log/mysql.log from logrotate. Everything should be inside
     the mysql directory (/var/log/mysql/) and not directly on plain /var/log
-  * New upstream release
+  * New upstream release. Includes fixes for the following security
+    vulnerabilities (changelog updated post release):
+    - CVE-2015-2568
+    - CVE-2015-2573
+    - CVE-2015-0433
+    - CVE-2015-0441
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 02 Mar 2015 20:01:13 +0200
 
