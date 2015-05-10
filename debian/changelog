@@ -1,4 +1,29 @@
-mariadb-10.0 (10.0.17-1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.19-0+deb8u1) jessie-security; urgency=high
+
+  [ Otto Kekäläinen ]
+  * New upstream release 10.0.19. Fixed the server crash caused by
+    mysql_upgrade (MDEV-8115).
+  * Includes fixes done in 10.0.18 for the following security vulnerabilities:
+    - CVE-2014-8964 bundled PCRE contained heap-based buffer overflow
+      vulnerability that allowed the server to crash or have other unspecified
+      impact via a crafted regular expression made possible with the
+      REGEXP_SUBSTR function (MDEV-8006).
+    - CVE-2015-0501
+    - CVE-2015-2571
+    - CVE-2015-0505
+    - CVE-2015-0499
+  * Includes fixes done in 10.0.17 for the following security vulnerabilities:
+    - CVE-2015-2568
+    - CVE-2015-2573
+    - CVE-2015-0433
+    - CVE-2015-0441
+  * Removed /var/log/mysql.log from logrotate. Everything should be inside
+    the mysql directory (/var/log/mysql/) and not directly on plain /var/log
+  * d/control: Related to innochecksum manpage move, also break/replace
+    the mysql-client-5.5/6 packages (Closes: #779873)
+  * New release confirmed to build with GCC-5 (Closes: #777996)
+  * Updated Swedish translation by Martin Bagge
+    and Anders Jonsson (Closes: #781684)
 
   [ Robie Basak ]
   * Move innochecksum back to mariadb-server-core-10.0 to align with other
@@ -10,17 +35,7 @@ mariadb-10.0 (10.0.17-1) UNRELEASED; urgency=low
   * Adding mysqld_multi_confd.patch, makes mysqld_multi reading conf.d
     (Closes: #778761)
 
-  [ Otto Kekäläinen ]
-  * New upstream release
-  * Remove /var/log/mysql.log from logrotate. Everything should be inside
-    the mysql directory (/var/log/mysql/) and not directly on plain /var/log
-  * d/control: Related to innochecksum manpage move, also break/replace
-    the mysql-client-5.5/6 packages (Closes: #779873)
-  * New release confirmed to build with GCC-5 (Closes: #777996)
-  * Updated Swedish translation by Martin Bagge
-    and Anders Jonsson (Closes: #781684)
-
- -- Otto Kekäläinen <otto@seravo.fi>  Fri, 10 Apr 2015 23:33:33 +0300
+ -- Otto Kekäläinen <otto@seravo.fi>  Sun, 10 May 2015 18:41:11 +0300
 
 mariadb-10.0 (10.0.16-1) unstable; urgency=low
 
