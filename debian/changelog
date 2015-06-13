@@ -17,6 +17,8 @@ mariadb-10.0 (10.0.19-0+deb8u1) jessie-security; urgency=high
     - CVE-2015-2573
     - CVE-2015-0433
     - CVE-2015-0441
+  * Import of 10.0.17 included updated lines to the mariadb-server-10.0.postinst
+    github.com/MariaDB/server/commit/dc94bd09b875b7aac106761f1a398c1c6de036f9
   * Removed /var/log/mysql.log from logrotate. Everything should be inside
     the mysql directory (/var/log/mysql/) and not directly on plain /var/log
   * d/control: Related to innochecksum manpage move, also break/replace
@@ -24,6 +26,8 @@ mariadb-10.0 (10.0.19-0+deb8u1) jessie-security; urgency=high
   * New release confirmed to build with GCC-5 (Closes: #777996)
   * Updated Swedish translation by Martin Bagge
     and Anders Jonsson (Closes: #781684)
+  * Security: improved hardening flags (hardening=+all,-pie)
+  * Updated copyright file based on Lintian feedback
 
   [ Robie Basak ]
   * Move innochecksum back to mariadb-server-core-10.0 to align with other
