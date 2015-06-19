@@ -1,8 +1,8 @@
-commit: 0880284bf715b4916cc735e19b76d1062c2bfdcf
-date: 2015-05-08 17:06:35 +0300
-build-date: 2015-05-08 16:37:53 +0200 
-short: 0880284
+commit: a6087e7dc1ef3561d8189c8db15e9591d0f9b520
+date: 2015-06-17 16:13:02 +0200
+build-date: 2015-06-17 16:54:14 +0200 
+short: a6087e7
 branch: HEAD
 
 
-MySQL source 10.0.19
+MySQL source 10.0.20
