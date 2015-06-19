@@ -1,3 +1,13 @@
+mariadb-10.0 (10.0.20-1) unstable; urgency=low
+
+  * New upstream release. Includes fix for the following security vulnerability:
+    - CVE-2015-3152: Client command line option --ssl-verify-server-cert (and
+      MYSQL_OPT_SSL_VERIFY_SERVER_CERT option of the client API) when used
+      together with --ssl will ensure that the established connection is
+      SSL-encrypted and the MariaDB server has a valid certificate.
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 19 Jun 2015 13:01:56 +0300
+
 mariadb-10.0 (10.0.19-1) unstable; urgency=low
 
   * New upstream release. Fixed the server crash caused by mysql_upgrade 
