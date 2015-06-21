@@ -5,6 +5,7 @@ mariadb-10.0 (10.0.20-1) unstable; urgency=low
       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option of the client API) when used
       together with --ssl will ensure that the established connection is
       SSL-encrypted and the MariaDB server has a valid certificate.
+  * New release includes fix for memory corruption on arm64 (Closes: #787221)
   * Added patch to enhance build reproducibility regarding the file INFO_BIN
 
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 19 Jun 2015 13:01:56 +0300

@@ -83,7 +83,7 @@ Download new source package
   cd pkg-mariadb-10.0
   uscan --verbose
 
-Enter git repostitory path and apply new sources
+Enter git repository path and apply new sources
   cd mariadb-10.0
   git-import-orig --pristine-tar ../mariadb-10.0.14.tar.gz
 
@@ -128,7 +128,7 @@ Create new copyright file
   licensecheck --copyright -r . -c . | /usr/lib/cdbs/licensecheck2dep5 > /tmp/copyright
 
 ..but you need to do lots of manual work to merge the new file with the old, as
-liscensecheck has a lot of cruft and the original copyright file already had
+licensecheck has a lot of cruft and the original copyright file already had
 those cleaned up.
 
 
@@ -156,11 +156,10 @@ The run the commands to automatically change version and upload
 
 ## Uploading to Ubuntu security releases ##
 
-See examples with documented procedures:
- * https://bugs.launchpad.net/ubuntu/+source/mariadb-5.5/+bug/1313187
- * https://bugs.launchpad.net/ubuntu/+source/mariadb-5.5/+bug/1363222
+See example with documented procedure:
+ * https://bugs.launchpad.net/ubuntu/+source/mariadb-5.5/+bug/1464895
 
-Probably the most optimal workflow would be to create a git branch (e.g.
+Probably the most optimal work-flow would be to create a git branch (e.g.
 ubuntu-14.04) with custom gbp.conf and maintaining it by importing upstream in
 one commit, and updating changelog and other stuff, including refreshing
 patches in another commits, so that it would be easy to produce a patch file
@@ -171,7 +170,7 @@ git-buildpackage to produce test builds instead of plain 'fakeroot dpkg-buildpac
 ## Comparison to other distributions ##
 
 For tracking security release information, finding solutions for build errors
-on many architechtures and for general quality control it can be useful to keep
+on many architectures and for general quality control it can be useful to keep
 an eye on what packagers in other distributions do:
 
 Fedora:

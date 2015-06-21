@@ -477,12 +477,6 @@ License: BSD-4-clause
 Files: cmd-line-utils/libedit/np/wcsdup.c
 Copyright: 2006 Aleksey Cheusov
 License: public-domain
- This material is provided "as is", with absolutely no warranty expressed
- or implied. Any use is at your own risk.
- .
- Permission to use or copy this software for any purpose is hereby granted
- without fee. Permission to modify the code and to distribute modified
- code is also granted without any restrictions.
 
 Files: cmd-line-utils/libedit/filecomplete.c
  cmd-line-utils/libedit/filecomplete.h
@@ -1167,7 +1161,6 @@ License: Artistic
  WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  .
  				The End
-
 
 License: public-domain
  The work is public domain (no license).
