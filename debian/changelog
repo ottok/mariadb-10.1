@@ -24,7 +24,7 @@ mariadb-10.0 (10.0.19-0+deb8u1) jessie-security; urgency=high
     resulting binaries would have closer to the same security features as the
     old binaries had when built using deprecated hardening-wrapper.
   * Removed /var/log/mysql.log from logrotate. No mysql related log should be
-    not directly under /var/log. The correct place is in /var/log/mysql
+    directly under /var/log. The correct place is in /var/log/mysql
   * d/control: Related to innochecksum manpage move, also break/replace
     the mysql-client-5.5/6 packages (Closes: #779873)
   * Documentation changes:
