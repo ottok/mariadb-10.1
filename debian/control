@@ -1,7 +1,8 @@
 Source: mariadb-10.0
 Section: database
 Priority: optional
-Maintainer: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
 Uploaders: Otto Kekäläinen <otto@seravo.fi>, Arnaud Fontaine <arnau@debian.org>
 Build-Depends: bison,
                chrpath,
@@ -16,6 +17,7 @@ Build-Depends: bison,
                libpam0g-dev,
                libpcre3-dev (>= 2:8.35-3.2~),
                libreadline-gplv2-dev,
+               libwrap0-dev (>= 7.6-8.3~),
                lsb-release,
                perl,
                po-debconf,
@@ -43,7 +45,7 @@ Description: MariaDB embedded database development files
 
 Package: mariadb-common
 Architecture: all
-Depends: mysql-common, ${misc:Depends}
+Depends: mysql-common (>= 5.6.22-1~), ${misc:Depends}
 Multi-Arch: foreign
 Description: MariaDB common metapackage
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
@@ -112,19 +114,15 @@ Package: mariadb-server-core-10.0
 Architecture: any
 Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
 Conflicts: mariadb-galera-server-5.5, mysql-server-5.5, mysql-server-5.6
-Breaks: mariadb-client-10.0 (<< ${source:Version}),
+Breaks: mariadb-client-10.0 (<< 10.0.16-2~),
         mariadb-server-core-5.5,
         mysql-server-core-5.5,
         mysql-server-core-5.6,
-        mysql-client-5.5,
-        mysql-client-5.6,
         virtual-mysql-server-core
-Replaces: mariadb-client-10.0 (<< ${source:Version}),
+Replaces: mariadb-client-10.0 (<< 10.0.16-2~),
           mariadb-server-core-5.5,
           mysql-server-core-5.5,
           mysql-server-core-5.6,
-          mysql-client-5.5,
-          mysql-client-5.6,
           virtual-mysql-server-core
 Provides: virtual-mysql-server-core
 Description: MariaDB database core server files
@@ -167,7 +165,7 @@ Package: mariadb-server-10.0
 Architecture: any
 Suggests: mailx, mariadb-test, tinyca
 Recommends: libhtml-template-perl
-Pre-Depends: adduser (>= 3.40), debconf, mariadb-common
+Pre-Depends: adduser (>= 3.40), debconf, mariadb-common (>= 10.0.16-1ubuntu4)
 Depends: libdbi-perl,
          lsb-base (>= 3.0-10),
          mariadb-client-10.0 (>= ${source:Version}),

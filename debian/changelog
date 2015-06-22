@@ -1,49 +1,103 @@
-mariadb-10.0 (10.0.17-1~exp3) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.17-0ubuntu1) vivid; urgency=medium
 
-  * Cleanup in d/copyright
+  * New upstream microrelease.
+  * Drop patches no longer required:
+    - d/p/reproducible-builds-fix-connect.patch: upstream no longer uses
+      __DATE__ and __TIME__ in build.
+    - new_valid_certs.patch, new_valid_certs_test_fix.patch: tests fixed
+      upstream with new certificate.
+  * Refresh remove_rename_mariadb-server_files_in.patch to remove fuzz.
+  * Cherry-picks from Debian VCS in range e73d494..c0b5f94 as the others
+    are not suitable for feature freeze:
+    - [221008e] Adding mysqld_multi_confd.patch, makes mysqld_multi
+      reading conf.d (Closes: #778761)
+    - [361e420] Adding mysqld_multi.server_lsb-header.patch, provides
+      LSB headers for example initscript (Closes: #778762)
+    - [5038203] d/rules: added same hardening line as in mysql-5.6
+      packaging after validation with hardening-check tool
+    - [c0b5f94] Updated Swedish debconf translations
+    - Fixes to d/mariadb-server-10.0.postinst:
+      + [72b30b2] Remove script output, such invasive debugging is no
+        longer needed.
+      + [ffefd9a] Set mysql_rundir
+      + [14fd487] Fix postinst script failure: don't use unsupported
+        DELIMITER in mysqld command (LP: #1429725).
 
- -- Otto Kekäläinen <otto@seravo.fi>  Fri, 10 Apr 2015 23:15:53 +0300
+ -- Robie Basak <robie.basak@ubuntu.com>  Thu, 16 Apr 2015 14:16:45 +0000
 
-mariadb-10.0 (10.0.17-1~exp2) experimental; urgency=low
+mariadb-10.0 (10.0.16-2~exp1~ubuntu1) vivid; urgency=medium
 
-  * d/control: Related to innochecksum manpage move, also break/replace
-    the mysql-client-5.5/6 packages (Closes: #779873)
-  * Add automatic fallback to the new /etc/mysql/my.cnf management scheme
-    for cases where mysql-common/configure-symlinks is not yet available
-    and users complain the installation ends up broken.
-  * New release confirmed to build with GCC-5 (Closes: #777996)
+  * Merge from Debian VCS commit e73d494. Remaining changes:
+    - Build without TokuDB since it fails tests.
+    - Depend on mysql-common (>= 5.6.22-1~) to ensure that the new
+      my.cnf symlink wrapper is available during upgrade.
+    - Add versioned mariadb-common dependency to mariadb-server-10.0 so
+      it doesn't fulfil the dependency using an older mariadb-common
+      that doesn't require the newer mysql-common with the my.cnf
+      symlink support.
+  * Drop changes (applied in Debian):
+    - Fix typo in mariadb-server-10.0.postinst.
+    - Include change by Otto found in ppa:mysql-ubuntu/mariadb-10.0 but
+      not yet in VCS: include "/etc/mysql/conf.d/*.cnf" for global options.
 
- -- Otto Kekäläinen <otto@seravo.fi>  Fri, 06 Mar 2015 16:42:21 +0200
+ -- Robie Basak <robie.basak@ubuntu.com>  Tue, 17 Feb 2015 19:19:05 +0000
 
-mariadb-10.0 (10.0.17-1~exp1) experimental; urgency=low
+mariadb-10.0 (10.0.16-2~exp1) UNRELEASED; urgency=medium
 
-  [ Jan Wagner ]
-  * Adding mysqld_multi.server_lsb-header.patch, provides LSB headers for
-    example initscript (Closes: #778762)
-  * Adding mysqld_multi_confd.patch, makes mysqld_multi reading conf.d
-    (Closes: #778761)
-
-  [ Robie Basak ]
   * Move innochecksum back to mariadb-server-core-10.0 to align with other
     variants (LP: #1421520).
   * Fix typo in mariadb-server-10.0.postinst.
   * Fix typo in postinst mktemp call (LP: #1420831).
+
+ -- Robie Basak <robie.basak@ubuntu.com>  Tue, 17 Feb 2015 17:52:26 +0000
+
+mariadb-10.0 (10.0.16-1ubuntu4) vivid; urgency=medium
+
+  * Fix typo in mariadb-server-10.0.postinst.
+  * Add versioned mariadb-common dependency to mariadb-server-10.0 so it
+    doesn't fulfil the dependency using an older mariadb-common that doesn't
+    require the newer mysql-common with the my.cnf symlink support.
+
+ -- Robie Basak <robie.basak@ubuntu.com>  Tue, 10 Feb 2015 10:59:34 +0000
+
+mariadb-10.0 (10.0.16-1ubuntu3) vivid; urgency=medium
+
+  * Fix typo in TokuDB build disablement.
+
+ -- Robie Basak <robie.basak@ubuntu.com>  Tue, 10 Feb 2015 07:21:32 +0000
+
+mariadb-10.0 (10.0.16-1ubuntu2) vivid; urgency=medium
+
+  * Disable TokuDB build by setting CMAKEFLAGS, not with the old variable that
+    no longer does anything in the master branch.
+
+ -- Robie Basak <robie.basak@ubuntu.com>  Mon, 09 Feb 2015 23:08:00 +0000
+
+mariadb-10.0 (10.0.16-1ubuntu1) vivid; urgency=low
+
+  * Switch to being based from the Debian VCS master branch, instead of the
+    frozen jessie branch.
+  * Include change by Otto found in ppa:mysql-ubuntu/mariadb-10.0 but not yet
+    in VCS: include "/etc/mysql/conf.d/*.cnf" for global options.
+  * Depend on mysql-common (>= 5.6.22-1~) to ensure that the new my.cnf symlink
+    wrapper is available during upgrade.
+  * Build without TokuDB since it fails tests.
+
+ -- Robie Basak <robie.basak@ubuntu.com>  Mon, 09 Feb 2015 17:37:35 +0000
+
+mariadb-10.0 (10.0.16-1~exp4) experimental; urgency=low
+
+  * Follow to new /etc/mysql/my.cnf management scheme
+  * Remove the my.cnf move command as it increases complexity too much and might
+    emit an error code if mariadb-common is upgraded before mysql-common is.
+  * Add patch to enhance build reproducibility
 
   [ Arnaud Fontaine ]
   * d/control: innochecksum manpage has been moved to mariadb-client-10.0 in
     10.0.13-1 (ba97056), thus add Breaks/Replaces in mariadb-client-10.0
     against mariadb-server-10.0 << 10.0.13-1~.
 
-  [ Otto Kekäläinen ]
-  * Follow to new /etc/mysql/my.cnf management scheme
-  * Remove the my.cnf move command as it increases complexity too much and might
-    emit an error code if mariadb-common is upgraded before mysql-common is.
-  * Add patch to enhance build reproducibility
-  * Remove /var/log/mysql.log from logrotate. Everything should be inside
-    the mysql directory (/var/log/mysql/) and not directly on plain /var/log
-  * New upstream release
-
- -- Otto Kekäläinen <otto@seravo.fi>  Mon, 02 Mar 2015 20:01:13 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Sun, 08 Feb 2015 10:03:39 +0200
 
 mariadb-10.0 (10.0.16-1~exp3) experimental; urgency=low
 
@@ -64,7 +118,7 @@ mariadb-10.0 (10.0.16-1~exp2) experimental; urgency=low
 
 mariadb-10.0 (10.0.16-1~exp1) experimental; urgency=low
 
-  * New upstream release. Includes fixes for the following security
+  * New upstream release. Inludes fixes for the following security
     vulnerabilities:
     - CVE-2015-0411
     - CVE-2015-0382
@@ -79,7 +133,7 @@ mariadb-10.0 (10.0.15-2~exp1) experimental; urgency=low
 
   * Fix mariadb-server-10.0.postinst so that the flag removal will not emit
     an error code if there are no previous debian-*.flag files. This will
-    fix a dpkg issue caught by piuparts testing.
+    fix a dpkg issue cought by piuparts testing.
   * Increase the debconf downgrade warning dialog priority to critical to make
     sure all users see it and understand why their system broke after downgrade.
   * Attempt to fix FTBFS on mips, mipsel, powerpc introduced by upstream

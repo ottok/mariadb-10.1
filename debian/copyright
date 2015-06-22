@@ -492,6 +492,29 @@ Files: cmd-line-utils/libedit/filecomplete.c
  cmd-line-utils/libedit/readline/*
 Copyright: 1997-2001 The NetBSD Foundation Inc
 License: BSD-2-clause
+ This code is derived from software contributed to The NetBSD Foundation
+ by Jaromir Dolecek.
+ .
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
 
 Files: sql-bench/*.sh
 Copyright: 2009 Sun Microsystems, Inc
@@ -594,12 +617,16 @@ Copyright:
  2000,2002,2005-2011 Oracle and/or its affiliates
  tommy@valley.ne.jp
 License: LGPL
+ On Debian and systems the full text of the GNU Library General Public
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/LGPL-2`
 
 Files: scripts/mysqld_safe.sh
  support-files/mysql-multi.server.sh
  support-files/mysql.server.sh
 Copyright: 1996 Abandoned TCX DataKonsult AB & Monty Program KB & Detron HB
 License: public-domain
+ This file is public domain and comes with NO WARRANTY of any kind
 
 Files: sql/sql_yacc.cc sql/sql_yacc.h storage/xtradb/fts/fts0pars.cc
  storage/xtradb/include/fts0pars.h
@@ -686,6 +713,18 @@ Copyright: Richard A. O'Keefe.
    2009-2011, Monty Program Ab
 License: BSD-2-clause
 
+License: BSD-2-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+ .
+  2. Redistributions in binary form must the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+
 Files: cmd-line-utils/libedit/np/strlcat.c
  cmd-line-utils/libedit/np/strlcpy.c
 Copyright: 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -706,16 +745,63 @@ Files: sql/nt_servc.cc
  sql/nt_servc.h
 Copyright: 1998 Abandoned Irena Pancirov - Irnet Snc
 License: public-domain
+ This file is public domain and comes with NO WARRANTY of any kind
 
 Files: dbug/dbug.c
  dbug/dbug_long.h
 Copyright: 1987 Abandoned Fred Fish
 License: public-domain
+ N O T I C E
+ .
+ Copyright Abandoned, 1987, Fred Fish
+ .
+ .
+ This previously copyrighted work has been placed into the  public
+ domain by  the  author  and  may be freely used for any purpose
+ private or commercial.
+ .
+ Because of the number of inquiries I was receiving about the  use
+ of this product in commercially developed works I have decided to
+ simply make it public domain to further its unrestricted use. I
+ specifically  would  be  most happy to see this material become a
+ part of the standard Unix distributions by AT&T and the  Berkeley
+ Computer  Science  Research Group, and a standard part of the GNU
+ system from the Free Software Foundation.
+ .
+ I would appreciate it, as a courtesy, if this notice is  left  in
+ all copies and derivative works.  Thank you.
+ .
+ The author makes no warranty of any kind  with respect  to  this
+ product  and  explicitly disclaims any implied warranties of mer-
+ chantability or fitness for any particular purpose.
 
 Files: cmd-line-utils/libedit/np/vis.c
 Copyright: 1989-1993 The Regents of the University of California.
  1999-2005 The NetBSD Foundation Inc
 License: BSD-3-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. Neither the name of the University nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
 
 Files: scripts/dheadgen.pl
 Copyright: 2008-2009 Sun Microsystems Inc
@@ -810,6 +896,7 @@ License: SWsoft
 Files: tests/mail_to_db.pl
 Copyright: 1998 Abandoned TCX DataKonsult AB & Monty Program KB & Detron HB
 License: public-domain
+ This file is public domain and comes with NO WARRANTY of any kind
 
 Files: scripts/mysqlaccess.conf
 Copyright: 1997, Yves.Carlier@rug.ac.be
@@ -972,18 +1059,6 @@ License: LGPL
  On Debian and systems the full text of the GNU Library General Public
  License version 2 can be found in the file
  `/usr/share/common-licenses/LGPL-2`
-
-License: BSD-2-clause
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are
- met:
- .
-  1. Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
- .
-  2. Redistributions in binary form must the following disclaimer in
-    the documentation and/or other materials provided with the
-    distribution.
 
 License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
