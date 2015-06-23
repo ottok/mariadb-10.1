@@ -308,7 +308,6 @@ License: GPL-2+
 Files: plugin/auth_pam/testing/pam_mariadb_mtr.c
 Copyright: none
 License: public-domain
-  This code is in the public domain and has no copyright.
 
 Files:  plugin/locale_info/locale_info.cc
 Copyright: 2013, Spaempresarial - Brazil, Roberto Spadim
