@@ -118,28 +118,30 @@ case "$1" in
     ret=$?
     set -e
     if [ $ret -ne 1 ]; then
-        if [ ! -d "$mysql_cfgdir" ]; then install -o 0 -g 0 -m 0755 -d $mysql_cfgdir; fi
-        if [ -e "$dc" ]; then
-          oldconf=`mktemp --tmpdir=$mysql_cfgdir -t debian_old_config.XXXXXX`
-          cp $dc $oldconf
-        else
-          oldconf=''
-        fi
-        umask 066
-        cat /dev/null > $dc
-        umask 022
-        echo "# Automatically generated for Debian scripts. DO NOT TOUCH!" >>$dc
-        echo "[client]"                                                    >>$dc
-        echo "host     = localhost"                                        >>$dc
-        echo "user     = root"                                             >>$dc
-        echo "password = "                                                 >>$dc
-        echo "socket   = $mysql_rundir/mysqld.sock"                        >>$dc
-        echo "[mysql_upgrade]"                                             >>$dc
-        echo "host     = localhost"                                        >>$dc
-        echo "user     = root"                                             >>$dc
-        echo "password = "                                                 >>$dc
-        echo "socket   = $mysql_rundir/mysqld.sock"                        >>$dc
-        echo "basedir  = /usr"                                             >>$dc
+      if [ ! -d "$mysql_cfgdir" ]; then
+        install -o 0 -g 0 -m 0755 -d $mysql_cfgdir
+      fi
+      if [ -e "$dc" ]; then
+        oldconf=`mktemp --tmpdir=$mysql_cfgdir -t debian_old_config.XXXXXX`
+        cp $dc $oldconf
+      else
+        oldconf=''
+      fi
+      umask 066
+      cat /dev/null > $dc
+      umask 022
+      echo "# Automatically generated for Debian scripts. DO NOT TOUCH!" >>$dc
+      echo "[client]"                                                    >>$dc
+      echo "host     = localhost"                                        >>$dc
+      echo "user     = root"                                             >>$dc
+      echo "password = "                                                 >>$dc
+      echo "socket   = $mysql_rundir/mysqld.sock"                        >>$dc
+      echo "[mysql_upgrade]"                                             >>$dc
+      echo "host     = localhost"                                        >>$dc
+      echo "user     = root"                                             >>$dc
+      echo "password = "                                                 >>$dc
+      echo "socket   = $mysql_rundir/mysqld.sock"                        >>$dc
+      echo "basedir  = /usr"                                             >>$dc
     else
       oldconf=''
     fi
@@ -149,9 +151,9 @@ case "$1" in
 
     # Update privilege tables
     password_column_fix_query=`/bin/echo -e \
-        "USE mysql;\n" \
-        "SET sql_log_bin=0;\n" \
-        "ALTER TABLE user CHANGE Password Password char(41) character set latin1 collate latin1_bin DEFAULT '' NOT NULL;"`
+      "USE mysql;\n" \
+      "SET sql_log_bin=0;\n" \
+      "ALTER TABLE user CHANGE Password Password char(41) character set latin1 collate latin1_bin DEFAULT '' NOT NULL;"`
 
     # Upgrade password column format before the root password gets set.
     # NOTE: Lines like this apparently really need to be formatted this way
@@ -160,8 +162,8 @@ case "$1" in
 
     # Replace old maintenance user with auth_socket usage if migrating
     replace_query=`/bin/echo -e \
-        "SET sql_mode='', sql_log_bin=0;\n" \
-        "DELETE FROM mysql.user WHERE user='debian-sys-maint' AND host='localhost';"`
+      "SET sql_mode='', sql_log_bin=0;\n" \
+      "DELETE FROM mysql.user WHERE user='debian-sys-maint' AND host='localhost';"`
     # WARNING: This line might yield "The MariaDB server is running with
     # the --skip-grant-tables option so it cannot execute this statement"
 
@@ -169,28 +171,29 @@ case "$1" in
     # to be aborted if the CREATE TABLE fails due to an already existent table in which case the
     # admin might already have chosen to remove one or more plugins. Newlines are necessary.
     install_plugins=`/bin/echo -e \
-        "USE mysql;\n" \
-        "SET sql_log_bin=0;\n" \
-        "CREATE TABLE IF NOT EXISTS plugin (name char(64) COLLATE utf8_bin NOT NULL DEFAULT '', " \
-        "  dl char(128) COLLATE utf8_bin NOT NULL DEFAULT '', " \
-        "  PRIMARY KEY (name)) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='MySQL plugins';\n" \
-        "INSTALL PLUGIN unix_socket SONAME 'auth_socket';\n"`
+      "USE mysql;\n" \
+      "SET sql_log_bin=0;\n" \
+      "CREATE TABLE IF NOT EXISTS plugin (name char(64) COLLATE utf8_bin NOT NULL DEFAULT '', " \
+      "  dl char(128) COLLATE utf8_bin NOT NULL DEFAULT '', " \
+      "  PRIMARY KEY (name)) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='MySQL plugins';\n" \
+      "INSTALL PLUGIN unix_socket SONAME 'auth_socket';\n"`
 
     # Install plugins and ignore if already there
     set +e
     echo "$install_plugins" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
     set -e
 
-     if ! set_mysql_rootpw; then
-         password_error="yes"
-         # restore old config file if exists
-         [ -e $oldconf ] && mv $oldconf $dc
-     else
-         [ -e $oldconf ] && rm -f $oldconf
-         # purge debian-sys-maint user
-         set +e
-         echo "$replace_query" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
-         set -e
+    if [ ! set_mysql_rootpw ]; then
+      password_error="yes"
+      # restore old config file if exists
+      # run only if $oldconf is set and is not empty
+      if [ ! -z $oldconf ]; then mv $oldconf $dc; fi
+    else
+      if [ ! -z $oldconf ]; then rm -f $oldconf; fi
+      # purge debian-sys-maint user
+      set +e
+      echo "$replace_query" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
+      set -e
     fi
   ;;
 
@@ -209,10 +212,10 @@ esac
 # fails for any other reason, nothing happens.
 if [ "$1" = "configure" ]; then
 
-       if [ "$password_error" = "yes" ]; then
-               db_input high mariadb-server/error_setting_password || true
-               db_go
-       fi
+  if [ "$password_error" = "yes" ]; then
+    db_input high mariadb-server/error_setting_password || true
+    db_go
+  fi
 
 fi
 
