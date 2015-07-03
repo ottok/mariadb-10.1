@@ -1,3 +1,22 @@
+mariadb-10.0 (10.0.20-0ubuntu0.15.04.1) vivid-security; urgency=low
+
+  * SECURITY UPDATE: Update to 10.0.20 (via .18 and .19) fixes security issues:
+    - CVE-2015-3152: Client command line option --ssl-verify-server-cert (and
+      MYSQL_OPT_SSL_VERIFY_SERVER_CERT option of the client API) when used
+      together with --ssl will ensure that the established connection is
+      SSL-encrypted and the MariaDB server has a valid certificate.
+    - CVE-2014-8964 bundled PCRE contained heap-based buffer overflow
+      vulnerability that allowed the server to crash or have other unspecified
+      impact via a crafted regular expression made possible with the
+      REGEXP_SUBSTR function (MDEV-8006).
+    - CVE-2015-0501
+    - CVE-2015-2571
+    - CVE-2015-0505
+    - CVE-2015-0499
+  * New release includes fix for memory corruption on arm64 (LP: #1427406)
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 03 Jul 2015 17:39:42 +0300
+
 mariadb-10.0 (10.0.17-0ubuntu1) vivid; urgency=medium
 
   * New upstream microrelease.

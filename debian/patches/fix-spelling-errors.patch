@@ -4,7 +4,7 @@ Last-Update: 2014-10-02
 
 --- mariadb-10.0-10.0.13.orig/storage/connect/tabxml.cpp
 +++ mariadb-10.0-10.0.13/storage/connect/tabxml.cpp
-@@ -1490,7 +1490,7 @@ void XMULCOL::ReadColumn(PGLOBAL g)
+@@ -1798,7 +1798,7 @@ void XMULCOL::ReadColumn(PGLOBAL g)
  
        if (N > Tdbp->Limit) {
          N = Tdbp->Limit;
