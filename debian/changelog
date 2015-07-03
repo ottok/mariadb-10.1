@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.20-0ubuntu0.15.04.1) vivid-security; urgency=low
+mariadb-10.0 (10.0.20-1ubuntu0.15.04.1) vivid-security; urgency=low
 
   * SECURITY UPDATE: Update to 10.0.20 (via .18 and .19) fixes security issues:
     - CVE-2015-3152: Client command line option --ssl-verify-server-cert (and
