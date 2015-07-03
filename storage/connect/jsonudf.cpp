@@ -17,36 +17,45 @@
 #include "json.h"
 
 #define MEMFIX  512
+#define UDF_EXEC_ARGS \
+  UDF_INIT*, UDF_ARGS*, char*, unsigned long*, char*, char* 
 
 uint GetJsonGrpSize(void);
 
 extern "C" {
 DllExport my_bool Json_Value_init(UDF_INIT*, UDF_ARGS*, char*);
-DllExport char *Json_Value(UDF_INIT*, UDF_ARGS*, char*,
-                         unsigned long*, char *, char *);
+DllExport char *Json_Value(UDF_EXEC_ARGS);
 DllExport void Json_Value_deinit(UDF_INIT*);
+
 DllExport my_bool Json_Array_init(UDF_INIT*, UDF_ARGS*, char*);
-DllExport char *Json_Array(UDF_INIT*, UDF_ARGS*, char*,
-                         unsigned long*, char *, char *);
+DllExport char *Json_Array(UDF_EXEC_ARGS);
 DllExport void Json_Array_deinit(UDF_INIT*);
+
 DllExport my_bool Json_Array_Add_init(UDF_INIT*, UDF_ARGS*, char*);
-DllExport char *Json_Array_Add(UDF_INIT*, UDF_ARGS*, char*,
-                         unsigned long*, char *, char *);
+DllExport char *Json_Array_Add(UDF_EXEC_ARGS);
 DllExport void Json_Array_Add_deinit(UDF_INIT*);
+
+DllExport my_bool Json_Array_Delete_init(UDF_INIT*, UDF_ARGS*, char*);
+DllExport char *Json_Array_Delete(UDF_EXEC_ARGS);
+DllExport void Json_Array_Delete_deinit(UDF_INIT*);
+
 DllExport my_bool Json_Object_init(UDF_INIT*, UDF_ARGS*, char*);
-DllExport char *Json_Object(UDF_INIT*, UDF_ARGS*, char*,
-                         unsigned long*, char *, char *);
+DllExport char *Json_Object(UDF_EXEC_ARGS);
 DllExport void Json_Object_deinit(UDF_INIT*);
+
+DllExport my_bool Json_Object_Nonull_init(UDF_INIT*, UDF_ARGS*, char*);
+DllExport char *Json_Object_Nonull(UDF_EXEC_ARGS);
+DllExport void Json_Object_Nonull_deinit(UDF_INIT*);
+
 DllExport my_bool Json_Array_Grp_init(UDF_INIT*, UDF_ARGS*, char*);
 DllExport void Json_Array_Grp_add(UDF_INIT *, UDF_ARGS *, char *, char *);
-DllExport char *Json_Array_Grp(UDF_INIT*, UDF_ARGS*, char*,
-                         unsigned long*, char *, char *);
+DllExport char *Json_Array_Grp(UDF_EXEC_ARGS);
 DllExport void Json_Array_Grp_clear(UDF_INIT *, char *, char *);
 DllExport void Json_Array_Grp_deinit(UDF_INIT*);
+
 DllExport my_bool Json_Object_Grp_init(UDF_INIT*, UDF_ARGS*, char*);
 DllExport void Json_Object_Grp_add(UDF_INIT *, UDF_ARGS *, char *, char *);
-DllExport char *Json_Object_Grp(UDF_INIT*, UDF_ARGS*, char*,
-                         unsigned long*, char *, char *);
+DllExport char *Json_Object_Grp(UDF_EXEC_ARGS);
 DllExport void Json_Object_Grp_clear(UDF_INIT *, char *, char *);
 DllExport void Json_Object_Grp_deinit(UDF_INIT*);
 } // extern "C"
@@ -228,7 +237,7 @@ static PSZ MakeKey(PGLOBAL g, UDF_ARGS *args, int i)
 /***********************************************************************/
 static PJVAL MakeValue(PGLOBAL g, UDF_ARGS *args, int i)
 {
-  char *sap = args->args[i];
+  char *sap = (args->arg_count > (unsigned)i) ? args->args[i] : NULL;
   PJSON jsp;
   PJVAL jvp = new(g) JVALUE;
 
@@ -287,7 +296,7 @@ my_bool Json_Value_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 } // end of Json_Value_init
 
 char *Json_Value(UDF_INIT *initid, UDF_ARGS *args, char *result, 
-                unsigned long *res_length, char *is_null, char *error)
+                unsigned long *res_length, char *, char *)
 {
   char   *str;
   PJVAL   jvp;
@@ -320,7 +329,7 @@ my_bool Json_Array_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 } // end of Json_Array_init
 
 char *Json_Array(UDF_INIT *initid, UDF_ARGS *args, char *result, 
-                unsigned long *res_length, char *is_null, char *error)
+                unsigned long *res_length, char *, char *)
 {
   char   *str;
   uint    i;
@@ -358,7 +367,7 @@ my_bool Json_Array_Add_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
     strcpy(message, "Json_Value_Add must have at least 2 arguments");
     return true;
   } else if (!IsJson(args, 0)) {
-    strcpy(message, "Json_Value_Add first argument must be a json array");
+    strcpy(message, "Json_Value_Add first argument must be a json item");
     return true;
   } else
     CalcLen(args, false, reslen, memlen);
@@ -367,7 +376,7 @@ my_bool Json_Array_Add_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 } // end of Json_Array_Add_init
 
 char *Json_Array_Add(UDF_INIT *initid, UDF_ARGS *args, char *result, 
-                unsigned long *res_length, char *is_null, char *error)
+                unsigned long *res_length, char *, char *)
 {
   char   *str;
   PJVAL   jvp;
@@ -401,6 +410,67 @@ void Json_Array_Add_deinit(UDF_INIT* initid)
 } // end of Json_Array_Add_deinit
 
 /***********************************************************************/
+/*  Delete a value from a Json array.                                  */
+/***********************************************************************/
+my_bool Json_Array_Delete_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
+{
+  unsigned long reslen, memlen;
+
+  if (args->arg_count != 2) {
+    strcpy(message, "Json_Value_Delete must have 2 arguments");
+    return true;
+  } else if (!IsJson(args, 0)) {
+    strcpy(message, "Json_Value_Delete first argument must be a json item");
+    return true;
+  } else
+    CalcLen(args, false, reslen, memlen);
+
+  return JsonInit(initid, message, reslen, memlen);
+} // end of Json_Array_Delete_init
+
+char *Json_Array_Delete(UDF_INIT *initid, UDF_ARGS *args, char *result, 
+                unsigned long *res_length, char *, char *)
+{
+  char   *str;
+  int     n;
+  PJVAL   jvp;
+  PJAR    arp;
+  PGLOBAL g = (PGLOBAL)initid->ptr;
+
+  PlugSubSet(g, g->Sarea, g->Sarea_Size);
+  jvp = MakeValue(g, args, 0);
+
+  if (jvp->GetValType() != TYPE_JAR) {
+    push_warning(current_thd, Sql_condition::WARN_LEVEL_WARN, 0, 
+                 "First argument is not an array");
+    str = args->args[0];
+  } else if (args->arg_type[1] != INT_RESULT) {
+    push_warning(current_thd, Sql_condition::WARN_LEVEL_WARN, 0, 
+                 "Second argument is not an integer");
+    str = args->args[0];
+  } else {
+    n = *(int*)args->args[1];
+    arp = jvp->GetArray();
+    arp->DeleteValue(n);
+    arp->InitArray(g);
+
+    if (!(str = Serialize(g, arp, NULL, 0))) {
+      str = strcpy(result, g->Message);
+      push_warning(current_thd, Sql_condition::WARN_LEVEL_WARN, 0, str);
+      } // endif str
+
+  } // endif's
+
+  *res_length = strlen(str);
+  return str;
+} // end of Json_Array_Delete
+
+void Json_Array_Delete_deinit(UDF_INIT* initid)
+{
+  PlugExit((PGLOBAL)initid->ptr);
+} // end of Json_Array_Delete_deinit
+
+/***********************************************************************/
 /*  Make a Json Oject containing all the parameters.                   */
 /***********************************************************************/
 my_bool Json_Object_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
@@ -412,7 +482,7 @@ my_bool Json_Object_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 } // end of Json_Object_init
 
 char *Json_Object(UDF_INIT *initid, UDF_ARGS *args, char *result, 
-                  unsigned long *res_length, char *is_null, char *error)
+                  unsigned long *res_length, char *, char *)
 {
   char   *str;
   uint    i;
@@ -436,6 +506,46 @@ void Json_Object_deinit(UDF_INIT* initid)
 {
   PlugExit((PGLOBAL)initid->ptr);
 } // end of Json_Object_deinit
+
+/***********************************************************************/
+/*  Make a Json Oject containing all not null parameters.              */
+/***********************************************************************/
+my_bool Json_Object_Nonull_init(UDF_INIT *initid, UDF_ARGS *args,
+                                char *message)
+{
+  unsigned long reslen, memlen;
+
+  CalcLen(args, true, reslen, memlen);
+  return JsonInit(initid, message, reslen, memlen);
+} // end of Json_Object_Nonull_init
+
+char *Json_Object_Nonull(UDF_INIT *initid, UDF_ARGS *args, char *result, 
+                  unsigned long *res_length, char *, char *)
+{
+  char   *str;
+  uint    i;
+  PJOB    objp;
+  PJVAL   jvp;
+  PGLOBAL g = (PGLOBAL)initid->ptr;
+
+  PlugSubSet(g, g->Sarea, g->Sarea_Size);
+  objp = new(g) JOBJECT;
+
+  for (i = 0; i < args->arg_count; i++)
+    if (!(jvp = MakeValue(g, args, i))->IsNull())
+      objp->SetValue(g, jvp, MakeKey(g, args, i));
+
+  if (!(str = Serialize(g, objp, NULL, 0)))
+    str = strcpy(result, g->Message);
+
+  *res_length = strlen(str);
+  return str;
+} // end of Json_Object_Nonull
+
+void Json_Object_Nonull_deinit(UDF_INIT* initid)
+{
+  PlugExit((PGLOBAL)initid->ptr);
+} // end of Json_Object_nonull_deinit
 
 /***********************************************************************/
 /*  Make a Json array from values comming from rows.                   */
@@ -464,8 +574,7 @@ my_bool Json_Array_Grp_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
   return false;
 } // end of Json_Array_Grp_init
 
-void Json_Array_Grp_add(UDF_INIT *initid, UDF_ARGS *args, 
-                      char *is_null, char *error)
+void Json_Array_Grp_add(UDF_INIT *initid, UDF_ARGS *args, char*, char*)
 {
   PGLOBAL g = (PGLOBAL)initid->ptr;
   PJAR    arp = (PJAR)g->Activityp;
@@ -475,8 +584,8 @@ void Json_Array_Grp_add(UDF_INIT *initid, UDF_ARGS *args,
 
 } // end of Json_Array_Grp_add
 
-char *Json_Array_Grp(UDF_INIT *initid, UDF_ARGS *args, char *result, 
-                unsigned long *res_length, char *is_null, char *error)
+char *Json_Array_Grp(UDF_INIT *initid, UDF_ARGS *, char *result, 
+                     unsigned long *res_length, char *, char *)
 {
   char   *str;
   PGLOBAL g = (PGLOBAL)initid->ptr;
@@ -495,7 +604,7 @@ char *Json_Array_Grp(UDF_INIT *initid, UDF_ARGS *args, char *result,
   return str;
 } // end of Json_Array_Grp
 
-void Json_Array_Grp_clear(UDF_INIT *initid, char *is_null, char *error)
+void Json_Array_Grp_clear(UDF_INIT *initid, char*, char*)
 {
   PGLOBAL g = (PGLOBAL)initid->ptr;
 
@@ -517,7 +626,7 @@ my_bool Json_Object_Grp_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
   unsigned long reslen, memlen, n = GetJsonGrpSize();
 
   if (args->arg_count != 2) {
-    strcpy(message, "Json_Array_Grp can only accept 2 argument");
+    strcpy(message, "Json_Array_Grp can only accept 2 arguments");
     return true;
   } else 
     CalcLen(args, true, reslen, memlen);
@@ -536,8 +645,7 @@ my_bool Json_Object_Grp_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
   return false;
 } // end of Json_Object_Grp_init
 
-void Json_Object_Grp_add(UDF_INIT *initid, UDF_ARGS *args, 
-                      char *is_null, char *error)
+void Json_Object_Grp_add(UDF_INIT *initid, UDF_ARGS *args, char*, char*)
 {
   PGLOBAL g = (PGLOBAL)initid->ptr;
   PJOB    objp = (PJOB)g->Activityp;
@@ -547,8 +655,8 @@ void Json_Object_Grp_add(UDF_INIT *initid, UDF_ARGS *args,
 
 } // end of Json_Object_Grp_add
 
-char *Json_Object_Grp(UDF_INIT *initid, UDF_ARGS *args, char *result, 
-                unsigned long *res_length, char *is_null, char *error)
+char *Json_Object_Grp(UDF_INIT *initid, UDF_ARGS *, char *result, 
+                      unsigned long *res_length, char *, char *)
 {
   char   *str;
   PGLOBAL g = (PGLOBAL)initid->ptr;
@@ -565,7 +673,7 @@ char *Json_Object_Grp(UDF_INIT *initid, UDF_ARGS *args, char *result,
   return str;
 } // end of Json_Object_Grp
 
-void Json_Object_Grp_clear(UDF_INIT *initid, char *is_null, char *error)
+void Json_Object_Grp_clear(UDF_INIT *initid, char*, char*)
 {
   PGLOBAL g = (PGLOBAL)initid->ptr;
 
