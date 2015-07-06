@@ -16,6 +16,7 @@ mariadb-10.0 (10.0.20-0ubuntu0.15.04.1) vivid-security; urgency=low
     - CVE-2015-0499
     (LP: #1451677)
   * New release includes fix for memory corruption on arm64 (LP: #1427406)
+  * Upstream also includes lots of line ending changes (from CRLF -> LF)
 
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 03 Jul 2015 17:39:42 +0300
 
