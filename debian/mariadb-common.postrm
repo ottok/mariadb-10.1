@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -9,16 +9,6 @@ case "$1" in
       /usr/share/mysql-common/configure-symlinks remove mariadb "/etc/mysql/mariadb.cnf"
     fi
   ;;
-
-  purge|upgrade|failed-upgrade|abort-install|abort-upgrade)
-  ;;
-
-  *)
-    echo "postrm called with unknown argument '$1'" 1>&2
-    exit 1
-  ;;
 esac
 
 #DEBHELPER#
-
-exit 0
