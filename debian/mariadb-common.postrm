@@ -4,8 +4,6 @@ set -e
 
 case "$1" in
   remove|disappear)
-    # New packaging paradigm for my.cnf as of Dec-2014 for sharing mysql
-    # variants in Ubuntu.
     if [ -f /usr/share/mysql-common/configure-symlinks ]
     then
       /usr/share/mysql-common/configure-symlinks remove mariadb "/etc/mysql/mariadb.cnf"
