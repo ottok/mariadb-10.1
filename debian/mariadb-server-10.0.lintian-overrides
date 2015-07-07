@@ -1,9 +1,9 @@
 # OK, embedded has same source
 mariadb-server-10.0: embedded-library usr/bin/mysqlbinlog: libmysqlclient
 # ash's buildin has no "-e" so use /bin/echo
-mariadb-server-10.0: command-with-path-in-maintainer-script postinst:154 /bin/echo
-mariadb-server-10.0: command-with-path-in-maintainer-script postinst:164 /bin/echo
-mariadb-server-10.0: command-with-path-in-maintainer-script postinst:177 /bin/echo
+mariadb-server-10.0: command-with-path-in-maintainer-script postinst:156 /bin/echo
+mariadb-server-10.0: command-with-path-in-maintainer-script postinst:166 /bin/echo
+mariadb-server-10.0: command-with-path-in-maintainer-script postinst:179 /bin/echo
 # False positive: unfortified calls have already been fully validated at compile-time
 # See full research at https://mariadb.atlassian.net/browse/MDEV-8377
 mariadb-server-10.0: hardening-no-fortify-functions usr/lib/mysql/plugin/auth_pam.so
