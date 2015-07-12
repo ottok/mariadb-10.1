@@ -4,6 +4,7 @@ mariadb-10.0 (10.0.20-3) UNRELEASED; urgency=medium
   * mariadb-common: Depend on a version of mysql-common that ships
     /usr/share/mysql-common/configure-symlinks.  (Closes: #787533)
   * mariadb-common.postinst: Drop fallback my.cnf symlink management.
+  * mariadb-common.preinst: Clean up my.cnf/my.cnf.old from the fallback.
 
  -- Andreas Beckmann <anbe@debian.org>  Wed, 08 Jul 2015 09:09:58 +0200
 
