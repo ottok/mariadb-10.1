@@ -14,9 +14,8 @@ ${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*" 1>&2 }
 
 export PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin
 MYADMIN="/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf"
-DATADIR=/var/lib/mysql
-LOGDIR=/var/log/mysql
-UPGRADEDIR=/var/lib/mysql-upgrade
+mysql_datadir=/var/lib/mysql
+mysql_upgradedir=/var/lib/mysql-upgrade
 
 # Try to stop the server in a sane way. If it does not success let the admin
 # do it himself. No database directories should be removed while the server
@@ -50,7 +49,7 @@ this_version=10.0
 
 # Show upgrade warning if old data exists
 # Designed for scenarios where users upgrade form MySQL 5.5 or 5.6 or MariaDB 5.5
-for i in `ls $DATADIR/debian-*.flag 2>/dev/null`; do
+for i in `ls $mysql_datadir/debian-*.flag 2>/dev/null`; do
   found_version=`echo $i | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
   if dpkg --compare-versions "$this_version" '>>' "$found_version"; then
     db_fset mariadb-server/oneway_migration seen false || true
@@ -69,7 +68,7 @@ done
 
 # Safe the user from stupidities.
 show_downgrade_warning=0
-for i in `ls $DATADIR/debian-*.flag 2>/dev/null`; do
+for i in `ls $mysql_datadir/debian-*.flag 2>/dev/null`; do
   found_version=`echo $i | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
   if dpkg --compare-versions "$this_version" '<<' "$found_version"; then
     show_downgrade_warning=1
@@ -82,11 +81,11 @@ if [ "$show_downgrade_warning" = 1 ]; then
   db_go
   db_get mariadb-server-$this_version/really_downgrade || true
   if [ "$RET" = "true" ]; then
-    rm -f $DATADIR/debian-*.flag
+    rm -f $mysql_datadir/debian-*.flag
   else
     echo "Aborting downgrade from (at least) $found_version to $this_version." 1>&2
     echo "If are sure you want to downgrade to $this_version, remove the file" 1>&2
-    echo "$DATADIR/debian-*.flag and try installing again." 1>&2
+    echo "$mysql_datadir/debian-*.flag and try installing again." 1>&2
     db_stop
     exit 1
   fi
@@ -140,19 +139,19 @@ set -e
 for dir in DATADIR LOGDIR; do
     checkdir=`eval echo "$"$dir`
     if [ -L "$checkdir" ]; then
-	mkdir -p "$UPGRADEDIR"
-	cp -dT "$checkdir" "$UPGRADEDIR/$dir.link"
+	mkdir -p "$mysql_upgradedir"
+	cp -dT "$checkdir" "$mysql_upgradedir/$dir.link"
     fi
 done
 
 # creating mysql home directory
-if [ ! -d $DATADIR -a ! -L $DATADIR ]; then
- 	mkdir $DATADIR
+if [ ! -d $mysql_datadir -a ! -L $mysql_datadir ]; then
+ 	mkdir $mysql_datadir
 fi
 
 # checking disc space
-if LC_ALL=C BLOCKSIZE= df --portability $DATADIR/. | tail -n 1 | awk '{ exit ($4>1000) }'; then
-  echo "ERROR: There's not enough space in $DATADIR/" 1>&2
+if LC_ALL=C BLOCKSIZE= df --portability $mysql_datadir/. | tail -n 1 | awk '{ exit ($4>1000) }'; then
+  echo "ERROR: There's not enough space in $mysql_datadir/" 1>&2
   db_stop
   exit 1
 fi
@@ -165,8 +164,8 @@ fi
 # The "set +e" is necessary as e.g. a ".journal" of a ext3 partition is
 # not chgrp'able (#318435).
 set +e
-chown mysql:mysql $DATADIR
-find $DATADIR -follow -not -group mysql -print0 2>/dev/null \
+chown mysql:mysql $mysql_datadir
+find $mysql_datadir -follow -not -group mysql -print0 2>/dev/null \
   | xargs -0 --no-run-if-empty chgrp mysql
 set -e
 

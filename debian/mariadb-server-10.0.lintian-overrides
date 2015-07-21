@@ -1,9 +1,9 @@
 # OK, embedded has same source
 mariadb-server-10.0: embedded-library usr/bin/mysqlbinlog: libmysqlclient
 # ash's buildin has no "-e" so use /bin/echo
-mariadb-server-10.0: command-with-path-in-maintainer-script postinst:156 /bin/echo
-mariadb-server-10.0: command-with-path-in-maintainer-script postinst:166 /bin/echo
-mariadb-server-10.0: command-with-path-in-maintainer-script postinst:179 /bin/echo
+mariadb-server-10.0: command-with-path-in-maintainer-script postinst:199 /bin/echo
+mariadb-server-10.0: command-with-path-in-maintainer-script postinst:209 /bin/echo
+mariadb-server-10.0: command-with-path-in-maintainer-script postinst:222 /bin/echo
 # OK, path /usr/sbin/invoke-rc.d is only used in check, executes are run without the path
 mariadb-server-10.0: command-with-path-in-maintainer-script postinst:17 /usr/sbin/invoke-rc.d
 mariadb-server-10.0: command-with-path-in-maintainer-script postrm:15 /usr/sbin/invoke-rc.d
