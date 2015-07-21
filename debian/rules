@@ -11,6 +11,8 @@ include /usr/share/dpkg/buildflags.mk
 ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
 ARCH_OS := $(shell dpkg-architecture -qDEB_BUILD_ARCH_OS)
 BUILDDIR := builddir
+CC := $(DEB_HOST_GNU_TYPE)-gcc
+CXX := $(DEB_HOST_GNU_TYPE)-g++
 DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_SYSTEM ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_SYSTEM)
@@ -25,23 +27,13 @@ DISTRIBUTION := $(shell lsb_release -i -s)
 RELEASE := $(shell lsb_release -r -s)
 TMP:=$(CURDIR)/debian/tmp
 
-
-export MYSQL_BUILD_CC=$(DEB_HOST_GNU_TYPE)-gcc
-export MYSQL_BUILD_CXX=$(DEB_HOST_GNU_TYPE)-g++
-
-# Parallel build support as adviced
+# Parallel build support as advised
 # at https://www.debian.org/doc/debian-policy/ch-source.html#s-debianrules-options
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
     NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-    # Even though at later point the MAKEFLAGS variable will end up
-    # having the -j option without a parameter, in test builds it has been
-    # confirmed that the NUMJOBS really doeas has an effect via MAKEFLAGS magic.
-    # MAKEFLAGS magic will later also add the -jobserver option.
     MAKEFLAGS += -j $(NUMJOBS)
 endif
 
-# This is removed in mysql-5.6 and a candidate for removal in MariaDB too
-USE_ASSEMBLER:=--enable-assembler
 ifneq (,$(filter $(ARCH), i386 kfreebsd-i386 hurd-i386))
     TAOCRYPT_OPT="-DTAOCRYPT_DISABLE_X86ASM"
 endif
@@ -66,8 +58,9 @@ MAKEFLAGS += VERBOSE=1
 
 MAKE_TEST_TARGET:=test-force
 ifneq ($(findstring fulltest,$(DEB_BUILD_OPTIONS)),)
-# make test-bt is the testsuite run by the MySQL build team
-# before a release, but it is long
+# Presets related to test-bt are not guarenteed to work in MariaDB as there
+# are hard-coded MTR lines insted. See MDEV-8244 for implementation status
+# of new test presets.
     MAKE_TEST_TARGET:=test-bt
 endif
 
@@ -93,29 +86,28 @@ override_dh_auto_configure:
 	@echo "RULES.$@"
 	dh_testdir
 
-	( test -d $(BUILDDIR) || mkdir $(BUILDDIR) ) && cd $(BUILDDIR) && \
+	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && \
 	sh -c  'PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
-	    	CC=$${MYSQL_BUILD_CC:-gcc} \
-		CFLAGS=$${MYSQL_BUILD_CFLAGS:-"-O2 -DBIG_JOINS=1 -fno-strict-aliasing ${TAOCRYPT_OPT}"} \
-	    	CXX=$${MYSQL_BUILD_CXX:-g++} \
-	    	CXXFLAGS=$${MYSQL_BUILD_CXXFLAGS:-"-O3 -DBIG_JOINS=1 -felide-constructors -fno-exceptions -fno-rtti -fno-strict-aliasing ${TAOCRYPT_OPT}"} \
+	    	CC=${CC} \
+		CFLAGS=$${MYSQL_BUILD_CFLAGS:-"-O3 -fno-strict-aliasing"} \
+	    	CXX=${CXX} \
+	    	CXXFLAGS=$${MYSQL_BUILD_CXXFLAGS:-"-O3 -felide-constructors -fno-exceptions -fno-rtti -fno-strict-aliasing ${TAOCRYPT_OPT}"} \
 	    cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(CMAKEFLAGS) \
-	    -DWITH_LIBWRAP=no \
 	    -DWITH_SSL=bundled \
-	    -DCOMPILATION_COMMENT="($(DISTRIBUTION))" \
+	    -DCOMPILATION_COMMENT="$(DISTRIBUTION) $(RELEASE)" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
 	    -DSYSTEM_TYPE="debian-$(DEB_BUILD_GNU_SYSTEM)" \
 	    -DBUILD_CONFIG=mysql_release \
 	    -DINSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH) \
 	    -DINSTALL_PLUGINDIR=lib/mysql/plugin \
-	    -DDEB=1 ..'
+	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
+	    -DDEB=$(DISTRIBUTION) ..'
 	touch $@
 
 # This is needed, otherwise 'make test' will run before binaries have been built
 override_dh_auto_build:
 	@echo "RULES.$@"
-	@echo "MAKEFLAGS: $(value MAKEFLAGS)"
 	cd $(BUILDDIR) && $(MAKE)
 	touch $@
 
@@ -144,13 +136,6 @@ override_dh_auto_install:
 	# make install
 	cd $(BUILDDIR) && $(MAKE) install DESTDIR=$(TMP)
 
-	# mariadb-server
-	# INBO_BIN is generated at build time and must thus be installed like this
-	install -D -m 0644 $(BUILDDIR)/Docs/INFO_BIN $(TMP)/usr/share/doc/mariadb-server-10.0/INFO_BIN
-	rm -vf $(TMP)/usr/share/mysql/mi_test_all* \
-	       $(TMP)/usr/share/mysql/mysql-log-rotate \
-	       $(TMP)/usr/share/mysql/mysql.server \
-	       $(TMP)/usr/share/mysql/binary-configure
 	# nm numeric soft is not enough, therefore extra sort in command
 	# to satisfy Debian reproducible build requirements
 	nm -n $(BUILDDIR)/sql/mysqld | sort | gzip -n -9 > $(TMP)/usr/share/doc/mariadb-server-10.0/mysqld.sym.gz
@@ -161,15 +146,12 @@ override_dh_auto_install:
 	# rename and install Apport hook
 	install -D -m 644 debian/mariadb-server-10.0.py $(TMP)/usr/share/apport/package-hooks/source_mariadb-10.0.py
 
-	# mariadb-test
-	mv $(TMP)/usr/mysql-test $(TMP)/usr/share/mysql
-
 	touch $@
 
 override_dh_installlogrotate-arch:
 	dh_installlogrotate --name mysql-server
 
-# Start mysql in runlevel 19 before 20 where apache, proftpd etc gets
+# Start mysql at sequence number 19 before 20 where apache, proftpd etc gets
 # started which might depend on a running database server.
 override_dh_installinit-arch:
 	dh_installinit --name=mysql -- defaults 19 21

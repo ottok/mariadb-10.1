@@ -11,4 +11,3 @@ fix-spelling-errors.patch
 mroonga-disable-switch.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
-build_reproducibly.patch
