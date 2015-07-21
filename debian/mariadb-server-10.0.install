@@ -1,6 +1,8 @@
 debian/additions/debian-start etc/mysql
 debian/additions/debian-start.inc.sh usr/share/mysql
 debian/additions/echo_stderr usr/share/mysql
+debian/additions/mariadb.conf.d/server.cnf etc/mysql/mariadb.conf.d
+debian/additions/mariadb.conf.d/mysqld_safe.cnf etc/mysql/mariadb.conf.d
 etc/apparmor.d/usr.sbin.mysqld
 usr/bin/aria_chk
 usr/bin/aria_dump_log
