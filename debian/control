@@ -75,13 +75,13 @@ Description: MariaDB database core client binaries
 Package: mariadb-client-10.0
 Architecture: any
 Depends: debianutils (>=1.6),
+         libdbd-mysql-perl (>= 1.2202),
          libdbi-perl,
          libterm-readkey-perl,
          mariadb-client-core-10.0 (>= ${source:Version}),
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
-Recommends: libdbd-mysql-perl (>= 1.2202)
 Conflicts: mysql-client-core-5.5, mysql-client-core-5.6
 Breaks: mariadb-client-5.5,
         mariadb-server-10.0 (<< 10.0.13-1~),
