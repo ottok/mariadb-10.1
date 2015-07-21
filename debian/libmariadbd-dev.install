@@ -1,2 +1,2 @@
 usr/lib/*/libmysqld.a
-usr/lib/*/libmysqld.so*
+usr/lib/*/libmysqld.so
