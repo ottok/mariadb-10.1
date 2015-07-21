@@ -6,6 +6,18 @@ mariadb-10.0 (10.0.20-3) UNRELEASED; urgency=medium
   * mariadb-common.postinst: Drop fallback my.cnf symlink management.
   * mariadb-common.preinst: Clean up my.cnf/my.cnf.old from the fallback.
 
+  [ Otto Kekäläinen ]
+  * Minor Lintian fixes
+
+  [ Olaf van der Spek ]
+  * Minor spell checking (Closes: #792123)
+
+  [ Israel Tsadok ]
+  * Fix mariadb-server-10.0.preinst script that failed to save a new
+    /var/lib/mysql-upgrade/DATADIR.link if a previous DATADIR.link existed and
+    the /var/lib/mysql directory was a symbolic link with an absolute path
+    as target (Closes: #792918)
+
  -- Andreas Beckmann <anbe@debian.org>  Wed, 08 Jul 2015 09:09:58 +0200
 
 mariadb-10.0 (10.0.20-2) unstable; urgency=low
