@@ -141,7 +141,7 @@ for dir in DATADIR LOGDIR; do
     checkdir=`eval echo "$"$dir`
     if [ -L "$checkdir" ]; then
 	mkdir -p "$UPGRADEDIR"
-	cp -d "$checkdir" "$UPGRADEDIR/$dir.link"
+	cp -dT "$checkdir" "$UPGRADEDIR/$dir.link"
     fi
 done
 
