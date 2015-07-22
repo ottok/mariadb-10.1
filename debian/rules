@@ -11,8 +11,6 @@ include /usr/share/dpkg/buildflags.mk
 ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
 ARCH_OS := $(shell dpkg-architecture -qDEB_BUILD_ARCH_OS)
 BUILDDIR := builddir
-CC := $(DEB_HOST_GNU_TYPE)-gcc
-CXX := $(DEB_HOST_GNU_TYPE)-g++
 DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_SYSTEM ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_SYSTEM)
@@ -26,6 +24,9 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 DISTRIBUTION := $(shell lsb_release -i -s)
 RELEASE := $(shell lsb_release -r -s)
 TMP:=$(CURDIR)/debian/tmp
+
+CC := $(DEB_HOST_GNU_TYPE)-gcc
+CXX := $(DEB_HOST_GNU_TYPE)-g++
 
 # Parallel build support as advised
 # at https://www.debian.org/doc/debian-policy/ch-source.html#s-debianrules-options
