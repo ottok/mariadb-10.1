@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.20-3) UNRELEASED; urgency=medium
+mariadb-10.0 (10.0.20-3) unstable; urgency=medium
 
   [ Andreas Beckmann ]
   * mariadb-common: Depend on a version of mysql-common that ships
@@ -7,7 +7,11 @@ mariadb-10.0 (10.0.20-3) UNRELEASED; urgency=medium
   * mariadb-common.preinst: Clean up my.cnf/my.cnf.old from the fallback.
 
   [ Otto Kekäläinen ]
-  * Minor Lintian fixes
+  * Clean up old cruft from rules file after review by Sergei Golubchik
+  * Unified config file layout with upstream .cnf layout
+  * Created libmariadbd and moved so file from libmariadbd-dev there
+  * Recover mysql-upgrade dir/link handlig wrongly removed in f7caa041db
+  * Minor Lintian and documentation fixes
 
   [ Olaf van der Spek ]
   * Minor spell checking (Closes: #792123)
@@ -18,7 +22,7 @@ mariadb-10.0 (10.0.20-3) UNRELEASED; urgency=medium
     the /var/lib/mysql directory was a symbolic link with an absolute path
     as target (Closes: #792918)
 
- -- Andreas Beckmann <anbe@debian.org>  Wed, 08 Jul 2015 09:09:58 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 24 Jul 2015 23:00:00 +0300
 
 mariadb-10.0 (10.0.20-2) unstable; urgency=low
 
@@ -43,7 +47,7 @@ mariadb-10.0 (10.0.20-1) unstable; urgency=low
 
 mariadb-10.0 (10.0.19-1) unstable; urgency=low
 
-  * New upstream release. Fixed the server crash caused by mysql_upgrade 
+  * New upstream release. Fixed the server crash caused by mysql_upgrade
     (MDEV-8115).
   * Upload to unstable from master branch as Jessie is not released.
 
