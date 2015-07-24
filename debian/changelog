@@ -22,6 +22,10 @@ mariadb-10.0 (10.0.20-3) unstable; urgency=medium
     the /var/lib/mysql directory was a symbolic link with an absolute path
     as target (Closes: #792918)
 
+  [ Jean Weisbuch ]
+  * Added a Debian default file for the mariadb-server-10.0 package which
+    allows to set the MYSQLD_STARTUP_TIMEOUT variable used in the init script
+
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 24 Jul 2015 23:00:00 +0300
 
 mariadb-10.0 (10.0.20-2) unstable; urgency=low
