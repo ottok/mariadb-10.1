@@ -1,5 +1,6 @@
 debian/additions/innotop/innotop usr/bin/
-debian/additions/mariadb.conf.d/client.cnf etc/mysql/mariadb.conf.d
+debian/additions/mariadb.conf.d/50-client.cnf etc/mysql/mariadb.conf.d
+debian/additions/mariadb.conf.d/50-mysql-clients.cnf etc/mysql/mariadb.conf.d
 debian/additions/mysqlreport usr/bin/
 usr/bin/mysql_find_rows
 usr/bin/mysql_fix_extensions
