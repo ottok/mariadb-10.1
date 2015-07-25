@@ -26,6 +26,11 @@ mariadb-10.0 (10.0.20-3) unstable; urgency=medium
   [ Jean Weisbuch ]
   * Added a Debian default file for the mariadb-server-10.0 package which allows
     one to set the MYSQLD_STARTUP_TIMEOUT variable used in the init script
+  * The MYCHECK_RCPT variable can now be set from the default file.
+  * The check_for_crashed_tables() function on the debian-start script has been 
+    fixed to be able to log (and email) the errors it encountered : Errors are
+    sent to stderr by the CLI while only stdout was captured by the function.
+  * The same function now also checks Aria tables along with MyISAM ones. 
 
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 24 Jul 2015 23:00:00 +0300
 
