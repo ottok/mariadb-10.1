@@ -9,7 +9,6 @@ mariadb-10.0 (10.0.20-3) unstable; urgency=medium
   [ Otto Kekäläinen ]
   * Clean up old cruft from rules file after review by Sergei Golubchik
   * Unified config file layout with upstream .cnf layout
-  * Created libmariadbd and moved so file from libmariadbd-dev there
   * Recover mysql-upgrade dir/link handlig wrongly removed in f7caa041db
   * Minor Lintian and documentation fixes
   * Switch 'nm -n' to 'nm --defined-only' to improve reproducible builds
