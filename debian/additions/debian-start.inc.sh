@@ -3,7 +3,7 @@
 # This file is included by /etc/mysql/debian-start
 #
 
-## Check all unclosed tables.
+## Check MyISAM and Aria unclosed tables.
 # - Requires the server to be up.
 # - Is supposed to run silently in background. 
 function check_for_crashed_tables() {
@@ -11,7 +11,7 @@ function check_for_crashed_tables() {
   set -u
 
   # But do it in the background to not stall the boot process.
-  logger -p daemon.info -i -t$0 "Triggering myisam-recover for all MyISAM tables"
+  logger -p daemon.info -i -t$0 "Triggering myisam-recover for all MyISAM tables and aria-recover for all Aria tables"
 
   # Checking for $? is unreliable so the size of the output is checked.
   # Some table handlers like HEAP do not support CHECK TABLE.
@@ -21,10 +21,10 @@ function check_for_crashed_tables() {
   LC_ALL=C $MYSQL --skip-column-names --batch -e  '
       select concat('\''select count(*) into @discard from `'\'',
                     TABLE_SCHEMA, '\''`.`'\'', TABLE_NAME, '\''`'\'') 
-      from information_schema.TABLES where ENGINE='\''MyISAM'\' | \
+      from information_schema.TABLES where TABLE_SCHEMA<>'\''INFORMATION_SCHEMA'\'' and TABLE_SCHEMA<>'\''PERFORMANCE_SCHEMA'\'' and ( ENGINE='\''MyISAM'\'' or ENGINE='\''Aria'\'' )' | \
     xargs -i $MYSQL --skip-column-names --silent --batch \
-                    --force -e "{}" >$tempfile 
-  if [ -s $tempfile ]; then
+                    --force -e "{}" &>$tempfile 
+  if [ -s "$tempfile" ]; then
     (
       /bin/echo -e "\n" \
         "Improperly closed tables are also reported if clients are accessing\n" \
