@@ -1,5 +1,0 @@
-# OK as the MariaDB package is not anyway allowed to use MySQL name
-libmariadbd-dev: package-name-doesnt-match-sonames libmysqld18
-# OK, embedded has same source
-libmariadbd-dev: embedded-library usr/lib/x86_64-linux-gnu/libmysqld.so.18: libmysqlclient
-libmariadbd-dev: embedded-library usr/lib/i386-linux-gnu/libmysqld.so.18: libmysqlclient
