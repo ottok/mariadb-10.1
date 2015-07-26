@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.20-4) UNRELEASED; urgency=low
+
+  * Created libmariadbd and moved .so file from libmariadbd-dev there
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Sun, 26 Jul 2015 22:49:15 +0300
+
 mariadb-10.0 (10.0.20-3) unstable; urgency=medium
 
   [ Andreas Beckmann ]
@@ -9,7 +15,6 @@ mariadb-10.0 (10.0.20-3) unstable; urgency=medium
   [ Otto Kekäläinen ]
   * Clean up old cruft from rules file after review by Sergei Golubchik
   * Unified config file layout with upstream .cnf layout
-  * Created libmariadbd and moved so file from libmariadbd-dev there
   * Recover mysql-upgrade dir/link handlig wrongly removed in f7caa041db
   * Minor Lintian and documentation fixes
   * Switch 'nm -n' to 'nm --defined-only' to improve reproducible builds
