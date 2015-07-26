@@ -28,8 +28,8 @@ MYADMIN="/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf"
 # priority can be overriden and "-s" adds output to stderr
 ERR_LOGGER="logger -p daemon.err -t /etc/init.d/mysql -i"
 
-if [ -f /etc/default/mariadb-server-10.0 ] ; then
-        . /etc/default/mariadb-server-10.0
+if [ -f /etc/default/mysql ]; then
+  . /etc/default/mysql
 fi
 
 # Safeguard (relative paths, core dumps..)
