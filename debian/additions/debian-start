@@ -7,6 +7,10 @@
 
 source /usr/share/mysql/debian-start.inc.sh
 
+if [ -f /etc/default/mysql ]; then
+  . /etc/default/mysql
+fi
+
 MYSQL="/usr/bin/mysql --defaults-file=/etc/mysql/debian.cnf"
 MYADMIN="/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf"
 MYUPGRADE="/usr/bin/mysql_upgrade --defaults-extra-file=/etc/mysql/debian.cnf"
