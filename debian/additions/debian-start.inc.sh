@@ -16,14 +16,21 @@ function check_for_crashed_tables() {
   # Checking for $? is unreliable so the size of the output is checked.
   # Some table handlers like HEAP do not support CHECK TABLE.
   tempfile=`tempfile`
-  # We have to use xargs in this case, because a for loop barfs on the 
-  # spaces in the thing to be looped over. 
+
+  # We have to use xargs in this case, because a for loop barfs on the
+  # spaces in the thing to be looped over.
+
+  # If a crashed table is encountered, the "mysql" command will return with a status different from 0
+  set +e
+
   LC_ALL=C $MYSQL --skip-column-names --batch -e  '
       select concat('\''select count(*) into @discard from `'\'',
                     TABLE_SCHEMA, '\''`.`'\'', TABLE_NAME, '\''`'\'') 
       from information_schema.TABLES where TABLE_SCHEMA<>'\''INFORMATION_SCHEMA'\'' and TABLE_SCHEMA<>'\''PERFORMANCE_SCHEMA'\'' and ( ENGINE='\''MyISAM'\'' or ENGINE='\''Aria'\'' )' | \
     xargs -i $MYSQL --skip-column-names --silent --batch \
-                    --force -e "{}" &>$tempfile 
+                    --force -e "{}" &>$tempfile
+  set -e
+
   if [ -s "$tempfile" ]; then
     (
       /bin/echo -e "\n" \
