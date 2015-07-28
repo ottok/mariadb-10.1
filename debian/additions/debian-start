@@ -7,15 +7,19 @@
 
 source /usr/share/mysql/debian-start.inc.sh
 
+if [ -f /etc/default/mysql ]; then
+  . /etc/default/mysql
+fi
+
 MYSQL="/usr/bin/mysql --defaults-file=/etc/mysql/debian.cnf"
 MYADMIN="/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf"
 MYUPGRADE="/usr/bin/mysql_upgrade --defaults-extra-file=/etc/mysql/debian.cnf"
 MYCHECK="/usr/bin/mysqlcheck --defaults-file=/etc/mysql/debian.cnf"
 MYCHECK_SUBJECT="WARNING: mysqlcheck has found corrupt tables"
 MYCHECK_PARAMS="--all-databases --fast --silent"
-MYCHECK_RCPT="root"
+MYCHECK_RCPT="${MYCHECK_RCPT:-root}"
 
-## Checking for corrupt, not cleanly closed and upgrade needing tables.
+## Checking for corrupt, not cleanly closed (only for MyISAM and Aria engines) and upgrade needing tables.
 
 # The following commands should be run when the server is up but in background
 # where they do not block the server start and in one shell instance so that
