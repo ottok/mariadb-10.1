@@ -5,6 +5,10 @@ mariadb-10.0 (10.0.21-1) UNRELEASED; urgency=low
   * Reproducible build improvement: Add LC_ALL=C to mysql.sym sort command
   * New upstream release.
     - Add skip_log_error to mysqld_safe config as done in upstream
+  * Split mariadb-test-data-10.0 out of the main test package. This will save
+    disk space in Debian archives as the arch independent data files are
+    in one single package that can be used on all platforms and the package
+    that is built on multiple platform shrinks significantly.
 
   [ Jean Weisbuch ]
   * The MYCHECK_RCPT variable can now be set from the default file.
