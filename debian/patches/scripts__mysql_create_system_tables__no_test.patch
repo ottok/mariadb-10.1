@@ -6,8 +6,8 @@
 ## DP: circumstances as it is checked first. See #301741.
 ## DP: http://bugs.mysql.com/bug.php?id=6901
 
---- old/scripts/mysql_system_tables_data.sql	2008-12-04 22:59:44.000000000 +0100
-+++ new/scripts/mysql_system_tables_data.sql	2008-12-04 23:00:07.000000000 +0100
+--- a/scripts/mysql_system_tables_data.sql
++++ b/scripts/mysql_system_tables_data.sql
 @@ -26,16 +26,6 @@
  -- a plain character
  SELECT LOWER( REPLACE((SELECT REPLACE(@@hostname,'_','\_')),'%','\%') )INTO @current_hostname;
@@ -33,4 +33,4 @@
 -INSERT INTO tmp_user (host,user) SELECT @current_hostname,'' FROM dual WHERE @current_hostname != 'localhost';
  INSERT INTO user SELECT * FROM tmp_user WHERE @had_user_table=0;
  DROP TABLE tmp_user;
-
+ 

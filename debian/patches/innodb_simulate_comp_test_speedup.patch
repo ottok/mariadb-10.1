@@ -7,8 +7,8 @@ Description: Add options to innodb test that fixes possible test failure
 Author: Otto Kekäläinen <otto@seravo.fi>
 Bug: https://mariadb.atlassian.net/browse/MDEV-6682
 
---- mariadb-10.0-10.0.13.orig/mysql-test/suite/innodb/t/innodb_simulate_comp_failures_small-master.opt
-+++ mariadb-10.0-10.0.13/mysql-test/suite/innodb/t/innodb_simulate_comp_failures_small-master.opt
+--- a/mysql-test/suite/innodb/t/innodb_simulate_comp_failures_small-master.opt
++++ b/mysql-test/suite/innodb/t/innodb_simulate_comp_failures_small-master.opt
 @@ -1,2 +1,3 @@
  --innodb-file-per-table
 +--innodb-flush-log-at-trx-commit=2
