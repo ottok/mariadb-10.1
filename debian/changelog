@@ -1,8 +1,10 @@
-mariadb-10.0 (10.0.20-4) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.21-1) UNRELEASED; urgency=low
 
   [ Otto Kekäläinen ]
   * Created libmariadbd and moved .so file from libmariadbd-dev there
   * Reproducible build improvement: Add LC_ALL=C to mysql.sym sort command
+  * New upstream release.
+    - Add skip_log_error to mysqld_safe config as done in upstream
 
   [ Jean Weisbuch ]
   * The MYCHECK_RCPT variable can now be set from the default file.
