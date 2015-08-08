@@ -4,7 +4,8 @@ mariadb-10.0 (10.0.21-1) UNRELEASED; urgency=low
   * Created libmariadbd and moved .so file from libmariadbd-dev there
   * Reproducible build improvement: Add LC_ALL=C to mysql.sym sort command
   * New upstream release.
-    - Add skip_log_error to mysqld_safe config as done in upstream
+    - Upstream added skip_log_error to mysqld_safe config (Closes: #781945)
+    - Diffie-Helman modulus increased to 2048-bits (Closes: #788905)
   * Split mariadb-test-data-10.0 out of the main test package. This will save
     disk space in Debian archives as the arch independent data files are
     in one single package that can be used on all platforms and the package
