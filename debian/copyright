@@ -147,7 +147,17 @@ Copyright:
  2011, Ondřej Surý <ondrej@debian.org>
  2012, Nicholas Bamber <nicholas@periapt.co.uk>
  2013, Kristian Nielsen <knielsen@askmonty.org>
- 2013-2014, Otto Kekäläinen <otto@seravo.fi>
+ 2013-2015, Otto Kekäläinen <otto@seravo.fi>
+ 2014 Julien Muchembled <jm@jmuchemb.eu>
+ 2014 Tobias Frost <tobi@coldtobi.de>
+ 2015 Andreas Beckmann <anbe@debian.org>
+ 2015 Arnaud Fontaine <arnau@debian.org>
+ 2015 Daniel Black <daniel.black@openquery.com.au>
+ 2015 Israel Tsadok <itsadok@gmail.com>
+ 2015 Jan Wagner <waja@cyconet.org>
+ 2015 Jean Weisbuch <jean@phpnet.org>
+ 2015 Olaf van der Spek <olafvdspek@gmail.com>
+ 2015 Robie Basak <robie.basak@canonical.com>
 License: GPL-2+
 
 Files: plugin/feedback/*
