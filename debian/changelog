@@ -258,7 +258,7 @@ mariadb-10.0 (10.0.14-1) experimental; urgency=low
   * Updated Swedish translation by Martin Bagge
     and Anders Jonsson (Closes: #762795)
   * Updated Spanish translation by Javier Fernandez-Sanguino (Closes: #762751)
-  * Updated Portugese translation by Miguel Figueiredo (Closes: #763194)
+  * Updated Portuguese translation by Miguel Figueiredo (Closes: #763194)
   * Updated Czech translation by Miroslav Kure (Closes: #763309)
 
  -- Otto Kekäläinen <otto@seravo.fi>  Thu, 28 Aug 2014 00:39:02 +0300
