@@ -1,7 +1,7 @@
 mariadb-10.0 (10.0.21-1) UNRELEASED; urgency=low
 
   [ Otto Kekäläinen ]
-  * Created libmariadbd and moved .so file from libmariadbd-dev there
+  * Created libmariadbd18 and moved .so file from libmariadbd-dev there
   * Reproducible build improvement: Add LC_ALL=C to mysql.sym sort command
   * New upstream release.
     - Upstream added skip_log_error to mysqld_safe config (Closes: #781945)
