@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.21-1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.21-1) experimental; urgency=low
 
   [ Otto Kekäläinen ]
   * Created libmariadbd18 and moved .so file from libmariadbd-dev there
@@ -18,7 +18,7 @@ mariadb-10.0 (10.0.21-1) UNRELEASED; urgency=low
     sent to stderr by the CLI while only stdout was captured by the function.
   * The same function now also checks Aria tables along with MyISAM ones.
 
- -- Otto Kekäläinen <otto@seravo.fi>  Sun, 26 Jul 2015 22:49:15 +0300
+ -- Otto Kekäläinen <otto@seravo.fi>  Thu, 13 Aug 2015 10:08:38 +0200
 
 mariadb-10.0 (10.0.20-3) unstable; urgency=medium
 
