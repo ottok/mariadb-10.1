@@ -504,7 +504,6 @@ sub list_defaults_files
                '@prefix@/my.cnf',
                ($ENV{MYSQL_HOME} ? "$ENV{MYSQL_HOME}/my.cnf" : undef),
                $opt{'extra-file'},
-               </etc/mysql/conf.d/*.cnf>,
                ($ENV{HOME} ? "$ENV{HOME}/.my.cnf" : undef));
 }
 

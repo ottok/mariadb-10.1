@@ -1,3 +1,2 @@
 --innodb-file-per-table
---innodb-flush-log-at-trx-commit=2
 

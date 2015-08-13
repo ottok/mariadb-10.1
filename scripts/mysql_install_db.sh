@@ -372,7 +372,7 @@ then
 fi
 
 # Create database directories
-for dir in "$ldata" "$ldata/mysql"
+for dir in "$ldata" "$ldata/mysql" "$ldata/test"
 do
   if test ! -d "$dir"
   then

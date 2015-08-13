@@ -14,24 +14,8 @@
 # Version 1.0
 #
 
-### BEGIN INIT INFO
-# Provides:          mysqld_multi
-# Required-Start:    $remote_fs $syslog
-# Required-Stop:     $remote_fs $syslog
-# Should-Start:      $network $named $time
-# Should-Stop:       $network $named $time
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: Start and stop multiple mysql database server daemon instances
-# Description:       Controls multiple MariaDB database server daemon instances
-### END INIT INFO
-
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-NAME=mysqld_multi
-DESC=mysqld_multi
-
-basedir=/usr
-bindir=/usr/bin
+basedir=/usr/local/mysql
+bindir=/usr/local/mysql/bin
 
 if test -x $bindir/mysqld_multi
 then
