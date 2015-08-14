@@ -4,17 +4,19 @@
 ## DP: Executes /etc/init.d/mysql on signals
 ## DP: Reported as http://bugs.mysql.com/bug.php?id=31361
 
---- a/scripts/mysqld_safe.sh	2013-01-11 16:02:41 +0000
-+++ b/scripts/mysqld_safe.sh	2013-01-11 16:03:14 +0000
-@@ -33,7 +33,6 @@ err_log=
+Index: mariadb-10.0/scripts/mysqld_safe.sh
+===================================================================
+--- mariadb-10.0.orig/scripts/mysqld_safe.sh	2015-08-13 19:40:49.149504559 +0900
++++ mariadb-10.0/scripts/mysqld_safe.sh	2015-08-13 19:41:02.213573178 +0900
+@@ -34,7 +34,6 @@
  syslog_tag_mysqld=mysqld
  syslog_tag_mysqld_safe=mysqld_safe
-
+ 
 -trap '' 1 2 3 15			# we shouldn't let anyone kill us
-
+ 
  # MySQL-specific environment variable. First off, it's not really a umask,
  # it's the desired mode. Second, it follows umask(2), not umask(3) in that
-@@ -164,7 +163,7 @@ eval_log_error () {
+@@ -165,7 +164,7 @@
        # sed buffers output (only GNU sed supports a -u (unbuffered) option)
        # which means that messages may not get sent to syslog until the
        # mysqld process quits.
@@ -23,9 +25,9 @@
        ;;
      *)
        echo "Internal program error (non-fatal):" \
-@@ -806,6 +805,13 @@ then
+@@ -819,6 +818,13 @@
  fi
-
+ 
  #
 +# From now on, we catch signals to do a proper shutdown of mysqld
 +# when signalled to do so.

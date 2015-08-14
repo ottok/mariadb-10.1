@@ -1,3 +1,10 @@
+mariadb-10.0 (10.0.21-0+deb8u1) UNRELEASED; urgency=low
+
+  * New upstream release 10.0.21.
+    + Refreshed debian/patches/*.
+
+ -- Arnaud Fontaine <arnau@debian.org>  Fri, 14 Aug 2015 14:23:49 +0900
+
 mariadb-10.0 (10.0.20-0+deb8u1) jessie-security; urgency=high
 
   [ Otto Kekäläinen ]
