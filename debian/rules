@@ -65,13 +65,6 @@ ifneq ($(findstring fulltest,$(DEB_BUILD_OPTIONS)),)
     MAKE_TEST_TARGET:=test-bt
 endif
 
-ifneq (,$(filter $(ARCH), amd64 kfreebsd-amd64 i386 kfreebsd-i386 ia64 s390 s390x))
-    TESTSUITE_FAIL_CMD:=exit 1
-else
-    TESTSUITE_FAIL_CMD:=true
-endif
-
-
 override_dh_auto_clean:
 	@echo "RULES.$@"
 	dh_testdir
@@ -116,7 +109,7 @@ override_dh_auto_build:
 override_dh_auto_test:
 	@echo "RULES.$@"
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	cd $(BUILDDIR) && $(MAKE) $(MAKE_TEST_TARGET) || $(TESTSUITE_FAIL_CMD) ;
+	cd $(BUILDDIR) && $(MAKE) $(MAKE_TEST_TARGET)
 endif
 
 override_dh_auto_install:
