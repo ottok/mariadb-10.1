@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.21-2) UNRELEASED; urgency=low
+
+  * Update gdb.conf to have tags signed by default
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Wed, 26 Aug 2015 18:20:54 +0300
+
 mariadb-10.0 (10.0.21-1) experimental; urgency=low
 
   [ Otto Kekäläinen ]
