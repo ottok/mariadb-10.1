@@ -6,7 +6,7 @@ mariadb-10.0 (10.0.20-0ubuntu0.15.04.1) vivid-security; urgency=low
       together with --ssl will ensure that the established connection is
       SSL-encrypted and the MariaDB server has a valid certificate.
       (LP: #1464895)
-    - CVE-2014-8964 bundled PCRE contained heap-based buffer overflow
+    - CVE-2014-8964: bundled PCRE contained heap-based buffer overflow
       vulnerability that allowed the server to crash or have other unspecified
       impact via a crafted regular expression made possible with the
       REGEXP_SUBSTR function (MDEV-8006).
