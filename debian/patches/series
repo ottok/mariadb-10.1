@@ -8,6 +8,5 @@ extend_default_test_timeout_for_tokudb.patch
 remove_rename_mariadb-server_files_in.patch
 innodb_simulate_comp_test_speedup.patch
 fix-spelling-errors.patch
-mroonga-disable-switch.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch

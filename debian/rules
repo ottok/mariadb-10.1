@@ -49,11 +49,6 @@ endif
 # See https://lists.launchpad.net/maria-developers/msg08390.html
 CMAKEFLAGS += -DWITHOUT_TOKUDB=true
 
-# Skip Mroonga if arch is not amd64
-ifneq ($(ARCH), amd64)
-    CMAKEFLAGS += -DWITHOUT_MROONGA=true
-endif
-
 # Add support for verbose builds
 MAKEFLAGS += VERBOSE=1
 
