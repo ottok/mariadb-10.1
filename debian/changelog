@@ -1,6 +1,7 @@
 mariadb-10.0 (10.0.21-2) UNRELEASED; urgency=low
 
   * Update gdb.conf to have tags signed by default
+  * Add CVE IDs to previous changelog entries
 
  -- Otto Kekäläinen <otto@seravo.fi>  Wed, 26 Aug 2015 18:20:54 +0300
 
@@ -67,11 +68,17 @@ mariadb-10.0 (10.0.20-2) unstable; urgency=low
 
 mariadb-10.0 (10.0.20-1) unstable; urgency=low
 
-  * New upstream release. Includes fix for the following security vulnerability:
+  * New upstream release. Includes fixes for the following security
+    vulnerabilities:
     - CVE-2015-3152: Client command line option --ssl-verify-server-cert (and
       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option of the client API) when used
       together with --ssl will ensure that the established connection is
       SSL-encrypted and the MariaDB server has a valid certificate.
+    - CVE-2015-3152
+    - CVE-2015-2648
+    - CVE-2015-2582
+    - CVE-2015-4752
+    - CVE-2015-2643
   * New release includes fix for memory corruption on arm64 (Closes: #787221)
   * Added patch to enhance build reproducibility regarding the file INFO_BIN
 
@@ -97,6 +104,7 @@ mariadb-10.0 (10.0.18-1~exp1) experimental; urgency=low
     - CVE-2015-2571
     - CVE-2015-0505
     - CVE-2015-0499
+    - CVE-2015-4757
   * Cleanup in d/copyright
   * Make the mariadb-common depends versioned to guarantee that latest
     config files are installed
