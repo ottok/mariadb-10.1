@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.21-2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.21-2) experimental; urgency=low
 
   * Update gdb.conf to have tags signed by default
   * Add CVE IDs to previous changelog entries
