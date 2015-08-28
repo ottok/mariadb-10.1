@@ -1,7 +1,11 @@
 mariadb-10.0 (10.0.21-0+deb8u1) UNRELEASED; urgency=low
 
+  [ Arnaud Fontaine ]
   * New upstream release 10.0.21.
     + Refreshed debian/patches/*.
+
+  [ Otto Kekäläinen ]
+  * Add CVE IDs to previous changelog entries
 
  -- Arnaud Fontaine <arnau@debian.org>  Fri, 14 Aug 2015 14:23:49 +0900
 
@@ -13,6 +17,12 @@ mariadb-10.0 (10.0.20-0+deb8u1) jessie-security; urgency=high
     - CVE-2015-3152: Client command line option --ssl-verify-server-cert (and
       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option of the client API) when used
       together with --ssl will ensure that the established connection is
+      SSL-encrypted and the MariaDB server has a valid certificate.
+    - CVE-2015-3152
+    - CVE-2015-2648
+    - CVE-2015-2582
+    - CVE-2015-4752
+    - CVE-2015-2643
   * Includes fixes done in 10.0.18 for the following security vulnerabilities:
     - CVE-2014-8964 bundled PCRE contained heap-based buffer overflow
       vulnerability that allowed the server to crash or have other unspecified
@@ -22,6 +32,7 @@ mariadb-10.0 (10.0.20-0+deb8u1) jessie-security; urgency=high
     - CVE-2015-2571
     - CVE-2015-0505
     - CVE-2015-0499
+    - CVE-2015-4757
   * Includes fixes done in 10.0.17 for the following security vulnerabilities:
     - CVE-2015-2568
     - CVE-2015-2573
