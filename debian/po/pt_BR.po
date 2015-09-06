@@ -1,23 +1,21 @@
-# Brazilian Portuguese (pt_BR) debconf template translation for
-# Debian's mysql-dfsg source package.
-# Debian-BR Project <debian-l10n-portuguese@lists.debian.org>
-# André Luís Lopes, <andrelop@debian.org> , 2004
-# André Luís Lopes, <andrelop@debian.org> , 2006
-# André Luís Lopes, <andrelop@debian.org> , 2007
+# Debconf translations for mariadb-10.0.
+# This file is distributed under the same license as the mariadb-10.0 package.
+# André Luís Lopes, <andrelop@debian.org>, 2005-2007
+# Adriano Rafael Gomes <adrianorg@arg.eti.br>, 2015
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: mysql-dfsg-5.1\n"
+"Project-Id-Version: mariadb-10.0\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2015-01-31 14:00+0200\n"
-"PO-Revision-Date: 2007-04-21 110.09-0300\n"
-"Last-Translator: André Luís Lopes <andrelop@debian.org>\n"
-"Language-Team: Debian-BR Project <debian-l10n-portuguese@lists.debian.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2015-05-16 18:15-0300\n"
+"Last-Translator: Adriano Rafael Gomes <adrianorg@arg.eti.br>\n"
+"Language-Team: Brazilian Portuguese <debian-l10n-portuguese@lists.debian."
+"org>\n"
+"Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"pt_BR utf-8\n"
 
 #. Type: boolean
 #. Description
@@ -34,10 +32,6 @@ msgstr "Um arquivo de nome /var/lib/mysql/debian-*.flag existe no sistema."
 #. Type: boolean
 #. Description
 #: ../mariadb-server-10.0.templates:2001
-#, fuzzy
-#| msgid ""
-#| "Such file is an indication that a mariadb-server package with a higher "
-#| "version has been installed earlier."
 msgid ""
 "Such a file is an indication that a mariadb-server package with a higher "
 "version has been installed previously."
@@ -68,19 +62,18 @@ msgid ""
 "Using MariaDB under NIS/YP requires a mysql user account to be added on the "
 "local system with:"
 msgstr ""
+"Usar o MariaDB sob NIS/YP requer que uma conta de usuário mysql seja "
+"adicionada ao sistema local com:"
 
 #. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:3001
-#, fuzzy
-#| msgid ""
-#| "You should also check the permissions and the owner of the /var/lib/mysql "
-#| "directory:"
 msgid ""
 "You should also check the permissions and ownership of the /var/lib/mysql "
 "directory:"
 msgstr ""
-"Você deverá também checar as permissões e o dono do diretório /var/lib/mysql:"
+"Você deverá também verificar as permissões e o dono do diretório /var/lib/"
+"mysql:"
 
 #. Type: boolean
 #. Description
@@ -126,37 +119,31 @@ msgid ""
 msgstr ""
 "Um erro ocorreu durante a definição da senha para o usuário administrativo "
 "do MariaDB. Isso pode ter acontecido devido a esse usuário já possuir uma "
-"senha definida ou devido a ocorrência de um problema de comunicação com o "
+"senha definida ou devido à ocorrência de um problema de comunicação com o "
 "servidor MariaDB."
 
 #. Type: error
 #. Description
 #: ../mariadb-server-10.0.templates:5001
-#, fuzzy
-#| msgid ""
-#| "You should check the account's password after tha package installation."
 msgid "You should check the account's password after the package installation."
-msgstr "Você deverá checar a senha dessa conta após a instalação deste pacote."
+msgstr ""
+"Você deverá verificar a senha dessa conta após a instalação deste pacote."
 
 #. Type: error
 #. Description
 #: ../mariadb-server-10.0.templates:5001
-#, fuzzy
-#| msgid ""
-#| "Please read the /usr/share/doc/mysql-server-5.1/README.Debian file for "
-#| "more information."
 msgid ""
 "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
 "more information."
 msgstr ""
 "Por favor, leia o arquivo /usr/share/doc/mariadb-server-10.0/README.Debian "
-"para maiores informações."
+"para mais informações."
 
 #. Type: boolean
 #. Description
 #: ../mariadb-server-10.0.templates:6001
 msgid "Really migrate to MariaDB?"
-msgstr ""
+msgstr "Realmente migrar para o MariaDB?"
 
 #. Type: boolean
 #. Description
@@ -165,6 +152,8 @@ msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
 msgstr ""
+"O MariaDB é um substituto para o MySQL. Ele usará o seu arquivo de "
+"configuração atual (my.cnf) e os bancos de dados atuais."
 
 #. Type: boolean
 #. Description
@@ -174,23 +163,7 @@ msgid ""
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
-
-#~ msgid "New password for the MariaDB \"root\" user:"
-#~ msgstr "Nova senha para o usuário \"root\" do MariaDB:"
-
-#~ msgid ""
-#~ "While not mandatory, it is highly recommended that you set a password for "
-#~ "the MariaDB administrative \"root\" user."
-#~ msgstr ""
-#~ "Apesar de não ser mandatório, é altamente recomendado que você defina uma "
-#~ "senha para o usuário administrativo \"root\" do MariaDB."
-
-#, fuzzy
-#~| msgid "If that field is left blank, the password will not be changed."
-#~ msgid "If this field is left blank, the password will not be changed."
-#~ msgstr "Caso este campo seja deixado em branco, a senha não sera mudada."
-
-#, fuzzy
-#~| msgid "New password for the MySQL \"root\" user:"
-#~ msgid "Repeat password for the MariaDB \"root\" user:"
-#~ msgstr "Nova senha para o usuário \"root\" do MariaDB:"
+"Note que o MariaDB tem algumas características melhoradas, que não existem "
+"no MySQL e, portanto, migrar de volta para o MySQL pode nem sempre "
+"funcionar, pelo menos não tão automaticamente quanto migrar do MySQL para o "
+"MariaDB."
