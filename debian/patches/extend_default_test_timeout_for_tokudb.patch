@@ -1,6 +1,8 @@
+Description: Extend timeout
+ Some Debian pbuilder/sbuilder chroots can be very slow and would timeout in
+ vain as given enough time the build result is fully correct.
+Forwarded: not-needed
 Author: Otto Kekäläinen <otto@seravo.fi>
-Description: Extend timeout as some Debian pbuilder/sbuilder chroots may be very slow to run these
-
 --- a/mysql-test/CMakeLists.txt
 +++ b/mysql-test/CMakeLists.txt
 @@ -64,7 +64,7 @@ ELSE()

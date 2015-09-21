@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.21-4) UNRELEASED; urgency=low
+
+  * Update the most recent patches with proper DEP-3 compliant headers
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Mon, 21 Sep 2015 13:18:39 +0300
+
 mariadb-10.0 (10.0.21-3) unstable; urgency=low
 
   * Updated Brazilian Portuguese translation (Closes: #798048)

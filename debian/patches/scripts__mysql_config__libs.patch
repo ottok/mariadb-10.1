@@ -1,5 +1,5 @@
-Author: Christian Hammers <ch@debian.org>
 Description: Removes unnecessary library dependencies. See #390692
+Author: Christian Hammers <ch@debian.org>
 
 --- a/scripts/mysql_config.sh
 +++ b/scripts/mysql_config.sh

@@ -1,5 +1,6 @@
-Author: Otto Kekäläinen <otto@seravo.fi>
 Description: Remove upstream debian/* handling that is obsolete
+Forwarded: not-needed
+Author: Otto Kekäläinen <otto@seravo.fi>
 
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
