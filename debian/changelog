@@ -1,6 +1,10 @@
 mariadb-10.0 (10.0.21-4) UNRELEASED; urgency=low
 
+  [ Otto Kekäläinen ]
   * Update the most recent patches with proper DEP-3 compliant headers
+
+  [ Jean Weisbuch ]
+  * Update mysqlreport to version 4.0
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 21 Sep 2015 13:18:39 +0300
 
