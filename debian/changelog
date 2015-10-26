@@ -2,6 +2,7 @@ mariadb-10.0 (10.0.21-4) UNRELEASED; urgency=low
 
   [ Otto Kekäläinen ]
   * Update the most recent patches with proper DEP-3 compliant headers
+  * Add CVE IDs to previous changelog entries
 
   [ Jean Weisbuch ]
   * Update mysqlreport to version 4.0
@@ -34,6 +35,11 @@ mariadb-10.0 (10.0.21-1) experimental; urgency=low
   * New upstream release.
     - Upstream added skip_log_error to mysqld_safe config (Closes: #781945)
     - Diffie-Helman modulus increased to 2048-bits (Closes: #788905)
+  * New upstream release fixes the following security vulnerabilities:
+    - CVE-2015-4816
+    - CVE-2015-4819
+    - CVE-2015-4879
+    - CVE-2015-4895
   * Split mariadb-test-data-10.0 out of the main test package. This will save
     disk space in Debian archives as the arch independent data files are
     in one single package that can be used on all platforms and the package
@@ -91,15 +97,16 @@ mariadb-10.0 (10.0.20-1) unstable; urgency=low
 
   * New upstream release. Includes fixes for the following security
     vulnerabilities:
+    - CVE-2015-2582
+    - CVE-2015-2620
+    - CVE-2015-2643
+    - CVE-2015-2648
     - CVE-2015-3152: Client command line option --ssl-verify-server-cert (and
       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option of the client API) when used
       together with --ssl will ensure that the established connection is
       SSL-encrypted and the MariaDB server has a valid certificate.
-    - CVE-2015-3152
-    - CVE-2015-2648
-    - CVE-2015-2582
     - CVE-2015-4752
-    - CVE-2015-2643
+    - CVE-2015-4864
   * New release includes fix for memory corruption on arm64 (Closes: #787221)
   * Added patch to enhance build reproducibility regarding the file INFO_BIN
 
@@ -126,6 +133,7 @@ mariadb-10.0 (10.0.18-1~exp1) experimental; urgency=low
     - CVE-2015-0505
     - CVE-2015-0499
     - CVE-2015-4757
+    - CVE-2015-4866
   * Cleanup in d/copyright
   * Make the mariadb-common depends versioned to guarantee that latest
     config files are installed
