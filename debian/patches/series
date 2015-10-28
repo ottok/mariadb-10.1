@@ -10,3 +10,4 @@ innodb_simulate_comp_test_speedup.patch
 fix-spelling-errors.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
+os_sync_free.patch
