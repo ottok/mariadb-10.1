@@ -116,6 +116,9 @@ Test that the patches still apply by running:
 
 If there are any rejects, inspect the files and update the patches.
 
+If there are simple offsets we can refresh the patches simply with:
+  quilt pop -a
+  while quilt push; do quilt refresh; done
 
 ### Maintaining debian/copyright ###
 

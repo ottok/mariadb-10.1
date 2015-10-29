@@ -15,7 +15,7 @@ Last-Update: 2014-10-02
  
 --- a/man/mysqldump.1
 +++ b/man/mysqldump.1
-@@ -1261,7 +1261,7 @@ to point the slave to the correct master
+@@ -1275,7 +1275,7 @@ to point the slave to the correct master
  .\" max-allowed-packet option: mysqldump
  \fB\-\-max\-allowed\-packet=\fR\fB\fIlength\fR\fR
  .sp
@@ -60,7 +60,7 @@ Last-Update: 2014-10-02
  DROP TABLE bookstore;
 --- a/extra/yassl/src/ssl.cpp
 +++ b/extra/yassl/src/ssl.cpp
-@@ -952,7 +952,7 @@ void OpenSSL_add_all_algorithms()  // co
+@@ -979,7 +979,7 @@ void OpenSSL_add_all_algorithms()  // co
  {}
  
  
@@ -95,7 +95,7 @@ Last-Update: 2014-10-02
  44	ru_UA	Russian - Ukraine	8	11	,	.	russian
 --- a/sql/mysqld.cc
 +++ b/sql/mysqld.cc
-@@ -7079,7 +7079,7 @@ struct my_option my_long_options[]=
+@@ -7097,7 +7097,7 @@ struct my_option my_long_options[]=
     &opt_show_slave_auth_info, &opt_show_slave_auth_info, 0,
     GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
    {"skip-bdb", OPT_DEPRECATED_OPTION,
@@ -104,7 +104,7 @@ Last-Update: 2014-10-02
     0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
  #ifndef DISABLE_GRANT_OPTIONS
    {"skip-grant-tables", 0,
-@@ -8372,7 +8372,7 @@ mysqld_get_one_option(int optid,
+@@ -8390,7 +8390,7 @@ mysqld_get_one_option(int optid,
      break;
    case OPT_DEPRECATED_OPTION:
      sql_print_warning("'%s' is deprecated. It does nothing and exists only "
