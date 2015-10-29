@@ -1,13 +1,32 @@
-mariadb-10.0 (10.0.21-0+deb8u1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.22-0+deb8u1) jessie-security; urgency=high
+
+  [ Otto Kekäläinen ]
+  * New upstream release 10.0.22. Includes fixes for the following 
+    security vulnerabilities (Closes: #802874):
+    - CVE-2015-4802
+    - CVE-2015-4807
+    - CVE-2015-4815
+    - CVE-2015-4826
+    - CVE-2015-4830
+    - CVE-2015-4836
+    - CVE-2015-4858
+    - CVE-2015-4861
+    - CVE-2015-4870
+    - CVE-2015-4913
+    - CVE-2015-4792
+  * New release includes updated man pages (Closes: #779992)
+  * Add CVE IDs to previous changelog entries
 
   [ Arnaud Fontaine ]
   * New upstream release 10.0.21.
     + Refreshed debian/patches/*.
+    + Incluees fixes the following security vulnerabilities:
+      - CVE-2015-4816
+      - CVE-2015-4819
+      - CVE-2015-4879
+      - CVE-2015-4895
 
-  [ Otto Kekäläinen ]
-  * Add CVE IDs to previous changelog entries
-
- -- Arnaud Fontaine <arnau@debian.org>  Fri, 14 Aug 2015 14:23:49 +0900
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 30 Oct 2015 00:07:24 +0200
 
 mariadb-10.0 (10.0.20-0+deb8u1) jessie-security; urgency=high
 

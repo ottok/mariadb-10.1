@@ -1,11 +1,9 @@
 Author: Otto Kekäläinen <otto@seravo.fi>
 Description: Remove upstream debian/* handling that is obsolete
 
-Index: mariadb-10.0/CMakeLists.txt
-===================================================================
---- mariadb-10.0.orig/CMakeLists.txt	2015-08-13 19:40:49.121504411 +0900
-+++ mariadb-10.0/CMakeLists.txt	2015-08-13 19:41:17.489653436 +0900
-@@ -458,12 +458,6 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -458,12 +458,6 @@ CONFIGURE_FILE(
      ${CMAKE_SOURCE_DIR}/cmake/info_macros.cmake.in
      ${CMAKE_BINARY_DIR}/info_macros.cmake @ONLY)
  
