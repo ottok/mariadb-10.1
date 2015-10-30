@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.22-2) UNRELEASED; urgency=low
+
+  * Add diagnostics to find out the problem in os_sync_free()
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 30 Oct 2015 11:42:55 +0200
+
 mariadb-10.0 (10.0.22-1) unstable; urgency=low
 
   [ Otto Kekäläinen ]
@@ -21,7 +27,9 @@ mariadb-10.0 (10.0.22-1) unstable; urgency=low
   [ Jean Weisbuch ]
   * Update mysqlreport to version 4.0
 
- -- Otto Kekäläinen <otto@seravo.fi>  Thu, 29 Oct 2015 23:02:01 +0200
+  [ Otto Kekäläinen ]
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 30 Oct 2015 11:42:30 +0200
 
 mariadb-10.0 (10.0.21-3) unstable; urgency=low
 
