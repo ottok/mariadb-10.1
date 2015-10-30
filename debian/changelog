@@ -20,7 +20,8 @@ mariadb-10.0 (10.0.22-0+deb8u1) jessie-security; urgency=high
   [ Arnaud Fontaine ]
   * New upstream release 10.0.21.
     + Refreshed debian/patches/*.
-    + Incluees fixes the following security vulnerabilities:
+    + Upstream changed mysqld_safe_syslog.cnf to fix logging error
+    + Includes fixes the following security vulnerabilities:
       - CVE-2015-4816
       - CVE-2015-4819
       - CVE-2015-4879
