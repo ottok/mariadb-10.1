@@ -1,3 +1,27 @@
+mariadb-10.0 (10.0.22-0ubuntu0.15.04.1) vivid-security; urgency=low
+
+  * SECURITY UPDATE: Update to 10.0.22 fixes security issues:
+    - CVE-2015-4802
+    - CVE-2015-4807
+    - CVE-2015-4815
+    - CVE-2015-4826
+    - CVE-2015-4830
+    - CVE-2015-4836
+    - CVE-2015-4858
+    - CVE-2015-4861
+    - CVE-2015-4870
+    - CVE-2015-4913
+    - CVE-2015-4792
+  * Includes security issues fixed in 10.0.21:
+    - CVE-2015-4816
+    - CVE-2015-4819
+    - CVE-2015-4879
+    - CVE-2015-4895
+    (LP: #1512241)
+  * Upstream changed mysqld_safe_syslog.cnf to fix logging error
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Mon, 02 Nov 2015 09:25:30 +0200
+
 mariadb-10.0 (10.0.20-0ubuntu0.15.04.1) vivid-security; urgency=low
 
   * SECURITY UPDATE: Update to 10.0.20 (via .18 and .19) fixes security issues:
@@ -15,6 +39,13 @@ mariadb-10.0 (10.0.20-0ubuntu0.15.04.1) vivid-security; urgency=low
     - CVE-2015-0505
     - CVE-2015-0499
     (LP: #1451677)
+  * Oracle CVE IDs added after release:
+    - CVE-2015-2648
+    - CVE-2015-2582
+    - CVE-2015-4752
+    - CVE-2015-2643
+    - CVE-2015-0501
+    - CVE-2015-4757
   * New release includes fix for memory corruption on arm64 (LP: #1427406)
   * Upstream also includes lots of line ending changes (from CRLF -> LF)
 
@@ -44,7 +75,11 @@ mariadb-10.0 (10.0.17-0ubuntu1) vivid; urgency=medium
       + [ffefd9a] Set mysql_rundir
       + [14fd487] Fix postinst script failure: don't use unsupported
         DELIMITER in mysqld command (LP: #1429725).
-
+  * Includes fixes for the following security vulnerabilities:
+    - CVE-2015-2568
+    - CVE-2015-2573
+    - CVE-2015-0433
+    - CVE-2015-0441
  -- Robie Basak <robie.basak@ubuntu.com>  Thu, 16 Apr 2015 14:16:45 +0000
 
 mariadb-10.0 (10.0.16-2~exp1~ubuntu1) vivid; urgency=medium
