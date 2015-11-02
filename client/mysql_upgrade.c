@@ -865,6 +865,7 @@ static const char *expected_errors[]=
   "ERROR 1060", /* Duplicate column name */
   "ERROR 1061", /* Duplicate key name */
   "ERROR 1054", /* Unknown column */
+  "ERROR 1290", /* RR_OPTION_PREVENTS_STATEMENT */
   0
 };
 
@@ -1095,7 +1096,7 @@ int main(int argc, char **argv)
     printf("This installation of MySQL is already upgraded to %s, "
            "use --force if you still need to run mysql_upgrade\n",
            MYSQL_SERVER_VERSION);
-    die(NULL);
+    goto end;
   }
 
   if (opt_version_check && check_version_match())
@@ -1124,6 +1125,7 @@ int main(int argc, char **argv)
 
   DBUG_ASSERT(phase == phases_total);
 
+end:
   free_used_memory();
   my_end(my_end_arg);
   exit(0);

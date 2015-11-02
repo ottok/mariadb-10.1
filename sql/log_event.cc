@@ -305,7 +305,7 @@ public:
   ~Write_on_release_cache()
   {
     copy_event_cache_to_file_and_reinit(m_cache, m_file);
-    if (m_flags | FLUSH_F)
+    if (m_flags & FLUSH_F)
       fflush(m_file);
   }
 
@@ -813,6 +813,15 @@ const char* Log_event::get_type_str(Log_event_type type)
   case BINLOG_CHECKPOINT_EVENT: return "Binlog_checkpoint";
   case GTID_EVENT: return "Gtid";
   case GTID_LIST_EVENT: return "Gtid_list";
+
+  /* The following is only for mysqlbinlog */
+  case IGNORABLE_LOG_EVENT: return "Ignorable log event";
+  case ROWS_QUERY_LOG_EVENT: return "MySQL Rows_query";
+  case GTID_LOG_EVENT: return "MySQL Gtid";
+  case ANONYMOUS_GTID_LOG_EVENT: return "MySQL Anonymous_Gtid";
+  case PREVIOUS_GTIDS_LOG_EVENT: return "MySQL Previous_gtids";
+  case HEARTBEAT_LOG_EVENT: return "Heartbeat";
+
   default: return "Unknown";				/* impossible */
   }
 }
@@ -1083,12 +1092,22 @@ my_bool Log_event::need_checksum()
      and Stop event) 
      provides their checksum alg preference through Log_event::checksum_alg.
   */
-  ret= ((checksum_alg != BINLOG_CHECKSUM_ALG_UNDEF) ?
-        (checksum_alg != BINLOG_CHECKSUM_ALG_OFF) :
-        ((binlog_checksum_options != BINLOG_CHECKSUM_ALG_OFF) &&
-         (cache_type == Log_event::EVENT_NO_CACHE)) ?
-        MY_TEST(binlog_checksum_options) : FALSE);
-
+  if (checksum_alg != BINLOG_CHECKSUM_ALG_UNDEF)
+    ret= (checksum_alg != BINLOG_CHECKSUM_ALG_OFF);
+  else
+  {
+    if (binlog_checksum_options != BINLOG_CHECKSUM_ALG_OFF &&
+           cache_type == Log_event::EVENT_NO_CACHE)
+    {
+      checksum_alg= binlog_checksum_options;
+      ret= MY_TEST(binlog_checksum_options);
+    }
+    else
+    {
+      ret= FALSE;
+      checksum_alg= (uint8) BINLOG_CHECKSUM_ALG_OFF;
+    }
+  }
   /*
     FD calls the methods before data_written has been calculated.
     The following invariant claims if the current is not the first
@@ -1098,10 +1117,6 @@ my_bool Log_event::need_checksum()
   
   DBUG_ASSERT(get_type_code() != FORMAT_DESCRIPTION_EVENT || ret ||
               data_written == 0);
-
-  if (checksum_alg == BINLOG_CHECKSUM_ALG_UNDEF)
-    checksum_alg= ret ? // calculated value stored
-      (uint8) binlog_checksum_options : (uint8) BINLOG_CHECKSUM_ALG_OFF;
 
   DBUG_ASSERT(!ret || 
               ((checksum_alg == binlog_checksum_options ||
@@ -1142,17 +1157,19 @@ bool Log_event::wrapper_my_b_safe_write(IO_CACHE* file, const uchar* buf, ulong 
 
 bool Log_event::write_footer(IO_CACHE* file) 
 {
+  DBUG_ENTER("write_footer");
   /*
      footer contains the checksum-algorithm descriptor 
      followed by the checksum value
   */
   if (need_checksum())
   {
+    DBUG_PRINT("info", ("Writing checksum"));
     uchar buf[BINLOG_CHECKSUM_LEN];
     int4store(buf, crc);
-    return (my_b_safe_write(file, (uchar*) buf, sizeof(buf)));
+    DBUG_RETURN(my_b_safe_write(file, (uchar*) buf, sizeof(buf)));
   }
-  return 0;
+  DBUG_RETURN(0);
 }
 
 /*
@@ -1174,7 +1191,7 @@ bool Log_event::write_header(IO_CACHE* file, ulong event_data_length)
 
   if (need_checksum())
   {
-    crc= my_checksum(0L, NULL, 0);
+    crc= 0;
     data_written += BINLOG_CHECKSUM_LEN;
   }
 
@@ -1408,6 +1425,8 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
   DBUG_ENTER("Log_event::read_log_event");
   DBUG_ASSERT(description_event != 0);
   char head[LOG_EVENT_MINIMAL_HEADER_LEN];
+  my_off_t position= my_b_tell(file);
+
   /*
     First we only want to read at most LOG_EVENT_MINIMAL_HEADER_LEN, just to
     check the event for sanity and to know its length; no need to really parse
@@ -1419,7 +1438,7 @@ Log_event* Log_event::read_log_event(IO_CACHE* file,
                         LOG_EVENT_MINIMAL_HEADER_LEN);
 
   LOCK_MUTEX;
-  DBUG_PRINT("info", ("my_b_tell: %lu", (ulong) my_b_tell(file)));
+  DBUG_PRINT("info", ("my_b_tell: %llu", (ulonglong) position));
   if (my_b_read(file, (uchar *) head, header_size))
   {
     DBUG_PRINT("info", ("Log_event::read_log_event(IO_CACHE*,Format_desc*) \
@@ -1476,8 +1495,9 @@ err:
   {
     DBUG_ASSERT(error != 0);
     sql_print_error("Error in Log_event::read_log_event(): "
-                    "'%s', data_len: %lu, event_type: %d",
-		    error,data_len,(uchar)(head[EVENT_TYPE_OFFSET]));
+                    "'%s' at offset: %llu  data_len: %lu  event_type: %d",
+		    error, position, data_len,
+                    (uchar)(head[EVENT_TYPE_OFFSET]));
     my_free(buf);
     /*
       The SQL slave thread will check if file->error<0 to know
@@ -1510,10 +1530,12 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
   DBUG_PRINT("info", ("binlog_version: %d", description_event->binlog_version));
   DBUG_DUMP("data", (unsigned char*) buf, event_len);
 
-  /* Check the integrity */
+  /*
+    Check the integrity; This is needed because handle_slave_io() doesn't
+    check if packet is of proper length.
+ */
   if (event_len < EVENT_LEN_OFFSET ||
-      (uchar)buf[EVENT_TYPE_OFFSET] >= ENUM_END_EVENT ||
-      (uint) event_len != uint4korr(buf+EVENT_LEN_OFFSET))
+      event_len != uint4korr(buf+EVENT_LEN_OFFSET))
   {
     *error="Sanity check failed";		// Needed to free buffer
     DBUG_RETURN(NULL); // general sanity check - will fail on a partial read
@@ -1695,6 +1717,15 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     case DELETE_ROWS_EVENT:
       ev = new Delete_rows_log_event(buf, event_len, description_event);
       break;
+
+      /* MySQL GTID events are ignored */
+    case GTID_LOG_EVENT:
+    case ANONYMOUS_GTID_LOG_EVENT:
+    case PREVIOUS_GTIDS_LOG_EVENT:
+      ev= new Ignorable_log_event(buf, description_event,
+                                  get_type_str((Log_event_type) event_type));
+      break;
+
     case TABLE_MAP_EVENT:
       ev = new Table_map_log_event(buf, event_len, description_event);
       break;
@@ -1712,10 +1743,22 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
       ev = new Annotate_rows_log_event(buf, event_len, description_event);
       break;
     default:
-      DBUG_PRINT("error",("Unknown event code: %d",
-                          (int) buf[EVENT_TYPE_OFFSET]));
-      ev= NULL;
-      break;
+      /*
+        Create an object of Ignorable_log_event for unrecognized sub-class.
+        So that SLAVE SQL THREAD will only update the position and continue.
+      */
+      if (uint2korr(buf + FLAGS_OFFSET) & LOG_EVENT_IGNORABLE_F)
+      {
+        ev= new Ignorable_log_event(buf, description_event,
+                                    get_type_str((Log_event_type) event_type));
+      }
+      else
+      {
+        DBUG_PRINT("error",("Unknown event code: %d",
+                            (int) buf[EVENT_TYPE_OFFSET]));
+        ev= NULL;
+        break;
+      }
     }
   }
 
@@ -2181,20 +2224,13 @@ log_event_print_value(IO_CACHE *file, const uchar *ptr,
       uint precision= meta >> 8;
       uint decimals= meta & 0xFF;
       uint bin_size= my_decimal_get_binary_size(precision, decimals);
-      uint length;
       my_decimal dec;
       binary2my_decimal(E_DEC_FATAL_ERROR, (uchar*) ptr, &dec,
                         precision, decimals);
-      int i, end;
-      char buff[512], *pos;
-      pos= buff;
-      pos+= sprintf(buff, "%s", dec.sign() ? "-" : "");
-      end= ROUND_UP(dec.frac) + ROUND_UP(dec.intg)-1;
-      for (i=0; i < end; i++)
-        pos+= sprintf(pos, "%09d.", dec.buf[i]);
-      pos+= sprintf(pos, "%09d", dec.buf[i]);
-      length= (uint) (pos - buff);
-      my_b_write(file, buff, length);
+      int length= DECIMAL_MAX_STR_LENGTH;
+      char buff[DECIMAL_MAX_STR_LENGTH + 1];
+      decimal2string(&dec, buff, &length, 0, 0, 0);
+      my_b_write(file, (uchar*)buff, length);
       my_snprintf(typestr, typestr_length, "DECIMAL(%d,%d)",
                   precision, decimals);
       return bin_size;
@@ -3066,6 +3102,7 @@ Query_log_event::Query_log_event()
       query_arg         - array of char representing the query
       query_length      - size of the  `query_arg' array
       using_trans       - there is a modified transactional table
+      direct            - Don't cache statement
       suppress_use      - suppress the generation of 'USE' statements
       errcode           - the error code of the query
       
@@ -3184,10 +3221,17 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
     break;
 
     case SQLCOM_CREATE_TABLE:
-      trx_cache= (lex->select_lex.item_list.elements &&
-                  thd->is_current_stmt_binlog_format_row());
-      use_cache= (lex->create_info.tmp_table() &&
-                   thd->in_multi_stmt_transaction_mode()) || trx_cache;
+      /*
+        If we are using CREATE ... SELECT or if we are a slave
+        executing BEGIN...COMMIT (generated by CREATE...SELECT) we
+        have to use the transactional cache to ensure we don't
+        calculate any checksum for the CREATE part.
+      */
+      trx_cache= ((lex->select_lex.item_list.elements &&
+                  thd->is_current_stmt_binlog_format_row()) ||
+                  (thd->variables.option_bits & OPTION_GTID_BEGIN));
+      use_cache= ((lex->create_info.tmp_table() &&
+                   thd->in_multi_stmt_transaction_mode()) || trx_cache);
       break;
     case SQLCOM_SET_OPTION:
       if (lex->autocommit)
@@ -3218,8 +3262,8 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
   else
     cache_type= Log_event::EVENT_STMT_CACHE;
   DBUG_ASSERT(cache_type != Log_event::EVENT_INVALID_CACHE);
-  DBUG_PRINT("info",("Query_log_event has flags2: %lu  sql_mode: %llu",
-                     (ulong) flags2, sql_mode));
+  DBUG_PRINT("info",("Query_log_event has flags2: %lu  sql_mode: %llu  cache_tye: %d",
+                     (ulong) flags2, sql_mode, cache_type));
 }
 #endif /* MYSQL_CLIENT */
 
@@ -4261,7 +4305,6 @@ int Query_log_event::do_apply_event(rpl_group_info *rgi,
                           "mysql", rpl_gtid_slave_state_table_name.str,
                           errcode,
                           thd->get_stmt_da()->message());
-            trans_rollback(thd);
             sub_id= 0;
             thd->is_slave_error= 1;
             goto end;
@@ -4876,6 +4919,9 @@ Format_description_log_event(uint8 binlog_ver, const char* server_ver)
       post_header_len[HEARTBEAT_LOG_EVENT-1]= 0;
       post_header_len[IGNORABLE_LOG_EVENT-1]= 0;
       post_header_len[ROWS_QUERY_LOG_EVENT-1]= 0;
+      post_header_len[GTID_LOG_EVENT-1]= 0;
+      post_header_len[ANONYMOUS_GTID_LOG_EVENT-1]= 0;
+      post_header_len[PREVIOUS_GTIDS_LOG_EVENT-1]= 0;
       post_header_len[WRITE_ROWS_EVENT-1]=  ROWS_HEADER_LEN_V2;
       post_header_len[UPDATE_ROWS_EVENT-1]= ROWS_HEADER_LEN_V2;
       post_header_len[DELETE_ROWS_EVENT-1]= ROWS_HEADER_LEN_V2;
@@ -7351,7 +7397,6 @@ int Xid_log_event::do_apply_event(rpl_group_info *rgi)
                     "%s.%s: %d: %s",
                     "mysql", rpl_gtid_slave_state_table_name.str, ec,
                     thd->get_stmt_da()->message());
-      trans_rollback(thd);
       thd->is_slave_error= 1;
       return err;
     }
@@ -12625,6 +12670,52 @@ Incident_log_event::write_data_body(IO_CACHE *file)
 }
 
 
+Ignorable_log_event::Ignorable_log_event(const char *buf,
+                                         const Format_description_log_event
+                                         *descr_event,
+                                         const char *event_name)
+  :Log_event(buf, descr_event), number((int) (uchar) buf[EVENT_TYPE_OFFSET]),
+   description(event_name)
+{
+  DBUG_ENTER("Ignorable_log_event::Ignorable_log_event");
+  DBUG_VOID_RETURN;
+}
+
+Ignorable_log_event::~Ignorable_log_event()
+{
+}
+
+#ifndef MYSQL_CLIENT
+/* Pack info for its unrecognized ignorable event */
+void Ignorable_log_event::pack_info(THD *thd, Protocol *protocol)
+{
+  char buf[256];
+  size_t bytes;
+  bytes= my_snprintf(buf, sizeof(buf), "# Ignorable event type %d (%s)",
+                     number, description);
+  protocol->store(buf, bytes, &my_charset_bin);
+}
+#endif
+
+#ifdef MYSQL_CLIENT
+/* Print for its unrecognized ignorable event */
+void
+Ignorable_log_event::print(FILE *file,
+                           PRINT_EVENT_INFO *print_event_info)
+{
+  if (print_event_info->short_form)
+    return;
+
+  print_header(&print_event_info->head_cache, print_event_info, FALSE);
+  my_b_printf(&print_event_info->head_cache, "\tIgnorable\n");
+  my_b_printf(&print_event_info->head_cache,
+              "# Ignorable event type %d (%s)\n", number, description);
+  copy_event_cache_to_file_and_reinit(&print_event_info->head_cache,
+                                      file);
+}
+#endif
+
+
 #ifdef MYSQL_CLIENT
 /**
   The default values for these variables should be values that are
@@ -12705,5 +12796,26 @@ bool rpl_get_position_info(const char **log_file_name, ulonglong *log_pos,
   }
   return TRUE;
 #endif
+}
+
+/**
+   Check if we should write event to the relay log
+
+   This is used to skip events that is only supported by MySQL
+
+   Return:
+   0 ok
+   1 Don't write event
+*/
+
+bool event_that_should_be_ignored(const char *buf)
+{
+  uint event_type= (uchar)buf[EVENT_TYPE_OFFSET];
+  if (event_type == GTID_LOG_EVENT ||
+      event_type == ANONYMOUS_GTID_LOG_EVENT ||
+      event_type == PREVIOUS_GTIDS_LOG_EVENT ||
+      (uint2korr(buf + FLAGS_OFFSET) & LOG_EVENT_IGNORABLE_F))
+    return 1;
+  return 0;
 }
 #endif

@@ -4523,9 +4523,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   rli->parallel.reset();
 
   //tell the I/O thread to take relay_log_space_limit into account from now on
-  mysql_mutex_lock(&rli->log_space_lock);
   rli->ignore_log_space_limit= 0;
-  mysql_mutex_unlock(&rli->log_space_lock);
 
   serial_rgi->gtid_sub_id= 0;
   serial_rgi->gtid_pending= false;
@@ -5464,7 +5462,7 @@ static int queue_event(Master_info* mi,const char* buf, ulong event_len)
     if (uint4korr(&buf[0]) == 0 && checksum_alg == BINLOG_CHECKSUM_ALG_OFF &&
         mi->rli.relay_log.relay_log_checksum_alg != BINLOG_CHECKSUM_ALG_OFF)
     {
-      ha_checksum rot_crc= my_checksum(0L, NULL, 0);
+      ha_checksum rot_crc= 0;
       event_len += BINLOG_CHECKSUM_LEN;
       memcpy(rot_buf, buf, event_len - BINLOG_CHECKSUM_LEN);
       int4store(&rot_buf[EVENT_LEN_OFFSET],
@@ -5617,6 +5615,11 @@ static int queue_event(Master_info* mi,const char* buf, ulong event_len)
       error_msg.append(llbuf, strlen(llbuf));
       goto err;
     }
+
+    /*
+      Heartbeat events doesn't count in the binlog size, so we don't have to
+      increment mi->master_log_pos
+    */
     goto skip_relay_logging;
   }
   break;
@@ -5846,6 +5849,7 @@ static int queue_event(Master_info* mi,const char* buf, ulong event_len)
   else
   if ((s_id == global_system_variables.server_id &&
        !mi->rli.replicate_same_server_id) ||
+      event_that_should_be_ignored(buf) ||
       /*
         the following conjunction deals with IGNORE_SERVER_IDS, if set
         If the master is on the ignore list, execution of
@@ -6626,14 +6630,8 @@ static Log_event* next_event(rpl_group_info *rgi, ulonglong *event_size)
           rli->ignore_log_space_limit= true;
         }
 
-        /*
-          If the I/O thread is blocked, unblock it.  Ok to broadcast
-          after unlock, because the mutex is only destroyed in
-          ~Relay_log_info(), i.e. when rli is destroyed, and rli will
-          not be destroyed before we exit the present function.
-        */
-        mysql_mutex_unlock(&rli->log_space_lock);
         mysql_cond_broadcast(&rli->log_space_cond);
+        mysql_mutex_unlock(&rli->log_space_lock);
         // Note that wait_for_update_relay_log unlocks lock_log !
         rli->relay_log.wait_for_update_relay_log(rli->sql_driver_thd);
         // re-acquire data lock since we released it earlier

@@ -5,4 +5,5 @@
 # Remember to edit /etc/mysql/debian.cnf when changing the socket location.
 socket		= /var/run/mysqld/mysqld.sock
 nice		= 0
+skip_log_error
 syslog

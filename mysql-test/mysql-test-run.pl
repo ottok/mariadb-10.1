@@ -1083,7 +1083,6 @@ sub print_global_resfile {
   resfile_global("shutdown-timeout", $opt_shutdown_timeout ? 1 : 0);
   resfile_global("warnings", $opt_warnings ? 1 : 0);
   resfile_global("max-connections", $opt_max_connections);
-#  resfile_global("default-myisam", $opt_default_myisam ? 1 : 0);
   resfile_global("product", "MySQL");
   # Somewhat hacky code to convert numeric version back to dot notation
   my $v1= int($mysql_version_id / 10000);
@@ -1244,7 +1243,6 @@ sub command_line_setup {
              'stop-file=s'              => \$opt_stop_file,
              'stop-keep-alive=i'        => \$opt_stop_keep_alive,
 	     'max-connections=i'        => \$opt_max_connections,
-	     'default-myisam!'          => \&collect_option,
 	     'report-times'             => \$opt_report_times,
 	     'result-file'              => \$opt_resfile,
 	     'stress=s'                 => \$opt_stress,
@@ -2686,15 +2684,18 @@ sub setup_vardir() {
   {
     $plugindir="$opt_vardir/plugins";
     mkpath($plugindir);
-    if (IS_WINDOWS && !$opt_embedded_server)
+    if (IS_WINDOWS)
     {
-      for (<$bindir/storage/*$opt_vs_config/*.dll>,
-           <$bindir/plugin/*$opt_vs_config/*.dll>,
-           <$bindir/sql$opt_vs_config/*.dll>)
+      if (!$opt_embedded_server)
       {
-        my $pname=basename($_);
-        copy rel2abs($_), "$plugindir/$pname";
-        set_plugin_var($pname);
+        for (<$bindir/storage/*$opt_vs_config/*.dll>,
+             <$bindir/plugin/*$opt_vs_config/*.dll>,
+             <$bindir/sql$opt_vs_config/*.dll>)
+        {
+          my $pname=basename($_);
+          copy rel2abs($_), "$plugindir/$pname";
+          set_plugin_var($pname);
+        }
       }
     }
     else
@@ -4859,6 +4860,7 @@ sub extract_warning_lines ($$) {
      qr|InnoDB: Setting thread \d+ nice to \d+ failed, current nice \d+, errno 13|, # setpriority() fails under valgrind
      qr|Failed to setup SSL|,
      qr|SSL error: Failed to set ciphers to use|,
+     qr/Plugin 'InnoDB' will be forced to shutdown/,
     );
 
   my $matched_lines= [];
@@ -6634,9 +6636,6 @@ Misc options
   timediff              With --timestamp, also print time passed since
                         *previous* test started
   max-connections=N     Max number of open connection to server in mysqltest
-  default-myisam        Set default storage engine to MyISAM for non-innodb
-                        tests. This is needed after switching default storage
-                        engine to InnoDB.
   report-times          Report how much time has been spent on different
                         phases of test execution.
   stress=ARGS           Run stress test, providing options to

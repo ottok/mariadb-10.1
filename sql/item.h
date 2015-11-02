@@ -25,7 +25,6 @@
 #include "sql_priv.h"                /* STRING_BUFFER_USUAL_SIZE */
 #include "unireg.h"
 #include "sql_const.h"                 /* RAND_TABLE_BIT, MAX_FIELD_NAME */
-#include "unireg.h"                    // REQUIRED: for other includes
 #include "thr_malloc.h"                         /* sql_calloc */
 #include "field.h"                              /* Derivation */
 
@@ -657,7 +656,7 @@ public:
   */
   uint name_length;                     /* Length of name */
   uint decimals;
-  int8 marker;
+  int  marker;
   bool maybe_null;			/* If item may be null */
   bool in_rollup;                       /* If used in GROUP BY list
                                            of a query with ROLLUP */ 
@@ -3356,6 +3355,7 @@ class Item_ref :public Item_ident
 {
 protected:
   void set_properties();
+  bool set_properties_only; // the item doesn't need full fix_fields
 public:
   enum Ref_Type { REF, DIRECT_REF, VIEW_REF, OUTER_REF, AGGREGATE_REF };
   Field *result_field;			 /* Save result here */
@@ -3365,7 +3365,7 @@ public:
            const char *db_arg, const char *table_name_arg,
            const char *field_name_arg)
     :Item_ident(context_arg, db_arg, table_name_arg, field_name_arg),
-    result_field(0), ref(0), reference_trough_name(1) {}
+    set_properties_only(0), result_field(0), ref(0), reference_trough_name(1) {}
   /*
     This constructor is used in two scenarios:
     A) *item = NULL
@@ -3388,7 +3388,7 @@ public:
 
   /* Constructor need to process subselect with temporary tables (see Item) */
   Item_ref(THD *thd, Item_ref *item)
-    :Item_ident(thd, item), result_field(item->result_field), ref(item->ref) {}
+    :Item_ident(thd, item), set_properties_only(0), result_field(item->result_field), ref(item->ref) {}
   enum Type type() const		{ return REF_ITEM; }
   enum Type real_type() const           { return ref ? (*ref)->type() :
                                           REF_ITEM; }
@@ -3770,6 +3770,8 @@ public:
   bool eq(const Item *item, bool binary_cmp) const;
   Item *get_tmp_table_item(THD *thd)
   {
+    if (const_item())
+      return copy_or_same(thd);
     Item *item= Item_ref::get_tmp_table_item(thd);
     item->name= name;
     return item;

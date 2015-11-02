@@ -22,7 +22,6 @@
 
 #include <my_global.h>                          /* NO_EMBEDDED_ACCESS_CHECKS */
 #include "sql_priv.h"
-#include "unireg.h"                    // REQUIRED: for other includes
 #include "sql_update.h"
 #include "sql_cache.h"                          // query_cache_*
 #include "sql_base.h"                       // close_tables_for_reopen
@@ -459,7 +458,8 @@ int mysql_update(THD *thd,
   query_plan.scanned_rows= select? select->records: table->file->stats.records;
         
   if (select && select->quick && select->quick->unique_key_range())
-  { // Single row select (always "ordered"): Ok to use with key field UPDATE
+  {
+    /* Single row select (always "ordered"): Ok to use with key field UPDATE */
     need_sort= FALSE;
     query_plan.index= MAX_KEY;
     used_key_is_modified= FALSE;
@@ -468,7 +468,8 @@ int mysql_update(THD *thd,
   {
     ha_rows scanned_limit= query_plan.scanned_rows;
     query_plan.index= get_index_for_order(order, table, select, limit,
-                                          &scanned_limit, &need_sort, &reverse);
+                                          &scanned_limit, &need_sort,
+                                          &reverse);
     if (!need_sort)
       query_plan.scanned_rows= scanned_limit;
 
@@ -481,12 +482,15 @@ int mysql_update(THD *thd,
     else
     {
       if (need_sort)
-      { // Assign table scan index to check below for modified key fields:
+      {
+        /* Assign table scan index to check below for modified key fields: */
         query_plan.index= table->file->key_used_on_scan;
       }
       if (query_plan.index != MAX_KEY)
-      { // Check if we are modifying a key that we are used to search with:
-        used_key_is_modified= is_key_used(table, query_plan.index, table->write_set);
+      {
+        /* Check if we are modifying a key that we are used to search with: */
+        used_key_is_modified= is_key_used(table, query_plan.index,
+                                          table->write_set);
       }
     }
   }
@@ -597,19 +601,20 @@ int mysql_update(THD *thd,
         B. query_plan.index != MAX_KEY
            B.1 quick select is used, start the scan with init_read_record
            B.2 quick select is not used, this is full index scan (with LIMIT)
-               Full index scan must be started with init_read_record_idx
+           Full index scan must be started with init_read_record_idx
       */
 
       if (query_plan.index == MAX_KEY || (select && select->quick))
-      {
-        if (init_read_record(&info, thd, table, select, 0, 1, FALSE))
-        {
-          close_cached_file(&tempfile);
-          goto err;
-        }
-      }
+        error= init_read_record(&info, thd, table, select, 0, 1, FALSE);
       else
-        init_read_record_idx(&info, thd, table, 1, query_plan.index, reverse);
+        error= init_read_record_idx(&info, thd, table, 1, query_plan.index,
+                                    reverse);
+
+      if (error)
+      {
+        close_cached_file(&tempfile);
+        goto err;
+      }
 
       THD_STAGE_INFO(thd, stage_searching_rows_for_update);
       ha_rows tmp_limit= limit;
@@ -1161,7 +1166,7 @@ bool unsafe_key_update(List<TABLE_LIST> leaves, table_map tables_for_update)
 
   while ((tl= it++))
   {
-    if (tl->table->map & tables_for_update)
+    if (!tl->is_jtbm() && (tl->table->map & tables_for_update))
     {
       TABLE *table1= tl->table;
       bool primkey_clustered= (table1->file->primary_key_is_clustered() &&
@@ -1178,6 +1183,8 @@ bool unsafe_key_update(List<TABLE_LIST> leaves, table_map tables_for_update)
       it2.rewind();
       while ((tl2= it2++))
       {
+        if (tl2->is_jtbm())
+          continue;
         /*
           Look at "next" tables only since all previous tables have
           already been checked
@@ -1409,6 +1416,9 @@ int mysql_multi_update_prepare(THD *thd)
   {
     TABLE *table= tl->table;
 
+    if (tl->is_jtbm())
+      continue;
+
     /* if table will be updated then check that it is unique */
     if (table->map & tables_for_update)
     {
@@ -1457,6 +1467,8 @@ int mysql_multi_update_prepare(THD *thd)
   for (tl= table_list; tl; tl= tl->next_local)
   {
     bool not_used= false;
+    if (tl->is_jtbm())
+      continue;
     if (multi_update_check_table_access(thd, tl, tables_for_update, &not_used))
       DBUG_RETURN(TRUE);
   }
@@ -1464,6 +1476,8 @@ int mysql_multi_update_prepare(THD *thd)
   /* check single table update for view compound from several tables */
   for (tl= table_list; tl; tl= tl->next_local)
   {
+    if (tl->is_jtbm())
+      continue;
     if (tl->is_merged_derived())
     {
       TABLE_LIST *for_update= 0;
@@ -1493,6 +1507,8 @@ int mysql_multi_update_prepare(THD *thd)
   ti.rewind();
   while ((tl= ti++))
   {
+    if (tl->is_jtbm())
+      continue;
     TABLE *table= tl->table;
     TABLE_LIST *tlist;
     if (!(tlist= tl->top_table())->derived)
@@ -1635,6 +1651,9 @@ int multi_update::prepare(List<Item> &not_used_values,
   */
   while ((table_ref= ti++))
   {
+    if (table_ref->is_jtbm())
+      continue;
+
     TABLE *table= table_ref->table;
     if (tables_to_update & table->map)
     {
@@ -1654,6 +1673,9 @@ int multi_update::prepare(List<Item> &not_used_values,
   ti.rewind();
   while ((table_ref= ti++))
   {
+    if (table_ref->is_jtbm())
+      continue;
+
     TABLE *table= table_ref->table;
     if (tables_to_update & table->map)
     {
@@ -1684,6 +1706,8 @@ int multi_update::prepare(List<Item> &not_used_values,
   while ((table_ref= ti++))
   {
     /* TODO: add support of view of join support */
+    if (table_ref->is_jtbm())
+      continue;
     TABLE *table=table_ref->table;
     leaf_table_count++;
     if (tables_to_update & table->map)

@@ -4684,12 +4684,12 @@ int create_table_impl(THD *thd,
       bool table_creation_was_logged= tmp_table->s->table_creation_was_logged;
       if (create_info->options & HA_LEX_CREATE_REPLACE)
       {
-        bool is_trans;
+        bool tmp;
         /*
           We are using CREATE OR REPLACE on an existing temporary table
           Remove the old table so that we can re-create it.
         */
-        if (drop_temporary_table(thd, tmp_table, &is_trans))
+        if (drop_temporary_table(thd, tmp_table, &tmp))
           goto err;
       }
       else if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
@@ -5846,6 +5846,16 @@ drop_create_field:
     {
       if (!key->create_if_not_exists)
         continue;
+
+      /* Check if the table already has a PRIMARY KEY */
+      if (key->type == Key::PRIMARY &&
+          table->s->primary_key != MAX_KEY)
+      {
+        push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
+            ER_DUP_KEYNAME, ER(ER_MULTIPLE_PRI_KEY));
+        goto remove_key_no_warn;
+      }
+
       /* If the name of the key is not specified,     */
       /* let us check the name of the first key part. */
       if ((keyname= key->name.str) == NULL)
@@ -5912,6 +5922,7 @@ drop_create_field:
 remove_key:
       push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
           ER_DUP_KEYNAME, ER(ER_DUP_KEYNAME), keyname);
+remove_key_no_warn:
       key_it.remove();
       if (key->type == Key::FOREIGN_KEY)
       {
