@@ -11,3 +11,4 @@ fix-spelling-errors.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
 os_sync_free.patch
+mdev-7550-tokudb.patch
