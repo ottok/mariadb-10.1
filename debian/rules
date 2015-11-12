@@ -44,11 +44,6 @@ ifneq ($(ARCH), amd64)
     CMAKEFLAGS += -DWITHOUT_TOKUDB=true
 endif
 
-# Completely disable TokuDB as it fails to build on some platforms and
-# upstream developers do not seem to have fixing those on their roadmap
-# See https://lists.launchpad.net/maria-developers/msg08390.html
-CMAKEFLAGS += -DWITHOUT_TOKUDB=true
-
 # Add support for verbose builds
 MAKEFLAGS += VERBOSE=1
 

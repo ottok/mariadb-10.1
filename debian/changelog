@@ -1,8 +1,10 @@
-mariadb-10.0 (10.0.22-2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.22-2~exp1) experimental; urgency=low
 
   * Add diagnostics to find out the problem in os_sync_free()
+  * Backport fix for TokuDB crashes in build tests on Launchpad
+    and enable TokuDB builds
 
- -- Otto Kekäläinen <otto@seravo.fi>  Fri, 30 Oct 2015 11:42:55 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 13 Nov 2015 08:54:05 +0200
 
 mariadb-10.0 (10.0.22-1) unstable; urgency=low
 
