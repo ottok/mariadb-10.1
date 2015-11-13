@@ -47,14 +47,6 @@ endif
 # Add support for verbose builds
 MAKEFLAGS += VERBOSE=1
 
-MAKE_TEST_TARGET:=test-force
-ifneq ($(findstring fulltest,$(DEB_BUILD_OPTIONS)),)
-# Presets related to test-bt are not guarenteed to work in MariaDB as there
-# are hard-coded MTR lines insted. See MDEV-8244 for implementation status
-# of new test presets.
-    MAKE_TEST_TARGET:=test-bt
-endif
-
 override_dh_auto_clean:
 	@echo "RULES.$@"
 	dh_testdir
@@ -99,7 +91,7 @@ override_dh_auto_build:
 override_dh_auto_test:
 	@echo "RULES.$@"
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	cd $(BUILDDIR) && $(MAKE) $(MAKE_TEST_TARGET)
+	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS)
 endif
 
 override_dh_auto_install:
