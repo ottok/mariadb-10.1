@@ -2,6 +2,7 @@ mariadb-10.0 (10.0.22-2~exp2) UNRELEASED; urgency=low
 
   * Replace old 'make test' structure with direct call on mysql-test-run and
     parallelize the test suite run in the Debian build.
+  * Print in build log env info to help debug builds on different platforms.
 
  -- Otto Kekäläinen <otto@seravo.fi>  Fri, 13 Nov 2015 22:08:49 +0200
 
