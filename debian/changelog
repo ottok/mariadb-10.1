@@ -1,5 +1,6 @@
 mariadb-10.0 (10.0.22-2~exp2) UNRELEASED; urgency=low
 
+  * Merging MDEV-8692 from the upstream
   * Replace old 'make test' structure with direct call on mysql-test-run and
     parallelize the test suite run in the Debian build.
   * Print in build log env info to help debug builds on different platforms.
