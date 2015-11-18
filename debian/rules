@@ -92,8 +92,24 @@ override_dh_auto_build:
 
 override_dh_auto_test:
 	@echo "RULES.$@"
+	# Skip unstable tests
+	touch $(BUILDDIR)/mysql-test/unstable-tests
+ifeq ($(ARCH), mipsel)
+	cat <<EOT >> $(BUILDDIR)/mysql-test/unstable-tests
+federated.federated_partition : https://mariadb.atlassian.net/browse/MDEV-8691
+federated.federated_transactions : MDEV-8691
+federated.federated_innodb : MDEV-8691
+multi_source.gtid : MDEV-8691
+multi_source.multisource : MDEV-8691
+rpl.rpl_auto_increment : MDEV-8691
+rpl.rpl_auto_increment : MDEV-8691
+rpl.rpl_auto_increment : MDEV-8691
+rpl.rpl_invoked_features : MDEV-8691
+EOF
+endif
+
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS)
+	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS) --skip-test-list=unstable-tests
 endif
 
 override_dh_auto_install:
