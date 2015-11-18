@@ -13,3 +13,4 @@ mysqld_multi.server_lsb-header.patch
 os_sync_free.patch
 mdev-7550-tokudb.patch
 mdev-8692-perf-arm.patch
+mdev-9091-tokudb.patch
