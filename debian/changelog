@@ -1,8 +1,8 @@
-mariadb-10.0 (10.0.22-2~exp2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.22-2~exp2) experimental; urgency=low
 
   [Alexander Barkov]
-  * A fix for "MDEV-9091 mysqld crashes on shutdown after running
-     TokuDB tests on Ubuntu"
+  * Backport patch from upstream to fix MDEV-9091: mysqld crashes on shutdown
+    after running TokuDB tests on Ubuntu
   * Backport patch from upstream to fix MDEV-8692: prefschema test failures
 
   [Otto Kekäläinen]
