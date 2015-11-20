@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.22-2) UNRELEASED; urgency=low
+
+  * Escape d/rules file correctly to avoid parse error.
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 20 Nov 2015 23:11:09 +0200
+
 mariadb-10.0 (10.0.22-2~exp2) experimental; urgency=low
 
   [Alexander Barkov]
