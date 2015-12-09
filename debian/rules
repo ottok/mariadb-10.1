@@ -95,7 +95,7 @@ override_dh_auto_test:
 	# Skip unstable tests
 	touch $(BUILDDIR)/mysql-test/unstable-tests
 ifeq ($(ARCH), mipsel)
-	cat <<EOT >> $(BUILDDIR)/mysql-test/unstable-tests\
+	cat <<EOF >> $(BUILDDIR)/mysql-test/unstable-tests\
 federated.federated_partition : https://mariadb.atlassian.net/browse/MDEV-8691\
 federated.federated_transactions : MDEV-8691\
 federated.federated_innodb : MDEV-8691\

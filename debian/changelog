@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.22-3) UNRELEASED; urgency=low
+
+  * Fix typo in d/rules
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Wed, 09 Dec 2015 19:56:13 +0200
+
 mariadb-10.0 (10.0.22-2) unstable; urgency=low
 
   * Escape d/rules file correctly to avoid parse error.
