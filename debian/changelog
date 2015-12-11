@@ -1,7 +1,7 @@
 mariadb-10.0 (10.0.22-3) UNRELEASED; urgency=low
 
   * Fix typo in d/rules
-  * Extend list of unstable tests for arch mips and mipsel64
+  * Extend list of unstable tests for arch mips, mipsel64 and alpha
 
  -- Otto Kekäläinen <otto@seravo.fi>  Wed, 09 Dec 2015 19:56:13 +0200
 
