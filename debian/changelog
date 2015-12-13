@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.22-4) unstable; urgency=low
+
+  * Upload to unstable
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Mon, 14 Dec 2015 00:49:14 +0200
+
 mariadb-10.0 (10.0.22-4~exp1) experimental; urgency=low
 
   * Rewrite unstable tests section in d/rules that was not working
