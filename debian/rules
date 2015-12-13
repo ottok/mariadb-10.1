@@ -92,53 +92,9 @@ override_dh_auto_build:
 
 override_dh_auto_test:
 	@echo "RULES.$@"
-	# Skip unstable tests
-	touch $(BUILDDIR)/mysql-test/unstable-tests
-ifeq ($(ARCH), mips)
-	cat <<EOF >> $(BUILDDIR)/mysql-test/unstable-tests\
-federated.federated_partition : https://mariadb.atlassian.net/browse/MDEV-8691\
-federated.federated_transactions : MDEV-8691\
-federated.federated_innodb : MDEV-8691\
-multi_source.gtid : MDEV-8691\
-multi_source.multisource : MDEV-8691\
-rpl.rpl_auto_increment : MDEV-8691\
-rpl.rpl_invoked_features : MDEV-8691\
-EOF
-endif
-ifeq ($(ARCH), mipsel)
-	cat <<EOF >> $(BUILDDIR)/mysql-test/unstable-tests\
-federated.federated_partition : https://mariadb.atlassian.net/browse/MDEV-8691\
-federated.federated_transactions : MDEV-8691\
-federated.federated_innodb : MDEV-8691\
-multi_source.gtid : MDEV-8691\
-multi_source.multisource : MDEV-8691\
-rpl.rpl_auto_increment : MDEV-8691\
-rpl.rpl_invoked_features : MDEV-8691\
-EOF
-endif
-ifeq ($(ARCH), mips64el)
-	cat <<EOF >> $(BUILDDIR)/mysql-test/unstable-tests\
-federated.federated_partition : https://mariadb.atlassian.net/browse/MDEV-8691\
-federated.federated_transactions : MDEV-8691\
-federated.federated_innodb : MDEV-8691\
-multi_source.gtid : MDEV-8691\
-multi_source.multisource : MDEV-8691\
-rpl.rpl_auto_increment : MDEV-8691\
-rpl.rpl_auto_increment_bug45679 : MDEV-8691\
-EOF
-endif
-ifeq ($(ARCH), alpha)
-	cat <<EOF >> $(BUILDDIR)/mysql-test/unstable-tests\
-rpl.rpl_skip_replication : https://mariadb.atlassian.net/browse/MDEV-9268\
-main.mysqltest : MDEV-9269\
-mroonga/storage.column_datetime_32bit_2038 : MDEV-9270\
-mroonga/storage.column_datetime_32bit_before_unix_epoch : MDEV-9270\
-mroonga/storage.column_datetime_32bit_max : MDEV-9270\
-mroonga/storage.column_datetime_32bit_out_of_range : MDEV-9270\
-mroonga/storage.index_multiple_column_unique_date_32bit_equal : MDEV-9270\
-mroonga/storage.index_multiple_column_unique_date_order_32bit_desc : MDEV-9270\
-EOF
-endif
+	dh_testdir
+	# Skip unstable tests if such are defined for arch
+	[ ! -f debian/unstable-tests.$(ARCH) ] || cp debian/unstable-tests.$(ARCH) $(BUILDDIR)/mysql-test/unstable-tests
 	# Run testsuite
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS) --skip-test-list=unstable-tests
