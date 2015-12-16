@@ -5,4 +5,3 @@ multi_source.gtid : MDEV-8691
 multi_source.multisource : MDEV-8691
 rpl.rpl_auto_increment : MDEV-8691
 rpl.rpl_invoked_features : MDEV-8691
-
