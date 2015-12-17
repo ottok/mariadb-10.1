@@ -44,19 +44,6 @@ _Description: Remove all MariaDB databases?
  recent version or if a different mariadb-server package is already
  using it, the data should be kept.
 
-Template: mariadb-server/error_setting_password
-Type: error
-_Description: Unable to set password for the MariaDB "root" user
- An error occurred while setting the password for the MariaDB
- administrative user. This may have happened because the account
- already has a password, or because of a communication problem with
- the MariaDB server.
- .
- You should check the account's password after the package installation.
- .
- Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file
- for more information.
-
 Template: mariadb-server/oneway_migration
 Type: boolean
 Default: true

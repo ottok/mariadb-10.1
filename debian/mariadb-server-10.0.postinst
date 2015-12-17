@@ -21,42 +21,7 @@ invoke() {
   fi
 }
 
-MYSQL_BOOTSTRAP="/usr/sbin/mysqld --bootstrap --user=mysql --disable-log-bin --skip-grant-tables --default-storage-engine=myisam --plugin-load-add=auth_socket"
-
-# This function resets the root@localhost user password and enable the
-# usage of the unix_socket plugin for it.
-set_mysql_rootpw() {
-
-       tfile="$(mktemp)"
-       if [ ! -f "$tfile" ]; then
-               return 1
-       fi
-
-       # - The mysqld statement is like that in mysql_install_db because the
-       #   server is not already running. This has some implications:
-       # - GRANT is not possible with --skip-grant-tables and "INSERT
-       #   (user,host..) VALUES" is not --ansi compliant but will have to do.
-
-       # The reset_root statement is used to verify that the unix_socket plugin
-       # is active before resetting the root@localhost password ; if the plugin
-       # is not active, it will fail with "ERROR 1065 (42000): Query was empty"
-
-       # purge off the root@127.0.0.1 / root@::1 entries created by
-       # mysql_install_db and double check they have no authention
-
-       # This avoids us having to call "test" or "[" on $rootpw
-       cat << EOF > $tfile
-SET sql_log_bin=0;
-SET @reset_root=IF( (SELECT 1 FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='unix_socket' AND PLUGIN_STATUS='ACTIVE' AND PLUGIN_TYPE='AUTHENTICATION' AND PLUGIN_LIBRARY LIKE CONCAT('auth_socket','%') )=1, "UPDATE mysql.user SET Password='', Plugin='unix_socket' WHERE User='root' AND Host='localhost'", '');
-PREPARE reset_root FROM @reset_root;
-EXECUTE reset_root;
-DELETE FROM mysql.user WHERE User='root' AND Host!='localhost' AND Password='' AND Plugin='';
-EOF
-       $MYSQL_BOOTSTRAP <$tfile
-       retval=$?
-       rm -f "$tfile"
-       return $retval
-}
+MYSQL_BOOTSTRAP="/usr/sbin/mysqld --bootstrap --user=mysql --disable-log-bin --skip-grant-tables --default-storage-engine=myisam"
 
 # This is necessary because mysql_install_db removes the pid file in /var/run
 # and because changed configuration options should take effect immediately.
@@ -153,23 +118,15 @@ EOF
     set -e
 
 
-    # recreate the credentials file if not present or with debian-sys-maint
-    # still there
+    # Create the credentials file if not present. On all new installs the
+    # root account can be used directly for maintenance authenticated by
+    # unix socket and on new installs there is no need to define a
+    # separate Debian maintenance user account.
     dc=$mysql_cfgdir/debian.cnf;
-    set +e
-    grep -sq "^\s*user\s*=\s*debian-sys-maint\s*$" "$dc"
-    ret=$?
-    set -e
-    if [ $ret -ne 1 ]; then
-      if [ ! -d "$mysql_cfgdir" ]; then
-        install -o 0 -g 0 -m 0755 -d $mysql_cfgdir
-      fi
-      if [ -e "$dc" ]; then
-        oldconf=`mktemp --tmpdir=$mysql_cfgdir -t debian_old_config.XXXXXX`
-        cp $dc $oldconf
-      else
-        oldconf=''
-      fi
+    if [ ! -d "$mysql_cfgdir" ]; then
+      install -o 0 -g 0 -m 0755 -d $mysql_cfgdir
+    fi
+    if [ ! -e "$dc" ]; then
       umask 066
       cat /dev/null > $dc
       umask 022
@@ -185,8 +142,6 @@ EOF
       echo "password = "                                                 >>$dc
       echo "socket   = $mysql_rundir/mysqld.sock"                        >>$dc
       echo "basedir  = /usr"                                             >>$dc
-    else
-      oldconf=''
     fi
     # If this dir chmod go+w then the admin did it. But this file should not.
     chown 0:0 $dc
@@ -198,46 +153,11 @@ EOF
       "SET sql_log_bin=0;\n" \
       "ALTER TABLE user CHANGE Password Password char(41) character set latin1 collate latin1_bin DEFAULT '' NOT NULL;"`
 
-    # Upgrade password column format before the root password gets set.
+    # Upgrade password column format.
     # NOTE: Lines like this apparently really need to be formatted this way
     # for mysqld to process the correclty (;-delimiter, newlines etc)
     echo "$password_column_fix_query" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
 
-    # Replace old maintenance user with auth_socket usage if migrating
-    replace_query=`/bin/echo -e \
-      "SET sql_mode='', sql_log_bin=0;\n" \
-      "DELETE FROM mysql.user WHERE user='debian-sys-maint' AND host='localhost';"`
-    # WARNING: This line might yield "The MariaDB server is running with
-    # the --skip-grant-tables option so it cannot execute this statement"
-
-    # Some plugins should installed per default. The query sequence is supposed
-    # to be aborted if the CREATE TABLE fails due to an already existent table in which case the
-    # admin might already have chosen to remove one or more plugins. Newlines are necessary.
-    install_plugins=`/bin/echo -e \
-      "USE mysql;\n" \
-      "SET sql_log_bin=0;\n" \
-      "CREATE TABLE IF NOT EXISTS plugin (name char(64) COLLATE utf8_bin NOT NULL DEFAULT '', " \
-      "  dl char(128) COLLATE utf8_bin NOT NULL DEFAULT '', " \
-      "  PRIMARY KEY (name)) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='MySQL plugins';\n" \
-      "INSTALL PLUGIN unix_socket SONAME 'auth_socket';\n"`
-
-    # Install plugins and ignore if already there
-    set +e
-    echo "$install_plugins" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
-    set -e
-
-    if [ ! set_mysql_rootpw ]; then
-      password_error="yes"
-      # restore old config file if exists
-      # run only if $oldconf is set and is not empty
-      if [ ! -z $oldconf ]; then mv $oldconf $dc; fi
-    else
-      if [ ! -z $oldconf ]; then rm -f $oldconf; fi
-      # purge debian-sys-maint user
-      set +e
-      echo "$replace_query" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
-      set -e
-    fi
   ;;
 
   abort-upgrade|abort-remove|abort-configure)
@@ -248,19 +168,6 @@ EOF
     exit 1
   ;;
 esac
-
-# here we check to see if we can connect as root without a password
-# this should catch upgrades from previous versions where the root
-# password wasn't set.  if there is a password, or if the connection
-# fails for any other reason, nothing happens.
-if [ "$1" = "configure" ]; then
-
-  if [ "$password_error" = "yes" ]; then
-    db_input high mariadb-server/error_setting_password || true
-    db_go
-  fi
-
-fi
 
 db_stop # in case invoke failes
 

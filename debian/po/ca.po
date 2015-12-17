@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-4.1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-01-31 14:00+0200\n"
+"POT-Creation-Date: 2015-12-17 16:33+0200\n"
 "PO-Revision-Date: 2004-01-31 19:20GMT\n"
 "Last-Translator: Aleix Badia i Bosch <abadia@ica.es>\n"
 "Language-Team: Debian L10n Catalan <debian-l10n-catalan@lists.debian.org>\n"
@@ -90,44 +90,15 @@ msgid ""
 "the data should be kept."
 msgstr ""
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Unable to set password for the MariaDB \"root\" user"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"An error occurred while setting the password for the MariaDB administrative "
-"user. This may have happened because the account already has a password, or "
-"because of a communication problem with the MariaDB server."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "You should check the account's password after the package installation."
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
-"more information."
-msgstr ""
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Really migrate to MariaDB?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -135,7 +106,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "

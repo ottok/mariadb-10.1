@@ -1,21 +1,21 @@
-# 
+#
 #    Translators, if you are not familiar with the PO format, gettext
 #    documentation is worth reading, especially sections dedicated to
 #    this format, e.g. by running:
 #         info -n '(gettext)PO Files'
 #         info -n '(gettext)Header Entry'
-# 
+#
 #    Some information specific to po-debconf are available at
 #            /usr/share/doc/po-debconf/README-trans
 #         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-# 
+#
 #    Developers do not need to manually edit POT or PO files.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: mariadb-10.0\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-01-31 14:00+0200\n"
+"POT-Creation-Date: 2015-12-17 16:33+0200\n"
 "PO-Revision-Date: 2014-09-29 08:58+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
@@ -108,48 +108,15 @@ msgstr ""
 "MariaDB, nebo pokud tato data souběžně využívá jiný balík mariadb-server, "
 "měli byste data ponechat."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Unable to set password for the MariaDB \"root\" user"
-msgstr "Nelze nastavit heslo MariaDB uživatele „root“"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"An error occurred while setting the password for the MariaDB administrative "
-"user. This may have happened because the account already has a password, or "
-"because of a communication problem with the MariaDB server."
-msgstr ""
-"Během nastavování hesla pro správcovského uživatele MariaDB se vyskytla "
-"chyba. To se mohlo stát třeba proto, protože uživatel již měl heslo "
-"nastaveno, nebo protože nastal problém v komunikaci s MariaDB serverem."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "You should check the account's password after the package installation."
-msgstr "Po instalaci balíku byste měli heslo ověřit."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
-"more information."
-msgstr ""
-"Více informací naleznete v /usr/share/doc/mariadb-server-10.0/README.Debian."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Really migrate to MariaDB?"
 msgstr "Opravdu migrovat na MariaDB?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -159,7 +126,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -168,6 +135,30 @@ msgstr ""
 "MariaDB má některé pokročilé vlastnosti, které v MySQL neexistují a tudíž "
 "návrat zpět k MySQL nemusí fungovat (alespoň ne tak autoamticky, jako "
 "migrace z MySQL na MariaDB)."
+
+#~ msgid "Unable to set password for the MariaDB \"root\" user"
+#~ msgstr "Nelze nastavit heslo MariaDB uživatele „root“"
+
+#~ msgid ""
+#~ "An error occurred while setting the password for the MariaDB "
+#~ "administrative user. This may have happened because the account already "
+#~ "has a password, or because of a communication problem with the MariaDB "
+#~ "server."
+#~ msgstr ""
+#~ "Během nastavování hesla pro správcovského uživatele MariaDB se vyskytla "
+#~ "chyba. To se mohlo stát třeba proto, protože uživatel již měl heslo "
+#~ "nastaveno, nebo protože nastal problém v komunikaci s MariaDB serverem."
+
+#~ msgid ""
+#~ "You should check the account's password after the package installation."
+#~ msgstr "Po instalaci balíku byste měli heslo ověřit."
+
+#~ msgid ""
+#~ "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
+#~ "more information."
+#~ msgstr ""
+#~ "Více informací naleznete v /usr/share/doc/mariadb-server-10.0/README."
+#~ "Debian."
 
 #~ msgid "New password for the MariaDB \"root\" user:"
 #~ msgstr "Nové heslo MariaDB uživatele „root“:"

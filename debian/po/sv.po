@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1 5.0.21-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-01-31 14:00+0200\n"
+"POT-Creation-Date: 2015-12-17 16:33+0200\n"
 "PO-Revision-Date: 2015-04-01 18:11+0100\n"
 "Last-Translator: Martin Bagge / brother <brother@bsnet.se>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
@@ -104,50 +104,15 @@ msgstr ""
 "en nyare version eller om en annan mariadb-server redan använder filerna ska "
 "de inte raderas."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Unable to set password for the MariaDB \"root\" user"
-msgstr "Kunde inte sätta lösenord för MariaDBs \"root\"-användare"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"An error occurred while setting the password for the MariaDB administrative "
-"user. This may have happened because the account already has a password, or "
-"because of a communication problem with the MariaDB server."
-msgstr ""
-"Ett fel uppstod när det skulle sättas ett lösenord för MariaDBs "
-"administrativa användare (\"root\"). Detta kan ha skett för att användaren "
-"redan har ett lösenord satt, eller på grund av problem med att kommunicera "
-"med MariaDB-servern."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "You should check the account's password after the package installation."
-msgstr "Du bör kontrollera kontots lösenord efter installationen av paketet."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
-"more information."
-msgstr ""
-"Läs filen /usr/share/doc/mariadb-server-10.0/README.Debian för mer "
-"information."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Really migrate to MariaDB?"
 msgstr "Ska migreringen till MariaDB fortsätta?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -158,7 +123,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -167,3 +132,29 @@ msgstr ""
 "Observera att det finns ett antal förbättrade funktioner som inte finns i "
 "MySQL, att gå tillbaka till MySQL är därför inte garanterat fungerande. "
 "Åtminstone med samma automatik som från MySQL till MariaDB."
+
+#~ msgid "Unable to set password for the MariaDB \"root\" user"
+#~ msgstr "Kunde inte sätta lösenord för MariaDBs \"root\"-användare"
+
+#~ msgid ""
+#~ "An error occurred while setting the password for the MariaDB "
+#~ "administrative user. This may have happened because the account already "
+#~ "has a password, or because of a communication problem with the MariaDB "
+#~ "server."
+#~ msgstr ""
+#~ "Ett fel uppstod när det skulle sättas ett lösenord för MariaDBs "
+#~ "administrativa användare (\"root\"). Detta kan ha skett för att "
+#~ "användaren redan har ett lösenord satt, eller på grund av problem med att "
+#~ "kommunicera med MariaDB-servern."
+
+#~ msgid ""
+#~ "You should check the account's password after the package installation."
+#~ msgstr ""
+#~ "Du bör kontrollera kontots lösenord efter installationen av paketet."
+
+#~ msgid ""
+#~ "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
+#~ "more information."
+#~ msgstr ""
+#~ "Läs filen /usr/share/doc/mariadb-server-10.0/README.Debian för mer "
+#~ "information."

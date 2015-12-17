@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mariadb 10.0.13-1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-01-31 14:00+0200\n"
+"POT-Creation-Date: 2015-12-17 16:33+0200\n"
 "PO-Revision-Date: 2014-10-04 08:12+0100\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: german <debian-l10n-german@lists.debian.org>\n"
@@ -105,52 +105,15 @@ msgstr ""
 "Version zu installieren oder ein anderes mariadb-server-Paket die Daten "
 "benutzt, sollten diese beibehalten werden."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Unable to set password for the MariaDB \"root\" user"
-msgstr "Passwort für den MariaDB-»root«-Benutzer konnte nicht gesetzt werden"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"An error occurred while setting the password for the MariaDB administrative "
-"user. This may have happened because the account already has a password, or "
-"because of a communication problem with the MariaDB server."
-msgstr ""
-"Beim Setzen des Passworts für den administrativen MariaDB-Benutzer ist ein "
-"Fehler aufgetreten. Dies könnte daran liegen, dass der Benutzer bereits ein "
-"Passwort hat oder dass es ein Problem bei der Kommunikation mit dem MariaDB-"
-"Server gibt."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "You should check the account's password after the package installation."
-msgstr ""
-"Sie sollten das Passwort des administrativen Benutzers nach der "
-"Paketinstallation prüfen."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
-"more information."
-msgstr ""
-"Für weitere Informationen lesen Sie /usr/share/doc/mariadb-server-10.0/"
-"README.Debian."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Really migrate to MariaDB?"
 msgstr "Möchten Sie wirklich auf MariaDB migrieren?"
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -160,7 +123,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
@@ -169,6 +132,34 @@ msgstr ""
 "Beachten Sie, dass MariaDB über einige erweiterte Funktionalitäten verfügt, "
 "die es in MySQL nicht gibt. Eine Rückmigration klappt daher nicht immer, "
 "zumindest nicht automatisch wie das Migrieren von MySQL auf MariaDB."
+
+#~ msgid "Unable to set password for the MariaDB \"root\" user"
+#~ msgstr ""
+#~ "Passwort für den MariaDB-»root«-Benutzer konnte nicht gesetzt werden"
+
+#~ msgid ""
+#~ "An error occurred while setting the password for the MariaDB "
+#~ "administrative user. This may have happened because the account already "
+#~ "has a password, or because of a communication problem with the MariaDB "
+#~ "server."
+#~ msgstr ""
+#~ "Beim Setzen des Passworts für den administrativen MariaDB-Benutzer ist "
+#~ "ein Fehler aufgetreten. Dies könnte daran liegen, dass der Benutzer "
+#~ "bereits ein Passwort hat oder dass es ein Problem bei der Kommunikation "
+#~ "mit dem MariaDB-Server gibt."
+
+#~ msgid ""
+#~ "You should check the account's password after the package installation."
+#~ msgstr ""
+#~ "Sie sollten das Passwort des administrativen Benutzers nach der "
+#~ "Paketinstallation prüfen."
+
+#~ msgid ""
+#~ "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
+#~ "more information."
+#~ msgstr ""
+#~ "Für weitere Informationen lesen Sie /usr/share/doc/mariadb-server-10.0/"
+#~ "README.Debian."
 
 #~ msgid "New password for the MariaDB \"root\" user:"
 #~ msgstr "Neues Passwort für den MariaDB-»root«-Benutzer:"

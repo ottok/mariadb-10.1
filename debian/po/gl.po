@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-01-31 14:00+0200\n"
+"POT-Creation-Date: 2015-12-17 16:33+0200\n"
 "PO-Revision-Date: 2007-04-20 09:44+0200\n"
 "Last-Translator: Jacobo Tarrio <jtarrio@debian.org>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
@@ -107,56 +107,15 @@ msgstr ""
 "recente ou se xa hai un paquete mariadb-server diferente a empregalo, "
 "debería conservar os datos."
 
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Unable to set password for the MariaDB \"root\" user"
-msgstr "Non se puido establecer o contrasinal do usuario \"root\" de MariaDB"
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"An error occurred while setting the password for the MariaDB administrative "
-"user. This may have happened because the account already has a password, or "
-"because of a communication problem with the MariaDB server."
-msgstr ""
-"Houbo un erro ao establecer o contrasinal do usuario administrativo de "
-"MariaDB. Puido ocorrer porque o usuario xa teña un contrasinal ou debido a "
-"un problema de comunicacións co servidor MariaDB."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-#, fuzzy
-#| msgid ""
-#| "You should check the account's password after tha package installation."
-msgid "You should check the account's password after the package installation."
-msgstr "Debería comprobar o contrasinal da conta trala instalación do paquete."
-
-#. Type: error
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-#, fuzzy
-#| msgid ""
-#| "Please read the /usr/share/doc/mysql-server-5.1/README.Debian file for "
-#| "more information."
-msgid ""
-"Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
-"more information."
-msgstr ""
-"Consulte o ficheiro /usr/share/doc/mariadb-server-10.0/README.Debian para "
-"máis información."
-
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid "Really migrate to MariaDB?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "MariaDB is a drop-in replacement for MySQL. It will use your current "
 "configuration file (my.cnf) and current databases."
@@ -164,12 +123,45 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../mariadb-server-10.0.templates:6001
+#: ../mariadb-server-10.0.templates:5001
 msgid ""
 "Note that MariaDB has some enhanced features, which do not exist in MySQL "
 "and thus migration back to MySQL might not always work, at least not as "
 "automatically as migrating from MySQL to MariaDB."
 msgstr ""
+
+#~ msgid "Unable to set password for the MariaDB \"root\" user"
+#~ msgstr ""
+#~ "Non se puido establecer o contrasinal do usuario \"root\" de MariaDB"
+
+#~ msgid ""
+#~ "An error occurred while setting the password for the MariaDB "
+#~ "administrative user. This may have happened because the account already "
+#~ "has a password, or because of a communication problem with the MariaDB "
+#~ "server."
+#~ msgstr ""
+#~ "Houbo un erro ao establecer o contrasinal do usuario administrativo de "
+#~ "MariaDB. Puido ocorrer porque o usuario xa teña un contrasinal ou debido "
+#~ "a un problema de comunicacións co servidor MariaDB."
+
+#, fuzzy
+#~| msgid ""
+#~| "You should check the account's password after tha package installation."
+#~ msgid ""
+#~ "You should check the account's password after the package installation."
+#~ msgstr ""
+#~ "Debería comprobar o contrasinal da conta trala instalación do paquete."
+
+#, fuzzy
+#~| msgid ""
+#~| "Please read the /usr/share/doc/mysql-server-5.1/README.Debian file for "
+#~| "more information."
+#~ msgid ""
+#~ "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
+#~ "more information."
+#~ msgstr ""
+#~ "Consulte o ficheiro /usr/share/doc/mariadb-server-10.0/README.Debian para "
+#~ "máis información."
 
 #~ msgid "New password for the MariaDB \"root\" user:"
 #~ msgstr "Novo contrasinal para o usuario \"root\" de MariaDB:"

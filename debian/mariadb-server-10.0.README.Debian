@@ -64,7 +64,7 @@ doesn't suit your needs, you can store it in the file $HOME/.my.cnf. It should
 be chmod 0600 (-rw------- username username .my.cnf) to ensure that nobody else
 can read it.  Every other configuration parameter can be stored there, too.
 
-For more information in the MariaDB manual in/usr/share/doc/mariadb-doc or 
+For more information in the MariaDB manual in/usr/share/doc/mariadb-doc or
 https://mariadb.com/kb/en/configuring-mariadb-with-mycnf/.
 
 ATTENTION: It is necessary, that a ~/.my.cnf from root always contains a "user"
