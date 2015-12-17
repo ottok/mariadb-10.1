@@ -104,14 +104,13 @@ character-set-server  = utf8mb4
 collation-server      = utf8mb4_general_ci
 
 #
-# * Unix socket authentication plugin
+# * Unix socket authentication plugin is built-in since 10.0.22-6
 #
 # Needed so the root database user can authenticate without a password but
 # only when running as the unix root user.
 #
 # Also available for other users if required.
 # See https://mariadb.com/kb/en/unix_socket-authentication-plugin/
-plugin-load-add         = auth_socket.so
 
 # this is only for embedded server
 [embedded]

@@ -79,8 +79,10 @@ override_dh_auto_configure:
 	    -DINSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH) \
 	    -DINSTALL_PLUGINDIR=lib/mysql/plugin \
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
+	    -DWITH_AUTH_SOCKET=ON \
 	    -DDEB=$(DISTRIBUTION) ..'
 	touch $@
+	# from 10.1 onwards use syntax: -DPLUGIN_AUTH_SOCKET=STATIC
 
 # This is needed, otherwise 'make test' will run before binaries have been built
 override_dh_auto_build:

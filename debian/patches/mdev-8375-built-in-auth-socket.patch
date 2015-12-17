@@ -1,0 +1,42 @@
+From: Sergey Vojtovich <svoj@mariadb.org>
+Desciption: Make auth_socket built-in by default
+ Remove this the day passwordless root account becomes the default in
+ upstream too and not just in Debian packaging.
+Date: Fri, 18 Dec 2015 16:31:05 +0400
+Subject: [PATCH] Fixed auth_socket static compilation
+Origin: https://github.com/MariaDB/server/commit/3402f7a85364e26fe85dfff3b5d803a8497042aa.patch
+Bug: https://mariadb.atlassian.net/browse/MDEV-8375
+
+--- a/plugin/auth_socket/CMakeLists.txt
++++ b/plugin/auth_socket/CMakeLists.txt
+@@ -65,6 +65,6 @@ ENDIF()
+ ENDIF()
+ 
+ IF(ok)
+-  MYSQL_ADD_PLUGIN(auth_socket auth_socket.c MODULE_ONLY)
++  MYSQL_ADD_PLUGIN(auth_socket auth_socket.c)
+ ENDIF()
+ 
+--- a/plugin/auth_socket/auth_socket.c
++++ b/plugin/auth_socket/auth_socket.c
+@@ -105,7 +105,7 @@ static struct st_mysql_auth socket_auth_
+   socket_auth
+ };
+ 
+-maria_declare_plugin(socket_auth)
++maria_declare_plugin(auth_socket)
+ {
+   MYSQL_AUTHENTICATION_PLUGIN,
+   &socket_auth_handler,
+--- a/mysql-test/mysql-test-run.pl
++++ b/mysql-test/mysql-test-run.pl
+@@ -3641,6 +3641,9 @@ sub mysql_install_db {
+   mtr_tofile($bootstrap_sql_file,
+ 	     "DELETE FROM mysql.user where user= '';\n");
+ 
++  mtr_tofile($bootstrap_sql_file,
++            "UPDATE mysql.user SET plugin='';\n");
++
+   # Create mtr database
+   mtr_tofile($bootstrap_sql_file,
+ 	     "CREATE DATABASE mtr;\n");
