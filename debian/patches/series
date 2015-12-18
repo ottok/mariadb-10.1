@@ -15,3 +15,4 @@ mdev-8692-perf-arm.patch
 mdev-9091-tokudb.patch
 mdev-8375-passwordless-root-via-socket-auth.patch
 mdev-8375-built-in-auth-socket.patch
+mdev-8375-auth-socket-test.patch

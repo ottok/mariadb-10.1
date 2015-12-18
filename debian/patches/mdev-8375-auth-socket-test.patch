@@ -1,0 +1,48 @@
+From: Sergey Vojtovich <svoj@mariadb.org>
+Description: Update tests to match built-in unix-socket plugin
+ Remove this the day passwordless root account becomes the default in
+ upstream too and not just in Debian packaging.
+Date: Fri, 18 Dec 2015 22:51:12 +0400
+Subject: [PATCH] Filter out unix-socket from unrelated test cases
+Origin: https://github.com/MariaDB/server/commit/5efb8f1677f680e6d6ab2304630495c522475dc3.patch
+Bug: https://mariadb.atlassian.net/browse/MDEV-8375
+
+--- a/mysql-test/suite/plugins/r/auth_v0100.result
++++ b/mysql-test/suite/plugins/r/auth_v0100.result
+@@ -1,9 +1,8 @@
+ install soname 'auth_0x0100';
+-select plugin_name, plugin_type_version from information_schema.plugins where plugin_type='authentication' order by plugin_name;
++select plugin_name, plugin_type_version from information_schema.plugins where
++plugin_type='authentication' and plugin_library is not null order by plugin_name;
+ plugin_name	plugin_type_version
+ auth_0x0100	1.0
+-mysql_native_password	2.0
+-mysql_old_password	2.0
+ create user tt identified via auth_0x0100;
+ grant select on test.* to zzzzzzzzzzzzzzzz;
+ connect(localhost,tt,,test,MASTER_MYPORT,MASTER_MYSOCK);
+
+--- a/mysql-test/suite/plugins/t/auth_v0100.test
++++ b/mysql-test/suite/plugins/t/auth_v0100.test
+@@ -6,7 +6,8 @@ if (!$AUTH_0X0100_SO) {
+ 
+ install soname 'auth_0x0100';
+ 
+-select plugin_name, plugin_type_version from information_schema.plugins where plugin_type='authentication' order by plugin_name;
++select plugin_name, plugin_type_version from information_schema.plugins where
++plugin_type='authentication' and plugin_library is not null order by plugin_name;
+ 
+ create user tt identified via auth_0x0100;
+ grant select on test.* to zzzzzzzzzzzzzzzz;
+
+--- a/mysql-test/t/mysqld--help.test
++++ b/mysql-test/t/mysqld--help.test
+@@ -30,7 +30,7 @@ perl;
+               thread-concurrency super-large-pages mutex-deadlock-detector
+               connect null-audit aria oqgraph sphinx thread-handling
+               test-sql-discovery rpl-semi-sync query-cache-info
+-              query-response-time metadata-lock-info locales/;
++              query-response-time metadata-lock-info locales unix-socket/;
+ 
+   # And substitute the content some environment variables with their
+   # names:
