@@ -1,16 +1,16 @@
-mariadb-10.0 (10.0.22-6) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.22-6) unstable; urgency=low
 
   * Add patches to make passwordless root login default on all new
     installs in all situations. Make auth_socket a built-in plugin.
   * Clean up previous passwordless root implementation so that it
     applies only to new installs and existing databases continue
-    to operate with the passwords defined in their user tables.
+    to operate with the passwords defined in their user tables
   * As disabled.def intrepreted test names in a special way, switch
     back to using --skip-test-list option
   * Make the watch file to make it better suited for the
     git-buildpackage workflow and remove call to uupdate
 
- -- Otto Kekäläinen <otto@seravo.fi>  Thu, 17 Dec 2015 15:28:51 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Sat, 19 Dec 2015 22:28:23 +0200
 
 mariadb-10.0 (10.0.22-5) unstable; urgency=low
 

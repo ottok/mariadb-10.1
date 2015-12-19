@@ -7,8 +7,6 @@ Author: Alexander Barkov <bar@mariadb.org>
 Bug: https://mariadb.atlassian.net/browse/MDEV-9091
 
 
-diff --git a/storage/tokudb/ft-index/portability/CMakeLists.txt b/storage/tokudb/ft-index/portability/CMakeLists.txt
-index 9f84d9b..a356205 100644
 --- a/storage/tokudb/ft-index/portability/CMakeLists.txt
 +++ b/storage/tokudb/ft-index/portability/CMakeLists.txt
 @@ -14,12 +14,12 @@ set(tokuportability_srcs

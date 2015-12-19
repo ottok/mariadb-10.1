@@ -21,7 +21,6 @@ Bug: https://mariadb.atlassian.net/browse/MDEV-8375
  create user tt identified via auth_0x0100;
  grant select on test.* to zzzzzzzzzzzzzzzz;
  connect(localhost,tt,,test,MASTER_MYPORT,MASTER_MYSOCK);
-
 --- a/mysql-test/suite/plugins/t/auth_v0100.test
 +++ b/mysql-test/suite/plugins/t/auth_v0100.test
 @@ -6,7 +6,8 @@ if (!$AUTH_0X0100_SO) {
@@ -34,7 +33,6 @@ Bug: https://mariadb.atlassian.net/browse/MDEV-8375
  
  create user tt identified via auth_0x0100;
  grant select on test.* to zzzzzzzzzzzzzzzz;
-
 --- a/mysql-test/t/mysqld--help.test
 +++ b/mysql-test/t/mysqld--help.test
 @@ -30,7 +30,7 @@ perl;

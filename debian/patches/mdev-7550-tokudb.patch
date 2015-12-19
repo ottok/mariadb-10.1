@@ -1,8 +1,6 @@
-diff --git a/storage/tokudb/ft-index/portability/portability.cc b/storage/tokudb/ft-index/portability/portability.cc
-index 09c1ccd..a6522b3 100644
 --- a/storage/tokudb/ft-index/portability/portability.cc
 +++ b/storage/tokudb/ft-index/portability/portability.cc
-@@ -355,9 +355,16 @@ toku_get_processor_frequency_cpuinfo(uint64_t *hzret) {
+@@ -355,9 +355,16 @@ toku_get_processor_frequency_cpuinfo(uin
          r = get_error_errno();
      } else {
          uint64_t maxhz = 0;
@@ -22,7 +20,7 @@ index 09c1ccd..a6522b3 100644
              unsigned int cpu;
              sscanf(buf, "processor : %u", &cpu);
              unsigned int ma, mb;
-@@ -367,8 +374,6 @@ toku_get_processor_frequency_cpuinfo(uint64_t *hzret) {
+@@ -367,8 +374,6 @@ toku_get_processor_frequency_cpuinfo(uin
                      maxhz = hz;
              }
          }
