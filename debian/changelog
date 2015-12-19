@@ -7,6 +7,8 @@ mariadb-10.0 (10.0.22-6) UNRELEASED; urgency=low
     to operate with the passwords defined in their user tables.
   * As disabled.def intrepreted test names in a special way, switch
     back to using --skip-test-list option
+  * Make the watch file to make it better suited for the
+    git-buildpackage workflow and remove call to uupdate
 
  -- Otto Kekäläinen <otto@seravo.fi>  Thu, 17 Dec 2015 15:28:51 +0200
 
