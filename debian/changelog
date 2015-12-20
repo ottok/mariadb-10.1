@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.23-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Sun, 20 Dec 2015 14:18:33 +0200
+
 mariadb-10.0 (10.0.22-6) unstable; urgency=low
 
   * Add patches to make passwordless root login default on all new

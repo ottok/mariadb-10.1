@@ -4,7 +4,7 @@ Last-Update: 2014-10-02
 
 --- a/storage/connect/tabxml.cpp
 +++ b/storage/connect/tabxml.cpp
-@@ -1798,7 +1798,7 @@ void XMULCOL::ReadColumn(PGLOBAL g)
+@@ -1800,7 +1800,7 @@ void XMULCOL::ReadColumn(PGLOBAL g)
  
        if (N > Tdbp->Limit) {
          N = Tdbp->Limit;
@@ -13,17 +13,6 @@ Last-Update: 2014-10-02
          PushWarning(g, Tdbp);
          } // endif N
  
---- a/man/mysqldump.1
-+++ b/man/mysqldump.1
-@@ -1275,7 +1275,7 @@ to point the slave to the correct master
- .\" max-allowed-packet option: mysqldump
- \fB\-\-max\-allowed\-packet=\fR\fB\fIlength\fR\fR
- .sp
--Sets the maximum packet length to send to or recieve from server\&.
-+Sets the maximum packet length to send to or receive from server\&.
- .RE
- .sp
- .RS 4
 --- a/storage/connect/mysql-test/connect/r/xml_mult.result
 +++ b/storage/connect/mysql-test/connect/r/xml_mult.result
 @@ -51,14 +51,14 @@ WEB	XQuery Kick Start	en	Per Bothner	200
@@ -95,7 +84,7 @@ Last-Update: 2014-10-02
  44	ru_UA	Russian - Ukraine	8	11	,	.	russian
 --- a/sql/mysqld.cc
 +++ b/sql/mysqld.cc
-@@ -7097,7 +7097,7 @@ struct my_option my_long_options[]=
+@@ -7095,7 +7095,7 @@ struct my_option my_long_options[]=
     &opt_show_slave_auth_info, &opt_show_slave_auth_info, 0,
     GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
    {"skip-bdb", OPT_DEPRECATED_OPTION,
@@ -104,7 +93,7 @@ Last-Update: 2014-10-02
     0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
  #ifndef DISABLE_GRANT_OPTIONS
    {"skip-grant-tables", 0,
-@@ -8390,7 +8390,7 @@ mysqld_get_one_option(int optid,
+@@ -8389,7 +8389,7 @@ mysqld_get_one_option(int optid,
      break;
    case OPT_DEPRECATED_OPTION:
      sql_print_warning("'%s' is deprecated. It does nothing and exists only "
@@ -153,7 +142,7 @@ Last-Update: 2014-10-02
    &my_locale_typelib_ab_month_names_pt_PT,
 --- a/storage/spider/spd_param.cc
 +++ b/storage/spider/spd_param.cc
-@@ -1859,7 +1859,7 @@ int spider_param_auto_increment_mode(
+@@ -1882,7 +1882,7 @@ int spider_param_auto_increment_mode(
  static MYSQL_THDVAR_BOOL(
    same_server_link, /* name */
    PLUGIN_VAR_OPCMDARG, /* opt */

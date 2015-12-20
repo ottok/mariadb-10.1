@@ -10,9 +10,6 @@ innodb_simulate_comp_test_speedup.patch
 fix-spelling-errors.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
-mdev-7550-tokudb.patch
-mdev-8692-perf-arm.patch
-mdev-9091-tokudb.patch
 mdev-8375-passwordless-root-via-socket-auth.patch
 mdev-8375-built-in-auth-socket.patch
 mdev-8375-auth-socket-test.patch
