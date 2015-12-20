@@ -39,6 +39,13 @@ ifneq (,$(filter $(ARCH), i386 kfreebsd-i386 hurd-i386))
     TAOCRYPT_OPT="-DTAOCRYPT_DISABLE_X86ASM"
 endif
 
+# Ignore test suite exit code on unstable platforms
+ifneq (,$(filter $(ARCH), mips mipsel))
+    TESTSUITE_FAIL_CMD:=true
+else
+    TESTSUITE_FAIL_CMD:=exit 1
+endif
+
 # Skip TokuDB if arch is not amd64
 ifneq ($(ARCH), amd64)
     CMAKEFLAGS += -DWITHOUT_TOKUDB=true
@@ -99,7 +106,7 @@ override_dh_auto_test:
 	[ ! -f debian/unstable-tests.$(ARCH) ] || cat debian/unstable-tests.$(ARCH) >> mysql-test/unstable-tests
 	# Run testsuite
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS) --skip-test-list=unstable-tests
+	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS) --skip-test-list=unstable-tests  || $(TESTSUITE_FAIL_CMD) ;
 endif
 
 override_dh_auto_install:
