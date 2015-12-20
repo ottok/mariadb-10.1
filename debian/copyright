@@ -833,7 +833,7 @@ Copyright:
 License: BSD-3-clause
 
 Files: storage/tokudb/*
-Copyright: 2007-2014 Tokutek, Inc
+Copyright: 2006-2015 Percona and/or its affiliates
 License: GPL-2
 
 Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/ltmain.sh

@@ -2,6 +2,8 @@ mariadb-10.0 (10.0.23-1) unstable; urgency=low
 
   * New upstream release
   * Ignore test suite exit code on unstable platforms (mips, mipsel)
+  * Update TokuDB plugin install and copyright paths to match latest
+    release done under Percona ownership
 
  -- Otto Kekäläinen <otto@seravo.fi>  Sun, 20 Dec 2015 14:18:33 +0200
 
