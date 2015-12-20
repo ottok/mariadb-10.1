@@ -12,6 +12,8 @@ mariadb-10.0 (10.0.23-0ubuntu0.15.04.1) vivid-security; urgency=low
     - CVE-2016-0596
     - CVE-2016-0546
     - CVE-2016-0505
+  * Update TokuDB plugin install and copyright paths to match latest
+    release done under Percona ownership
 
  -- Otto Kekäläinen <otto@seravo.fi>  Tue, 26 Jan 2016 23:59:51 +0200
 

@@ -123,7 +123,7 @@ override_dh_auto_install:
 	dh_testroot
 
 	# If TokuDB plugin was built add it to the server install list.
-	[ ! -f $(BUILDDIR)/storage/tokudb/ha_tokudb.so ] || echo 'usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/conf.d/tokudb.cnf\nusr/bin/tokuftdump\nusr/share/doc/mariadb-server-10.0/README-TOKUDB\nusr/share/doc/mariadb-server-10.0/README.md' >> debian/mariadb-server-10.0.install
+	[ ! -f $(BUILDDIR)/storage/tokudb/ha_tokudb.so ] || echo 'usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/conf.d/tokudb.cnf\nusr/bin/tokuftdump\nusr/share/doc/mariadb-server-10.0/README.md' >> debian/mariadb-server-10.0.install
 
 	# If Mroonga plugin was built add it to the server install list.
 	[ ! -f $(BUILDDIR)/storage/mroonga/ha_mroonga.so ] || echo 'usr/lib/mysql/plugin/ha_mroonga.so' >> debian/mariadb-server-10.0.install
