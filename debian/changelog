@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
+
+  * Skip unstable Spider tests on Launchpad s390x builds
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
+
 mariadb-10.0 (10.0.23-1) unstable; urgency=low
 
   * New upstream release
