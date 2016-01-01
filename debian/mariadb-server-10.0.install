@@ -4,7 +4,6 @@ debian/additions/echo_stderr usr/share/mysql
 debian/additions/mariadb.conf.d/50-mysqld_safe.cnf etc/mysql/mariadb.conf.d
 debian/additions/mariadb.conf.d/50-server.cnf etc/mysql/mariadb.conf.d
 etc/apparmor.d/usr.sbin.mysqld
-etc/mysql/conf.d/cassandra.cnf etc/mysql/mariadb.conf.d
 usr/bin/aria_chk
 usr/bin/aria_dump_log
 usr/bin/aria_ftdump
@@ -50,8 +49,6 @@ usr/share/doc/mariadb-server-10.0/mysqld.sym.gz
 usr/share/mysql/errmsg-utf8.txt
 usr/share/mysql/fill_help_tables.sql
 usr/share/mysql/install_spider.sql
-usr/share/mysql/mroonga/install.sql
-usr/share/mysql/mroonga/uninstall.sql
 usr/share/mysql/mysql_performance_tables.sql
 usr/share/mysql/mysql_system_tables.sql
 usr/share/mysql/mysql_system_tables_data.sql
