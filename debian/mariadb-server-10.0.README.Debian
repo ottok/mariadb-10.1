@@ -1,13 +1,25 @@
 * MYSQL WON'T START OR STOP?:
 =============================
+First check the contents of syslog (or systemd journal) and then check the
+logs at /var/log/mysql/ for any hints of what might be wrong.
+
+* ROOT USER AUTHENTICATION VIA UNIX SOCKET
+==========================================
+
+On new installs no root password is set and no debian-sys-maint user is
+created anymore. Instead the MariaDB root account is set to be authenticated
+using the unix socket, e.g. any mysqld invocation by root or via sudo will
+let the user see the mysqld prompt.
+
 You may never ever delete the mysql user "root". Although it has no password
 is set, the unix_auth plugin ensure that it can only be run locally as the root
-user. The credentials in /etc/mysql/debian.cnf specify the user are used by the
-init scripts to stop the server and perform logrotation. So in most of the
-time you can fix the situation by making sure that the /etc/mysql/debian.cnf
-file specifies the root user and no password.
+user.
 
-This used to be the debian-sys-maint user which is no longer used.
+The credentials in /etc/mysql/debian.cnf specify the user which is used by the
+init scripts to stop the server and perform logrotation. This used to be the
+debian-sys-maint user which is no longer used as root can run directly.
+
+If you have start/stop problems make sure that the /etc/mysql/debian.cnf file specifies the root user and no password.
 
 * WHAT TO DO AFTER UPGRADES:
 ============================
@@ -22,7 +34,6 @@ chapter.  They are not necessary as the Debian packages does them
 automatically.
 
 The only thing that is left over for the admin is
- - setting the passwords
  - creating new users and databases
  - read the rest of this text
 
@@ -39,8 +50,8 @@ https://mariadb.com/kb
 
 * PASSWORDS:
 ============
-It is strongly recommended you create an admin users for your database
-adminstration needs.
+It is recommended you create additional admin users for your database
+adminstration needs in addition to the default root user.
 
 If your your local unix account is the one you want to have local super user
 access on your database with you can create the following account that will
