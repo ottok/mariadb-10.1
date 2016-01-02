@@ -151,20 +151,20 @@ Description: MariaDB database core server files
  .
  This package includes the core server files, as used by Akonadi.
 
-Package: mariadb-test-10.0
+Package: mariadb-test
 Architecture: any
 Depends: mariadb-client-10.0 (= ${binary:Version}),
          mariadb-server-10.0 (= ${binary:Version}),
-         mariadb-test-data-10.0 (= ${source:Version}),
+         mariadb-test-data (= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Breaks: mariadb-test (<< ${source:Version}),
+Breaks: mariadb-test-10.0,
         mariadb-test-5.5,
         mysql-testsuite,
         mysql-testsuite-5.5,
         mysql-testsuite-5.6,
         virtual-mysql-testsuite
-Replaces: mariadb-test (<< ${source:Version}),
+Replaces: mariadb-test-10.0,
           mariadb-test-5.5,
           mysql-testsuite,
           mysql-testsuite-5.5,
@@ -180,16 +180,18 @@ Description: MariaDB database regression test suite
  .
  This package includes the regression test suite.
 
-Package: mariadb-test-data-10.0
+Package: mariadb-test-data
 Architecture: all
 Depends: ${misc:Depends}
-Breaks: mariadb-test-10.0 (<< ${source:Version}),
+Breaks: mariadb-test-10.0,
         mariadb-test-5.5,
+        mariadb-test-data-10.0,
         mysql-testsuite,
         mysql-testsuite-5.5,
         mysql-testsuite-5.6
-Replaces: mariadb-test-10.0 (<< ${source:Version}),
+Replaces: mariadb-test-10.0,
           mariadb-test-5.5,
+          mariadb-test-data-10.0,
           mysql-testsuite,
           mysql-testsuite-5.5,
           mysql-testsuite-5.6
@@ -271,14 +273,6 @@ Description: MariaDB database client (metapackage depending on the latest versio
  mariadb-client (currently mariadb-client-10.0), as determined by the MariaDB
  maintainers.  Install this package if in doubt about which MariaDB version
  you want, as this is the one considered to be in the best shape.
-
-Package: mariadb-test
-Architecture: all
-Depends: mariadb-test-10.0 (>= ${source:Version}), ${misc:Depends}
-Description: MariaDB database regression test suite (metapackage for the latest version)
- This is an empty package that depends on the current "best" version of
- mariadb-test (currently mariadb-test-10.0), as determined by the MariaDB
- maintainers.
 
 Package: mariadb-plugin-connect
 Architecture: any
