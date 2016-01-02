@@ -5,7 +5,8 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
     of files produced by the build process
   * Update server README.Debian to match current unix socekt authentication
   * Split TokuDB, Mroonga and Cassandra into their own packages and
-    start using new naming scheme 'mariadb-plugin-xzy'
+    start using new naming scheme 'mariadb-plugin-xzy' and rename existing
+    Connect and OQGraph packages accordingly
   * Lintian fixes and more updates to TokuDB plugin copyright paths
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
