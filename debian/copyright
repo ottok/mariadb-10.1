@@ -262,7 +262,7 @@ Files: BUILD/*
  mysql-test/suite/perfschema/include/*
  mysql-test/suite/perfschema_stress/include/*
  mysys/*
- packaging/WiX/ca/*
+ win/packaging/ca/*
  plugin/audit_null/*
  plugin/auth_*
  plugin/daemon_example/*
@@ -836,20 +836,20 @@ Files: storage/tokudb/*
 Copyright: 2006-2015 Percona and/or its affiliates
 License: GPL-2
 
-Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/ltmain.sh
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/depcomp
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/config.guess
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/compile
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzless.in
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/config.sub
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzdiff.in
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt_int.h
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/Makefile.am
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzmore.in
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/src/scripts/xzgrep.in
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/extra/scanlzma/scanlzma.c
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/missing
- storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/*
+Files: storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/ltmain.sh
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/depcomp
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/config.guess
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/compile
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/src/scripts/xzless.in
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/config.sub
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/src/scripts/xzdiff.in
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/lib/getopt_int.h
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/lib/Makefile.am
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/src/scripts/xzmore.in
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/src/scripts/xzgrep.in
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/extra/scanlzma/scanlzma.c
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/missing
+ storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/m4/*
 Copyright: 1987-2009 Free Software Foundation, Inc.
  1992,1993 Jean-loup Gailly
  Andrew Dudman
@@ -859,19 +859,19 @@ Copyright: 1987-2009 Free Software Foundation, Inc.
  1996 Gordon Matzigkeit
 License: GPL-2+
 
-Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/m4/acx_pthread.m4
+Files: storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/m4/acx_pthread.m4
 Copyright:  2007 Steven G. Johnson <stevenj@alum.mit.edu>
 License: GPL-3+
 
-Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt*
+Files: storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/lib/getopt*
 Copyright: 1987-2009 Free Software Foundation, Inc.
 License: LGPL-2.1+
 
-Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/lib/getopt_int.h
+Files: storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/lib/getopt_int.h
 Copyright: 1989-1994,1996-1999,2001,2003,2004 Free Software Foundation, Inc.
 License: GPL-2+
 
-Files: storage/tokudb/ft-index/third_party/xz-4.999.9beta/build-aux/install-sh
+Files: storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/install-sh
 Copyright: Copyright (C) 1994 X Consortium
 License: MIT/X11
  Permission is hereby granted, free of charge, to any person obtaining a copy
