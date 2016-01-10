@@ -19,7 +19,6 @@ debian/tmp/usr/share/man/man1/mysql_plugin.1
 debian/tmp/usr/share/man/man1/mysql_secure_installation.1
 debian/tmp/usr/share/man/man1/mysql_setpermission.1
 debian/tmp/usr/share/man/man1/mysql_tzinfo_to_sql.1
-debian/tmp/usr/share/man/man1/mysql_upgrade.1
 debian/tmp/usr/share/man/man1/mysql_zap.1
 debian/tmp/usr/share/man/man1/perror.1
 debian/tmp/usr/share/man/man1/replace.1

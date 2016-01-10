@@ -11,6 +11,9 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
   * There is no need for mariadb-test packages to contain the version in the
     package name, so remove it. It only makes sense to keep the version number
     in the client and server packages, which users actually want to pin to.
+  * Move mysql_upgrade to server core package so that Akonadi and similar
+    core package consumers can upgrade the database. Also update control file
+    with breaks/replaces to allow smooth upgrades (Closes: #793977).
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
 
