@@ -14,6 +14,8 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
   * Move mysql_upgrade to server core package so that Akonadi and similar
     core package consumers can upgrade the database. Also update control file
     with breaks/replaces to allow smooth upgrades (Closes: #793977).
+  * Update slow_query_log_file configuration syntax to match upstream's. Also
+    fixes #677222 in MariaDB packages.
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
 
