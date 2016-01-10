@@ -339,3 +339,14 @@ Description: Cassandra storage engine for MariaDB
  can insert to, update, and select from. You can write joins against this table,
  it is possible to join data that's stored in MariaDB with data that's stored in
  Cassandra.
+
+Package: mariadb-plugin-spider
+Architecture: any
+Depends: mariadb-server-10.0|mariadb-galera-server-10.0,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: Spider storage engine for MariaDB
+ The Spider storage engine with built-in sharding features. It supports
+ partitioning and xa transactions, and allows tables of different MariaDB
+ instances to be handled as if they were on the same insctance. It refers to one
+ possible implementation of ISO/IEC 9075-9:2008 SQL/MED.
