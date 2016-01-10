@@ -6,7 +6,7 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
   * Update server README.Debian to match current unix socekt authentication
   * Split TokuDB, Mroonga, Spider and Cassandra into their own packages and
     start using new naming scheme 'mariadb-plugin-xzy' and rename existing
-    Connect and OQGraph packages accordingly
+    Connect and OQGraph packages accordingly (Closes: #773727)
   * Lintian fixes and more updates to TokuDB plugin copyright paths
   * There is no need for mariadb-test packages to contain the version in the
     package name, so remove it. It only makes sense to keep the version number
