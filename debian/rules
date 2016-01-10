@@ -135,9 +135,6 @@ override_dh_auto_install:
 	# rename and install AppArmor profile
 	install -D -m 644 debian/apparmor-profile $(TMP)/etc/apparmor.d/usr.sbin.mysqld
 
-	# rename and install Apport hook
-	install -D -m 644 debian/mariadb-server-10.0.py $(TMP)/usr/share/apport/package-hooks/source_mariadb-10.0.py
-
 	touch $@
 
 override_dh_installlogrotate-arch:
