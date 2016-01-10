@@ -35,10 +35,6 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
     MAKEFLAGS += -j $(NUMJOBS)
 endif
 
-ifneq (,$(filter $(ARCH), i386 kfreebsd-i386 hurd-i386))
-    TAOCRYPT_OPT="-DTAOCRYPT_DISABLE_X86ASM"
-endif
-
 # Ignore test suite exit code on unstable platforms
 ifneq (,$(filter $(ARCH), mips mipsel))
     TESTSUITE_FAIL_CMD:=true

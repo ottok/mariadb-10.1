@@ -17,6 +17,7 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
   * Update slow_query_log_file configuration syntax to match upstream's. Also
     fixes #677222 in MariaDB packages.
   * Rename and install Apport hook correctly
+  * Remove Taocrypt workaround fixed upstream long since #627208
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
 
