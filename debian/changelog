@@ -23,6 +23,7 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
   * Unmask the systemd mysql.service if left behind by a mysql-server-5.6
     installation, otherwise the MariaDB service would remain masked too.
   * Add gdb to build-deps as suggested in #627208 to get automatic stack traces
+  * Updated Turkish translation by Atila KOÇ (Closes: #811414)
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
 
