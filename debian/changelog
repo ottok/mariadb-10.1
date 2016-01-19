@@ -22,6 +22,7 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
     in mysql-5.6 packaging commit id 16a64e810e28f1d0b66ede274cd4c2b1a425fecb
   * Unmask the systemd mysql.service if left behind by a mysql-server-5.6
     installation, otherwise the MariaDB service would remain masked too.
+  * Add gdb to build-deps as suggested in #627208 to get automatic stack traces
 
  -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
 
