@@ -23,7 +23,19 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
 
 mariadb-10.0 (10.0.23-1) unstable; urgency=low
 
-  * New upstream release
+  * New upstream release 10.0.23. Includes fixes for the following
+    security vulnerabilities:
+    - CVE-2016-2047
+    - CVE-2016-0616
+    - CVE-2016-0609
+    - CVE-2016-0608
+    - CVE-2016-0606
+    - CVE-2016-0600
+    - CVE-2016-0598
+    - CVE-2016-0597
+    - CVE-2016-0596
+    - CVE-2016-0546
+    - CVE-2016-0505
   * Ignore test suite exit code on unstable platforms (mips, mipsel)
   * Update TokuDB plugin install and copyright paths to match latest
     release done under Percona ownership
@@ -105,6 +117,8 @@ mariadb-10.0 (10.0.22-1) unstable; urgency=low
   [ Otto Kekäläinen ]
   * New upstream release. Includes fixes for the following security
     vulnerabilities (Closes: #802874):
+    - CVE-2016-0610
+    - CVE-2015-7744
     - CVE-2015-4802
     - CVE-2015-4807
     - CVE-2015-4815
@@ -242,6 +256,7 @@ mariadb-10.0 (10.0.18-1~exp1) experimental; urgency=low
 
   * New upstream release. Includes fixes for the following security
     vulnerabilities:
+    - CVE-2015-4866
     - CVE-2014-8964 bundled PCRE contained heap-based buffer overflow
       vulnerability that allowed the server to crash or have other unspecified
       impact via a crafted regular expression made possible with the
