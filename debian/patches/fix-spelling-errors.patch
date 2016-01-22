@@ -4,7 +4,7 @@ Last-Update: 2014-10-02
 
 --- a/storage/connect/tabxml.cpp
 +++ b/storage/connect/tabxml.cpp
-@@ -1798,7 +1798,7 @@ void XMULCOL::ReadColumn(PGLOBAL g)
+@@ -1800,7 +1800,7 @@ void XMULCOL::ReadColumn(PGLOBAL g)
  
        if (N > Tdbp->Limit) {
          N = Tdbp->Limit;
@@ -13,17 +13,6 @@ Last-Update: 2014-10-02
          PushWarning(g, Tdbp);
          } // endif N
  
---- a/man/mysqldump.1
-+++ b/man/mysqldump.1
-@@ -1275,7 +1275,7 @@ to point the slave to the correct master
- .\" max-allowed-packet option: mysqldump
- \fB\-\-max\-allowed\-packet=\fR\fB\fIlength\fR\fR
- .sp
--Sets the maximum packet length to send to or recieve from server\&.
-+Sets the maximum packet length to send to or receive from server\&.
- .RE
- .sp
- .RS 4
 --- a/storage/connect/mysql-test/connect/r/xml_mult.result
 +++ b/storage/connect/mysql-test/connect/r/xml_mult.result
 @@ -51,14 +51,14 @@ WEB	XQuery Kick Start	en	Per Bothner	200
