@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.23-2) unstable; urgency=low
 
   * Skip unstable Spider tests on Launchpad s390x builds
   * Extend install lists with missing files after reviewing the list
@@ -19,7 +19,7 @@ mariadb-10.0 (10.0.23-2) UNRELEASED; urgency=low
   * Add gdb to build-deps as suggested in #627208 to get automatic stack traces
   * Updated Turkish translation by Atila KOÇ (Closes: #811414)
 
- -- Otto Kekäläinen <otto@seravo.fi>  Mon, 28 Dec 2015 09:51:36 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Sat, 23 Jan 2016 23:07:15 +0200
 
 mariadb-10.0 (10.0.23-1) unstable; urgency=low
 
