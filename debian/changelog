@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.23-3) UNRELEASED; urgency=low
+
+  * Add Lintian overrides for TokuDB sources that indeed need autotools files
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Tue, 26 Jan 2016 11:34:48 +0200
+
 mariadb-10.0 (10.0.23-2) unstable; urgency=low
 
   * Skip unstable Spider tests on Launchpad s390x builds
