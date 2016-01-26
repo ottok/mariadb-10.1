@@ -4,9 +4,9 @@
 ## DP: Executes /etc/init.d/mysql on signals
 ## DP: Reported as http://bugs.mysql.com/bug.php?id=31361
 
---- a/scripts/mysqld_safe.sh	2013-01-11 16:02:41 +0000
-+++ b/scripts/mysqld_safe.sh	2013-01-11 16:03:14 +0000
-@@ -33,7 +33,6 @@ err_log=
+--- a/scripts/mysqld_safe.sh
++++ b/scripts/mysqld_safe.sh
+@@ -34,7 +34,6 @@ skip_err_log=0
  syslog_tag_mysqld=mysqld
  syslog_tag_mysqld_safe=mysqld_safe
  
@@ -14,7 +14,7 @@
  
  # MySQL-specific environment variable. First off, it's not really a umask,
  # it's the desired mode. Second, it follows umask(2), not umask(3) in that
-@@ -164,7 +163,7 @@ eval_log_error () {
+@@ -165,7 +164,7 @@ eval_log_error () {
        # sed buffers output (only GNU sed supports a -u (unbuffered) option)
        # which means that messages may not get sent to syslog until the
        # mysqld process quits.
@@ -23,7 +23,7 @@
        ;;
      *)
        echo "Internal program error (non-fatal):" \
-@@ -806,6 +805,13 @@ then
+@@ -819,6 +818,13 @@ then
  fi
  
  #
@@ -37,4 +37,3 @@
  # Uncomment the following lines if you want all tables to be automatically
  # checked and repaired during startup. You should add sensible key_buffer
  # and sort_buffer values to my.cnf to improve check performance or require
-

@@ -1,6 +1,6 @@
 --- a/scripts/mysqld_multi.sh
 +++ b/scripts/mysqld_multi.sh
-@@ -504,6 +504,7 @@
+@@ -503,6 +503,7 @@ sub list_defaults_files
                 '@prefix@/my.cnf',
                 ($ENV{MYSQL_HOME} ? "$ENV{MYSQL_HOME}/my.cnf" : undef),
                 $opt{'extra-file'},

@@ -1,10 +1,9 @@
 Author: Christian Hammers <ch@debian.org>
 Description: Removes unnecessary library dependencies. See #390692
 
-diff -Nur mysql-dfsg-5.1-5.1.31.orig/scripts/mysql_config.sh mysql-dfsg-5.1-5.1.31/scripts/mysql_config.sh
---- mysql-dfsg-5.1-5.1.31.orig/scripts/mysql_config.sh  2009-01-19 17:30:55.000000000 +0100
-+++ mysql-dfsg-5.1-5.1.31/scripts/mysql_config.sh       2009-02-08 17:17:48.000000000 +0100
-@@ -107,10 +107,10 @@
+--- a/scripts/mysql_config.sh
++++ b/scripts/mysql_config.sh
+@@ -107,10 +107,10 @@ fi
  
  # Create options 
  # We intentionally add a space to the beginning and end of lib strings, simplifies replace later
@@ -18,4 +17,3 @@ diff -Nur mysql-dfsg-5.1-5.1.31.orig/scripts/mysql_config.sh mysql-dfsg-5.1-5.1.
  
  if [ -r "$pkglibdir/libmygcc.a" ]; then
    # When linking against the static library with a different version of GCC
-

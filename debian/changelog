@@ -1,7 +1,26 @@
+mariadb-10.0 (10.0.23-0ubuntu0.15.04.1) vivid-security; urgency=low
+
+  * SECURITY UPDATE: Update to 10.0.23 fixes security issues (LP: #1538315):
+    - CVE-2016-2047
+    - CVE-2016-0616
+    - CVE-2016-0609
+    - CVE-2016-0608
+    - CVE-2016-0606
+    - CVE-2016-0600
+    - CVE-2016-0598
+    - CVE-2016-0597
+    - CVE-2016-0596
+    - CVE-2016-0546
+    - CVE-2016-0505
+
+ -- Otto Kekäläinen <otto@seravo.fi>  Tue, 26 Jan 2016 23:59:51 +0200
+
 mariadb-10.0 (10.0.22-0ubuntu0.15.04.1) vivid-security; urgency=low
 
   * SECURITY UPDATE: Update to 10.0.22 fixes security issues:
     (LP: #1512241)
+    - CVE-2016-0610
+    - CVE-2015-7744
     - CVE-2015-4802
     - CVE-2015-4807
     - CVE-2015-4815
@@ -41,6 +60,7 @@ mariadb-10.0 (10.0.20-0ubuntu0.15.04.1) vivid-security; urgency=low
     - CVE-2015-0499
     (LP: #1451677)
   * Oracle CVE IDs added after release:
+    - CVE-2015-4866
     - CVE-2015-2648
     - CVE-2015-2582
     - CVE-2015-4752
