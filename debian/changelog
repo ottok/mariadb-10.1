@@ -1,6 +1,12 @@
 mariadb-10.0 (10.0.23-3) UNRELEASED; urgency=low
 
   * Add Lintian overrides for TokuDB sources that indeed need autotools files
+  * Split TokuDB, Mroonga, Spider and Cassandra into their own packages and
+    start using new naming scheme 'mariadb-plugin-xzy' and rename existing
+    Connect and OQGraph packages accordingly (Closes: #773727)
+  * There is no need for mariadb-test packages to contain the version in the
+    package name, so remove it. It only makes sense to keep the version number
+    in the client and server packages, which users actually want to pin to.
 
  -- Otto Kekäläinen <otto@seravo.fi>  Tue, 26 Jan 2016 11:34:48 +0200
 
@@ -10,13 +16,7 @@ mariadb-10.0 (10.0.23-2) unstable; urgency=low
   * Extend install lists with missing files after reviewing the list
     of files produced by the build process
   * Update server README.Debian to match current unix socekt authentication
-  * Split TokuDB, Mroonga, Spider and Cassandra into their own packages and
-    start using new naming scheme 'mariadb-plugin-xzy' and rename existing
-    Connect and OQGraph packages accordingly (Closes: #773727)
   * Lintian fixes and more updates to TokuDB plugin copyright paths
-  * There is no need for mariadb-test packages to contain the version in the
-    package name, so remove it. It only makes sense to keep the version number
-    in the client and server packages, which users actually want to pin to.
   * Move mysql_upgrade to server core package so that Akonadi and similar
     core package consumers can upgrade the database. Also update control file
     with breaks/replaces to allow smooth upgrades (Closes: #793977).
