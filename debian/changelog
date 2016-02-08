@@ -7,6 +7,7 @@ mariadb-10.0 (10.0.23-3) UNRELEASED; urgency=low
   * There is no need for mariadb-test packages to contain the version in the
     package name, so remove it. It only makes sense to keep the version number
     in the client and server packages, which users actually want to pin to.
+  * Update standards version
 
  -- Otto Kekäläinen <otto@seravo.fi>  Tue, 26 Jan 2016 11:34:48 +0200
 
