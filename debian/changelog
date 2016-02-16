@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.23-3) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.23-3) unstable; urgency=low
 
   * Add Lintian overrides for TokuDB sources that indeed need autotools files
   * Split TokuDB, Mroonga, Spider and Cassandra into their own packages and
