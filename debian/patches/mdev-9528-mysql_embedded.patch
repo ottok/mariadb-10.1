@@ -1,0 +1,25 @@
+Description: The patch adds a missing man page, mysql_embedded
+ Remove this once upstream has released an official fix.
+Author: Ian Gilfillan <ian@mariadb.org>
+Bug: https://mariadb.atlassian.net/browse/MDEV-9528
+
+--- /dev/null
++++ b/man/mysql_embedded.1
+@@ -0,0 +1,16 @@
++'\" t
++.\"
++.TH "\FBMYSQL_EMBEDDED\FR" "1" "27/01/2016" "MariaDB 10\&.0" "MariaDB Database System"
++.\" -----------------------------------------------------------------
++.\" * set default formatting
++.\" -----------------------------------------------------------------
++.\" disable hyphenation
++.nh
++.\" disable justification (adjust text to left margin only)
++.ad l
++.SH NAME
++mysql_embedded \- mysql client statically linked to libmysqld, the embedded server
++.SH DESCRIPTION
++Use: For a full list of available options, see the mysql man page
++.PP
++For more information, please refer to the MariaDB Knowledge Base, available online at https://mariadb.com/kb/
+

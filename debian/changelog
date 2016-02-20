@@ -1,9 +1,13 @@
 mariadb-10.0 (10.0.24-1) UNRELEASED; urgency=low
 
+  [Otto Kekäläinen]
   * New upstream release 10.0.24
     - Drop auth_socket patches as MDEV-8375 was partially fixed upstream
     - Refresh other patches
   * Update filenames in d/copyright
+
+  [Ian Gilfillan]
+  * Add missing mysql_embedded man page
 
  -- Otto Kekäläinen <otto@seravo.fi>  Sat, 20 Feb 2016 14:23:50 +0200
 
