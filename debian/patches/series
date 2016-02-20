@@ -12,4 +12,3 @@ mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
 mdev-8375-passwordless-root-via-socket-auth.patch
 mdev-8375-built-in-auth-socket.patch
-mdev-8375-auth-socket-test.patch

@@ -84,7 +84,7 @@ Last-Update: 2014-10-02
  44	ru_UA	Russian - Ukraine	8	11	,	.	russian
 --- a/sql/mysqld.cc
 +++ b/sql/mysqld.cc
-@@ -7095,7 +7095,7 @@ struct my_option my_long_options[]=
+@@ -7085,7 +7085,7 @@ struct my_option my_long_options[]=
     &opt_show_slave_auth_info, &opt_show_slave_auth_info, 0,
     GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
    {"skip-bdb", OPT_DEPRECATED_OPTION,
@@ -93,7 +93,7 @@ Last-Update: 2014-10-02
     0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
  #ifndef DISABLE_GRANT_OPTIONS
    {"skip-grant-tables", 0,
-@@ -8389,7 +8389,7 @@ mysqld_get_one_option(int optid,
+@@ -8414,7 +8414,7 @@ mysqld_get_one_option(int optid,
      break;
    case OPT_DEPRECATED_OPTION:
      sql_print_warning("'%s' is deprecated. It does nothing and exists only "
