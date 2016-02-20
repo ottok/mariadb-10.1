@@ -178,7 +178,7 @@ Files:
  dbug/remove_function_from_trace.pl
  dbug/tests.c
  dbug/tests-t.pl
- include/probes_mysql_nodtrace.h
+ include/probes_mysql_nodtrace.h.in
  libmysqld/resource.h
  mysql-test/*
  storage/ndb/bin/*
