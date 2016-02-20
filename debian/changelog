@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.24-1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.24-1) unstable; urgency=low
 
   [Otto Kekäläinen]
   * New upstream release 10.0.24
