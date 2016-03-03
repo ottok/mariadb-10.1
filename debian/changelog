@@ -4,6 +4,8 @@ mariadb-10.0 (10.0.24-2) UNRELEASED; urgency=low
     the files used to reside there (Closes: #815377).
   * Disable main.delayed that has been confirmed to be a false positive
     caused by built platform resource limits.
+  * Disable multiple s390x tests that only fail on Ubuntu/Launchpad and
+    cannot be reproduced anywhere else.
 
  -- Otto Kekäläinen <otto@seravo.fi>  Sun, 21 Feb 2016 14:59:31 +0200
 
