@@ -24,8 +24,8 @@ Build-Depends: bison,
                zlib1g-dev (>= 1:1.1.3-5~)
 Standards-Version: 3.9.7
 Homepage: http://mariadb.org/
-Vcs-Git: git://anonscm.debian.org/pkg-mysql/mariadb-10.0.git
-Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-mysql/mariadb-10.0.git
+Vcs-Git: https://anonscm.debian.org/pkg-mysql/mariadb-10.0.git
+Vcs-Browser: https://anonscm.debian.org/gitweb/?p=pkg-mysql/mariadb-10.0.git
 
 Package: libmariadbd18
 Architecture: any
