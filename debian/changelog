@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.24-2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.24-2) unstable; urgency=low
 
   * Make new plugin packages breaks+replaces mariadb-server-10.0 as
     the files used to reside there (Closes: #815377).
@@ -7,7 +7,7 @@ mariadb-10.0 (10.0.24-2) UNRELEASED; urgency=low
   * Disable multiple s390x tests that only fail on Ubuntu/Launchpad and
     cannot be reproduced anywhere else.
 
- -- Otto Kekäläinen <otto@seravo.fi>  Sun, 21 Feb 2016 14:59:31 +0200
+ -- Otto Kekäläinen <otto@seravo.fi>  Fri, 04 Mar 2016 08:38:25 +0200
 
 mariadb-10.0 (10.0.24-1) unstable; urgency=low
 
