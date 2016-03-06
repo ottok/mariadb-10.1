@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.24-3) UNRELEASED; urgency=low
+
+  * Fix typo in rules file about Mroonga control section
+
+ -- Otto Kekäläinen <otto@debian.org>  Sun, 06 Mar 2016 16:01:19 +0200
+
 mariadb-10.0 (10.0.24-2) unstable; urgency=low
 
   * Make new plugin packages breaks+replaces mariadb-server-10.0 as
