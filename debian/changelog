@@ -1,6 +1,7 @@
 mariadb-10.0 (10.0.24-3) UNRELEASED; urgency=low
 
   * Fix typo in rules file about Mroonga control section
+  * Add main.delayed test exception to more platforms
 
  -- Otto Kekäläinen <otto@debian.org>  Sun, 06 Mar 2016 16:01:19 +0200
 
