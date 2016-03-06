@@ -1,10 +1,10 @@
-mariadb-10.0 (10.0.24-3) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.24-3) unstable; urgency=low
 
   * Fix typo in rules file about Mroonga control section
   * Add main.delayed test exception to more platforms
   * Install mysql_embedded man page correctly
 
- -- Otto Kekäläinen <otto@debian.org>  Sun, 06 Mar 2016 16:01:19 +0200
+ -- Otto Kekäläinen <otto@debian.org>  Sun, 06 Mar 2016 22:20:52 +0200
 
 mariadb-10.0 (10.0.24-2) unstable; urgency=low
 
