@@ -71,6 +71,7 @@ override_dh_auto_configure:
 	    	CXX=${CXX} \
 	    cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(CMAKEFLAGS) \
+			-DCMAKE_BUILD_TYPE=Debug \
 	    -DWITH_SSL=bundled \
 	    -DCOMPILATION_COMMENT="$(DISTRIBUTION) $(RELEASE)" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEBVERSION)" \
