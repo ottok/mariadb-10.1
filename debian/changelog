@@ -1,3 +1,10 @@
+mariadb-10.0 (10.0.24-4) UNRELEASED; urgency=low
+
+  * Update contributor documentation to match git-buildpackage version
+    in sid.
+
+ -- Otto Kekäläinen <otto@debian.org>  Tue, 08 Mar 2016 23:33:39 +0200
+
 mariadb-10.0 (10.0.24-3) unstable; urgency=low
 
   * Fix typo in rules file about Mroonga control section

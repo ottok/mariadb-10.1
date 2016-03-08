@@ -27,17 +27,17 @@ work-flow, so it is recommended to fork the Github mirror available at
 
 Once you have a fork at Github, clone the source repository with all relevant
 branches (master, upstream, prisine-tar) to your local environment
-  gbp-clone --pristine-tar git@github.com:{username}/mariadb-10.0.git
+  gbp clone --pristine-tar git@github.com:{username}/mariadb-10.0.git
 
 Clone needs to be run only once. On later runs you can refresh your clone with
 relevant branches using
-  gbp-pull --pristine-tar --force
+  gbp pull --pristine-tar --force
 
 
 ## Building the packages
 
 Build binaries, run testsuite and build Debian packages with
-  git-buildpackage
+  gbp buildpackage
 
 On the first run git-buildpackage will complain if some of the build dependencies
 defined in debian/control is missing. Simply install those packages and run the
@@ -56,7 +56,7 @@ the following environment variable:
 If you want to run the build in parallel on 2 CPUs and have verbose output:
   export DEB_BUILD_OPTIONS="parallel=2 verbose"
 
-The options above can also be combined freely to get desired behaviour.
+The options above can also be combined freely to get desired behavior.
 
 
 ## Creating a feature or bugfix branch
@@ -93,3 +93,4 @@ found in debian/patches and activated by a line in debian/patches/series
 Whatever you change is, you should bundle in you commit also a short description
 in the file at debian/changelog
 
+An example of a good pull request is https://github.com/ottok/mariadb-10.0/pull/33/files

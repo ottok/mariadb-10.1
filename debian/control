@@ -2,7 +2,7 @@ Source: mariadb-10.0
 Section: database
 Priority: optional
 Maintainer: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
-Uploaders: Otto Kekäläinen <otto@seravo.fi>, Arnaud Fontaine <arnau@debian.org>
+Uploaders: Otto Kekäläinen <otto@debian.org>, Arnaud Fontaine <arnau@debian.org>
 Build-Depends: bison,
                chrpath,
                cmake,
