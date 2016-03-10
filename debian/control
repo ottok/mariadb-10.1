@@ -17,10 +17,12 @@ Build-Depends: bison,
                libpam0g-dev,
                libpcre3-dev (>= 2:8.35-3.2~),
                libreadline-gplv2-dev,
+               libxml2-dev,
                lsb-release,
                perl,
                po-debconf,
                psmisc,
+               unixodbc-dev,
                zlib1g-dev (>= 1:1.1.3-5~)
 Standards-Version: 3.9.7
 Homepage: http://mariadb.org/

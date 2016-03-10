@@ -2,6 +2,8 @@ mariadb-10.0 (10.0.24-4) UNRELEASED; urgency=low
 
   * Update contributor documentation to match git-buildpackage version
     in sid.
+  * Add libxml and unixOBDC as build-depends for ConnectSE as done by 
+    in upstream (Closes: #814944).
 
  -- Otto Kekäläinen <otto@debian.org>  Tue, 08 Mar 2016 23:33:39 +0200
 
