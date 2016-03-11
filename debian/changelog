@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.24-5) UNRELEASED; urgency=low
+
+  * Disable sporadically failing rpl_binlog_index test on PowerPC.
+
+ -- Otto Kekäläinen <otto@debian.org>  Fri, 11 Mar 2016 10:54:15 +0200
+
 mariadb-10.0 (10.0.24-4) unstable; urgency=low
 
   * Update contributor documentation to match git-buildpackage version
