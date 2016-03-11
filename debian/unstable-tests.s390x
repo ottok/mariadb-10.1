@@ -1,4 +1,4 @@
-spider.basic_sql : https://mariadb.atlassian.net/browse/MDEV-9329
+spider.basic_sql : https://jira.mariadb.org/browse/MDEV-9329
 spider.basic_sql_part : MDEV-9329
 spider/bg.ha : MDEV-9329
 spider/bg.ha_part : MDEV-9329

@@ -7,7 +7,7 @@ mariadb-server-10.0: command-with-path-in-maintainer-script postinst:17 /usr/sbi
 mariadb-server-10.0: command-with-path-in-maintainer-script postrm:15 /usr/sbin/invoke-rc.d
 mariadb-server-10.0: command-with-path-in-maintainer-script preinst:27 /usr/sbin/invoke-rc.d
 # False positive: unfortified calls have already been fully validated at compile-time
-# See full research at https://mariadb.atlassian.net/browse/MDEV-8377
+# See full research at https://jira.mariadb.org/browse/MDEV-8377
 mariadb-server-10.0: hardening-no-fortify-functions usr/lib/mysql/plugin/auth_pam.so
 # Template is used, but with a variable in it's name so Lintian does not detect it
 mariadb-server-10.0: unused-debconf-template mariadb-server-10.0/really_downgrade

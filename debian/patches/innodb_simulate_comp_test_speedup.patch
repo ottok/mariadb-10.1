@@ -5,7 +5,7 @@ Description: Add options to innodb test that fixes possible test failure
  .
  Remove this once upstream has released an official fix.
 Author: Otto Kekäläinen <otto@seravo.fi>
-Bug: https://mariadb.atlassian.net/browse/MDEV-6682
+Bug: https://jira.mariadb.org/browse/MDEV-6682
 
 --- a/mysql-test/suite/innodb/t/innodb_simulate_comp_failures_small-master.opt
 +++ b/mysql-test/suite/innodb/t/innodb_simulate_comp_failures_small-master.opt

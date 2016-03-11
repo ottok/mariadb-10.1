@@ -1,4 +1,4 @@
-federated.federated_partition : https://mariadb.atlassian.net/browse/MDEV-8691
+federated.federated_partition : https://jira.mariadb.org/browse/MDEV-8691
 federated.federated_transactions : MDEV-8691
 federated.federated_innodb : MDEV-8691
 multi_source.gtid : MDEV-8691

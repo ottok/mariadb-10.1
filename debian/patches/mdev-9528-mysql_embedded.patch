@@ -1,7 +1,7 @@
 Description: The patch adds a missing man page, mysql_embedded
  Remove this once upstream has released an official fix.
 Author: Ian Gilfillan <ian@mariadb.org>
-Bug: https://mariadb.atlassian.net/browse/MDEV-9528
+Bug: https://jira.mariadb.org/browse/MDEV-9528
 
 --- /dev/null
 +++ b/man/mysql_embedded.1

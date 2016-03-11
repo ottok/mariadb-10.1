@@ -1,4 +1,4 @@
-rpl.rpl_skip_replication : https://mariadb.atlassian.net/browse/MDEV-9268
+rpl.rpl_skip_replication : https://jira.mariadb.org/browse/MDEV-9268
 main.mysqltest : MDEV-9269
 mroonga/storage.column_datetime_32bit_2038 : MDEV-9270
 mroonga/storage.column_datetime_32bit_before_unix_epoch : MDEV-9270
