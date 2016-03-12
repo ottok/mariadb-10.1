@@ -1,10 +1,10 @@
-mariadb-10.0 (10.0.24-5) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.24-5) unstable; urgency=low
 
   * Disable sporadically failing rpl_binlog_index test on PowerPC.
   * Disable another sporadic on amd64 and update all Jira links.
   * Fix typo in Mroonga prerm script.
 
- -- Otto Kekäläinen <otto@debian.org>  Fri, 11 Mar 2016 10:54:15 +0200
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 12 Mar 2016 10:08:23 +0200
 
 mariadb-10.0 (10.0.24-4) unstable; urgency=low
 
