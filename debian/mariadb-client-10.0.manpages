@@ -4,7 +4,6 @@ debian/tmp/usr/share/man/man1/mysqladmin.1
 debian/tmp/usr/share/man/man1/mysqlbug.1
 debian/tmp/usr/share/man/man1/mysqldump.1
 debian/tmp/usr/share/man/man1/mysqldumpslow.1
-debian/tmp/usr/share/man/man1/mysql_embedded.1
 debian/tmp/usr/share/man/man1/mysql_find_rows.1
 debian/tmp/usr/share/man/man1/mysql_fix_extensions.1
 debian/tmp/usr/share/man/man1/mysqlimport.1
