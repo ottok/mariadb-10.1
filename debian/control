@@ -74,16 +74,18 @@ Architecture: any
 Depends: mariadb-common (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Conflicts: mysql-client-5.5, mysql-client-5.6
+Conflicts: mysql-client-5.5, mysql-client-5.6, mysql-client-5.7
 Breaks: mariadb-client-core-5.5,
         mariadb-client-10.0 (<< 10.0.24-6~),
         mysql-client-core-5.5,
         mysql-client-core-5.6,
+        mysql-client-core-5.7,
         virtual-mysql-client-core
 Replaces: mariadb-client-core-5.5,
           mariadb-client-10.0 (<< 10.0.24-6~),
           mysql-client-core-5.5,
           mysql-client-core-5.6,
+          mysql-client-core-5.7,
           virtual-mysql-client-core
 Provides: virtual-mysql-client-core
 Description: MariaDB database core client binaries
@@ -104,18 +106,20 @@ Depends: debianutils (>=1.6),
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
-Conflicts: mysql-client-core-5.5, mysql-client-core-5.6
+Conflicts: mysql-client-core-5.5, mysql-client-core-5.6, mysql-client-core-5.7
 Breaks: mariadb-client-5.5,
         mariadb-server-10.0 (<< 10.0.13-1~),
         mysql-client,
         mysql-client-5.5,
         mysql-client-5.6,
+        mysql-client-5.7,
         virtual-mysql-client
 Replaces: mariadb-client-5.5,
           mariadb-server-10.0 (<< 10.0.13-1~),
           mysql-client,
           mysql-client-5.5,
           mysql-client-5.6,
+          mysql-client-5.7,
           virtual-mysql-client
 Provides: virtual-mysql-client
 Description: MariaDB database client binaries
@@ -132,7 +136,7 @@ Architecture: any
 Depends: mariadb-common (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Conflicts: mariadb-galera-server-5.5, mysql-server-5.5, mysql-server-5.6
+Conflicts: mariadb-galera-server-5.5, mysql-server-5.5, mysql-server-5.6, mysql-server-5.7
 Breaks: mariadb-client-10.0 (<< ${source:Version}),
         mariadb-server-10.0 (<< ${source:Version}),
         mariadb-server-core-5.5,
@@ -140,14 +144,17 @@ Breaks: mariadb-client-10.0 (<< ${source:Version}),
         mysql-client-5.6,
         mysql-server-core-5.5,
         mysql-server-core-5.6,
+        mysql-server-core-5.7,
         virtual-mysql-server-core
 Replaces: mariadb-client-10.0 (<< ${source:Version}),
           mariadb-server-10.0 (<< ${source:Version}),
           mariadb-server-core-5.5,
           mysql-client-5.5,
           mysql-client-5.6,
+          mysql-client-5.7,
           mysql-server-core-5.5,
           mysql-server-core-5.6,
+          mysql-server-core-5.7,
           virtual-mysql-server-core
 Provides: virtual-mysql-server-core
 Description: MariaDB database core server files
@@ -170,12 +177,14 @@ Breaks: mariadb-test-10.0,
         mysql-testsuite,
         mysql-testsuite-5.5,
         mysql-testsuite-5.6,
+        mysql-testsuite-5.7,
         virtual-mysql-testsuite
 Replaces: mariadb-test-10.0,
           mariadb-test-5.5,
           mysql-testsuite,
           mysql-testsuite-5.5,
           mysql-testsuite-5.6,
+          mysql-testsuite-5.7,
           virtual-mysql-testsuite
 Provides: virtual-mysql-testsuite
 Suggests: patch
@@ -195,13 +204,15 @@ Breaks: mariadb-test-10.0,
         mariadb-test-data-10.0,
         mysql-testsuite,
         mysql-testsuite-5.5,
-        mysql-testsuite-5.6
+        mysql-testsuite-5.6,
+        mysql-testsuite-5.7
 Replaces: mariadb-test-10.0,
           mariadb-test-5.5,
           mariadb-test-data-10.0,
           mysql-testsuite,
           mysql-testsuite-5.5,
-          mysql-testsuite-5.6
+          mysql-testsuite-5.6,
+          mysql-testsuite-5.7
 Description: MariaDB database regression test suite - data files
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
@@ -227,7 +238,8 @@ Depends: libdbi-perl,
 Conflicts: mariadb-tokudb-engine-10.0,
            mariadb-tokudb-engine-5.5,
            mysql-server-core-5.5,
-           mysql-server-core-5.6
+           mysql-server-core-5.6,
+           mysql-server-core-5.7
 Breaks: mariadb-galera-server,
         mariadb-galera-server-5.5,
         mariadb-server-5.5,
@@ -237,6 +249,7 @@ Breaks: mariadb-galera-server,
         mysql-server,
         mysql-server-5.5,
         mysql-server-5.6,
+        mysql-server-5.7,
         virtual-mysql-server
 Replaces: mariadb-galera-server,
           mariadb-galera-server-5.5,
@@ -247,6 +260,7 @@ Replaces: mariadb-galera-server,
           mysql-server,
           mysql-server-5.5,
           mysql-server-5.6,
+          mysql-server-5.7,
           virtual-mysql-server
 Provides: virtual-mysql-server
 Description: MariaDB database server binaries
