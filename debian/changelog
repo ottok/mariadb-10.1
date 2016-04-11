@@ -5,6 +5,8 @@ mariadb-10.0 (10.0.24-6) UNRELEASED; urgency=low
   * Add breaks/replaces for mariadb-client to accommodate the above.
   * Add conflicts/breaks/replaces for MySQL 5.7 series packages now
     when mysql-5.7 entered the Ubuntu repositories (LP: #1568285).
+  * Remove all old passwordless root account lines to close a potential
+    security vulnerability (LP: #1561062).
 
  -- Otto Kekäläinen <otto@debian.org>  Sat, 09 Apr 2016 14:47:22 +0300
 
