@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: po-debconf://mysql-dfsg\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-12-17 16:33+0200\n"
+"POT-Creation-Date: 2016-04-13 11:44+0300\n"
 "PO-Revision-Date: 2006-12-20 21:27+0200\n"
 "Last-Translator: stan ioan-eugen <stan.ieugen@gmail.com>\n"
 "Language-Team: romanian <debian-l10n-romanian@lists.debian.org>\n"
@@ -17,43 +17,34 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
 
-#. Type: boolean
+#. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
-#, fuzzy
-#| msgid "Do you really want to downgrade?"
-msgid "Really proceed with downgrade?"
-msgstr "Sunteţi sigur că doriţi să instalaţi o versiune mai veche?"
-
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:2001
-msgid "A file named /var/lib/mysql/debian-*.flag exists on this system."
+msgid "The old data directory will be saved at new location."
 msgstr ""
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:2001
-#, fuzzy
-#| msgid ""
-#| "WARNING: The file /var/lib/mysql/debian-*.flag exists. This indicates "
-#| "that a mysql-server package with a higher version has been installed "
-#| "before. It can not be guaranteed that this version can use its data."
-msgid ""
-"Such a file is an indication that a mariadb-server package with a higher "
-"version has been installed previously."
-msgstr ""
-"AVERTISMENT: Fişierul /var/lib/mysql/debian-*.flag există. Acest lucru "
-"indică faptul că anterior a fost instalată o versiune nouă a pachetului "
-"mariadb-server. Nu se poate garanta că versiunea instalată acum poate folosi "
-"datele versiunii instalate anterior."
-
-#. Type: boolean
+#. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid ""
-"There is no guarantee that the version you're currently installing will be "
-"able to use the current databases."
+"A file named /var/lib/mysql/debian-*.flag exists on this system. The number "
+"indicated a database binary format version that cannot automatically be "
+"upgraded (or downgraded)."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../mariadb-server-10.0.templates:2001
+msgid ""
+"Therefore the previous data directory will be renamed to /var/lib/mysql-* "
+"and a new data directory will be initialized at /var/lib/mysql."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../mariadb-server-10.0.templates:2001
+msgid ""
+"Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
 
 #. Type: note
@@ -111,28 +102,24 @@ msgstr ""
 "doar să instalaţi o versiune nouă MariaDB sau datele sunt folosite de către "
 "un alt pachet mariadb-server, atunci ar trebui păstraţi datele."
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Really migrate to MariaDB?"
-msgstr ""
+#, fuzzy
+#~| msgid "Do you really want to downgrade?"
+#~ msgid "Really proceed with downgrade?"
+#~ msgstr "Sunteţi sigur că doriţi să instalaţi o versiune mai veche?"
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"MariaDB is a drop-in replacement for MySQL. It will use your current "
-"configuration file (my.cnf) and current databases."
-msgstr ""
-
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"Note that MariaDB has some enhanced features, which do not exist in MySQL "
-"and thus migration back to MySQL might not always work, at least not as "
-"automatically as migrating from MySQL to MariaDB."
-msgstr ""
+#, fuzzy
+#~| msgid ""
+#~| "WARNING: The file /var/lib/mysql/debian-*.flag exists. This indicates "
+#~| "that a mysql-server package with a higher version has been installed "
+#~| "before. It can not be guaranteed that this version can use its data."
+#~ msgid ""
+#~ "Such a file is an indication that a mariadb-server package with a higher "
+#~ "version has been installed previously."
+#~ msgstr ""
+#~ "AVERTISMENT: Fişierul /var/lib/mysql/debian-*.flag există. Acest lucru "
+#~ "indică faptul că anterior a fost instalată o versiune nouă a pachetului "
+#~ "mariadb-server. Nu se poate garanta că versiunea instalată acum poate "
+#~ "folosi datele versiunii instalate anterior."
 
 #, fuzzy
 #~| msgid "Unable to set password for MySQL \"root\" user"

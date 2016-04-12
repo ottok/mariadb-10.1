@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-12-17 16:33+0200\n"
+"POT-Creation-Date: 2016-04-13 11:44+0300\n"
 "PO-Revision-Date: 2014-09-28 17:01+0100\n"
 "Last-Translator: Miguel Figueiredo <elmig@debianpt.org>\n"
 "Language-Team: Portuguese <traduz@debianpt.org>\n"
@@ -16,37 +16,35 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. Type: boolean
+#. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
-msgid "Really proceed with downgrade?"
-msgstr "Deseja mesmo continuar com o downgrade?"
+msgid "The old data directory will be saved at new location."
+msgstr ""
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:2001
-msgid "A file named /var/lib/mysql/debian-*.flag exists on this system."
-msgstr "Existe um ficheiro chamado /var/lib/mysql/debian-*.flag neste sistema."
-
-#. Type: boolean
+#. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid ""
-"Such a file is an indication that a mariadb-server package with a higher "
-"version has been installed previously."
+"A file named /var/lib/mysql/debian-*.flag exists on this system. The number "
+"indicated a database binary format version that cannot automatically be "
+"upgraded (or downgraded)."
 msgstr ""
-"Tal ficheiro significa que anteriormente já foi instalado um pacote mariadb-"
-"server com um número de versão superior."
 
-#. Type: boolean
+#. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid ""
-"There is no guarantee that the version you're currently installing will be "
-"able to use the current databases."
+"Therefore the previous data directory will be renamed to /var/lib/mysql-* "
+"and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
-"Não existe nenhuma garantia que a versão que está actualmente a instalar "
-"seja capaz de utilizar as actuais bases de dados."
+
+#. Type: note
+#. Description
+#: ../mariadb-server-10.0.templates:2001
+msgid ""
+"Please manually export/import your data (e.g. with mysqldump) if needed."
+msgstr ""
 
 #. Type: note
 #. Description
@@ -101,34 +99,46 @@ msgstr ""
 "versão mais recente ou se um pacote mariadb-server já o está a utilizar, "
 "então os dados devem ser mantidos."
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Really migrate to MariaDB?"
-msgstr "Realmente migrar para MariaDB?"
+#~ msgid "A file named /var/lib/mysql/debian-*.flag exists on this system."
+#~ msgstr ""
+#~ "Existe um ficheiro chamado /var/lib/mysql/debian-*.flag neste sistema."
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"MariaDB is a drop-in replacement for MySQL. It will use your current "
-"configuration file (my.cnf) and current databases."
-msgstr ""
-"MariaDB é um substituto para MySQL. Irá utilizar o seu ficheiro actual de "
-"configuração (my.cnf) e bases de dados."
+#~ msgid "Really proceed with downgrade?"
+#~ msgstr "Deseja mesmo continuar com o downgrade?"
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"Note that MariaDB has some enhanced features, which do not exist in MySQL "
-"and thus migration back to MySQL might not always work, at least not as "
-"automatically as migrating from MySQL to MariaDB."
-msgstr ""
-"Note que MariaDB tem algumas funcionalidades melhoradas, as quais não "
-"existem em MySQL e por isso a migração de volta para MySQL poderá nem sempre "
-"funcionar, pelo menos não automaticamente como a migração de MySQL para "
-"MariaDB."
+#~ msgid ""
+#~ "Such a file is an indication that a mariadb-server package with a higher "
+#~ "version has been installed previously."
+#~ msgstr ""
+#~ "Tal ficheiro significa que anteriormente já foi instalado um pacote "
+#~ "mariadb-server com um número de versão superior."
+
+#~ msgid ""
+#~ "There is no guarantee that the version you're currently installing will "
+#~ "be able to use the current databases."
+#~ msgstr ""
+#~ "Não existe nenhuma garantia que a versão que está actualmente a instalar "
+#~ "seja capaz de utilizar as actuais bases de dados."
+
+#~ msgid "Really migrate to MariaDB?"
+#~ msgstr "Realmente migrar para MariaDB?"
+
+#~ msgid ""
+#~ "MariaDB is a drop-in replacement for MySQL. It will use your current "
+#~ "configuration file (my.cnf) and current databases."
+#~ msgstr ""
+#~ "MariaDB é um substituto para MySQL. Irá utilizar o seu ficheiro actual de "
+#~ "configuração (my.cnf) e bases de dados."
+
+#~ msgid ""
+#~ "Note that MariaDB has some enhanced features, which do not exist in MySQL "
+#~ "and thus migration back to MySQL might not always work, at least not as "
+#~ "automatically as migrating from MySQL to MariaDB."
+#~ msgstr ""
+#~ "Note que MariaDB tem algumas funcionalidades melhoradas, as quais não "
+#~ "existem em MySQL e por isso a migração de volta para MySQL poderá nem "
+#~ "sempre funcionar, pelo menos não automaticamente como a migração de MySQL "
+#~ "para MariaDB."
 
 #~ msgid "Unable to set password for the MariaDB \"root\" user"
 #~ msgstr ""

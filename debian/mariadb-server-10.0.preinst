@@ -46,49 +46,80 @@ stop_server() {
 ################################ main() ##########################
 
 this_version=10.0
+max_upgradeable_version=5.6
 
-# Show upgrade warning if old data exists
-# Designed for scenarios where users upgrade form MySQL 5.5 or 5.6 or MariaDB 5.5
-for i in `ls $mysql_datadir/debian-*.flag 2>/dev/null`; do
-  found_version=`echo $i | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
-  if dpkg --compare-versions "$this_version" '>>' "$found_version"; then
-    db_fset mariadb-server/oneway_migration seen false || true
-    db_input high mariadb-server/oneway_migration || true
-    db_go
-    db_get mariadb-server/oneway_migration || true
-    if [ "$RET" = "false" ]; then
-      echo "Aborting MariaDB installation." 1>&2
-      db_stop
-      exit 1
-    fi
-  fi
-done
-# Notice the uses of "|| true"  to  prevent  the  script  from  dying
-# For details see man page debconf-devel(7)
+# Check if a flag file is found that indicates a previous MariaDB or MySQL
+# version was installed. If multiple flags are found, check which one was
+# the biggest version number.
+for flag in $mysql_datadir/debian-*.flag
+do
 
-# Safe the user from stupidities.
-show_downgrade_warning=0
-for i in `ls $mysql_datadir/debian-*.flag 2>/dev/null`; do
-  found_version=`echo $i | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
-  if dpkg --compare-versions "$this_version" '<<' "$found_version"; then
-    show_downgrade_warning=1
-    break;
+  # The for loop leaves $flag as the query string if there are no results,
+  # so the check below is needed to stop further processing when there are
+  # no real results.
+  if [ $flag = "$mysql_datadir/debian-*.flag" ]
+  then
+    break
   fi
+
+  flag_version=`echo $flag | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
+
+  # Initialize value if empty
+  if [ -z "$found_version" ]
+  then
+    found_version=$flag_version
+  fi
+
+  # Update value if now bigger then before
+  if dpkg --compare-versions "$flag_version" '>>' "$found_version"
+  then
+    found_version=$flag_version
+  fi
+
 done
-if [ "$show_downgrade_warning" = 1 ]; then
-  db_fset mariadb-server-$this_version/really_downgrade seen false || true
-  db_input critical mariadb-server-$this_version/really_downgrade || true
+
+
+# If an upgrade is detected, proceed with it automatically without
+# requiring any user interaction.
+#
+# However, if the user tempts to downgrade, warn about the incompatibility.
+# Downgrade is detected if the flag version is bigger than $this_version
+# (e.g. 10.1 > 10.0) or the flag version is smaller than 10.0 but bigger
+# than $max_upgradeable_version.
+if [ ! -z "$found_version" ]
+then
+
+  echo "$mysql_datadir: found previous version $found_version"
+
+  if dpkg --compare-versions "$found_version" '>>' "$this_version"
+  then
+    downgrade_detected=true
+  fi
+
+  if dpkg --compare-versions "$found_version" '>>' "$max_upgradeable_version" \
+  && dpkg --compare-versions "$found_version" '<<' "10.0"
+  then
+    downgrade_detected=true
+  fi
+
+fi
+
+
+# Don't abort dpkg if downgrade is detected (as was done previously).
+# Instead simply move the old datadir and create a new for this_version.
+if [ ! -z "$downgrade_detected" ]
+then
+  db_input critical mariadb-server-$this_version/old_data_directory_saved || true
   db_go
-  db_get mariadb-server-$this_version/really_downgrade || true
-  if [ "$RET" = "true" ]; then
-    rm -f $mysql_datadir/debian-*.flag
-  else
-    echo "Aborting downgrade from (at least) $found_version to $this_version." 1>&2
-    echo "If are sure you want to downgrade to $this_version, remove the file" 1>&2
-    echo "$mysql_datadir/debian-*.flag and try installing again." 1>&2
-    db_stop
-    exit 1
-  fi
+  echo "The file $mysql_datadir/debian-$found_version.flag indicated a" 1>&2
+  echo "version that cannot automatically be upgraded. Therefore the" 1>&2
+  echo "previous data directory will be renamed to $mysql_datadir-$found_version and" 1>&2
+  echo "a new data directory will be initialized at $mysql_datadir." 1>&2
+  echo "Please manually export/import your data (e.g. with mysqldump) if needed." 1>&2
+  mv -f $mysql_datadir $mysql_datadir-$found_version
+  # Also move away the old debian.cnf file that included credentials that are
+  # no longer valid
+  mv -f /etc/mysql/debian.cnf /etc/mysql/debian.cnf-$found_version
 fi
 
 # to be sure

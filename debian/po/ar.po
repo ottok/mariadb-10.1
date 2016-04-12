@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: templates\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2015-12-17 16:33+0200\n"
+"POT-Creation-Date: 2016-04-13 11:44+0300\n"
 "PO-Revision-Date: 2007-05-01 13:04+0300\n"
 "Last-Translator: Ossama M. Khayat <okhayat@yahoo.com>\n"
 "Language-Team: Arabic <support@arabeyes.org>\n"
@@ -25,40 +25,35 @@ msgstr ""
 ": n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5\n"
 ": n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5\n"
 
-#. Type: boolean
+#. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
-msgid "Really proceed with downgrade?"
-msgstr "هل فعلاً تريد التثبيط؟"
-
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:2001
-msgid "A file named /var/lib/mysql/debian-*.flag exists on this system."
-msgstr "هناك ملف مسمى /var/lib/mysql/debian-*.flag موجود على هذا النظام."
-
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:2001
-#, fuzzy
-#| msgid ""
-#| "Such file is an indication that a mariadb-server package with a higher "
-#| "version has been installed earlier."
-msgid ""
-"Such a file is an indication that a mariadb-server package with a higher "
-"version has been installed previously."
+msgid "The old data directory will be saved at new location."
 msgstr ""
-"هذا الملف دلالة على أن نسخة أحدث من حزمة mariadb-server تم تثبيتها مسبقاً."
 
-#. Type: boolean
+#. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid ""
-"There is no guarantee that the version you're currently installing will be "
-"able to use the current databases."
+"A file named /var/lib/mysql/debian-*.flag exists on this system. The number "
+"indicated a database binary format version that cannot automatically be "
+"upgraded (or downgraded)."
 msgstr ""
-"ليست هناك أية ضمانة أن النسخة التي تقوم بتثبيتها ستكون قادرة على استخدام "
-"قواعد البيانات الحالية."
+
+#. Type: note
+#. Description
+#: ../mariadb-server-10.0.templates:2001
+msgid ""
+"Therefore the previous data directory will be renamed to /var/lib/mysql-* "
+"and a new data directory will be initialized at /var/lib/mysql."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../mariadb-server-10.0.templates:2001
+msgid ""
+"Please manually export/import your data (e.g. with mysqldump) if needed."
+msgstr ""
 
 #. Type: note
 #. Description
@@ -111,28 +106,28 @@ msgstr ""
 "إن كنت تقوم بإزالة حزمة MariaDB كي تقوم لاحقاً بتثبيت نسخة أحدث أو إن كانت "
 "حزمة mariadb-server مختلفة تستخدمها، فيجب إبقاء البيانات."
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid "Really migrate to MariaDB?"
-msgstr ""
+#~ msgid "A file named /var/lib/mysql/debian-*.flag exists on this system."
+#~ msgstr "هناك ملف مسمى /var/lib/mysql/debian-*.flag موجود على هذا النظام."
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"MariaDB is a drop-in replacement for MySQL. It will use your current "
-"configuration file (my.cnf) and current databases."
-msgstr ""
+#~ msgid "Really proceed with downgrade?"
+#~ msgstr "هل فعلاً تريد التثبيط؟"
 
-#. Type: boolean
-#. Description
-#: ../mariadb-server-10.0.templates:5001
-msgid ""
-"Note that MariaDB has some enhanced features, which do not exist in MySQL "
-"and thus migration back to MySQL might not always work, at least not as "
-"automatically as migrating from MySQL to MariaDB."
-msgstr ""
+#, fuzzy
+#~| msgid ""
+#~| "Such file is an indication that a mariadb-server package with a higher "
+#~| "version has been installed earlier."
+#~ msgid ""
+#~ "Such a file is an indication that a mariadb-server package with a higher "
+#~ "version has been installed previously."
+#~ msgstr ""
+#~ "هذا الملف دلالة على أن نسخة أحدث من حزمة mariadb-server تم تثبيتها مسبقاً."
+
+#~ msgid ""
+#~ "There is no guarantee that the version you're currently installing will "
+#~ "be able to use the current databases."
+#~ msgstr ""
+#~ "ليست هناك أية ضمانة أن النسخة التي تقوم بتثبيتها ستكون قادرة على استخدام "
+#~ "قواعد البيانات الحالية."
 
 #~ msgid "Unable to set password for the MariaDB \"root\" user"
 #~ msgstr "تعذر تعيين كلمة مرور للمستخدم \"root\" الخاص بـMariaDB."
