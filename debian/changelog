@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.24-6) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.24-6) unstable; urgency=low
 
   * Move mysql_embedded from client package to client-core package,
     equally as is in mysql-client-core-5.6 and -5.7 (LP: #1568077).
@@ -11,10 +11,8 @@ mariadb-10.0 (10.0.24-6) UNRELEASED; urgency=low
     state.
   * Remove all old passwordless root account lines to close a potential
     security vulnerability (LP: #1561062).
-  * Temporarily disable the test suite due to excessive false positives.
-    Re-enable when upstream has had enough time to rewrite tests etc.
 
- -- Otto Kekäläinen <otto@debian.org>  Sat, 09 Apr 2016 14:47:22 +0300
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 13 Apr 2016 10:56:10 +0300
 
 mariadb-10.0 (10.0.24-5) unstable; urgency=low
 
