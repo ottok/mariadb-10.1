@@ -1,3 +1,10 @@
+mariadb-10.0 (10.0.24-7) unstable; urgency=low
+
+  * Temporarily remove mariadb-plugin-cassandra as Debian FTP bot thinks
+    it wasn't there before 10.0.24-6 and put the package in the NEW queue.
+
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 13 Apr 2016 13:24:28 +0300
+
 mariadb-10.0 (10.0.24-6) unstable; urgency=low
 
   * Move mysql_embedded from client package to client-core package,

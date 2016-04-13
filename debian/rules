@@ -120,7 +120,7 @@ override_dh_auto_install:
 	# If libthrift-dev was available (manually installed, as it is
 	# not in Debian) and ha_cassandra.so was thus built, create package,
 	# otherwise skip it.
-	[ -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || sed -i -e "/Package: mariadb-plugin-cassandra/,+14d" debian/control
+	#[ -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || sed -i -e "/Package: mariadb-plugin-cassandra/,+14d" debian/control
 
 	# make install
 	cd $(BUILDDIR) && $(MAKE) install DESTDIR=$(TMP)
