@@ -11,6 +11,8 @@ mariadb-10.0 (10.0.24-6) UNRELEASED; urgency=low
     state.
   * Remove all old passwordless root account lines to close a potential
     security vulnerability (LP: #1561062).
+  * Temporarily disable the test suite due to excessive false positives.
+    Re-enable when upstream has had enough time to rewrite tests etc.
 
  -- Otto Kekäläinen <otto@debian.org>  Sat, 09 Apr 2016 14:47:22 +0300
 
