@@ -100,10 +100,7 @@ override_dh_auto_test:
 	[ ! -f debian/unstable-tests.$(ARCH) ] || cat debian/unstable-tests.$(ARCH) >> mysql-test/unstable-tests
 	# Run testsuite
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	# Disable test suite because of too many false positives that we don't have
-	# time to fix in time of the Ubuntu 16.04 release, and as actual fixes must
-	# get in, the test suite with false positives is an unnecessary obstacle.
-	# cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS) --skip-test-list=unstable-tests  || $(TESTSUITE_FAIL_CMD) ;
+	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS) --skip-test-list=unstable-tests  || $(TESTSUITE_FAIL_CMD) ;
 endif
 
 override_dh_auto_install:
@@ -120,7 +117,7 @@ override_dh_auto_install:
 	# If libthrift-dev was available (manually installed, as it is
 	# not in Debian) and ha_cassandra.so was thus built, create package,
 	# otherwise skip it.
-	#[ -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || sed -i -e "/Package: mariadb-plugin-cassandra/,+14d" debian/control
+	[ -f $(BUILDDIR)/storage/cassandra/ha_cassandra.so ] || sed -i -e "/Package: mariadb-plugin-cassandra/,+14d" debian/control
 
 	# make install
 	cd $(BUILDDIR) && $(MAKE) install DESTDIR=$(TMP)

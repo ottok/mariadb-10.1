@@ -1,3 +1,9 @@
+mariadb-10.0 (10.0.24-8) UNRELEASED; urgency=low
+
+  * Revert previous changes tailored for Ubuntu 16.04 compatibility.
+
+ -- Otto Kekäläinen <otto@debian.org>  Sun, 24 Apr 2016 20:00:10 +0300
+
 mariadb-10.0 (10.0.24-7) unstable; urgency=low
 
   * Temporarily remove mariadb-plugin-cassandra as Debian FTP bot thinks
