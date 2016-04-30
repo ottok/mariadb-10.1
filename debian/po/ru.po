@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mariadb 10.0_10.0.32-1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2016-04-13 11:44+0300\n"
+"POT-Creation-Date: 2016-04-30 22:44+0300\n"
 "PO-Revision-Date: 2014-01-07 07:18+0400\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
@@ -23,7 +23,7 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
-msgid "The old data directory will be saved at new location."
+msgid "The old data directory will be saved at new location"
 msgstr ""
 
 #. Type: note

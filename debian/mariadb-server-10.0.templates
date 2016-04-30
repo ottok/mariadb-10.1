@@ -9,7 +9,7 @@
 
 Template: mariadb-server-10.0/old_data_directory_saved
 Type: note
-_Description: The old data directory will be saved at new location.
+_Description: The old data directory will be saved at new location
  A file named /var/lib/mysql/debian-*.flag exists on this system.
  The number indicated a database binary format version that cannot automatically
  be upgraded (or downgraded).

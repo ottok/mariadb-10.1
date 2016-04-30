@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mysql-dfsg-4.1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2016-04-13 11:44+0300\n"
+"POT-Creation-Date: 2016-04-30 22:44+0300\n"
 "PO-Revision-Date: 2004-01-31 19:20GMT\n"
 "Last-Translator: Aleix Badia i Bosch <abadia@ica.es>\n"
 "Language-Team: Debian L10n Catalan <debian-l10n-catalan@lists.debian.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 #. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
-msgid "The old data directory will be saved at new location."
+msgid "The old data directory will be saved at new location"
 msgstr ""
 
 #. Type: note
