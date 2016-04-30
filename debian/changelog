@@ -1,8 +1,18 @@
-mariadb-10.0 (10.0.24-8) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
 
   * Revert previous changes tailored for Ubuntu 16.04 compatibility.
+  * New upstream release 10.0.25. Includes fixes for the following
+    security vulnerabilities:
+    - CVE-2016-0666
+    - CVE-2016-0655
+    - CVE-2016-0648
+    - CVE-2016-0647
+    - CVE-2016-0643
+  * Updated old changelog entries to include new CVE identifiers.
+  * Upstream included changes to logrotate script that supports systems that
+    has multiple mysqld processes running (Closes: #810968).
 
- -- Otto Kekäläinen <otto@debian.org>  Sun, 24 Apr 2016 20:00:10 +0300
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 30 Apr 2016 21:00:18 +0300
 
 mariadb-10.0 (10.0.24-7) unstable; urgency=low
 
@@ -70,6 +80,15 @@ mariadb-10.0 (10.0.24-1) unstable; urgency=low
   * New upstream release 10.0.24
     - Drop auth_socket patches as MDEV-8375 was partially fixed upstream
     - Refresh other patches
+  * New upstream release includes fixes for the following security
+    vulnerabilities:
+    - CVE-2016-0668
+    - CVE-2016-0650
+    - CVE-2016-0649
+    - CVE-2016-0646
+    - CVE-2016-0644
+    - CVE-2016-0641
+    - CVE-2016-0640
   * Update filenames in d/copyright
 
   [Ian Gilfillan]
@@ -118,6 +137,8 @@ mariadb-10.0 (10.0.23-1) unstable; urgency=low
   * New upstream release 10.0.23. Includes fixes for the following
     security vulnerabilities:
     - CVE-2016-2047
+    - CVE-2016-0651
+    - CVE-2016-0642
     - CVE-2016-0616
     - CVE-2016-0609
     - CVE-2016-0608
