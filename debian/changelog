@@ -12,6 +12,8 @@ mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
   * Upstream included changes to logrotate script that supports systems that
     has multiple mysqld processes running (Closes: #810968).
   * Updated Dutch translation by Frans Spiesschaert (Closes: #822894).
+  * Updated Spanish translation by Javier Fernández-Sanguino Peña
+    (Closes: #823099).
 
  -- Otto Kekäläinen <otto@debian.org>  Sat, 30 Apr 2016 21:00:18 +0300
 

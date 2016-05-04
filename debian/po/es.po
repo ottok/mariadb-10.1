@@ -1,12 +1,12 @@
-# mysql-dfsg-5 translation to spanish
-# Copyright (C) 2005-2007 Software in the Public Interest, SPI Inc.
-# This file is distributed under the same license as the XXXX package.
-#
+# mariadb translation to spanish
+# Copyright (C) 2005-2016 Software in the Public Interest, SPI Inc.
+# This file is distributed under the same license as the mariadb package.
+# 
 # Changes:
 # - Initial translation
 #       Jesus Aneiros, 2006
 # - Updated
-#       Javier Fernandez-Sanguino, 2006-2007, 2012
+#       Javier Fernandez-Sanguino, 2006-2007, 2012, 2016
 # - Revision
 #       Nacho Barrientos Arias
 #       Fernando Cerezal
@@ -14,26 +14,26 @@
 #       Ricardo Mones
 #       Carlos Galisteo
 #       Javier Fernandez-Sanguino
-#
-#
-#  Traductores, si no conoce el formato PO, merece la pena leer la 
+# 
+# 
+#  Traductores, si no conoce el formato PO, merece la pena leer la
 #  documentación de gettext, especialmente las secciones dedicadas a este
 #  formato, por ejemplo ejecutando:
 #         info -n '(gettext)PO Files'
 #         info -n '(gettext)Header Entry'
-#
+# 
 # Equipo de traducción al español, por favor lean antes de traducir
 # los siguientes documentos:
-#
+# 
 # - El proyecto de traducción de Debian al español
 #   http://www.debian.org/intl/spanish/
 #   especialmente las notas y normas de traducción en
 #   http://www.debian.org/intl/spanish/notas
-#
+# 
 # - La guía de traducción de po's de debconf:
 #   /usr/share/doc/po-debconf/README-trans
 #   o http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
+# 
 # Si tiene dudas o consultas sobre esta traducción consulte con el último
 # traductor (campo Last-Translator) y ponga en copia a la lista de
 # traducción de Debian al español (<debian-l10n-spanish@lists.debian.org>)
@@ -42,19 +42,21 @@ msgstr ""
 "Project-Id-Version: mysql-dfsg-5.1_5.0.24-3\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2014-09-24 23:52+0200\n"
+"PO-Revision-Date: 2016-04-30 21:26+0200\n"
 "Last-Translator: Javier Fernández-Sanguino <jfs@debian.org>\n"
 "Language-Team: Debian l10 Spanish <debian-l10n-spanish@lists.debian.org>\n"
-"Language: \n"
+"Language: Spanish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-POFile-SpellExtra: YP mariadb lib ej server flag mysqldump mysql var NIS\n"
+"X-POFile-SpellExtra: MariaDB\n"
 
 #. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid "The old data directory will be saved at new location"
-msgstr ""
+msgstr "Se guardará el directorio antiguo de datos a la nueva ubicación"
 
 #. Type: note
 #. Description
@@ -64,6 +66,9 @@ msgid ""
 "indicated a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
+"Se ha encontrado un archivo «/var/lib/mysql/debian-*.flag» en el sistema. "
+"Este número indica una versión de base de datos en formato binario que no "
+"puede ser subirse (o bajarse) de versión automáticamente."
 
 #. Type: note
 #. Description
@@ -72,6 +77,8 @@ msgid ""
 "Therefore the previous data directory will be renamed to /var/lib/mysql-* "
 "and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
+"Por tanto, el archivo de datos anterior se renombrará a «/var/lib/mysql-*» y "
+"se inicializará un nuevo directorio de datos en «/var/lib/mysql»."
 
 #. Type: note
 #. Description
@@ -79,6 +86,8 @@ msgstr ""
 msgid ""
 "Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
+"Si lo necesita, tendrá que exportar e importar sus datos manualmente (p.ej. "
+"con mysqldump)."
 
 #. Type: note
 #. Description
