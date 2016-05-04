@@ -3,20 +3,20 @@
 # Ilgiz Kalmetev <translator@ilgiz.pp.ru>, 2003.
 # Yuriy Talakan' <yt@amur.elektra.ru>, 2005, 2006.
 # Yuriy Talakan' <yt@drsk.ru>, 2007.
-# Yuri Kozlov <yuray@komyakino.ru>, 2009, 2014.
+# Yuri Kozlov <yuray@komyakino.ru>, 2009, 2014, 2016.
 msgid ""
 msgstr ""
-"Project-Id-Version: mariadb 10.0_10.0.32-1\n"
+"Project-Id-Version: mariadb-10.0 10.0.25-1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2014-01-07 07:18+0400\n"
+"POT-Creation-Date: 2016-04-13 11:44+0300\n"
+"PO-Revision-Date: 2016-05-04 18:56+0300\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 "Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
@@ -24,7 +24,7 @@ msgstr ""
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid "The old data directory will be saved at new location"
-msgstr ""
+msgstr "Каталог со старыми данными будет сохранён в новом месте"
 
 #. Type: note
 #. Description
@@ -34,6 +34,9 @@ msgid ""
 "indicated a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
+"В системе найден файл /var/lib/mysql/debian-*.flag. Число представляет версию "
+"двоичного формата базы данных, которую невозможно обновить автоматически "
+"(или откатить к старой версии)."
 
 #. Type: note
 #. Description
@@ -42,6 +45,9 @@ msgid ""
 "Therefore the previous data directory will be renamed to /var/lib/mysql-* "
 "and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
+"В следствии этого, предыдущий каталог с данными будет переименован в "
+"/var/lib/mysql-*, а в /var/lib/mysql будет инициализирован каталог для "
+"новых данных."
 
 #. Type: note
 #. Description
@@ -49,6 +55,8 @@ msgstr ""
 msgid ""
 "Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
+"Если нужно, выполните экспорт/импорт данных вручную (например, с помощью "
+"mysqldump)."
 
 #. Type: note
 #. Description
