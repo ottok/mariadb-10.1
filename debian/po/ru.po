@@ -31,7 +31,7 @@ msgstr "Каталог со старыми данными будет сохра�
 #: ../mariadb-server-10.0.templates:2001
 msgid ""
 "A file named /var/lib/mysql/debian-*.flag exists on this system. The number "
-"indicated a database binary format version that cannot automatically be "
+"indicates a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
 "В системе найден файл /var/lib/mysql/debian-*.flag. Число представляет версию "

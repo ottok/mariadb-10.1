@@ -111,7 +111,7 @@ if [ ! -z "$downgrade_detected" ]
 then
   db_input critical mariadb-server-10.0/old_data_directory_saved || true
   db_go
-  echo "The file $mysql_datadir/debian-$found_version.flag indicated a" 1>&2
+  echo "The file $mysql_datadir/debian-$found_version.flag indicates a" 1>&2
   echo "version that cannot automatically be upgraded. Therefore the" 1>&2
   echo "previous data directory will be renamed to $mysql_datadir-$found_version and" 1>&2
   echo "a new data directory will be initialized at $mysql_datadir." 1>&2
