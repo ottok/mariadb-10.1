@@ -109,7 +109,7 @@ fi
 # Instead simply move the old datadir and create a new for this_version.
 if [ ! -z "$downgrade_detected" ]
 then
-  db_input critical mariadb-server-$this_version/old_data_directory_saved || true
+  db_input critical mariadb-server-10.0/old_data_directory_saved || true
   db_go
   echo "The file $mysql_datadir/debian-$found_version.flag indicated a" 1>&2
   echo "version that cannot automatically be upgraded. Therefore the" 1>&2
