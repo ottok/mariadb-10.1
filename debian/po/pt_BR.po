@@ -1,14 +1,14 @@
 # Debconf translations for mariadb-10.0.
 # This file is distributed under the same license as the mariadb-10.0 package.
-# André Luís Lopes, <andrelop@debian.org>, 2005-2007
-# Adriano Rafael Gomes <adrianorg@arg.eti.br>, 2015
+# André Luís Lopes, <andrelop@debian.org>, 2005-2007.
+# Adriano Rafael Gomes <adrianorg@arg.eti.br>, 2015-2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mariadb-10.0\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
-"POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2015-05-16 18:15-0300\n"
+"POT-Creation-Date: 2016-04-13 11:44+0300\n"
+"PO-Revision-Date: 2016-04-30 16:16-0300\n"
 "Last-Translator: Adriano Rafael Gomes <adrianorg@arg.eti.br>\n"
 "Language-Team: Brazilian Portuguese <debian-l10n-portuguese@lists.debian."
 "org>\n"
@@ -21,7 +21,7 @@ msgstr ""
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid "The old data directory will be saved at new location"
-msgstr ""
+msgstr "O diretório de dados antigo será salvo em novo local"
 
 #. Type: note
 #. Description
@@ -31,6 +31,9 @@ msgid ""
 "indicated a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
+"Um arquivo chamado /var/lib/mysql/debian-*.flag já existe nesse sistema. O "
+"número indicou uma versão de formato binário de banco de dados que não pode "
+"ser atualizada (ou rebaixada) automaticamente."
 
 #. Type: note
 #. Description
@@ -39,6 +42,8 @@ msgid ""
 "Therefore the previous data directory will be renamed to /var/lib/mysql-* "
 "and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
+"Portanto, o diretório de dados anterior será renomeado para /var/lib/mysql-* "
+"e um novo diretório de dados será inicializado em /var/lib/mysql."
 
 #. Type: note
 #. Description
@@ -46,6 +51,8 @@ msgstr ""
 msgid ""
 "Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
+"Por favor, exporte/importe manualmente seus dados (por exemplo, com "
+"mysqldump) se necessário."
 
 #. Type: note
 #. Description
