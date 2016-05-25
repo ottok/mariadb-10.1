@@ -1,5 +1,6 @@
 mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
 
+  [ Otto Kekäläinen ]
   * Revert previous changes tailored for Ubuntu 16.04 compatibility.
   * New upstream release 10.0.25. Includes fixes for the following
     security vulnerabilities:
@@ -19,6 +20,9 @@ mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
   * Updated Brazilian Portuguese translation (Closes: #824644).
   * Updated Turkish translation by Atila KOÇ (Closes: #825802).
   * Add patch to provide passwordless root accounts for test suite.
+
+  [ Vicențiu Ciorbaru ]
+  * Backport upstream MDEV-9479 fix: oqgraph fails to build with boost 1.60
 
  -- Otto Kekäläinen <otto@debian.org>  Sat, 30 Apr 2016 21:00:18 +0300
 

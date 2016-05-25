@@ -14,3 +14,4 @@ mdev-8375-passwordless-root-via-socket-auth.patch
 mdev-8375-built-in-auth-socket.patch
 mdev-8375-passwordless-accounts-for-testsuite.patch
 mdev-9528-mysql_embedded.patch
+mdev-9479-oqgraph-boost.patch
