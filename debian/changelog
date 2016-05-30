@@ -3,7 +3,7 @@ mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
   [ Otto Kekäläinen ]
   * Revert previous changes tailored for Ubuntu 16.04 compatibility.
   * New upstream release 10.0.25. Includes fixes for the following
-    security vulnerabilities:
+    security vulnerabilities (Closes: #823325):
     - CVE-2016-0666
     - CVE-2016-0655
     - CVE-2016-0648
@@ -89,7 +89,7 @@ mariadb-10.0 (10.0.24-2) unstable; urgency=low
 
 mariadb-10.0 (10.0.24-1) unstable; urgency=low
 
-  [Otto Kekäläinen]
+  [ Otto Kekäläinen ]
   * New upstream release 10.0.24
     - Drop auth_socket patches as MDEV-8375 was partially fixed upstream
     - Refresh other patches
@@ -104,7 +104,7 @@ mariadb-10.0 (10.0.24-1) unstable; urgency=low
     - CVE-2016-0640
   * Update filenames in d/copyright
 
-  [Ian Gilfillan]
+  [ Ian Gilfillan ]
   * Add missing mysql_embedded man page
 
  -- Otto Kekäläinen <otto@seravo.fi>  Sat, 20 Feb 2016 14:23:50 +0200
@@ -217,12 +217,12 @@ mariadb-10.0 (10.0.22-2) unstable; urgency=low
 
 mariadb-10.0 (10.0.22-2~exp2) experimental; urgency=low
 
-  [Alexander Barkov]
+  [ Alexander Barkov ]
   * Backport patch from upstream to fix MDEV-9091: mysqld crashes on shutdown
     after running TokuDB tests on Ubuntu
   * Backport patch from upstream to fix MDEV-8692: prefschema test failures
 
-  [Otto Kekäläinen]
+  [ Otto Kekäläinen ]
   * Replace old 'make test' structure with direct call on mysql-test-run and
     parallelize the test suite run in the Debian build.
   * Print in build log env info to help debug builds on different platforms.
