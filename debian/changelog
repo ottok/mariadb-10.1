@@ -17,6 +17,7 @@ mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
   * Updated Russian translation by Yuri Kozlov (Closes: #823422).
   * Updated German translation by Chris Leick (Closes: #824487).
   * Updated Brazilian Portuguese translation (Closes: #824644).
+  * Updated Turkish translation by Atila KOÇ (Closes: #825802).
   * Add patch to provide passwordless root accounts for test suite.
 
  -- Otto Kekäläinen <otto@debian.org>  Sat, 30 Apr 2016 21:00:18 +0300
