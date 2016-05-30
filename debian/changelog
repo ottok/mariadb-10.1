@@ -20,6 +20,7 @@ mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
   * Updated Brazilian Portuguese translation (Closes: #824644).
   * Updated Turkish translation by Atila KOÇ (Closes: #825802).
   * Add patch to provide passwordless root accounts for test suite.
+  * Updated Japanese translation by Takuma Yamada (Closes: #825813).
 
   [ Vicențiu Ciorbaru ]
   * Backport upstream MDEV-9479 fix: oqgraph fails to build with boost 1.60

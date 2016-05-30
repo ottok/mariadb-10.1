@@ -10,35 +10,46 @@
 #         or http://www.debian.org/intl/l10n/po-debconf/README-trans
 #
 #    Developers do not need to manually edit POT or PO files.
-#
+# Hideki Yamane (Debian-JP) <henrich@debian.or.jp>, 2013.
+# Takuma Yamada <tyamada@takumayamada.com>, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mariadb-10.0 10.0.32-1\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2013-09-09 18:48+0900\n"
-"Last-Translator: Hideki Yamane (Debian-JP) <henrich@debian.or.jp>\n"
+"PO-Revision-Date: 2016-05-01 11:27+0900\n"
+"Last-Translator: Takuma Yamada <tyamada@takumayamada.com>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Gtranslator 2.91.6\n"
 
 #. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid "The old data directory will be saved at new location"
-msgstr ""
+msgstr "古いデータディレクトリは、新しい場所に保存されます"
 
 #. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
+#, fuzzy
+#| msgid ""
+#| "A file named /var/lib/mysql/debian-*.flag exists on this system. The "
+#| "number indicated a database binary format version that cannot "
+#| "automatically be upgraded (or downgraded)."
 msgid ""
 "A file named /var/lib/mysql/debian-*.flag exists on this system. The number "
 "indicates a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
+"/var/lib/mysql/debian-*.flag という名前のファイルがこのシステム上に存在しま"
+"す。番号は、自動的にアップグレード (またはダウングレード) することができない"
+"データベースバイナリフォーマットのバージョンを示します。"
 
 #. Type: note
 #. Description
@@ -47,6 +58,8 @@ msgid ""
 "Therefore the previous data directory will be renamed to /var/lib/mysql-* "
 "and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
+"そのため、以前のデータディレクトリは /var/lib/mysql-* にリネームされ、新しい"
+"データディレクトリは /var/lib/mysql に初期化されます。"
 
 #. Type: note
 #. Description
@@ -54,6 +67,8 @@ msgstr ""
 msgid ""
 "Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
+"必要に応じて、(例えば mysqldump で) データを手動でエクスポート/インポートして"
+"ください。"
 
 #. Type: note
 #. Description
