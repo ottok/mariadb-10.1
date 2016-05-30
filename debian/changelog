@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.25-1) unstable; urgency=low
 
   [ Otto Kekäläinen ]
   * Revert previous changes tailored for Ubuntu 16.04 compatibility.
@@ -25,7 +25,7 @@ mariadb-10.0 (10.0.25-1) UNRELEASED; urgency=low
   [ Vicențiu Ciorbaru ]
   * Backport upstream MDEV-9479 fix: oqgraph fails to build with boost 1.60
 
- -- Otto Kekäläinen <otto@debian.org>  Sat, 30 Apr 2016 21:00:18 +0300
+ -- Otto Kekäläinen <otto@debian.org>  Mon, 30 May 2016 22:43:30 +0300
 
 mariadb-10.0 (10.0.24-7) unstable; urgency=low
 
