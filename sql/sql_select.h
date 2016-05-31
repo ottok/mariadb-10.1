@@ -33,7 +33,6 @@
 #include "records.h"                          /* READ_RECORD */
 #include "opt_range.h"                /* SQL_SELECT, QUICK_SELECT_I */
 
-
 /* Values in optimize */
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2
@@ -909,7 +908,7 @@ protected:
   enum enum_reopt_result {
     REOPT_NEW_PLAN, /* there is a new reoptimized plan */
     REOPT_OLD_PLAN, /* no new improved plan can be found, use the old one */
-    REOPT_ERROR,    /* an irrecovarable error occured during reoptimization */
+    REOPT_ERROR,    /* an irrecovarable error occurred during reoptimization */
     REOPT_NONE      /* not yet reoptimized */
   };
 

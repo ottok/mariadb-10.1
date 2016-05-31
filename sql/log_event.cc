@@ -1,6 +1,6 @@
 /*
-   Copyright (c) 2000, 2014, Oracle and/or its affiliates.
-   Copyright (c) 2009, 2014, Monty Program Ab.
+   Copyright (c) 2000, 2015, Oracle and/or its affiliates.
+   Copyright (c) 2009, 2016, MariaDB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1348,9 +1348,9 @@ int Log_event::read_log_event(IO_CACHE* file, String* packet,
     if (packet->append(file, data_len))
     {
       /*
-        Fatal error occured when appending rest of the event
+        Fatal error occurred when appending rest of the event
         to packet, possible failures:
-	1. EOF occured when reading from file, it's really an error
+	1. EOF occurred when reading from file, it's really an error
            as data_len is >=0 there's supposed to be more bytes available.
            file->error will have been set to number of bytes left to read
         2. Read was interrupted, file->error would normally be set to -1
@@ -3409,7 +3409,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
   
   slave_proxy_id= thread_id = uint4korr(buf + Q_THREAD_ID_OFFSET);
   exec_time = uint4korr(buf + Q_EXEC_TIME_OFFSET);
-  db_len = (uint)buf[Q_DB_LEN_OFFSET]; // TODO: add a check of all *_len vars
+  db_len = (uchar)buf[Q_DB_LEN_OFFSET]; // TODO: add a check of all *_len vars
   error_code = uint2korr(buf + Q_ERR_CODE_OFFSET);
 
   /*
@@ -11049,8 +11049,8 @@ bool Table_map_log_event::write_data_body(IO_CACHE *file)
   DBUG_ASSERT(m_dbnam != NULL);
   DBUG_ASSERT(m_tblnam != NULL);
   /* We use only one byte per length for storage in event: */
-  DBUG_ASSERT(m_dblen < 128);
-  DBUG_ASSERT(m_tbllen < 128);
+  DBUG_ASSERT(m_dblen <= MY_MIN(NAME_LEN, 255));
+  DBUG_ASSERT(m_tbllen <= MY_MIN(NAME_LEN, 255));
 
   uchar const dbuf[]= { (uchar) m_dblen };
   uchar const tbuf[]= { (uchar) m_tbllen };
@@ -11394,7 +11394,10 @@ Rows_log_event::write_row(rpl_group_info *rgi,
 
   /* unpack row into table->record[0] */
   if ((error= unpack_current_row(rgi)))
+  {
+    table->file->print_error(error, MYF(0));
     DBUG_RETURN(error);
+  }
 
   if (m_curr_row == m_rows_buf && !invoke_triggers)
   {
@@ -12453,8 +12456,8 @@ Update_rows_log_event::do_exec_row(rpl_group_info *rgi)
       We need to read the second image in the event of error to be
       able to skip to the next pair of updates
     */
-    m_curr_row= m_curr_row_end;
-    unpack_current_row(rgi);
+    if ((m_curr_row= m_curr_row_end))
+      unpack_current_row(rgi);
     return error;
   }
 
