@@ -22,10 +22,9 @@ Bug: https://jira.mariadb.org/browse/MDEV-9528
 +Use: For a full list of available options, see the mysql man page
 +.PP
 +For more information, please refer to the MariaDB Knowledge Base, available online at https://mariadb.com/kb/
-
 --- a/man/CMakeLists.txt
 +++ b/man/CMakeLists.txt
-@@ -26,7 +26,7 @@ SET(MAN1_SERVER innochecksum.1 my_print_defaults.1 myisam_ftdump.1 myisamchk.1
+@@ -26,7 +26,7 @@ SET(MAN1_SERVER innochecksum.1 my_print_
  SET(MAN8_SERVER mysqld.8)
  SET(MAN1_CLIENT msql2mysql.1 mysql.1 mysql_find_rows.1 mysql_waitpid.1
  		mysqlaccess.1 mysqladmin.1 mysqlbinlog.1 mysqlcheck.1
