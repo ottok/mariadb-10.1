@@ -1,5 +1,5 @@
 /* Copyright (c) 2000, 2015, Oracle and/or its affiliates.
-   Copyright (c) 2009, 2015, MariaDB
+   Copyright (c) 2009, 2016, MariaDB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1290,20 +1290,17 @@ static const char *require_quotes(const char *name, uint name_length)
 }
 
 
-/*
-  Quote the given identifier if needed and append it to the target string.
-  If the given identifier is empty, it will be quoted.
+/**
+  Convert and quote the given identifier if needed and append it to the
+  target string. If the given identifier is empty, it will be quoted.
+  @thd                         thread handler
+  @packet                      target string
+  @name                        the identifier to be appended
+  @length                      length of the appending identifier
 
-  SYNOPSIS
-  append_identifier()
-  thd                   thread handler
-  packet                target string
-  name                  the identifier to be appended
-  name_length           length of the appending identifier
-
-  RETURN VALUES
-    true                Error
-    false               Ok
+  @return
+    0             success
+    1             error
 */
 
 bool
@@ -4451,7 +4448,7 @@ uint get_table_open_method(TABLE_LIST *tables,
 
    @retval FALSE  No error, if lock was obtained TABLE_LIST::mdl_request::ticket
                   is set to non-NULL value.
-   @retval TRUE   Some error occured (probably thread was killed).
+   @retval TRUE   Some error occurred (probably thread was killed).
 */
 
 static bool
@@ -4559,7 +4556,7 @@ static int fill_schema_table_from_frm(THD *thd, TABLE_LIST *tables,
   if (try_acquire_high_prio_shared_mdl_lock(thd, &table_list, can_deadlock))
   {
     /*
-      Some error occured (most probably we have been killed while
+      Some error occurred (most probably we have been killed while
       waiting for conflicting locks to go away), let the caller to
       handle the situation.
     */

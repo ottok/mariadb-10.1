@@ -2280,9 +2280,6 @@ void *spider_bg_conn_action(
   if (!(trx = spider_get_trx(thd, FALSE, &error_num)))
   {
     delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-    set_current_thd(NULL);
-#endif
     pthread_mutex_lock(&conn->bg_conn_sync_mutex);
     pthread_cond_signal(&conn->bg_conn_sync_cond);
     pthread_mutex_unlock(&conn->bg_conn_sync_mutex);
@@ -2346,9 +2343,6 @@ void *spider_bg_conn_action(
       spider_free_trx(trx, TRUE);
       /* lex_end(thd->lex); */
       delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-      set_current_thd(NULL);
-#endif
       pthread_mutex_lock(&conn->bg_conn_sync_mutex);
       pthread_cond_signal(&conn->bg_conn_sync_cond);
       pthread_mutex_unlock(&conn->bg_conn_mutex);
@@ -2712,7 +2706,7 @@ void *spider_bg_sts_action(
   SPIDER_TRX *trx;
   int error_num = 0, roop_count;
   ha_spider spider;
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
   int *need_mons;
   SPIDER_CONN **conns;
   uint *conn_link_idx;
@@ -2739,7 +2733,7 @@ void *spider_bg_sts_action(
   my_thread_init();
   DBUG_ENTER("spider_bg_sts_action");
   /* init start */
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
 #if defined(HS_HAS_SQLCOM) && defined(HAVE_HANDLERSOCKET)
   if (!(need_mons = (int *)
     spider_bulk_malloc(spider_current_trx, 21, MYF(MY_WME),
@@ -2783,7 +2777,7 @@ void *spider_bg_sts_action(
     share->bg_sts_init = FALSE;
     pthread_mutex_unlock(&share->sts_mutex);
     my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
     spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
     DBUG_RETURN(NULL);
@@ -2799,9 +2793,6 @@ void *spider_bg_sts_action(
   if (!(trx = spider_get_trx(thd, FALSE, &error_num)))
   {
     delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-    set_current_thd(NULL);
-#endif
     share->bg_sts_thd_wait = FALSE;
     share->bg_sts_kill = FALSE;
     share->bg_sts_init = FALSE;
@@ -2810,7 +2801,7 @@ void *spider_bg_sts_action(
     my_pthread_setspecific_ptr(THR_THD, NULL);
 #endif
     my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
     spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
     DBUG_RETURN(NULL);
@@ -2867,9 +2858,6 @@ void *spider_bg_sts_action(
     }
     spider_free_trx(trx, TRUE);
     delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-    set_current_thd(NULL);
-#endif
     share->bg_sts_thd_wait = FALSE;
     share->bg_sts_kill = FALSE;
     share->bg_sts_init = FALSE;
@@ -2878,7 +2866,7 @@ void *spider_bg_sts_action(
     my_pthread_setspecific_ptr(THR_THD, NULL);
 #endif
     my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
     spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
     DBUG_RETURN(NULL);
@@ -2903,16 +2891,13 @@ void *spider_bg_sts_action(
       }
       spider_free_trx(trx, TRUE);
       delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-      set_current_thd(NULL);
-#endif
       pthread_cond_signal(&share->bg_sts_sync_cond);
       pthread_mutex_unlock(&share->sts_mutex);
 #if !defined(MYSQL_DYNAMIC_PLUGIN) || !defined(_WIN32)
       my_pthread_setspecific_ptr(THR_THD, NULL);
 #endif
       my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
       spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
       DBUG_RETURN(NULL);
@@ -3103,7 +3088,7 @@ void *spider_bg_crd_action(
   int error_num = 0, roop_count;
   ha_spider spider;
   TABLE table;
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
   int *need_mons;
   SPIDER_CONN **conns;
   uint *conn_link_idx;
@@ -3130,7 +3115,7 @@ void *spider_bg_crd_action(
   my_thread_init();
   DBUG_ENTER("spider_bg_crd_action");
   /* init start */
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
 #if defined(HS_HAS_SQLCOM) && defined(HAVE_HANDLERSOCKET)
   if (!(need_mons = (int *)
     spider_bulk_malloc(spider_current_trx, 22, MYF(MY_WME),
@@ -3174,7 +3159,7 @@ void *spider_bg_crd_action(
     share->bg_crd_init = FALSE;
     pthread_mutex_unlock(&share->crd_mutex);
     my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
     spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
     DBUG_RETURN(NULL);
@@ -3190,9 +3175,6 @@ void *spider_bg_crd_action(
   if (!(trx = spider_get_trx(thd, FALSE, &error_num)))
   {
     delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-    set_current_thd(NULL);
-#endif
     share->bg_crd_thd_wait = FALSE;
     share->bg_crd_kill = FALSE;
     share->bg_crd_init = FALSE;
@@ -3201,7 +3183,7 @@ void *spider_bg_crd_action(
     my_pthread_setspecific_ptr(THR_THD, NULL);
 #endif
     my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
     spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
     DBUG_RETURN(NULL);
@@ -3262,9 +3244,6 @@ void *spider_bg_crd_action(
     }
     spider_free_trx(trx, TRUE);
     delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-    set_current_thd(NULL);
-#endif
     share->bg_crd_thd_wait = FALSE;
     share->bg_crd_kill = FALSE;
     share->bg_crd_init = FALSE;
@@ -3273,7 +3252,7 @@ void *spider_bg_crd_action(
     my_pthread_setspecific_ptr(THR_THD, NULL);
 #endif
     my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
     spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
     DBUG_RETURN(NULL);
@@ -3298,16 +3277,13 @@ void *spider_bg_crd_action(
       }
       spider_free_trx(trx, TRUE);
       delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-      set_current_thd(NULL);
-#endif
       pthread_cond_signal(&share->bg_crd_sync_cond);
       pthread_mutex_unlock(&share->crd_mutex);
 #if !defined(MYSQL_DYNAMIC_PLUGIN) || !defined(_WIN32)
       my_pthread_setspecific_ptr(THR_THD, NULL);
 #endif
       my_thread_end();
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
       spider_free(NULL, need_mons, MYF(MY_WME));
 #endif
       DBUG_RETURN(NULL);
@@ -3441,7 +3417,7 @@ int spider_create_mon_threads(
     {
       char link_idx_str[SPIDER_SQL_INT_LEN];
       int link_idx_str_length;
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
       spider_string conv_name_str(share->table_name_length +
         SPIDER_SQL_INT_LEN + 1);
       conv_name_str.set_charset(system_charset_info);
@@ -3688,9 +3664,6 @@ void *spider_bg_mon_action(
   if (!(trx = spider_get_trx(thd, FALSE, &error_num)))
   {
     delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-    set_current_thd(NULL);
-#endif
     share->bg_mon_kill = FALSE;
     share->bg_mon_init = FALSE;
     pthread_cond_signal(&share->bg_mon_conds[link_idx]);
@@ -3734,9 +3707,6 @@ void *spider_bg_mon_action(
       pthread_mutex_unlock(&share->bg_mon_mutexes[link_idx]);
       spider_free_trx(trx, TRUE);
       delete thd;
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 100000
-      set_current_thd(NULL);
-#endif
 #if !defined(MYSQL_DYNAMIC_PLUGIN) || !defined(_WIN32)
       my_pthread_setspecific_ptr(THR_THD, NULL);
 #endif
@@ -3778,7 +3748,7 @@ int spider_conn_first_link_idx(
   int roop_count, active_links = 0;
   longlong balance_total = 0, balance_val;
   double rand_val;
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
   int *link_idxs, link_idx;
   long *balances;
 #else
@@ -3786,7 +3756,7 @@ int spider_conn_first_link_idx(
   long balances[link_count];
 #endif
   DBUG_ENTER("spider_conn_first_link_idx");
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
   if (!(link_idxs = (int *)
     spider_bulk_malloc(spider_current_trx, 24, MYF(MY_WME),
       &link_idxs, sizeof(int) * link_count,
@@ -3812,7 +3782,7 @@ int spider_conn_first_link_idx(
   if (active_links == 0)
   {
     DBUG_PRINT("info",("spider all links are failed"));
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
     spider_free(spider_current_trx, link_idxs, MYF(MY_WME));
 #endif
     DBUG_RETURN(-1);
@@ -3841,7 +3811,7 @@ int spider_conn_first_link_idx(
   }
 
   DBUG_PRINT("info",("spider first link_idx=%d", link_idxs[roop_count]));
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__SUNPRO_CC)
   link_idx = link_idxs[roop_count];
   spider_free(spider_current_trx, link_idxs, MYF(MY_WME));
   DBUG_RETURN(link_idx);

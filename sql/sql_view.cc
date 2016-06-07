@@ -245,7 +245,7 @@ fill_defined_view_parts (THD *thd, TABLE_LIST *view)
   @param mode VIEW_CREATE_NEW, VIEW_ALTER, VIEW_CREATE_OR_REPLACE
 
   @retval FALSE Operation was a success.
-  @retval TRUE An error occured.
+  @retval TRUE An error occurred.
 */
 
 bool create_view_precheck(THD *thd, TABLE_LIST *tables, TABLE_LIST *view,
@@ -388,7 +388,7 @@ bool create_view_precheck(THD *thd, TABLE_LIST *tables, TABLE_LIST *view,
   @note This function handles both create and alter view commands.
 
   @retval FALSE Operation was a success.
-  @retval TRUE An error occured.
+  @retval TRUE An error occurred.
 */
 
 bool mysql_create_view(THD *thd, TABLE_LIST *views,
@@ -1496,8 +1496,7 @@ bool mysql_make_view(THD *thd, File_parser *parser, TABLE_LIST *table,
 
       /* Fields in this view can be used in upper select in case of merge.  */
       if (table->select_lex)
-        table->select_lex->select_n_where_fields+=
-          lex->select_lex.select_n_where_fields;
+        table->select_lex->add_where_field(&lex->select_lex);
     }
     /*
       This method has a dependency on the proper lock type being set,

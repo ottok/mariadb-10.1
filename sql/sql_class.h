@@ -1,6 +1,6 @@
 /*
-   Copyright (c) 2000, 2015, Oracle and/or its affiliates.
-   Copyright (c) 2009, 2015, MariaDB
+   Copyright (c) 2000, 2016, Oracle and/or its affiliates.
+   Copyright (c) 2009, 2016, MariaDB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -656,6 +656,7 @@ typedef struct system_status_var
 {
   ulong com_other;
   ulong com_stat[(uint) SQLCOM_END];
+  ulong com_register_slave;
   ulong created_tmp_disk_tables_;
   ulong created_tmp_tables_;
   ulong ha_commit_count;
@@ -2098,6 +2099,18 @@ public:
     DBUG_ASSERT(current_stmt_binlog_format == BINLOG_FORMAT_STMT ||
                 current_stmt_binlog_format == BINLOG_FORMAT_ROW);
     return current_stmt_binlog_format == BINLOG_FORMAT_ROW;
+  }
+  /**
+    Determine if binlogging is disabled for this session
+    @retval 0 if the current statement binlogging is disabled
+              (could be because of binlog closed/binlog option
+               is set to false).
+    @retval 1 if the current statement will be binlogged
+  */
+  inline bool is_current_stmt_binlog_disabled() const
+  {
+    return (!(variables.option_bits & OPTION_BIN_LOG) ||
+            !mysql_bin_log.is_open());
   }
 
   enum binlog_filter_state
@@ -4173,10 +4186,14 @@ public:
 #define TMP_ENGINE_COLUMNDEF MARIA_COLUMNDEF
 #define TMP_ENGINE_HTON maria_hton
 #define TMP_ENGINE_NAME "Aria"
+inline uint tmp_table_max_key_length() { return maria_max_key_length(); }
+inline uint tmp_table_max_key_parts() { return maria_max_key_segments(); }
 #else
 #define TMP_ENGINE_COLUMNDEF MI_COLUMNDEF
 #define TMP_ENGINE_HTON myisam_hton
 #define TMP_ENGINE_NAME "MyISAM"
+inline uint tmp_table_max_key_length() { return MI_MAX_KEY_LENGTH; }
+inline uint tmp_table_max_key_parts() { return MI_MAX_KEY_SEG; }
 #endif
 
 /*
