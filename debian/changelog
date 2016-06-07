@@ -1,8 +1,33 @@
+mariadb-10.0 (10.0.25-0ubuntu0.15.10.1) wily-security; urgency=low
+
+  * SECURITY UPDATE: New upstream release 10.0.25. Includes fixes for the
+    following security vulnerabilities (LP: #1589302):
+    - CVE-2016-0666
+    - CVE-2016-0655
+    - CVE-2016-0648
+    - CVE-2016-0647
+    - CVE-2016-0643
+  * Includes fixes done in 10.0.24 for the following security vulnerabilities:
+    - CVE-2016-0668
+    - CVE-2016-0650
+    - CVE-2016-0649
+    - CVE-2016-0646
+    - CVE-2016-0644
+    - CVE-2016-0641
+    - CVE-2016-0640
+  * Updated old changelog entries to include new CVE identifiers.
+  * Upstream included changes to logrotate script that supports systems that
+    has multiple mysqld processes running.
+  * Upstream included bugfix to mariadb-server-10.0 postinstall.
+
+ -- Otto Kekäläinen <otto@debian.org>  Tue, 07 Jun 2016 23:30:35 +0300
+
 mariadb-10.0 (10.0.23-0ubuntu0.15.10.1) wily-security; urgency=low
 
   * SECURITY UPDATE: Update to 10.0.23 fixes security issues (LP: #1538315):
     - CVE-2016-2047
-
+    - CVE-2016-0651
+    - CVE-2016-0642
     - CVE-2016-0616
     - CVE-2016-0609
     - CVE-2016-0608
