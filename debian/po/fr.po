@@ -1,16 +1,17 @@
 # Translation of mysql-dfsg-* debconf templates to French
 # Copyright (C) 2004-2009 Debian French l10n team <debian-l10n-french@lists.debian.org>
 # This file is distributed under the same license as the mysql-dfsg-* packages.
-#
+# 
 # Translators:
 # Christian Perrier <bubulle@debian.org>, 2004, 2006, 2007, 2009, 2013.
+# Baptiste Jammet <baptiste@mailoo.org>, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2013-12-25 12:47+0100\n"
-"Last-Translator: Christian Perrier <bubulle@debian.org>\n"
+"PO-Revision-Date: 2016-06-05 22:44+0200\n"
+"Last-Translator: Baptiste Jammet <baptiste@mailoo.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -24,16 +25,24 @@ msgstr ""
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid "The old data directory will be saved at new location"
-msgstr ""
+msgstr "L'ancien répertoire de données sera sauvegardé à un nouvel emplacement"
 
 #. Type: note
 #. Description
 #: ../mariadb-server-10.0.templates:2001
+#, fuzzy
+#| msgid ""
+#| "A file named /var/lib/mysql/debian-*.flag exists on this system. The "
+#| "number indicated a database binary format version that cannot "
+#| "automatically be upgraded (or downgraded)."
 msgid ""
 "A file named /var/lib/mysql/debian-*.flag exists on this system. The number "
 "indicates a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
+"Un fichier nommé /var/lib/mysql/debian-*.flag existe déjà sur ce système. Le "
+"numéro indique une version de base de données au format binaire qui ne peut "
+"pas être mise à niveau (ou rétrogradée) automatiquement."
 
 #. Type: note
 #. Description
@@ -42,6 +51,8 @@ msgid ""
 "Therefore the previous data directory will be renamed to /var/lib/mysql-* "
 "and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
+"L'ancien répertoire sera renommé en /var/lib/mysql-* et un nouveau "
+"répertoire de données sera initialisé à l'emplacement /var/lib/mysql."
 
 #. Type: note
 #. Description
@@ -49,6 +60,8 @@ msgstr ""
 msgid ""
 "Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
+"Veuillez exporter puis importer vos données manuellement si besoin (par "
+"exemple avec mysqldump)."
 
 #. Type: note
 #. Description
