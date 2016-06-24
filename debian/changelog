@@ -1,3 +1,11 @@
+mariadb-10.0 (10.0.26-1) unstable; urgency=low
+
+  * Updated French translation by Baptiste Jammet (Closes: #826879)
+  * New upstream release 10.0.26
+  * Refresh patches after 10.0.26 import
+
+ -- Otto Kekäläinen <otto@debian.org>  Fri, 24 Jun 2016 17:05:44 +0300
+
 mariadb-10.0 (10.0.25-1) unstable; urgency=low
 
   [ Otto Kekäläinen ]
