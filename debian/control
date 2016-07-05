@@ -8,6 +8,7 @@ Build-Depends: bison,
                cmake,
                debhelper (>= 9),
                dh-apparmor,
+               dh-exec,
                gdb,
                libaio-dev [linux-any],
                libboost-dev,
@@ -89,6 +90,26 @@ Description: MariaDB database development files
  ease of use.
  .
  This package includes development libraries and header files.
+
+Package: libmariadbclient-dev-compat
+Architecture: any
+Section: libdevel
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libmariadbclient-dev,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Conflicts: libmysqlclient-dev
+Description: MariaDB database development files (libmysqlclient compatibility)
+ MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
+ server. SQL (Structured Query Language) is the most popular database query
+ language in the world. The main goals of MariaDB are speed, robustness and
+ ease of use.
+ .
+ This package provides a version of libmysqlclient.so to allow
+ packages to link using -lmysqlclient but end up with a link against
+ libmariadbclient instead. This allows packages designed for
+ MySQL to link against MariaDB's client library instead, while still permitting
+ MySQL's client library to co-exist on users' systems.
 
 Package: mariadb-common
 Architecture: all
