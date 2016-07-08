@@ -44,7 +44,7 @@ defined in debian/control is missing. Simply install those packages and run the
 build again.
 
 If the build fails, the easiest way to clean up before a new run is
-  git clean -f -d && git reset --hard
+  git clean -fdx && git reset --hard
 
 
 ### Build options
@@ -82,7 +82,13 @@ to open the pull request.
 
 ### Notes about how to make changes in the proper way
 
-Please use gitk or similar tool to browse the previous changes. Try to follow
+First consider submitting your patch upstream. Upstream MariaDB makes frequent
+maintenance releases and any fix done upstream will therefore be included in
+Debian relatively quickly. You can send email to the developers mailing list
+or open a pull request at https://github.com/MariaDB/server.
+
+Follow these instructions is your fix is about packaging in Debian specifically.
+Start by using gitk or similar tool to browse the previous changes. Try to follow
 similar pattern in your new changes.
 
 Keep in mind that all changes must done only for files residing in the debian/

@@ -82,7 +82,7 @@ done
 # If an upgrade is detected, proceed with it automatically without
 # requiring any user interaction.
 #
-# However, if the user tempts to downgrade, warn about the incompatibility.
+# However, if the user attempts to downgrade, warn about the incompatibility.
 # Downgrade is detected if the flag version is bigger than $this_version
 # (e.g. 10.1 > 10.0) or the flag version is smaller than 10.0 but bigger
 # than $max_upgradeable_version.
