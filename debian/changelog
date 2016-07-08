@@ -1,3 +1,17 @@
+mariadb-10.0 (10.0.26-2) UNRELEASED; urgency=low
+
+  [ Axel Beckert ]
+  * Extend mariadb-server to purge gracefully if datadir is a mountpoint (Closes: #829491)
+
+  [ Ian Gilfillan ]
+  * Add a patch to provide a man page for tokuftdump
+
+  [ Otto Kekäläinen ]
+  * Remove mariadb-plugin-cassandra
+  * Make libdbd-mysql-perl and friends Recommends instead of strict Depends
+
+ -- Otto Kekäläinen <otto@debian.org>  Fri, 08 Jul 2016 11:29:13 +0300
+
 mariadb-10.0 (10.0.26-1) unstable; urgency=low
 
   * Updated French translation by Baptiste Jammet (Closes: #826879)
