@@ -1,16 +1,30 @@
-mariadb-10.0 (10.0.26-2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.26-2~exp1) experimental; urgency=low
 
   [ Axel Beckert ]
-  * Extend mariadb-server to purge gracefully if datadir is a mountpoint (Closes: #829491)
+  * Extend mariadb-server to purge gracefully if datadir is a mountpoint 
+    (Closes: #829491)
 
   [ Ian Gilfillan ]
   * Add a patch to provide a man page for tokuftdump
 
+  [ Robie Basak ]
+  * Re-add libmariadbclient18 and libmariadbclient-dev
+  * Add libmariadbclient-dev-compat package
+
   [ Otto Kekäläinen ]
   * Remove mariadb-plugin-cassandra
   * Make libdbd-mysql-perl and friends Recommends instead of strict Depends
+  * Documentation and spelling fixes
+  * Remove mysqlbug binary as it is not used for MariaDB
+  * Update default config files with more secure TLS examples
+  * Add libmariadbclient-dev as dependency for libmariadbd-dev
+  * Replace hacky sed of libmysqlclient->libmariadbclient with proper patch
+  * Update symbols file to match newest libmariadbclient18
+  * Add patch to fix regression in ppc64el builds regarding ATOMIC_BUILTINS
+  * Upload to experimental to minimize effects of possible regressions
+    with new default-mysql-* and mysql-common source package scheme.
 
- -- Otto Kekäläinen <otto@debian.org>  Fri, 08 Jul 2016 11:29:13 +0300
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 09 Jul 2016 09:52:42 +0300
 
 mariadb-10.0 (10.0.26-1) unstable; urgency=low
 
