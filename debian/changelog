@@ -1,7 +1,17 @@
+mariadb-10.0 (10.0.26-2~exp2) experimental; urgency=low
+
+  [ Paul Gevers ]
+  * Add autopkg tests for MariaDB 10.0 (Closes: #809022)
+
+  [ Otto Kekäläinen ]
+  * d/control: libmariadbclient18 must be 'Multi-Arch: same'
+
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 09 Jul 2016 16:00:00 +0300
+
 mariadb-10.0 (10.0.26-2~exp1) experimental; urgency=low
 
   [ Axel Beckert ]
-  * Extend mariadb-server to purge gracefully if datadir is a mountpoint 
+  * Extend mariadb-server to purge gracefully if datadir is a mountpoint
     (Closes: #829491)
 
   [ Ian Gilfillan ]
