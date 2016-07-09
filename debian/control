@@ -29,6 +29,7 @@ Standards-Version: 3.9.8
 Homepage: http://mariadb.org/
 Vcs-Git: git://anonscm.debian.org/pkg-mysql/mariadb-10.0.git
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-mysql/mariadb-10.0.git/
+Testsuite: autopkgtest
 
 Package: libmariadbd18
 Architecture: any
