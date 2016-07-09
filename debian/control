@@ -50,7 +50,7 @@ Section: libs
 Architecture: any
 Depends: mariadb-common, ${misc:Depends}, ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Multi-Arch: no
+Multi-Arch: same
 Description: MariaDB database client library
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
