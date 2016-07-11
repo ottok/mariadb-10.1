@@ -2,14 +2,14 @@
 # Copyright (C) 2014 mariadb-10.0 og nedenstående oversættere.
 # This file is distributed under the same license as the mariadb-10.0 package.
 # Claus Hindsgaul <claus.hindsgaul@gmail.com>, 2005, 2006, 2007.
-# Joe Hansen <joedalton2@yahoo.dk>, 2014.
+# Joe Hansen <joedalton2@yahoo.dk>, 2014, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mariadb-10.0\n"
 "Report-Msgid-Bugs-To: mariadb-10.0@packages.debian.org\n"
 "POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2014-02-22 22:41+0200\n"
+"PO-Revision-Date: 2016-07-09 22:41+0200\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
 "Language-Team: Danish <debian-l10n-danish@lists.debian.org>\n"
 "Language: da\n"
@@ -21,7 +21,7 @@ msgstr ""
 #. Description
 #: ../mariadb-server-10.0.templates:2001
 msgid "The old data directory will be saved at new location"
-msgstr ""
+msgstr "Den gamle datamappe vil blive gemt på en ny placering"
 
 #. Type: note
 #. Description
@@ -31,6 +31,9 @@ msgid ""
 "indicates a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
+"En fil navngivet /var/lib/msyql/debian-*.flag findes på dette system. "
+"Nummeret antyder en databaseversion i binært format, som ikke automatisk "
+"kan opgraderes (eller nedgraderes)."
 
 #. Type: note
 #. Description
@@ -39,6 +42,8 @@ msgid ""
 "Therefore the previous data directory will be renamed to /var/lib/mysql-* "
 "and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
+"Derfor vil den tidligere datamappe blive omdøbt til /var/lib/mysql-* "
+"og en ny datamappe vil blive initialiseret i /var/lib/msyql."
 
 #. Type: note
 #. Description
@@ -46,6 +51,8 @@ msgstr ""
 msgid ""
 "Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
+"Eksporter/importer venligst manuelt dine data (f.eks. med mysqldump) hvis "
+"krævet."
 
 #. Type: note
 #. Description
@@ -101,90 +108,3 @@ msgstr ""
 "eller hvis en anden mariadb-server-pakke allerede benytter den, bør dataene "
 "bevares."
 
-#~ msgid "A file named /var/lib/mysql/debian-*.flag exists on this system."
-#~ msgstr ""
-#~ "Der er en fil med navnet /var/lib/mysql/debian-*.flag på dette system."
-
-#~ msgid "Really proceed with downgrade?"
-#~ msgstr "Ønsker du virkelig at fortsætte nedgraderingen?"
-
-#~ msgid ""
-#~ "Such a file is an indication that a mariadb-server package with a higher "
-#~ "version has been installed previously."
-#~ msgstr ""
-#~ "Sådan en fil tyder på, at der tidligere har været installeret en højere "
-#~ "version af pakken mariadb-server."
-
-#~ msgid ""
-#~ "There is no guarantee that the version you're currently installing will "
-#~ "be able to use the current databases."
-#~ msgstr ""
-#~ "Det kan ikke garanteres, at den version, du er ved at installere, kan "
-#~ "benytte data fra de eksisterende databaser."
-
-#~ msgid "Really migrate to MariaDB?"
-#~ msgstr "Migrer til MariaDB?"
-
-#~ msgid ""
-#~ "MariaDB is a drop-in replacement for MySQL. It will use your current "
-#~ "configuration file (my.cnf) and current databases."
-#~ msgstr ""
-#~ "MariaDB er en direkte erstatning for MySQL. Den vil bruge din nuværende "
-#~ "konfigurationsfil (my.cnf) og nuværende databaser."
-
-#~ msgid ""
-#~ "Note that MariaDB has some enhanced features, which do not exist in MySQL "
-#~ "and thus migration back to MySQL might not always work, at least not as "
-#~ "automatically as migrating from MySQL to MariaDB."
-#~ msgstr ""
-#~ "Bemærk at MariaDB har nogle forbedrede funktioner, som ikke findes i "
-#~ "MySQL og migrering tilbage til MySQL vil derfor ikke altid fungere, i det "
-#~ "mindste ikke ligeså automatisk som at migrere fra MySQL til MariaDB."
-
-#~ msgid "Unable to set password for the MariaDB \"root\" user"
-#~ msgstr "Kunne ikke sætte adgangskoden for MariaDB's »root«-bruger"
-
-#~ msgid ""
-#~ "An error occurred while setting the password for the MariaDB "
-#~ "administrative user. This may have happened because the account already "
-#~ "has a password, or because of a communication problem with the MariaDB "
-#~ "server."
-#~ msgstr ""
-#~ "Der opstod en fejl, da adgangskoden for MariaDB's administrationsbruger "
-#~ "blev forsøgt ændret. Dette kan være sket, fordi brugeren allerede har en "
-#~ "adgangskode, eller fordi der var problemer med at kommunikere med MariaDB-"
-#~ "serveren."
-
-#~ msgid ""
-#~ "You should check the account's password after the package installation."
-#~ msgstr "Du bør kontrollere kontoens adgangskode efter pakkeinstallationen."
-
-#~ msgid ""
-#~ "Please read the /usr/share/doc/mariadb-server-10.0/README.Debian file for "
-#~ "more information."
-#~ msgstr ""
-#~ "Se filen /usr/share/doc/mariadb-server-10.0/README.Debian for yderligere "
-#~ "information."
-
-#~ msgid "New password for the MariaDB \"root\" user:"
-#~ msgstr "Ny adgangskode for MariaDB's »root«-bruger:"
-
-#~ msgid ""
-#~ "While not mandatory, it is highly recommended that you set a password for "
-#~ "the MariaDB administrative \"root\" user."
-#~ msgstr ""
-#~ "Selvom det ikke kræves, anbefales det kraftigt, at du sætter en "
-#~ "adgangskode for MariaDB's administrationsbruger »root«."
-
-#~ msgid "If this field is left blank, the password will not be changed."
-#~ msgstr ""
-#~ "Hvis du lader dette felt stå tomt, vil adgangskoden ikke blive ændret."
-
-#~ msgid "Repeat password for the MariaDB \"root\" user:"
-#~ msgstr "Gentag adgangskode for MariaDB's »root«-bruger:"
-
-#~ msgid "Password input error"
-#~ msgstr "Indtastningsfejl for adgangskode"
-
-#~ msgid "The two passwords you entered were not the same. Please try again."
-#~ msgstr "De to adgangskoder du indtastede var ikke ens. Prøv igen."
