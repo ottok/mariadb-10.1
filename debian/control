@@ -100,7 +100,7 @@ Architecture: any
 Section: libdevel
 Pre-Depends: ${misc:Pre-Depends}
 Depends: libmariadbclient-dev, ${misc:Depends}, ${shlibs:Depends}
-Conflicts: libmysqlclient-dev
+Conflicts: libmysqlclient-dev, libmariadb-dev-compat
 Description: MariaDB database development files (libmysqlclient compatibility)
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
