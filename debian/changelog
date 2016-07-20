@@ -1,8 +1,15 @@
-mariadb-10.0 (10.0.26-2~exp3) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.26-2~exp3) experimental; urgency=low
 
-  * New changelog entry for the next revision
+  [ Otto Kekäläinen ]
+  * Updated Danish translation by Joe Hansen (Closes: #830592)
+  * Make libmariadbclient-dev-compat conflict with libmariadb-dev-compat 
+    (Closes: #831229)
 
- -- Otto Kekäläinen <otto@debian.org>  Mon, 11 Jul 2016 00:01:31 +0300
+  [ Vicențiu Ciorbaru ]
+  * Add patch to correctly revert changes from 10.0.26 that caused 
+    build failure regression on PPC64el
+
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 20 Jul 2016 23:01:17 +0300
 
 mariadb-10.0 (10.0.26-2~exp2) experimental; urgency=low
 
