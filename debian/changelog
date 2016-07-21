@@ -52,11 +52,14 @@ mariadb-10.0 (10.0.26-2~exp1) experimental; urgency=low
 mariadb-10.0 (10.0.26-1) unstable; urgency=low
 
   * Updated French translation by Baptiste Jammet (Closes: #826879)
-  * New upstream release 10.0.26
+  * New upstream release 10.0.26. Includes fixes for the following
+    security vulnerabilities:
+    - CVE-2016-5440
+    - CVE-2016-3615
+    - CVE-2016-3521
+    - CVE-2016-3477
+  * Updated old changelog entries to include new CVE identifiers.
   * Refresh patches after 10.0.26 import
-
-  [ Vicențiu Ciorbaru ]
-  * Revert innodb and xtradb PowerPC synchronization fix from upstream 10.0.26
 
  -- Otto Kekäläinen <otto@debian.org>  Fri, 24 Jun 2016 17:05:44 +0300
 
@@ -71,6 +74,9 @@ mariadb-10.0 (10.0.25-1) unstable; urgency=low
     - CVE-2016-0648
     - CVE-2016-0647
     - CVE-2016-0643
+    - CVE-2016-5444
+    - CVE-2016-3459
+    - CVE-2016-3452
   * Updated old changelog entries to include new CVE identifiers.
   * Upstream included changes to logrotate script that supports systems that
     has multiple mysqld processes running (Closes: #810968).
@@ -306,6 +312,7 @@ mariadb-10.0 (10.0.22-1) unstable; urgency=low
   * New upstream release. Includes fixes for the following security
     vulnerabilities (Closes: #802874):
     - CVE-2016-0610
+    - CVE-2016-3471
     - CVE-2015-7744
     - CVE-2015-4802
     - CVE-2015-4807
