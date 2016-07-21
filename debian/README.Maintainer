@@ -87,8 +87,8 @@ Enter git repository path and apply new sources
   cd mariadb-10.0
   git-import-orig --pristine-tar ../mariadb-10.0.14.tar.gz
 
-Generate new debian/changelog entry
-  dch -v 10.0.14-1 -D unstable
+Generate new debian/changelog entry automatically with git-dch
+  git-dch -avR
 
 Manually merge what needs to be done
 

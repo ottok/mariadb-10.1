@@ -96,7 +96,7 @@ subdirectory. If you need to create changes outside the debian/ directory,
 then you need to create a patch file using the same pattern as the patches
 found in debian/patches and activated by a line in debian/patches/series
 
-Whatever you change is, you should bundle in you commit also a short description
-in the file at debian/changelog
+Do not bundle in you commit any changes to debian/changelog. The correct changelog
+entries will be created later by the maintainer using git-dch.
 
-An example of a good pull request is https://github.com/ottok/mariadb-10.0/pull/33/files
+For an example of a patch adding commit see https://github.com/ottok/mariadb-10.0/commit/8d2a7c909
