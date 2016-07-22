@@ -1,5 +1,6 @@
 mariadb-10.0 (10.0.26-0+deb8u1) jessie-security; urgency=high
 
+  [ Otto Kekäläinen ]
   * New upstream release 10.0.25. Includes fixes for the following
     security vulnerabilities:
     - CVE-2016-5440
@@ -7,6 +8,10 @@ mariadb-10.0 (10.0.26-0+deb8u1) jessie-security; urgency=high
     - CVE-2016-3521
     - CVE-2016-3477
   * Update old changelog entries to include new CVE identifiers
+
+  [ Vicențiu Ciorbaru ]
+  * Revert InnoDB and XtraDB Power 8 synchronization fix from upstream 10.0.26
+    to fix failing builds on ppc64el
 
  -- Otto Kekäläinen <otto@debian.org>  Fri, 22 Jul 2016 09:54:47 +0300
 

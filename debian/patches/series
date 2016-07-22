@@ -11,3 +11,4 @@ fix-spelling-errors.patch
 mroonga-disable-switch.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
+innodb_xtradb_10.0.26_regression.patch
