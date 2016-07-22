@@ -1,7 +1,22 @@
+mariadb-10.0 (10.0.26-0+deb8u1) jessie-security; urgency=high
+
+  * New upstream release 10.0.25. Includes fixes for the following
+    security vulnerabilities:
+    - CVE-2016-5440
+    - CVE-2016-3615
+    - CVE-2016-3521
+    - CVE-2016-3477
+  * Update old changelog entries to include new CVE identifiers
+
+ -- Otto Kekäläinen <otto@debian.org>  Fri, 22 Jul 2016 09:54:47 +0300
+
 mariadb-10.0 (10.0.25-0+deb8u1) jessie-security; urgency=high
 
   * New upstream release 10.0.25. Includes fixes for the following
     security vulnerabilities (Closes: #823325):
+    - CVE-2016-5444
+    - CVE-2016-3459
+    - CVE-2016-3452
     - CVE-2016-0666
     - CVE-2016-0655
     - CVE-2016-0648
@@ -48,6 +63,7 @@ mariadb-10.0 (10.0.22-0+deb8u1) jessie-security; urgency=high
   [ Otto Kekäläinen ]
   * New upstream release 10.0.22. Includes fixes for the following
     security vulnerabilities (Closes: #802874):
+    - CVE-2016-3471
     - CVE-2016-0610
     - CVE-2015-7744
     - CVE-2015-4802
