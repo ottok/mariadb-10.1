@@ -1,27 +1,11 @@
-mariadb-10.0 (10.0.26-2~exp3) experimental; urgency=low
-
-  [ Otto Kekäläinen ]
-  * Updated Danish translation by Joe Hansen (Closes: #830592)
-  * Make libmariadbclient-dev-compat conflict with libmariadb-dev-compat 
-    (Closes: #831229)
+mariadb-10.0 (10.0.26-2) unstable; urgency=low
 
   [ Vicențiu Ciorbaru ]
-  * Add patch to correctly revert changes from 10.0.26 that caused 
+  * Add patch to correctly revert changes from 10.0.26 that caused
     build failure regression on PPC64el
-
- -- Otto Kekäläinen <otto@debian.org>  Wed, 20 Jul 2016 23:01:17 +0300
-
-mariadb-10.0 (10.0.26-2~exp2) experimental; urgency=low
 
   [ Paul Gevers ]
   * Add autopkg tests for MariaDB 10.0 (Closes: #809022)
-
-  [ Otto Kekäläinen ]
-  * d/control: libmariadbclient18 must be 'Multi-Arch: same'
-
- -- Otto Kekäläinen <otto@debian.org>  Sat, 09 Jul 2016 16:00:00 +0300
-
-mariadb-10.0 (10.0.26-2~exp1) experimental; urgency=low
 
   [ Axel Beckert ]
   * Extend mariadb-server to purge gracefully if datadir is a mountpoint
@@ -35,19 +19,21 @@ mariadb-10.0 (10.0.26-2~exp1) experimental; urgency=low
   * Add libmariadbclient-dev-compat package
 
   [ Otto Kekäläinen ]
-  * Remove mariadb-plugin-cassandra
-  * Make libdbd-mysql-perl and friends Recommends instead of strict Depends
-  * Documentation and spelling fixes
-  * Remove mysqlbug binary as it is not used for MariaDB
-  * Update default config files with more secure TLS examples
+  * d/control: libmariadbclient18 must be 'Multi-Arch: same'
+  * Make libmariadbclient-dev-compat conflict with libmariadb-dev-compat
+    (Closes: #831229)
   * Add libmariadbclient-dev as dependency for libmariadbd-dev
   * Replace hacky sed of libmysqlclient->libmariadbclient with proper patch
   * Update symbols file to match newest libmariadbclient18
-  * Add patch to fix regression in ppc64el builds regarding ATOMIC_BUILTINS
-  * Upload to experimental to minimize effects of possible regressions
-    with new default-mysql-* and mysql-common source package scheme.
+  * Updated Danish translation by Joe Hansen (Closes: #830592)
+  * Remove mariadb-plugin-cassandra until libthrif-dev lands in unstable
+  * Make libdbd-mysql-perl and friends Recommends instead of strict Depends
+    (Closes: #793787)
+  * Documentation and spelling fixes
+  * Remove mysqlbug binary as it is not used for MariaDB
+  * Update default config files with more secure TLS examples
 
- -- Otto Kekäläinen <otto@debian.org>  Sat, 09 Jul 2016 09:52:42 +0300
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 23 Jul 2016 01:39:56 +0300
 
 mariadb-10.0 (10.0.26-1) unstable; urgency=low
 
