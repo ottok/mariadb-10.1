@@ -1,7 +1,22 @@
+mariadb-10.0 (10.0.26-0ubuntu0.16.04.1) xenial-security; urgency=low
+
+  * SECURITY UPDATE: New upstream release 10.0.26. Includes fixes for the
+    following security vulnerabilities (LP: #1605493):
+    - CVE-2016-5440
+    - CVE-2016-3615
+    - CVE-2016-3521
+    - CVE-2016-3477
+  * Update old changelog entries to include new CVE identifiers
+
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 23 Jul 2016 02:38:09 +0300
+
 mariadb-10.0 (10.0.25-0ubuntu0.16.04.1) xenial-security; urgency=low
 
   * SECURITY UPDATE: New upstream release 10.0.25. Includes fixes for the
     following security vulnerabilities (LP: #1589302):
+    - CVE-2016-5444
+    - CVE-2016-3459
+    - CVE-2016-3452
     - CVE-2016-0666
     - CVE-2016-0655
     - CVE-2016-0648
@@ -281,6 +296,7 @@ mariadb-10.0 (10.0.21-1) experimental; urgency=low
     - Upstream added skip_log_error to mysqld_safe config (Closes: #781945)
     - Diffie-Helman modulus increased to 2048-bits (Closes: #788905)
   * New upstream release fixes the following security vulnerabilities:
+    - CVE-2016-3471
     - CVE-2015-4816
     - CVE-2015-4819
     - CVE-2015-4879
