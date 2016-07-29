@@ -33,7 +33,7 @@ mariadb-10.0 (10.0.26-2) unstable; urgency=low
   * Remove mysqlbug binary as it is not used for MariaDB
   * Update default config files with more secure TLS examples
 
- -- Otto Kekäläinen <otto@debian.org>  Sat, 23 Jul 2016 01:39:56 +0300
+ -- Otto Kekäläinen <otto@debian.org>  Fri, 29 Jul 2016 21:42:50 +0300
 
 mariadb-10.0 (10.0.26-1) unstable; urgency=low
 
