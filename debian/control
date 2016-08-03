@@ -224,7 +224,8 @@ Description: MariaDB database core server files
 
 Package: mariadb-test
 Architecture: any
-Depends: mariadb-client-10.0 (= ${binary:Version}),
+Depends: libmariadbclient18 (= ${binary:Version}),
+         mariadb-client-10.0 (= ${binary:Version}),
          mariadb-server-10.0 (= ${binary:Version}),
          mariadb-test-data (= ${source:Version}),
          ${misc:Depends},
