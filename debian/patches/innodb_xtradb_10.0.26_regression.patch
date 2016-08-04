@@ -26,7 +26,7 @@ index 1cf4e9c..1abb774 100644
  architecture. Disable memory barrier for Intel architecture for now. */
  # define os_rmb do { } while(0)
  # define os_wmb do { } while(0)
-+# define os_mb  do { } while(0)
++# define os_mb  __sync_synchronize()
  # define os_isync do { } while(0)
  # define IB_MEMORY_BARRIER_STARTUP_MSG \
  	"Memory barrier is not used"
@@ -61,7 +61,7 @@ index 0f93f3f..2aa9478 100644
  architecture. Disable memory barrier for Intel architecture for now. */
  # define os_rmb do { } while(0)
  # define os_wmb do { } while(0)
-+# define os_mb  do { } while(0)
++# define os_mb  __sync_synchronize()
  # define os_isync do { } while(0)
  # define IB_MEMORY_BARRIER_STARTUP_MSG \
  	"Memory barrier is not used"
