@@ -17,3 +17,4 @@ mdev-8375-passwordless-accounts-for-testsuite.patch
 mdev-9528-mysql_embedded.patch
 man_page_tokuftdump.patch
 innodb_xtradb_10.0.26_regression.patch
+mdev-10428-main-information-schema-stats-test-fix.patch
