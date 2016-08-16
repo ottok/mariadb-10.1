@@ -1,8 +1,20 @@
-mariadb-10.0 (10.0.26-3) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.26-3) unstable; urgency=low
 
-  * Open new changelog entry
+  [ Dieter Adriaenssens ]
+  * Add DEP-12 formatted upstream metadata file (Closes: #808421)
 
- -- Otto Kekäläinen <otto@debian.org>  Mon, 01 Aug 2016 00:44:23 +0300
+  [ Vicențiu Ciorbaru ]
+  * Update innodb_xtradb patch to introduce memory barrier after lock
+  * Fix failing shutdown with gcc v6
+
+  [ Otto Kekäläinen ]
+  * Extend commit d5af196 with old name of package libmariadb-dev-compat
+  * Extend commit 8d2a7c9 and actually install the tokuftdump man page
+  * Update mariadb-test dependencies to include also libmariadbclient18
+  * Add path to fix for sporadically failing test main.information_schema_stats
+  * d/rules: NUMJOBS must have a default value
+
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 17 Aug 2016 00:31:02 +0300
 
 mariadb-10.0 (10.0.26-2) unstable; urgency=low
 
