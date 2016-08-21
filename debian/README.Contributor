@@ -26,7 +26,7 @@ work-flow, so it is recommended to fork the Github mirror available at
   * https://github.com/ottok/mariadb-10.0
 
 Once you have a fork at Github, clone the source repository with all relevant
-branches (master, upstream, prisine-tar) to your local environment
+branches (master, upstream, pristine-tar) to your local environment
   gbp clone --pristine-tar git@github.com:{username}/mariadb-10.0.git
 
 Clone needs to be run only once. On later runs you can refresh your clone with
