@@ -1,3 +1,11 @@
+mariadb-10.0 (10.0.27-1) unstable; urgency=low
+
+  * New upstream release 10.0.27
+  * Remove 3 patches after 10.0.27 import as they have been applied
+    upstream.
+
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 07 Sep 2016 23:05:28 +0300
+
 mariadb-10.0 (10.0.26-3) unstable; urgency=low
 
   [ Dieter Adriaenssens ]
