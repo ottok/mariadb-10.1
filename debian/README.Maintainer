@@ -25,7 +25,7 @@ multi-target chroot usage check out how http://labs.seravo.fi/~otto/mariadb-repo
 uses git-buildpackage with pbuilder.
 
 If the build fails the easiest way to clean up before a new run is
-  git clean -f -d && git reset --hard
+  git clean -fdx && git reset --hard
 
 
 ### Tip ###
