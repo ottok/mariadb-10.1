@@ -1,4 +1,4 @@
-mariadb-10.0 (10.0.26-0ubuntu0.16.04.1) xenial-security; urgency=low
+mariadb-10.0 (10.0.26-0ubuntu0.16.04.1) UNRELEASED; urgency=low
 
   [ Otto Kekäläinen ]
   * SECURITY UPDATE: New upstream release 10.0.26. Includes fixes for the
