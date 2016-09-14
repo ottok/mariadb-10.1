@@ -13,4 +13,3 @@ mysqld_multi.server_lsb-header.patch
 mdev-8375-passwordless-root-via-socket-auth.patch
 mdev-8375-built-in-auth-socket.patch
 mdev-9528-mysql_embedded.patch
-innodb_xtradb_10.0.26_regression.patch

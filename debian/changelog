@@ -1,19 +1,16 @@
-mariadb-10.0 (10.0.26-0ubuntu0.16.04.1) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.27-0ubuntu0.16.04.1) xenial-security; urgency=low
 
-  [ Otto Kekäläinen ]
-  * SECURITY UPDATE: New upstream release 10.0.26. Includes fixes for the
+  * SECURITY UPDATE: New upstream release 10.0.27. Includes fixes for the
     following security vulnerabilities (LP: #1605493):
-    - CVE-2016-5440
+    - CVE-2016-6662
+  * Previous release 10.0.26 included included fixes for
+    the following security vulnerabilities:
     - CVE-2016-3615
     - CVE-2016-3521
     - CVE-2016-3477
   * Update old changelog entries to include new CVE identifiers
 
-  [ Vicențiu Ciorbaru ]
-  * Revert InnoDB and XtraDB Power 8 synchronization fix from upstream 10.0.26
-    to fix failing builds on ppc64el
-
- -- Otto Kekäläinen <otto@debian.org>  Sat, 23 Jul 2016 02:38:09 +0300
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 14 Sep 2016 22:30:17 +0300
 
 mariadb-10.0 (10.0.25-0ubuntu0.16.04.1) xenial-security; urgency=low
 
