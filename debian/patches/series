@@ -18,3 +18,4 @@ mdev-9528-mysql_embedded.patch
 man_page_tokuftdump.patch
 mips-errno-enotempty.patch
 mips64-taocrypt-integer.patch
+mips-groonga-atomic.patch
