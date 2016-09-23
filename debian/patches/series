@@ -19,3 +19,4 @@ man_page_tokuftdump.patch
 mips-errno-enotempty.patch
 mips64-taocrypt-integer.patch
 mips-groonga-atomic.patch
+mips-connect-unaligned.patch
