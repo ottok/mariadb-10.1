@@ -20,3 +20,4 @@ mips-errno-enotempty.patch
 mips64-taocrypt-integer.patch
 mips-groonga-atomic.patch
 mips-connect-unaligned.patch
+mips-machine.patch
