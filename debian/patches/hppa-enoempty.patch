@@ -1,0 +1,40 @@
+Description: Debian bug#837369 - test failures on hppa
+ ENOTEMPTY is 247 on hppa, not 39 like on Linux, according to this report:
+ .
+ So add another replacement for this to rpl.rpl_drop_db and
+ binlog.binlog_databasae tests (there were already a couple similar
+ replacements for other platforms).
+Author: Kristian Nielsen <knielsen at knielsen-hq.org>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/mysql-test/extra/binlog_tests/database.test
++++ b/mysql-test/extra/binlog_tests/database.test
+@@ -52,7 +52,7 @@ eval SELECT 'hello' INTO OUTFILE 'fake_f
+ 
+ # Use '/' instead of '\' in the error message. On windows platform, dir is
+ # formed with '\'.
+---replace_regex /\\testing_1\\*/\/testing_1\// /66/39/ /93/39/ /17/39/ /File exists/Directory not empty/
++--replace_regex /\\testing_1\\*/\/testing_1\// /66/39/ /93/39/ /17/39/ /247/39/ /File exists/Directory not empty/
+ --error 1010
+ DROP DATABASE testing_1;
+ let $wait_binlog_event= DROP TABLE IF EXIST;
+--- a/mysql-test/suite/rpl/t/rpl_drop_db.test
++++ b/mysql-test/suite/rpl/t/rpl_drop_db.test
+@@ -13,7 +13,7 @@ insert into mysqltest1.t1 values (1);
+ select * from mysqltest1.t1 into outfile 'mysqltest1/f1.txt';
+ create table mysqltest1.t2 (n int);
+ create table mysqltest1.t3 (n int);
+---replace_result \\ / 66 39 93 39 17 39 "File exists" "Directory not empty"
++--replace_result \\ / 66 39 93 39 17 39 247 39 "File exists" "Directory not empty"
+ --error 1010
+ drop database mysqltest1;
+ use mysqltest1;
+@@ -30,7 +30,7 @@ while ($1)
+ }
+ --enable_query_log
+ 
+---replace_result \\ / 66 39 93 39 17 39 "File exists" "Directory not empty"
++--replace_result \\ / 66 39 93 39 17 39 247 39 "File exists" "Directory not empty"
+ --error 1010
+ drop database mysqltest1;
+ use mysqltest1;
