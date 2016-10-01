@@ -1,3 +1,11 @@
+mariadb-10.0 (10.0.27-2) UNRELEASED; urgency=low
+
+  [ Dieter Adriaenssens ]
+  * Fix typo in README.Contributor
+  * Improve documentation on how to clean the build env
+
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 01 Oct 2016 19:20:08 +0300
+
 mariadb-10.0 (10.0.27-1) unstable; urgency=low
 
   * New upstream release 10.0.27
