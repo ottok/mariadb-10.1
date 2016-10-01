@@ -1,0 +1,32 @@
+Description: Correctly fix mips64 multiplication in taocrypt
+ In Debian bugs #719196 and #798126, a patch was submitted to fix a FTBFS on
+ mips64el of mysql-5.5 and mysql-5.6 respectively. This patch was accepted
+ upstream and made its way into mariadb (MDEV-6528). Unfortunately the patch
+ was incorrect and causes segfaults when executing the SSL parts of the
+ testsuite.
+ .
+ The previous patch replaced the "h" asm constraint with the "d" constraint
+ since the "h" is not supported in newer GCC versions. The "d" constraint was
+ wrong as it tells GCC that the result can be found in _any_ general purpose
+ register that it chooses. This resulted in GCC reading garbage into the high
+ result bits.
+ .
+ This new patch replaces the assembly code with a generic 128-bit
+ multiplication which works correctly on mips64.
+Author: James Cowgill <jcowgill@debian.org>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/extra/yassl/taocrypt/src/integer.cpp
++++ b/extra/yassl/taocrypt/src/integer.cpp
+@@ -193,8 +193,9 @@ DWord() {}
+                 "a" (a), "rm" (b) : "cc");
+ 
+         #elif defined(__mips64)
+-            __asm__("dmultu %2,%3" : "=d" (r.halfs_.high), "=l" (r.halfs_.low)
+-                : "r" (a), "r" (b));
++            unsigned __int128 t = (unsigned __int128) a * b;
++            r.halfs_.high = t >> 64;
++            r.halfs_.low = (word) t;
+ 
+         #elif defined(_M_IX86)
+             // for testing
