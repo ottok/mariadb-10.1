@@ -29,7 +29,7 @@ EOF
 
 cd /usr/share/mysql/mysql-test
 echo "starting mysql-test-tun.pl..."
-./mysql-test-run.pl --suite=main --vardir=$WORKDIR/var --tmpdir=$WORKDIR/tmp \
+perl -I. ./mysql-test-run.pl --suite=main --vardir=$WORKDIR/var --tmpdir=$WORKDIR/tmp \
     --skip-ndbcluster --parallel=auto --skip-rpl \
     --force --skip-test-list=$SKIP_TEST_LST $@ 2>&1
 echo "run: OK"
