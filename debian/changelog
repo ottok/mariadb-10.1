@@ -1,10 +1,24 @@
-mariadb-10.0 (10.0.27-2) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.27-2) unstable; urgency=low
 
   [ Dieter Adriaenssens ]
   * Fix typo in README.Contributor
   * Improve documentation on how to clean the build env
 
- -- Otto Kekäläinen <otto@debian.org>  Sat, 01 Oct 2016 19:20:08 +0300
+  [ James Cowgill ]
+  * Mips build and testsuite fixes (Closes: #838557, Closes: #838914)
+    - Permit 93 as a valid value of the ENOTEMPTY error in the testsuite
+    - Correctly fix mips64 multiplication in taocrypt
+    - Ensure groonga is built with libatomic
+    - Handle unaligned buffers in connect's TYPBLK class
+    - Fix DEFAULT_MACHINE on mips
+    - Remove various tests from unstable-tests which now pass on MIPS
+    - Update debian/unstable-tests.mips*
+
+  [ Kristian Nielsen ]
+  * Fix missing path for perl in autopkgtest (Closes: #809022)
+  * Fix test failures on hppa due to wrong enoempty (Closes: #837369)
+
+ -- Otto Kekäläinen <otto@debian.org>  Sun, 02 Oct 2016 09:22:59 +0300
 
 mariadb-10.0 (10.0.27-1) unstable; urgency=low
 
