@@ -23,3 +23,4 @@ mips-connect-unaligned.patch
 mips-machine.patch
 mips-unstable-tests.patch
 hppa-enoempty.patch
+tokudb_jemalloc_link.patch
