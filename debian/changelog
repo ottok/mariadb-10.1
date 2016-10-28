@@ -16,6 +16,8 @@ mariadb-10.0 (10.0.28-1) unstable; urgency=low
     - CVE-2016-5584
     - CVE-2016-3492
   * Drop 4 patches that have been applied upstream.
+  * Delete runnable files from mariadb-test-data as they were only
+    needed at build time to generate tests.
 
  -- Otto Kekäläinen <otto@debian.org>  Fri, 28 Oct 2016 22:51:14 +0300
 
