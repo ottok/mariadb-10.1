@@ -12,10 +12,8 @@ Description: Handle unaligned buffers in connect's TYPBLK class
 Author: James Cowgill <jcowgill@debian.org>
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
-Index: mariadb-10.0-10.0.27/storage/connect/valblk.h
-===================================================================
---- mariadb-10.0-10.0.27.orig/storage/connect/valblk.h
-+++ mariadb-10.0-10.0.27/storage/connect/valblk.h
+--- a/storage/connect/valblk.h
++++ b/storage/connect/valblk.h
 @@ -139,6 +139,7 @@ class VALBLK : public BLOCK {
    int     Prec;             // Precision of float values
    }; // end of class VALBLK
@@ -102,10 +100,8 @@ Index: mariadb-10.0-10.0.27/storage/connect/valblk.h
    }; // end of class TYPBLK
  
  /***********************************************************************/
-Index: mariadb-10.0-10.0.27/storage/connect/valblk.cpp
-===================================================================
---- mariadb-10.0-10.0.27.orig/storage/connect/valblk.cpp
-+++ mariadb-10.0-10.0.27/storage/connect/valblk.cpp
+--- a/storage/connect/valblk.cpp
++++ b/storage/connect/valblk.cpp
 @@ -265,14 +265,14 @@ bool TYPBLK<TYPE>::Init(PGLOBAL g, bool
  template <class TYPE>
  char *TYPBLK<TYPE>::GetCharString(char *p, int n)
