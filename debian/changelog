@@ -2,6 +2,10 @@ mariadb-10.0 (10.0.28-2) UNRELEASED; urgency=low
 
   * Open a new changelog entry
 
+  [ Samuel Thibault ]
+  * patches/hurd_socket.patch: Also avoid non-working socket path length check
+    on hurd-i386.
+
  -- Otto Kekäläinen <otto@debian.org>  Sun, 30 Oct 2016 13:33:22 +0200
 
 mariadb-10.0 (10.0.28-1) unstable; urgency=low
