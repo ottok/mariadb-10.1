@@ -1,8 +1,27 @@
+mariadb-10.0 (10.0.28-0ubuntu0.16.04.1) xenial-security; urgency=low
+
+  * SECURITY UPDATE: New upstream release 10.0.28. Includes fixes for the
+    following security vulnerabilities (LP: #1638125):
+    - CVE-2016-8283
+    - CVE-2016-7440
+    - CVE-2016-6663
+    - CVE-2016-5629
+    - CVE-2016-5626
+    - CVE-2016-5624
+    - CVE-2016-5616
+    - CVE-2016-5584
+    - CVE-2016-3492
+  * Update old changelog entries to include new CVE identifiers
+
+ -- Otto Kekäläinen <otto@debian.org>  Mon, 31 Oct 2016 22:34:22 +0200
+
 mariadb-10.0 (10.0.27-0ubuntu0.16.04.1) xenial-security; urgency=low
 
   * SECURITY UPDATE: New upstream release 10.0.27. Includes fixes for the
     following security vulnerabilities (LP: #1605493):
     - CVE-2016-6662
+    - CVE-2016-5630
+    - CVE-2016-5612
   * Previous release 10.0.26 included included fixes for
     the following security vulnerabilities:
     - CVE-2016-3615
