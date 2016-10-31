@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1997, 2015, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1997, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2008, Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
@@ -677,7 +677,7 @@ sel_enqueue_prefetched_row(
 /*********************************************************************//**
 Builds a previous version of a clustered index record for a consistent read
 @return	DB_SUCCESS or error code */
-static __attribute__((nonnull, warn_unused_result))
+static MY_ATTRIBUTE((nonnull, warn_unused_result))
 dberr_t
 row_sel_build_prev_vers(
 /*====================*/
@@ -712,7 +712,7 @@ row_sel_build_prev_vers(
 /*********************************************************************//**
 Builds the last committed version of a clustered index record for a
 semi-consistent read. */
-static __attribute__((nonnull))
+static MY_ATTRIBUTE((nonnull))
 void
 row_sel_build_committed_vers_for_mysql(
 /*===================================*/
@@ -810,7 +810,7 @@ row_sel_test_other_conds(
 Retrieves the clustered index record corresponding to a record in a
 non-clustered index. Does the necessary locking.
 @return	DB_SUCCESS or error code */
-static __attribute__((nonnull, warn_unused_result))
+static MY_ATTRIBUTE((nonnull, warn_unused_result))
 dberr_t
 row_sel_get_clust_rec(
 /*==================*/
@@ -1314,7 +1314,7 @@ func_exit:
 /*********************************************************************//**
 Performs a select step.
 @return	DB_SUCCESS or error code */
-static __attribute__((nonnull, warn_unused_result))
+static MY_ATTRIBUTE((nonnull, warn_unused_result))
 dberr_t
 row_sel(
 /*====*/
@@ -2456,9 +2456,11 @@ row_sel_convert_mysql_key_to_innobase(
 		if (UNIV_LIKELY(!is_null)) {
 			buf = row_mysql_store_col_in_innobase_format(
 					dfield, buf,
-					FALSE, /* MySQL key value format col */
+					/* MySQL key value format col */
+					FALSE,
 					key_ptr + data_offset, data_len,
-					dict_table_is_comp(index->table));
+					dict_table_is_comp(index->table),
+					false, 0, 0 ,0);
 			ut_a(buf <= original_buf + buf_len);
 		}
 
@@ -2551,18 +2553,22 @@ row_sel_store_row_id_to_prebuilt(
 
 #ifdef UNIV_DEBUG
 /** Convert a non-SQL-NULL field from Innobase format to MySQL format. */
-# define row_sel_field_store_in_mysql_format(dest,templ,idx,field,src,len) \
-	row_sel_field_store_in_mysql_format_func(dest,templ,idx,field,src,len)
+# define row_sel_field_store_in_mysql_format( \
+	dest,templ,idx,field,src,len,prebuilt) \
+	row_sel_field_store_in_mysql_format_func \
+	(dest,templ,idx,field,src,len, prebuilt)
 #else /* UNIV_DEBUG */
 /** Convert a non-SQL-NULL field from Innobase format to MySQL format. */
-# define row_sel_field_store_in_mysql_format(dest,templ,idx,field,src,len) \
-	row_sel_field_store_in_mysql_format_func(dest,templ,src,len)
+# define row_sel_field_store_in_mysql_format( \
+	dest,templ,idx,field,src,len,prebuilt) \
+	row_sel_field_store_in_mysql_format_func \
+	(dest,templ,src,len, prebuilt)
 #endif /* UNIV_DEBUG */
 
 /**************************************************************//**
 Stores a non-SQL-NULL field in the MySQL format. The counterpart of this
 function is row_mysql_store_col_in_innobase_format() in row0mysql.cc. */
-static __attribute__((nonnull))
+static MY_ATTRIBUTE((nonnull))
 void
 row_sel_field_store_in_mysql_format_func(
 /*=====================================*/
@@ -2586,7 +2592,10 @@ row_sel_field_store_in_mysql_format_func(
 				templ->icp_rec_field_no */
 #endif /* UNIV_DEBUG */
 	const byte*	data,	/*!< in: data to store */
-	ulint		len)	/*!< in: length of the data */
+	ulint		len,	/*!< in: length of the data */
+	row_prebuilt_t* prebuilt)
+				/*!< in: use prebuilt->compress_heap
+				only here */
 {
 	byte*			ptr;
 #ifdef UNIV_DEBUG
@@ -2630,6 +2639,15 @@ row_sel_field_store_in_mysql_format_func(
 		field_end = dest + templ->mysql_col_len;
 
 		if (templ->mysql_type == DATA_MYSQL_TRUE_VARCHAR) {
+			/* If this is a compressed column,
+			decompress it first */
+			if (templ->compressed)
+				data = row_decompress_column(data, &len,
+					reinterpret_cast<const byte*>(
+						templ->zip_dict_data.str),
+					templ->zip_dict_data.length,
+					prebuilt);
+
 			/* This is a >= 5.0.3 type true VARCHAR. Store the
 			length of the data to the first byte or the first
 			two bytes of dest. */
@@ -2680,7 +2698,11 @@ row_sel_field_store_in_mysql_format_func(
 		already copied to the buffer in row_sel_store_mysql_rec */
 
 		row_mysql_store_blob_ref(dest, templ->mysql_col_len, data,
-					 len);
+					len, templ->compressed,
+					reinterpret_cast<const byte*>(
+						templ->zip_dict_data.str),
+					templ->zip_dict_data.length,
+					prebuilt);
 		break;
 
 	case DATA_MYSQL:
@@ -2751,7 +2773,7 @@ row_sel_field_store_in_mysql_format_func(
 #endif /* UNIV_DEBUG */
 /**************************************************************//**
 Convert a field in the Innobase format to a field in the MySQL format. */
-static __attribute__((warn_unused_result))
+static MY_ATTRIBUTE((warn_unused_result))
 ibool
 row_sel_store_mysql_field_func(
 /*===========================*/
@@ -2833,7 +2855,7 @@ row_sel_store_mysql_field_func(
 
 		row_sel_field_store_in_mysql_format(
 			mysql_rec + templ->mysql_col_offset,
-			templ, index, field_no, data, len);
+			templ, index, field_no, data, len, prebuilt);
 
 		if (heap != prebuilt->blob_heap) {
 			mem_heap_free(heap);
@@ -2883,7 +2905,7 @@ row_sel_store_mysql_field_func(
 
 		row_sel_field_store_in_mysql_format(
 			mysql_rec + templ->mysql_col_offset,
-			templ, index, field_no, data, len);
+			templ, index, field_no, data, len, prebuilt);
 	}
 
 	ut_ad(len != UNIV_SQL_NULL);
@@ -2904,7 +2926,7 @@ Note that the template in prebuilt may advise us to copy only a few
 columns to mysql_rec, other columns are left blank. All columns may not
 be needed in the query.
 @return TRUE on success, FALSE if not all columns could be retrieved */
-static __attribute__((warn_unused_result))
+static MY_ATTRIBUTE((warn_unused_result))
 ibool
 row_sel_store_mysql_rec(
 /*====================*/
@@ -2930,6 +2952,9 @@ row_sel_store_mysql_rec(
 		mem_heap_free(prebuilt->blob_heap);
 		prebuilt->blob_heap = NULL;
 	}
+
+	if (UNIV_LIKELY_NULL(prebuilt->compress_heap))
+		mem_heap_empty(prebuilt->compress_heap);
 
 	for (i = 0; i < prebuilt->n_template; i++) {
 		const mysql_row_templ_t*templ = &prebuilt->mysql_template[i];
@@ -2966,7 +2991,7 @@ row_sel_store_mysql_rec(
 /*********************************************************************//**
 Builds a previous version of a clustered index record for a consistent read
 @return	DB_SUCCESS or error code */
-static __attribute__((nonnull, warn_unused_result))
+static MY_ATTRIBUTE((nonnull, warn_unused_result))
 dberr_t
 row_sel_build_prev_vers_for_mysql(
 /*==============================*/
@@ -3003,7 +3028,7 @@ Retrieves the clustered index record corresponding to a record in a
 non-clustered index. Does the necessary locking. Used in the MySQL
 interface.
 @return	DB_SUCCESS, DB_SUCCESS_LOCKED_REC, or error code */
-static __attribute__((nonnull, warn_unused_result))
+static MY_ATTRIBUTE((nonnull, warn_unused_result))
 dberr_t
 row_sel_get_clust_rec_for_mysql(
 /*============================*/

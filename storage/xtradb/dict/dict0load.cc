@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2013, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1996, 2016, Oracle and/or its affiliates. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -56,7 +56,9 @@ static const char* SYSTEM_TABLE_NAME[] = {
 	"SYS_FOREIGN",
 	"SYS_FOREIGN_COLS",
 	"SYS_TABLESPACES",
-	"SYS_DATAFILES"
+	"SYS_DATAFILES",
+	"SYS_ZIP_DICT",
+	"SYS_ZIP_DICT_COLS"
 };
 
 /* If this flag is TRUE, then we will load the cluster index's (and tables')
@@ -728,6 +730,161 @@ err_len:
 	return(NULL);
 }
 
+/** This function parses a SYS_ZIP_DICT record, extracts necessary
+information from the record and returns to caller.
+@return error message, or NULL on success */
+UNIV_INTERN
+const char*
+dict_process_sys_zip_dict(
+	mem_heap_t*	heap,		/*!< in/out: heap memory */
+	ulint		zip_size,	/*!< in: nonzero=compressed BLOB page size */
+	const rec_t*	rec,		/*!< in: current SYS_ZIP_DICT rec */
+	ulint*		id,		/*!< out: dict id */
+	const char**	name,		/*!< out: dict name */
+	const char**	data,		/*!< out: dict data */
+	ulint*		data_len)	/*!< out: dict data length */
+{
+	ulint		len;
+	const byte*	field;
+
+	/* Initialize the output values */
+	*id = ULINT_UNDEFINED;
+	*name = NULL;
+	*data = NULL;
+	*data_len = 0;
+
+	if (UNIV_UNLIKELY(rec_get_deleted_flag(rec, 0))) {
+		return("delete-marked record in SYS_ZIP_DICT");
+	}
+
+	if (UNIV_UNLIKELY(
+		rec_get_n_fields_old(rec)!= DICT_NUM_FIELDS__SYS_ZIP_DICT)) {
+		return("wrong number of columns in SYS_ZIP_DICT record");
+	}
+
+	field = rec_get_nth_field_old(
+		rec, DICT_FLD__SYS_ZIP_DICT__ID, &len);
+	if (UNIV_UNLIKELY(len != DICT_FLD_LEN_SPACE)) {
+		goto err_len;
+	}
+	*id = mach_read_from_4(field);
+
+	rec_get_nth_field_offs_old(
+		rec, DICT_FLD__SYS_ZIP_DICT__DB_TRX_ID, &len);
+	if (UNIV_UNLIKELY(len != DATA_TRX_ID_LEN && len != UNIV_SQL_NULL)) {
+		goto err_len;
+	}
+
+	rec_get_nth_field_offs_old(
+		rec, DICT_FLD__SYS_ZIP_DICT__DB_ROLL_PTR, &len);
+	if (UNIV_UNLIKELY(len != DATA_ROLL_PTR_LEN && len != UNIV_SQL_NULL)) {
+		goto err_len;
+	}
+
+	field = rec_get_nth_field_old(
+		rec, DICT_FLD__SYS_ZIP_DICT__NAME, &len);
+	if (UNIV_UNLIKELY(len == 0 || len == UNIV_SQL_NULL)) {
+		goto err_len;
+	}
+	*name = mem_heap_strdupl(heap, (char*) field, len);
+
+	field = rec_get_nth_field_old(
+		rec, DICT_FLD__SYS_ZIP_DICT__DATA, &len);
+	if (UNIV_UNLIKELY(len == UNIV_SQL_NULL)) {
+		goto err_len;
+	}
+
+	if (rec_get_1byte_offs_flag(rec) == 0 &&
+		rec_2_is_field_extern(rec, DICT_FLD__SYS_ZIP_DICT__DATA)) {
+		ut_a(len >= BTR_EXTERN_FIELD_REF_SIZE);
+
+		if (UNIV_UNLIKELY
+			(!memcmp(field + len - BTR_EXTERN_FIELD_REF_SIZE,
+				field_ref_zero,
+				BTR_EXTERN_FIELD_REF_SIZE))) {
+			goto err_len;
+		}
+		*data = reinterpret_cast<char*>(
+			btr_copy_externally_stored_field(data_len, field,
+							zip_size, len, heap, 0));
+	}
+	else {
+		*data_len = len;
+		*data = static_cast<char*>(mem_heap_dup(heap, field, len));
+	}
+
+	return(NULL);
+
+err_len:
+	return("incorrect column length in SYS_ZIP_DICT");
+}
+
+/** This function parses a SYS_ZIP_DICT_COLS record, extracts necessary
+information from the record and returns to caller.
+@return error message, or NULL on success */
+UNIV_INTERN
+const char*
+dict_process_sys_zip_dict_cols(
+	mem_heap_t*	heap,		/*!< in/out: heap memory */
+	const rec_t*	rec,		/*!< in: current SYS_ZIP_DICT rec */
+	ulint*		table_id,	/*!< out: table id */
+	ulint*		column_pos,	/*!< out: column position */
+	ulint*		dict_id)	/*!< out: dict id */
+{
+	ulint		len;
+	const byte*	field;
+
+	/* Initialize the output values */
+	*table_id = ULINT_UNDEFINED;
+	*column_pos = ULINT_UNDEFINED;
+	*dict_id = ULINT_UNDEFINED;
+
+	if (UNIV_UNLIKELY(rec_get_deleted_flag(rec, 0))) {
+		return("delete-marked record in SYS_ZIP_DICT_COLS");
+	}
+
+	if (UNIV_UNLIKELY(rec_get_n_fields_old(rec) !=
+		DICT_NUM_FIELDS__SYS_ZIP_DICT_COLS)) {
+		return("wrong number of columns in SYS_ZIP_DICT_COLS"
+			" record");
+	}
+
+	field = rec_get_nth_field_old(
+		rec, DICT_FLD__SYS_ZIP_DICT_COLS__TABLE_ID, &len);
+	if (UNIV_UNLIKELY(len != DICT_FLD_LEN_SPACE)) {
+err_len:
+		return("incorrect column length in SYS_ZIP_DICT_COLS");
+	}
+	*table_id = mach_read_from_4(field);
+
+	field = rec_get_nth_field_old(
+		rec, DICT_FLD__SYS_ZIP_DICT_COLS__COLUMN_POS, &len);
+	if (UNIV_UNLIKELY(len != DICT_FLD_LEN_SPACE)) {
+		goto err_len;
+	}
+	*column_pos = mach_read_from_4(field);
+
+	rec_get_nth_field_offs_old(
+		rec, DICT_FLD__SYS_ZIP_DICT_COLS__DB_TRX_ID, &len);
+	if (UNIV_UNLIKELY(len != DATA_TRX_ID_LEN && len != UNIV_SQL_NULL)) {
+		goto err_len;
+	}
+
+	rec_get_nth_field_offs_old(
+		rec, DICT_FLD__SYS_ZIP_DICT_COLS__DB_ROLL_PTR, &len);
+	if (UNIV_UNLIKELY(len != DATA_ROLL_PTR_LEN && len != UNIV_SQL_NULL)) {
+		goto err_len;
+	}
+
+	field = rec_get_nth_field_old(
+		rec, DICT_FLD__SYS_ZIP_DICT_COLS__DICT_ID, &len);
+	if (UNIV_UNLIKELY(len != DICT_FLD_LEN_SPACE)) {
+		goto err_len;
+	}
+	*dict_id = mach_read_from_4(field);
+
+	return(NULL);
+}
 /********************************************************************//**
 Determine the flags of a table as stored in SYS_TABLES.TYPE and N_COLS.
 @return  ULINT_UNDEFINED if error, else a valid dict_table_t::flags. */
@@ -1744,7 +1901,7 @@ err_len:
 		goto err_len;
 	}
 	type = mach_read_from_4(field);
-	if (type & (~0 << DICT_IT_BITS)) {
+	if (type & (~0U << DICT_IT_BITS)) {
 		return("unknown SYS_INDEXES.TYPE bits");
 	}
 
@@ -1784,7 +1941,7 @@ Loads definitions for table indexes. Adds them to the data dictionary
 cache.
 @return DB_SUCCESS if ok, DB_CORRUPTION if corruption of dictionary
 table or DB_UNSUPPORTED if table has unknown index type */
-static __attribute__((nonnull))
+static MY_ATTRIBUTE((nonnull))
 dberr_t
 dict_load_indexes(
 /*==============*/
@@ -2532,6 +2689,7 @@ func_exit:
 			/* the table->fts could be created in dict_load_column
 			when a user defined FTS_DOC_ID is present, but no
 			FTS */
+			fts_optimize_remove_table(table);
 			fts_free(table);
 		} else {
 			fts_optimize_add_table(table);
@@ -2597,14 +2755,13 @@ dict_load_table_on_id(
 	btr_pcur_open_on_user_rec(sys_table_ids, tuple, PAGE_CUR_GE,
 				  BTR_SEARCH_LEAF, &pcur, &mtr);
 
-check_rec:
 	rec = btr_pcur_get_rec(&pcur);
 
 	if (page_rec_is_user_rec(rec)) {
 		/*---------------------------------------------------*/
 		/* Now we have the record in the secondary index
 		containing the table ID and NAME */
-
+check_rec:
 		field = rec_get_nth_field_old(
 			rec, DICT_FLD__SYS_TABLE_IDS__ID, &len);
 		ut_ad(len == 8);
@@ -2614,12 +2771,14 @@ check_rec:
 			if (rec_get_deleted_flag(rec, 0)) {
 				/* Until purge has completed, there
 				may be delete-marked duplicate records
-				for the same SYS_TABLES.ID.
-				Due to Bug #60049, some delete-marked
-				records may survive the purge forever. */
-				if (btr_pcur_move_to_next(&pcur, &mtr)) {
+				for the same SYS_TABLES.ID, but different
+				SYS_TABLES.NAME. */
+				while (btr_pcur_move_to_next(&pcur, &mtr)) {
+					rec = btr_pcur_get_rec(&pcur);
 
-					goto check_rec;
+					if (page_rec_is_user_rec(rec)) {
+						goto check_rec;
+					}
 				}
 			} else {
 				/* Now we get the table name from the record */
@@ -2788,7 +2947,7 @@ dict_load_foreign_cols(
 /***********************************************************************//**
 Loads a foreign key constraint to the dictionary cache.
 @return	DB_SUCCESS or error code */
-static __attribute__((nonnull(1), warn_unused_result))
+static MY_ATTRIBUTE((nonnull(1), warn_unused_result))
 dberr_t
 dict_load_foreign(
 /*==============*/

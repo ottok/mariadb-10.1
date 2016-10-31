@@ -3015,8 +3015,6 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     scan_time= read_time= DBL_MAX;
   if (limit < records)
     read_time= (double) records + scan_time + 1; // Force to use index
-  else if (read_time <= 2.0 && !force_quick_range)
-    DBUG_RETURN(0);				/* No need for quick select */
   
   possible_keys.clear_all();
 
@@ -3285,7 +3283,6 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     thd->no_errors=0;
   }
 
-
   DBUG_EXECUTE("info", print_quick(quick, &needed_reg););
 
   /*
@@ -3348,9 +3345,16 @@ bool create_key_parts_for_pseudo_indexes(RANGE_OPT_PARAM *param,
     {
       Field *field= *field_ptr;
       uint16 store_length;
+      uint16 max_key_part_length= (uint16) table->file->max_key_part_length();
       key_part->key= keys;
       key_part->part= 0;
-      key_part->length= (uint16) field->key_length();
+      if (field->flags & BLOB_FLAG)
+        key_part->length= max_key_part_length;
+      else
+      {
+        key_part->length= (uint16) field->key_length();
+        set_if_smaller(key_part->length, max_key_part_length);
+      }
       store_length= key_part->length;
       if (field->real_maybe_null())
         store_length+= HA_KEY_NULL_LENGTH;
@@ -7730,7 +7734,7 @@ static SEL_TREE *get_func_mm_tree(RANGE_OPT_PARAM *param, Item_func *cond_func,
           break;
         }
         SEL_TREE *tree2;
-        for (; i < func->array->count; i++)
+        for (; i < func->array->used_count; i++)
         {
           if (func->array->compare_elems(i, i-1))
           {
@@ -10999,8 +11003,10 @@ get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
       KEY *table_key=quick->head->key_info+quick->index;
       flag=EQ_RANGE;
       if ((table_key->flags & HA_NOSAME) &&
+          min_part == key_tree->part &&
           key_tree->part == table_key->user_defined_key_parts-1)
       {
+        DBUG_ASSERT(min_part == max_part);
         if ((table_key->flags & HA_NULL_PART_KEY) &&
             null_part_in_key(key,
                              param->min_key,

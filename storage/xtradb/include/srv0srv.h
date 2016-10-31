@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 1995, 2016, Oracle and/or its affiliates. All rights reserved.
 Copyright (c) 2008, 2009, Google Inc.
 Copyright (c) 2009, Percona Inc.
 Copyright (c) 2013, 2014, SkySQL Ab. All Rights Reserved.
@@ -181,8 +181,10 @@ extern os_event_t	srv_checkpoint_completed_event;
 log tracking iteration */
 extern os_event_t	srv_redo_log_tracked_event;
 
-/** srv_redo_log_follow_thread spawn flag */
-extern bool srv_redo_log_thread_started;
+/** Whether the redo log tracker thread has been started. Does not take into
+account whether the tracking is currently enabled (see srv_track_changed_pages
+for that) */
+extern bool		srv_redo_log_thread_started;
 
 /* If the last data file is auto-extended, we add this many pages to it
 at a time */
@@ -278,6 +280,10 @@ extern char**	srv_data_file_names;
 extern ulint*	srv_data_file_sizes;
 extern ulint*	srv_data_file_is_raw_partition;
 
+
+/** Whether the redo log tracking is currently enabled. Note that it is
+possible for the log tracker thread to be running and the tracking to be
+disabled */
 extern my_bool		srv_track_changed_pages;
 extern ulonglong	srv_max_bitmap_file_size;
 
@@ -398,8 +404,6 @@ extern ulong	srv_innodb_stats_method;
 
 #ifdef UNIV_LOG_ARCHIVE
 extern ibool		srv_log_archive_on;
-extern ibool		srv_archive_recovery;
-extern ib_uint64_t	srv_archive_recovery_limit_lsn;
 #endif /* UNIV_LOG_ARCHIVE */
 
 extern char*	srv_file_flush_method_str;
@@ -504,6 +508,9 @@ extern ibool	srv_priority_boost;
 
 extern ulint	srv_truncated_status_writes;
 extern ulint	srv_available_undo_logs;
+
+extern ulint	srv_column_compressed;
+extern ulint	srv_column_decompressed;
 
 extern	ulint	srv_mem_pool_size;
 extern	ulint	srv_lock_table_size;
@@ -856,19 +863,29 @@ ulint
 srv_get_activity_count(void);
 /*========================*/
 /*******************************************************************//**
-Check if there has been any activity.
+Check if there has been any activity. Considers background change buffer
+merge as regular server activity unless a non-default
+old_ibuf_merge_activity_count value is passed, in which case the merge will be
+treated as keeping server idle.
 @return FALSE if no change in activity counter. */
 UNIV_INTERN
 ibool
 srv_check_activity(
 /*===============*/
-	ulint		old_activity_count);	/*!< old activity count */
+	ulint		old_activity_count,	/*!< old activity count */
+						/*!< old change buffer merge
+						activity count, or
+						ULINT_UNDEFINED */
+	ulint		old_ibuf_merge_activity_count = ULINT_UNDEFINED);
 /******************************************************************//**
 Increment the server activity counter. */
 UNIV_INTERN
 void
-srv_inc_activity_count(void);
-/*=========================*/
+srv_inc_activity_count(
+/*===================*/
+	bool ibuf_merge_activity = false);	/*!< whether this activity bump
+						is caused by the background
+						change buffer merge */
 
 /**********************************************************************//**
 Enqueues a task to server task queue and releases a worker thread, if there
@@ -929,7 +946,7 @@ UNIV_INTERN
 os_thread_ret_t
 DECLARE_THREAD(srv_purge_coordinator_thread)(
 /*=========================================*/
-	void*	arg __attribute__((unused)));	/*!< in: a dummy parameter
+	void*	arg MY_ATTRIBUTE((unused)));	/*!< in: a dummy parameter
 						required by os_thread_create */
 
 /*********************************************************************//**
@@ -939,7 +956,7 @@ UNIV_INTERN
 os_thread_ret_t
 DECLARE_THREAD(srv_worker_thread)(
 /*==============================*/
-	void*	arg __attribute__((unused)));	/*!< in: a dummy parameter
+	void*	arg MY_ATTRIBUTE((unused)));	/*!< in: a dummy parameter
 						required by os_thread_create */
 } /* extern "C" */
 
@@ -1093,6 +1110,8 @@ struct export_var_t{
 	ulint innodb_purge_view_trx_id_age;	/*!< rw_max_trx_id
 						- purged view's min trx_id */
 #endif /* UNIV_DEBUG */
+	ulint innodb_column_compressed;		/*!< srv_column_compressed */
+	ulint innodb_column_decompressed;	/*!< srv_column_decompressed */
 };
 
 /** Thread slot in the thread table.  */

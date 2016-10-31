@@ -37,7 +37,7 @@ user_connect.h valblk.h value.h xindex.h xobject.h xtable.h)
 #
 # Definitions that are shared for all OSes
 #
-add_definitions( -DMARIADB -DFORCE_INIT_OF_VARS )
+add_definitions( -DMARIADB -DFORCE_INIT_OF_VARS -Dconnect_EXPORTS)
 add_definitions( -DHUGE_SUPPORT -DZIP_SUPPORT -DPIVOT_SUPPORT )
 
 
@@ -232,6 +232,38 @@ int main() {
   ENDIF(UNIX)
 ENDIF(CONNECT_WITH_ODBC)
 
+#
+# JDBC
+#
+IF(APPLE)
+  OPTION(CONNECT_WITH_JDBC "some comment" OFF)
+ELSE()
+  OPTION(CONNECT_WITH_JDBC "some comment" ON)
+ENDIF()
+
+IF(CONNECT_WITH_JDBC)
+  FIND_PACKAGE(Java 1.6)
+  FIND_PACKAGE(JNI)
+  IF (JAVA_FOUND AND JNI_FOUND)
+    INCLUDE(UseJava)
+    INCLUDE_DIRECTORIES(${JAVA_INCLUDE_PATH})
+    INCLUDE_DIRECTORIES(${JAVA_INCLUDE_PATH2})
+    # SET(JDBC_LIBRARY ${JAVA_JVM_LIBRARY}) will be dynamically linked
+    SET(CONNECT_SOURCES ${CONNECT_SOURCES}
+    jdbconn.cpp tabjdbc.cpp jdbconn.h tabjdbc.h jdbccat.h
+    JdbcInterface.java ApacheInterface.java MariadbInterface.java
+    MysqlInterface.java OracleInterface.java PostgresqlInterface.java)
+    # TODO: Find how to compile and install the java wrapper classes
+    # Find required libraries and include directories
+    SET (JAVA_SOURCES JdbcInterface.java)
+    add_jar(JdbcInterface ${JAVA_SOURCES})
+		install_jar(JdbcInterface DESTINATION ${INSTALL_PLUGINDIR} COMPONENT connect-engine)
+    add_definitions(-DJDBC_SUPPORT)
+  ELSE()
+    SET(JDBC_LIBRARY "")
+  ENDIF()
+ENDIF(CONNECT_WITH_JDBC)
+
 
 #
 # XMAP
@@ -252,5 +284,5 @@ MYSQL_ADD_PLUGIN(connect ${CONNECT_SOURCES}
   COMPONENT connect-engine
   RECOMPILE_FOR_EMBEDDED
   LINK_LIBRARIES ${ZLIB_LIBRARY} ${XML_LIBRARY} ${ICONV_LIBRARY}
-                 ${ODBC_LIBRARY} ${IPHLPAPI_LIBRARY})
+                 ${ODBC_LIBRARY} ${JDBC_LIBRARY} ${IPHLPAPI_LIBRARY})
 

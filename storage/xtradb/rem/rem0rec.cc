@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2013, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1994, 2016, Oracle and/or its affiliates. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -241,7 +241,7 @@ rec_get_n_extern_new(
 Determine the offset to each field in a leaf-page record
 in ROW_FORMAT=COMPACT.  This is a special case of
 rec_init_offsets() and rec_get_offsets_func(). */
-UNIV_INLINE __attribute__((nonnull))
+UNIV_INLINE MY_ATTRIBUTE((nonnull))
 void
 rec_init_offsets_comp_ordinary(
 /*===========================*/
@@ -320,7 +320,8 @@ rec_init_offsets_comp_ordinary(
 			stored in one byte for 0..127.  The length
 			will be encoded in two bytes when it is 128 or
 			more, or when the field is stored externally. */
-			if (UNIV_UNLIKELY(col->len > 255)
+			if (UNIV_UNLIKELY(col->len > 255 -
+			    prtype_get_compression_extra(col->prtype))
 			    || UNIV_UNLIKELY(col->mtype
 					     == DATA_BLOB)) {
 				if (len & 0x80) {
@@ -785,7 +786,7 @@ rec_get_nth_field_offs_old(
 /**********************************************************//**
 Determines the size of a data tuple prefix in ROW_FORMAT=COMPACT.
 @return	total size */
-UNIV_INLINE __attribute__((warn_unused_result, nonnull(1,2)))
+UNIV_INLINE MY_ATTRIBUTE((warn_unused_result, nonnull(1,2)))
 ulint
 rec_get_converted_size_comp_prefix_low(
 /*===================================*/
@@ -841,8 +842,12 @@ rec_get_converted_size_comp_prefix_low(
 			continue;
 		}
 
-		ut_ad(len <= col->len || col->mtype == DATA_BLOB
-			|| (col->len == 0 && col->mtype == DATA_VARCHAR));
+		ut_ad(len <= col->len || col->mtype == DATA_BLOB ||
+		  ((col->mtype == DATA_VARCHAR || col->mtype == DATA_BINARY
+		   || col->mtype == DATA_VARMYSQL)
+		   && (col->len == 0
+		       || len <= col->len +
+			  prtype_get_compression_extra(col->prtype))));
 
 		fixed_len = field->fixed_len;
 		if (temp && fixed_len
@@ -874,7 +879,9 @@ rec_get_converted_size_comp_prefix_low(
 			ut_ad(col->len >= 256 || col->mtype == DATA_BLOB);
 			extra_size += 2;
 		} else if (len < 128
-			   || (col->len < 256 && col->mtype != DATA_BLOB)) {
+			   || (col->len < 256 -
+			       prtype_get_compression_extra(col->prtype)
+			       && col->mtype != DATA_BLOB)) {
 			extra_size++;
 		} else {
 			/* For variable-length columns, we look up the
@@ -1130,7 +1137,7 @@ rec_convert_dtuple_to_rec_old(
 
 /*********************************************************//**
 Builds a ROW_FORMAT=COMPACT record out of a data tuple. */
-UNIV_INLINE __attribute__((nonnull))
+UNIV_INLINE MY_ATTRIBUTE((nonnull))
 void
 rec_convert_dtuple_to_rec_comp(
 /*===========================*/
@@ -1269,12 +1276,16 @@ rec_convert_dtuple_to_rec_comp(
 			*lens-- = (byte) (len >> 8) | 0xc0;
 			*lens-- = (byte) len;
 		} else {
-			ut_ad(len <= dtype_get_len(type)
+			ut_ad(len <= dtype_get_len(type) +
+			      prtype_get_compression_extra(
+			        dtype_get_prtype(type))
 			      || dtype_get_mtype(type) == DATA_BLOB
 			      || !strcmp(index->name,
 					 FTS_INDEX_TABLE_IND_NAME));
 			if (len < 128
-			    || (dtype_get_len(type) < 256
+			    || (dtype_get_len(type) < 256 -
+			        prtype_get_compression_extra(
+				  dtype_get_prtype(type))
 				&& dtype_get_mtype(type) != DATA_BLOB)) {
 
 				*lens-- = (byte) len;
@@ -1338,7 +1349,9 @@ rec_convert_dtuple_to_rec(
 {
 	rec_t*	rec;
 
-	ut_ad(buf && index && dtuple);
+	ut_ad(buf != NULL);
+	ut_ad(index != NULL);
+	ut_ad(dtuple != NULL);
 	ut_ad(dtuple_validate(dtuple));
 	ut_ad(dtuple_check_typed(dtuple));
 

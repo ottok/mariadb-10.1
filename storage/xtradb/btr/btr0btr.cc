@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1994, 2015, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1994, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2012, Facebook Inc.
 
 This program is free software; you can redistribute it and/or modify it under
@@ -78,7 +78,7 @@ btr_corruption_report(
 			       buf_block_get_zip_size(block),
 			       BUF_PAGE_PRINT_NO_CRASH);
 	}
-	buf_page_print(buf_block_get_frame_fast(block), 0, 0);
+	buf_page_print(buf_nonnull_block_get_frame(block), 0, 0);
 }
 
 #ifndef UNIV_HOTBACKUP
@@ -804,8 +804,10 @@ btr_height_get(
 
         /* S latches the page */
         root_block = btr_root_block_get(index, RW_S_LATCH, mtr);
+	ut_ad(root_block); // The index must not be corrupted
 
-        height = btr_page_get_level(buf_block_get_frame_fast(root_block), mtr);
+	height = btr_page_get_level(buf_nonnull_block_get_frame(root_block),
+				    mtr);
 
         /* Release the S latch on the root page. */
         mtr_memo_release(mtr, root_block, MTR_MEMO_PAGE_S_FIX);
@@ -1122,7 +1124,7 @@ that the caller has made the reservation for free extents!
 @retval block, rw_lock_x_lock_count(&block->lock) == 1 if allocation succeeded
 (init_mtr == mtr, or the page was not previously freed in mtr)
 @retval block (not allocated or initialized) otherwise */
-static __attribute__((nonnull, warn_unused_result))
+static MY_ATTRIBUTE((nonnull, warn_unused_result))
 buf_block_t*
 btr_page_alloc_low(
 /*===============*/
@@ -1231,7 +1233,7 @@ btr_get_size(
 	SRV_CORRUPT_TABLE_CHECK(root,
 	{
 		mtr_commit(mtr);
-		return(0);
+		return(ULINT_UNDEFINED);
 	});
 
 	if (flag == BTR_N_LEAF_PAGES) {
@@ -2013,7 +2015,7 @@ IBUF_BITMAP_FREE is unaffected by reorganization.
 
 @retval true if the operation was successful
 @retval false if it is a compressed page, and recompression failed */
-static __attribute__((nonnull))
+static MY_ATTRIBUTE((nonnull))
 bool
 btr_page_reorganize_block(
 /*======================*/
@@ -2075,7 +2077,8 @@ btr_parse_page_reorganize(
 {
 	ulint	level;
 
-	ut_ad(ptr && end_ptr);
+	ut_ad(ptr != NULL);
+	ut_ad(end_ptr != NULL);
 
 	/* If dealing with a compressed page the record has the
 	compression level used during original compression written in
@@ -2542,7 +2545,7 @@ func_exit:
 Returns TRUE if the insert fits on the appropriate half-page with the
 chosen split_rec.
 @return	true if fits */
-static __attribute__((nonnull(1,3,4,6), warn_unused_result))
+static MY_ATTRIBUTE((nonnull(1,3,4,6), warn_unused_result))
 bool
 btr_page_insert_fits(
 /*=================*/
@@ -2685,7 +2688,7 @@ btr_insert_on_non_leaf_level_func(
 /**************************************************************//**
 Attaches the halves of an index page on the appropriate level in an
 index tree. */
-static __attribute__((nonnull))
+static MY_ATTRIBUTE((nonnull))
 void
 btr_attach_half_pages(
 /*==================*/
@@ -2755,7 +2758,7 @@ btr_attach_half_pages(
 	}
 
 	/* Get the level of the split pages */
-	level = btr_page_get_level(buf_block_get_frame_fast(block), mtr);
+	level = btr_page_get_level(buf_nonnull_block_get_frame(block), mtr);
 	ut_ad(level
 	      == btr_page_get_level(buf_block_get_frame(new_block), mtr));
 
@@ -2821,7 +2824,7 @@ btr_attach_half_pages(
 /*************************************************************//**
 Determine if a tuple is smaller than any record on the page.
 @return TRUE if smaller */
-static __attribute__((nonnull, warn_unused_result))
+static MY_ATTRIBUTE((nonnull, warn_unused_result))
 bool
 btr_page_tuple_smaller(
 /*===================*/
@@ -3397,7 +3400,7 @@ Removes a page from the level list of pages.
 
 /*************************************************************//**
 Removes a page from the level list of pages. */
-static __attribute__((nonnull))
+static MY_ATTRIBUTE((nonnull))
 void
 btr_level_list_remove_func(
 /*=======================*/
@@ -3413,7 +3416,8 @@ btr_level_list_remove_func(
 	ulint	prev_page_no;
 	ulint	next_page_no;
 
-	ut_ad(page && mtr);
+	ut_ad(page != NULL);
+	ut_ad(mtr != NULL);
 	ut_ad(mtr_memo_contains_page(mtr, page, MTR_MEMO_PAGE_X_FIX));
 	ut_ad(space == page_get_space_id(page));
 	/* Get the previous and next page numbers of page */
@@ -4131,8 +4135,10 @@ btr_discard_page(
 
 	/* Decide the page which will inherit the locks */
 
-	left_page_no = btr_page_get_prev(buf_block_get_frame_fast(block), mtr);
-	right_page_no = btr_page_get_next(buf_block_get_frame_fast(block), mtr);
+	left_page_no = btr_page_get_prev(buf_nonnull_block_get_frame(block),
+					 mtr);
+	right_page_no = btr_page_get_next(buf_nonnull_block_get_frame(block),
+					  mtr);
 
 	if (left_page_no != FIL_NULL) {
 		merge_block = btr_block_get(space, zip_size, left_page_no,

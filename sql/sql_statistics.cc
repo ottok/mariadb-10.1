@@ -29,6 +29,7 @@
 #include "sql_statistics.h"
 #include "opt_range.h"
 #include "my_atomic.h"
+#include "sql_show.h"
 
 /*
   The system variable 'use_stat_tables' can take one of the
@@ -1002,11 +1003,13 @@ public:
 
           switch (i) {
           case COLUMN_STAT_MIN_VALUE:
+	    table_field->read_stats->min_value->set_notnull();
             stat_field->val_str(&val);
             table_field->read_stats->min_value->store(val.ptr(), val.length(),
                                                       &my_charset_bin);
             break;
           case COLUMN_STAT_MAX_VALUE:
+	    table_field->read_stats->max_value->set_notnull();
             stat_field->val_str(&val);
             table_field->read_stats->max_value->store(val.ptr(), val.length(),
                                                       &my_charset_bin);
@@ -3193,6 +3196,10 @@ int delete_statistics_for_table(THD *thd, LEX_STRING *db, LEX_STRING *tab)
       rc= 1;
   }
 
+  err= del_global_table_stat(thd, db, tab);
+  if (err & !rc)
+      rc= 1;
+
   thd->restore_stmt_binlog_format(save_binlog_format);
 
   close_system_tables(thd, &open_tables_backup);
@@ -3338,6 +3345,10 @@ int delete_statistics_for_index(THD *thd, TABLE *tab, KEY *key_info,
       }
     }
   }
+
+  err= del_global_index_stat(thd, tab, key_info);
+  if (err && !rc)
+    rc= 1;
 
   thd->restore_stmt_binlog_format(save_binlog_format);
 
@@ -3650,17 +3661,8 @@ double get_column_range_cardinality(Field *field,
     {
       double avg_frequency= col_stats->get_avg_frequency();
       res= avg_frequency;   
-      /*
-        psergey-todo: what does check for min_value, max_value mean? 
-          min/max_value are set to NULL in alloc_statistics_for_table() and
-          alloc_statistics_for_table_share().  Both functions will immediately
-          call create_min_max_statistical_fields_for_table and 
-          create_min_max_statistical_fields_for_table_share() respectively,
-          which will set min/max_value to be valid pointers, unless OOM
-          occurs.
-      */
       if (avg_frequency > 1.0 + 0.000001 && 
-          col_stats->min_value && col_stats->max_value)
+          col_stats->min_max_values_are_provided())
       {
         Histogram *hist= &col_stats->histogram;
         if (hist->is_available())
@@ -3683,7 +3685,7 @@ double get_column_range_cardinality(Field *field,
   }  
   else 
   {
-    if (col_stats->min_value && col_stats->max_value)
+    if (col_stats->min_max_values_are_provided())
     {
       double sel, min_mp_pos, max_mp_pos;
 

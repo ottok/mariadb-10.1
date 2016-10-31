@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1996, 2012, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1996, 2016, Oracle and/or its affiliates. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -95,7 +95,7 @@ UNIV_INTERN
 dberr_t
 dict_boot(void)
 /*===========*/
-	__attribute__((warn_unused_result));
+	MY_ATTRIBUTE((warn_unused_result));
 
 /*****************************************************************//**
 Creates and initializes the data dictionary at the server bootstrap.
@@ -104,7 +104,7 @@ UNIV_INTERN
 dberr_t
 dict_create(void)
 /*=============*/
-	__attribute__((warn_unused_result));
+	MY_ATTRIBUTE((warn_unused_result));
 
 /*********************************************************************//**
 Check if a table id belongs to  system table.
@@ -114,7 +114,7 @@ bool
 dict_is_sys_table(
 /*==============*/
 	table_id_t	id)		/*!< in: table id to check */
-	__attribute__((warn_unused_result));
+	MY_ATTRIBUTE((warn_unused_result));
 
 /* Space id and page no where the dictionary header resides */
 #define	DICT_HDR_SPACE		0	/* the SYSTEM tablespace */
@@ -323,6 +323,38 @@ enum dict_fld_sys_datafiles_enum {
 	DICT_FLD__SYS_DATAFILES__DB_ROLL_PTR		= 2,
 	DICT_FLD__SYS_DATAFILES__PATH			= 3,
 	DICT_NUM_FIELDS__SYS_DATAFILES			= 4
+};
+/* The columns in SYS_DICT */
+enum dict_col_sys_zip_dict_enum {
+	DICT_COL__SYS_ZIP_DICT__ID			= 0,
+	DICT_COL__SYS_ZIP_DICT__NAME			= 1,
+	DICT_COL__SYS_ZIP_DICT__DATA			= 2,
+	DICT_NUM_COLS__SYS_ZIP_DICT			= 3
+};
+/* The field numbers in the SYS_DICT clustered index */
+enum dict_fld_sys_zip_dict_enum {
+	DICT_FLD__SYS_ZIP_DICT__ID			= 0,
+	DICT_FLD__SYS_ZIP_DICT__DB_TRX_ID		= 1,
+	DICT_FLD__SYS_ZIP_DICT__DB_ROLL_PTR		= 2,
+	DICT_FLD__SYS_ZIP_DICT__NAME			= 3,
+	DICT_FLD__SYS_ZIP_DICT__DATA			= 4,
+	DICT_NUM_FIELDS__SYS_ZIP_DICT			= 5
+};
+/* The columns in SYS_DICT_COLS */
+enum dict_col_sys_zip_dict_cols_enum {
+	DICT_COL__SYS_ZIP_DICT_COLS__TABLE_ID		= 0,
+	DICT_COL__SYS_ZIP_DICT_COLS__COLUMN_POS		= 1,
+	DICT_COL__SYS_ZIP_DICT_COLS__DICT_ID		= 2,
+	DICT_NUM_COLS__SYS_ZIP_DICT_COLS		= 3
+};
+/* The field numbers in the SYS_DICT_COLS clustered index */
+enum dict_fld_sys_zip_dict_cols_enum {
+	DICT_FLD__SYS_ZIP_DICT_COLS__TABLE_ID		= 0,
+	DICT_FLD__SYS_ZIP_DICT_COLS__COLUMN_POS		= 1,
+	DICT_FLD__SYS_ZIP_DICT_COLS__DB_TRX_ID		= 2,
+	DICT_FLD__SYS_ZIP_DICT_COLS__DB_ROLL_PTR	= 3,
+	DICT_FLD__SYS_ZIP_DICT_COLS__DICT_ID		= 4,
+	DICT_NUM_FIELDS__SYS_ZIP_DICT_COLS		= 5
 };
 
 /* A number of the columns above occur in multiple tables.  These are the

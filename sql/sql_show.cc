@@ -720,18 +720,36 @@ ignore_db_dirs_process_additions()
   for (i= 0; i < ignore_db_dirs_array.elements; i++)
   {
     get_dynamic(&ignore_db_dirs_array, (uchar *) &dir, i);
-    if (my_hash_insert(&ignore_db_dirs_hash, (uchar *) dir))
-      return true;
-    ptr= strnmov(ptr, dir->str, dir->length);
-    if (i + 1 < ignore_db_dirs_array.elements)
-      ptr= strmov(ptr, ",");
+    if (my_hash_insert(&ignore_db_dirs_hash, (uchar *)dir))
+    {
+      /* ignore duplicates from the config file */
+      if (my_hash_search(&ignore_db_dirs_hash, (uchar *)dir->str, dir->length))
+      {
+        sql_print_warning("Duplicate ignore-db-dir directory name '%.*s' "
+                          "found in the config file(s). Ignoring the duplicate.",
+                          (int) dir->length, dir->str);
+        my_free(dir);
+        goto continue_loop;
+      }
 
+      return true;
+    }
+    ptr= strnmov(ptr, dir->str, dir->length);
+    *(ptr++)= ',';
+
+continue_loop:
     /*
       Set the transferred array element to NULL to avoid double free
       in case of error.
     */
     dir= NULL;
     set_dynamic(&ignore_db_dirs_array, (uchar *) &dir, i);
+  }
+
+  if (ptr > opt_ignore_db_dirs)
+  {
+    ptr--;
+    DBUG_ASSERT(*ptr == ',');
   }
 
   /* make sure the string is terminated */
@@ -3442,6 +3460,100 @@ int fill_schema_table_stats(THD *thd, TABLE_LIST *tables, COND *cond)
   DBUG_RETURN(0);
 }
 
+/* Remove all indexes for a given table from global index statistics */
+
+static
+int del_global_index_stats_for_table(THD *thd, uchar* cache_key, uint cache_key_length)
+{
+  int res = 0;
+  DBUG_ENTER("del_global_index_stats_for_table");
+
+  mysql_mutex_lock(&LOCK_global_index_stats);
+
+  for (uint i= 0; i < global_index_stats.records;)
+  {
+    INDEX_STATS *index_stats =
+      (INDEX_STATS*) my_hash_element(&global_index_stats, i);
+
+    /* We search correct db\0table_name\0 string */
+    if (index_stats &&
+	index_stats->index_name_length >= cache_key_length &&
+	!memcmp(index_stats->index, cache_key, cache_key_length))
+    {
+      res= my_hash_delete(&global_index_stats, (uchar*)index_stats);
+      /*
+          In our HASH implementation on deletion one elements
+          is moved into a place where a deleted element was,
+          and the last element is moved into the empty space.
+          Thus we need to re-examine the current element, but
+          we don't have to restart the search from the beginning.
+      */
+    }
+    else
+      i++;
+  }
+
+  mysql_mutex_unlock(&LOCK_global_index_stats);
+  DBUG_RETURN(res);
+}
+
+/* Remove a table from global table statistics */
+
+int del_global_table_stat(THD *thd, LEX_STRING *db, LEX_STRING *table)
+{
+  TABLE_STATS *table_stats;
+  int res = 0;
+  uchar *cache_key;
+  uint cache_key_length;
+  DBUG_ENTER("del_global_table_stat");
+
+  cache_key_length= db->length + 1 + table->length + 1;
+
+  if(!(cache_key= (uchar *)my_malloc(cache_key_length,
+                                     MYF(MY_WME | MY_ZEROFILL))))
+  {
+    /* Out of memory error already given */
+    res = 1;
+    goto end;
+  }
+
+  memcpy(cache_key, db->str, db->length);
+  memcpy(cache_key + db->length + 1, table->str, table->length);
+
+  res= del_global_index_stats_for_table(thd, cache_key, cache_key_length);
+
+  mysql_mutex_lock(&LOCK_global_table_stats);
+
+  if((table_stats= (TABLE_STATS*) my_hash_search(&global_table_stats,
+                                                cache_key,
+                                                cache_key_length)))
+    res= my_hash_delete(&global_table_stats, (uchar*)table_stats);
+
+  my_free(cache_key);
+  mysql_mutex_unlock(&LOCK_global_table_stats);
+
+end:
+  DBUG_RETURN(res);
+}
+
+/* Remove a index from global index statistics */
+
+int del_global_index_stat(THD *thd, TABLE* table, KEY* key_info)
+{
+  INDEX_STATS *index_stats;
+  uint key_length= table->s->table_cache_key.length + key_info->name_length + 1;
+  int res = 0;
+  DBUG_ENTER("del_global_index_stat");
+  mysql_mutex_lock(&LOCK_global_index_stats);
+
+  if((index_stats= (INDEX_STATS*) my_hash_search(&global_index_stats,
+                                                key_info->cache_name,
+                                                key_length)))
+    res= my_hash_delete(&global_index_stats, (uchar*)index_stats);
+
+  mysql_mutex_unlock(&LOCK_global_index_stats);
+  DBUG_RETURN(res);
+}
 
 /* Fill information schema table with index statistics */
 
@@ -7297,19 +7409,30 @@ int fill_variables(THD *thd, TABLE_LIST *tables, COND *cond)
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
   enum enum_schema_tables schema_table_idx=
     get_schema_table_idx(tables->schema_table);
-  enum enum_var_type option_type= OPT_SESSION;
+  enum enum_var_type scope= OPT_SESSION;
   bool upper_case_names= (schema_table_idx != SCH_VARIABLES);
   bool sorted_vars= (schema_table_idx == SCH_VARIABLES);
 
   if ((sorted_vars && lex->option_type == OPT_GLOBAL) ||
       schema_table_idx == SCH_GLOBAL_VARIABLES)
-    option_type= OPT_GLOBAL;
+    scope= OPT_GLOBAL;
 
   COND *partial_cond= make_cond_for_info_schema(cond, tables);
 
   mysql_rwlock_rdlock(&LOCK_system_variables_hash);
-  res= show_status_array(thd, wild, enumerate_sys_vars(thd, sorted_vars, option_type),
-                         option_type, NULL, "", tables->table,
+
+  /*
+    Avoid recursive LOCK_system_variables_hash acquisition in
+    intern_sys_var_ptr() by pre-syncing dynamic session variables.
+  */
+  if (scope == OPT_SESSION &&
+      (!thd->variables.dynamic_variables_ptr ||
+       global_system_variables.dynamic_variables_head >
+       thd->variables.dynamic_variables_head))
+    sync_dynamic_session_variables(thd, true);
+
+  res= show_status_array(thd, wild, enumerate_sys_vars(thd, sorted_vars, scope),
+                         scope, NULL, "", tables->table,
                          upper_case_names, partial_cond);
   mysql_rwlock_unlock(&LOCK_system_variables_hash);
   DBUG_RETURN(res);

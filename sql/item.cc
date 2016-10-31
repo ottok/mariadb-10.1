@@ -272,9 +272,6 @@ bool Item::get_date_with_conversion(MYSQL_TIME *ltime, ulonglong fuzzydate)
 */
 String *Item::val_str_ascii(String *str)
 {
-  if (!(collation.collation->state & MY_CS_NONASCII))
-    return val_str(str);
-  
   DBUG_ASSERT(str != &str_value);
   
   uint errors;
@@ -282,11 +279,15 @@ String *Item::val_str_ascii(String *str)
   if (!res)
     return 0;
   
-  if ((null_value= str->copy(res->ptr(), res->length(),
-                             collation.collation, &my_charset_latin1,
-                             &errors)))
-    return 0;
-  
+  if (!(res->charset()->state & MY_CS_NONASCII))
+    str= res;
+  else
+  {
+    if ((null_value= str->copy(res->ptr(), res->length(), collation.collation,
+                               &my_charset_latin1, &errors)))
+      return 0;
+  }
+
   return str;
 }
 
@@ -2742,9 +2743,28 @@ void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **ref)
   if (context)
   {
     Name_resolution_context *ctx= new Name_resolution_context();
-    ctx->outer_context= NULL; // We don't build a complete name resolver
-    ctx->table_list= NULL;    // We rely on first_name_resolution_table instead
+    if (context->select_lex == new_parent)
+    {
+      /*
+        This field was pushed in then pulled out
+        (for example left part of IN)
+      */
+      ctx->outer_context= context->outer_context;
+    }
+    else if (context->outer_context)
+    {
+      /* just pull to the upper context */
+      ctx->outer_context= context->outer_context->outer_context;
+    }
+    else
+    {
+      /* No upper context (merging Derived/VIEW where context chain ends) */
+      ctx->outer_context= NULL;
+    }
+    ctx->table_list= context->first_name_resolution_table;
     ctx->select_lex= new_parent;
+    if (context->select_lex == NULL)
+      ctx->select_lex= NULL;
     ctx->first_name_resolution_table= context->first_name_resolution_table;
     ctx->last_name_resolution_table=  context->last_name_resolution_table;
     ctx->error_processor=             context->error_processor;

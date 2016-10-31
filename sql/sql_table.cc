@@ -2464,7 +2464,8 @@ int mysql_rm_table_no_locks(THD *thd, TABLE_LIST *tables, bool if_exists,
       if (table_type && table_type != view_pseudo_hton)
         ha_lock_engine(thd, table_type);
 
-      if (thd->locked_tables_mode)
+      if (thd->locked_tables_mode == LTM_LOCK_TABLES ||
+          thd->locked_tables_mode == LTM_PRELOCKED_UNDER_LOCK_TABLES)
       {
         if (wait_while_table_is_used(thd, table->table, HA_EXTRA_NOT_USED))
         {
@@ -2710,14 +2711,15 @@ bool log_drop_table(THD *thd, const char *db_name, size_t db_name_length,
 */
 
 bool quick_rm_table(THD *thd, handlerton *base, const char *db,
-                    const char *table_name, uint flags)
+                    const char *table_name, uint flags, const char *table_path)
 {
   char path[FN_REFLEN + 1];
   bool error= 0;
   DBUG_ENTER("quick_rm_table");
 
-  uint path_length= build_table_filename(path, sizeof(path) - 1,
-                                         db, table_name, reg_ext, flags);
+  uint path_length= table_path ?
+    (strxnmov(path, sizeof(path) - 1, table_path, reg_ext, NullS) - path) :
+    build_table_filename(path, sizeof(path)-1, db, table_name, reg_ext, flags);
   if (mysql_file_delete(key_file_frm, path, MYF(0)))
     error= 1; /* purecov: inspected */
   path[path_length - reg_ext_length]= '\0'; // Remove reg_ext
@@ -6272,6 +6274,7 @@ static bool fill_alter_inplace_info(THD *thd,
           (field->stored_in_db || field->vcol_info->is_in_partitioning_expr()))
       {
         if (is_equal == IS_EQUAL_NO ||
+            !new_field->vcol_info ||
             !field->vcol_info->is_equal(new_field->vcol_info))
           ha_alter_info->handler_flags|= Alter_inplace_info::ALTER_COLUMN_VCOL;
         else
@@ -9220,7 +9223,8 @@ err_new_table_cleanup:
   else
     (void) quick_rm_table(thd, new_db_type,
                           alter_ctx.new_db, alter_ctx.tmp_name,
-                          (FN_IS_TMP | (no_ha_table ? NO_HA_TABLE : 0)));
+                          (FN_IS_TMP | (no_ha_table ? NO_HA_TABLE : 0)),
+                          alter_ctx.get_tmp_path());
 
   /*
     No default value was provided for a DATE/DATETIME field, the

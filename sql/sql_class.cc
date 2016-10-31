@@ -5371,9 +5371,11 @@ int THD::decide_logging_format(TABLE_LIST *tables)
     {
       static const char *prelocked_mode_name[] = {
         "NON_PRELOCKED",
+        "LOCK_TABLES",
         "PRELOCKED",
         "PRELOCKED_UNDER_LOCK_TABLES",
       };
+      compile_time_assert(array_elements(prelocked_mode_name) == LTM_always_last);
       DBUG_PRINT("debug", ("prelocked_mode: %s",
                            prelocked_mode_name[locked_tables_mode]));
     }
@@ -6477,10 +6479,18 @@ void THD::rgi_lock_temporary_tables()
   temporary_tables= rgi_slave->rli->save_temporary_tables;
 }
 
-void THD::rgi_unlock_temporary_tables()
+void THD::rgi_unlock_temporary_tables(bool clear)
 {
   rgi_slave->rli->save_temporary_tables= temporary_tables;
   mysql_mutex_unlock(&rgi_slave->rli->data_lock);
+  if (clear)
+  {
+    /*
+      Temporary tables are shared with other by sql execution threads.
+      As a safety messure, clear the pointer to the common area.
+    */
+    temporary_tables= 0;
+  }
 }
 
 bool THD::rgi_have_temporary_tables()

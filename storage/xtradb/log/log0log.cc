@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2015, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1995, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2009, Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
@@ -1005,6 +1005,7 @@ log_init(void)
 
 	log_sys->next_checkpoint_no = 0;
 	log_sys->last_checkpoint_lsn = log_sys->lsn;
+	log_sys->next_checkpoint_lsn = log_sys->lsn;
 	log_sys->n_pending_checkpoint_writes = 0;
 
 
@@ -1080,8 +1081,7 @@ log_group_init(
 	ulint	space_id,		/*!< in: space id of the file space
 					which contains the log files of this
 					group */
-	ulint	archive_space_id __attribute__((unused)))
-					/*!< in: space id of the file space
+	ulint	archive_space_id)	/*!< in: space id of the file space
 					which contains some archived log
 					files for this group; currently, only
 					for the first log group this is
@@ -1929,6 +1929,7 @@ log_complete_checkpoint(void)
 
 	log_sys->next_checkpoint_no++;
 
+	ut_ad(log_sys->next_checkpoint_lsn >= log_sys->last_checkpoint_lsn);
 	log_sys->last_checkpoint_lsn = log_sys->next_checkpoint_lsn;
 	MONITOR_SET(MONITOR_LSN_CHECKPOINT_AGE,
 		    log_sys->lsn - log_sys->last_checkpoint_lsn);
@@ -2016,11 +2017,17 @@ log_group_checkpoint(
 	ulint		i;
 
 	ut_ad(!srv_read_only_mode);
+	ut_ad(srv_shutdown_state != SRV_SHUTDOWN_LAST_PHASE);
 	ut_ad(mutex_own(&(log_sys->mutex)));
 	ut_a(LOG_CHECKPOINT_SIZE <= OS_FILE_LOG_BLOCK_SIZE);
 
 	buf = group->checkpoint_buf;
 
+#ifdef UNIV_DEBUG
+	lsn_t		old_next_checkpoint_lsn
+		= mach_read_from_8(buf + LOG_CHECKPOINT_LSN);
+	ut_ad(old_next_checkpoint_lsn <= log_sys->next_checkpoint_lsn);
+#endif /* UNIV_DEBUG */
 	mach_write_to_8(buf + LOG_CHECKPOINT_NO, log_sys->next_checkpoint_no);
 	mach_write_to_8(buf + LOG_CHECKPOINT_LSN, log_sys->next_checkpoint_lsn);
 
@@ -2295,6 +2302,7 @@ log_checkpoint(
 		return(FALSE);
 	}
 
+	ut_ad(oldest_lsn >= log_sys->next_checkpoint_lsn);
 	log_sys->next_checkpoint_lsn = oldest_lsn;
 
 #ifdef UNIV_DEBUG
@@ -2587,7 +2595,7 @@ log_archived_file_name_gen(
 /*=======================*/
 	char*	buf,	/*!< in: buffer where to write */
 	ulint	buf_len,/*!< in: buffer length */
-	ulint	id __attribute__((unused)),
+	ulint	id MY_ATTRIBUTE((unused)),
 			/*!< in: group id;
 			currently we only archive the first group */
 	lsn_t	file_no)/*!< in: file number */
@@ -3246,10 +3254,9 @@ log_archive_close_groups(
 Writes the log contents to the archive up to the lsn when this function was
 called, and stops the archiving. When archiving is started again, the archived
 log file numbers start from 2 higher, so that the archiving will not write
-again to the archived log files which exist when this function returns.
-@return	DB_SUCCESS or DB_ERROR */
-UNIV_INTERN
-ulint
+again to the archived log files which exist when this function returns. */
+static
+void
 log_archive_stop(void)
 /*==================*/
 {
@@ -3257,13 +3264,7 @@ log_archive_stop(void)
 
 	mutex_enter(&(log_sys->mutex));
 
-	if (log_sys->archiving_state != LOG_ARCH_ON) {
-
-		mutex_exit(&(log_sys->mutex));
-
-		return(DB_ERROR);
-	}
-
+	ut_ad(log_sys->archiving_state == LOG_ARCH_ON);
 	log_sys->archiving_state = LOG_ARCH_STOPPING;
 
 	mutex_exit(&(log_sys->mutex));
@@ -3305,8 +3306,6 @@ log_archive_stop(void)
 	log_sys->archiving_state = LOG_ARCH_STOPPED;
 
 	mutex_exit(&(log_sys->mutex));
-
-	return(DB_SUCCESS);
 }
 
 /****************************************************************//**
@@ -3622,13 +3621,15 @@ loop:
 	before proceeding further. */
 	srv_shutdown_state = SRV_SHUTDOWN_FLUSH_PHASE;
 	count = 0;
-	while (buf_page_cleaner_is_active) {
-		++count;
-		os_thread_sleep(100000);
-		if (srv_print_verbose_log && count > 600) {
+	while (buf_page_cleaner_is_active || buf_lru_manager_is_active) {
+		if (srv_print_verbose_log && count == 0) {
 			ib_logf(IB_LOG_LEVEL_INFO,
 				"Waiting for page_cleaner to "
 				"finish flushing of buffer pool");
+		}
+		++count;
+		os_thread_sleep(100000);
+		if (count > 600) {
 			count = 0;
 		}
 	}
@@ -3704,7 +3705,7 @@ loop:
 
 		/* Wake the log tracking thread which will then immediatelly
 		quit because of srv_shutdown_state value */
-		if (srv_track_changed_pages) {
+		if (srv_redo_log_thread_started) {
 			os_event_reset(srv_redo_log_tracked_event);
 			os_event_set(srv_checkpoint_completed_event);
 		}
@@ -3783,7 +3784,7 @@ loop:
 	srv_shutdown_state = SRV_SHUTDOWN_LAST_PHASE;
 
 	/* Signal the log following thread to quit */
-	if (srv_track_changed_pages) {
+	if (srv_redo_log_thread_started) {
 		os_event_reset(srv_redo_log_tracked_event);
 		os_event_set(srv_checkpoint_completed_event);
 	}
@@ -3796,6 +3797,7 @@ loop:
 	ut_a(freed);
 
 	ut_a(lsn == log_sys->lsn);
+	ut_ad(lsn == log_sys->last_checkpoint_lsn);
 
 	if (lsn < srv_start_lsn) {
 		ib_logf(IB_LOG_LEVEL_ERROR,
@@ -3955,7 +3957,7 @@ log_print(
 			"Log tracking enabled\n"
 			"Log tracked up to   " LSN_PF "\n"
 			"Max tracked LSN age " LSN_PF "\n",
-			log_get_tracked_lsn_peek(),
+			log_get_tracked_lsn(),
 			log_sys->max_checkpoint_age);
 	}
 
@@ -4052,6 +4054,7 @@ log_shutdown(void)
 	rw_lock_free(&log_sys->checkpoint_lock);
 
 	mutex_free(&log_sys->mutex);
+	mutex_free(&log_sys->log_flush_order_mutex);
 
 #ifdef UNIV_LOG_ARCHIVE
 	rw_lock_free(&log_sys->archive_lock);
