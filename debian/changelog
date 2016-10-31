@@ -5,7 +5,7 @@ mariadb-10.0 (10.0.28-2) UNRELEASED; urgency=low
   [ Samuel Thibault ]
   * patches/hurd_socket.patch: Also avoid non-working socket path length check
     on hurd-i386.
-  * rules: Drop symbols on hurd-i386 too.
+  * rules: Drop symbols on hurd-i386 too (Closes: #842696).
 
  -- Otto Kekäläinen <otto@debian.org>  Sun, 30 Oct 2016 13:33:22 +0200
 
