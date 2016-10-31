@@ -69,9 +69,9 @@ override_dh_auto_configure:
 	dh_testdir
 
 	# Versioned symbols are only available on Linux.
-	# Remove symbols file on kFreeBSD builds so that
+	# Remove symbols file on kFreeBSD and Hurd builds so that
 	# dpkg-gensymbols will not fail the build.
-ifneq (,$(filter $(ARCH), kfreebsd-i386 kfreebsd-amd64))
+ifneq (,$(filter $(ARCH), kfreebsd-i386 kfreebsd-amd64 hurd-i386))
 	rm debian/libmariadbclient18.symbols
 endif
 
