@@ -88,7 +88,7 @@ endif
 	    -DCMAKE_SYSTEM_PROCESSOR=$(DEB_BUILD_ARCH) \
 	    -DBUILD_CONFIG=mysql_release \
 	    -DINSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH) \
-	    -DINSTALL_PLUGINDIR=lib/mysql/plugin \
+	    -DINSTALL_PLUGINDIR=lib/$(DEB_HOST_MULTIARCH)/mariadb18/plugin \
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
 	    -DWITH_AUTH_SOCKET=ON \
 	    -DDEB=$(DISTRIBUTION) ..'
