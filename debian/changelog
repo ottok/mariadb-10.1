@@ -1,13 +1,19 @@
-mariadb-10.0 (10.0.28-2) UNRELEASED; urgency=low
-
-  * Open a new changelog entry
+mariadb-10.0 (10.0.28-2) unstable; urgency=low
 
   [ Samuel Thibault ]
   * patches/hurd_socket.patch: Also avoid non-working socket path length check
     on hurd-i386.
   * rules: Drop symbols on hurd-i386 too (Closes: #842696).
 
- -- Otto Kekäläinen <otto@debian.org>  Sun, 30 Oct 2016 13:33:22 +0200
+  [ Daniel Black ]
+  * Don't install private mysql header files in libmariadbclient-dev
+
+  [ Otto Kekäläinen ]
+  * Update libmariadbd18 description and contents to match latest upstream
+  * Mark missing Multi-Arch as suggested by Multiarch hinter
+  * Move plugins to $ARCH/*/mariadb18 to meet multiarch needs (Closes: #739452)
+
+ -- Otto Kekäläinen <otto@debian.org>  Fri, 11 Nov 2016 22:03:33 +0200
 
 mariadb-10.0 (10.0.28-1) unstable; urgency=low
 
