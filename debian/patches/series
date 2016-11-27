@@ -22,3 +22,4 @@ mips-machine.patch
 mips-unstable-tests.patch
 hurd_socket.patch
 armhf_upd_fail.patch
+armhf_mroonga_storage_fail.patch

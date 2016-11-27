@@ -1,0 +1,21 @@
+Description: Prevent unaligned memory access on armhf in mroonga storage engine
+ Make use of memcpy instead of straight pointer dereferencing. The surrounding
+ code uses the same logic and should be fixed upstream.
+Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
+
+diff --git a/storage/mroonga/lib/mrn_multiple_column_key_codec.cpp b/storage/mroonga/lib/mrn_multiple_column_key_codec.cpp
+index 1e55636..32b6a93 100644
+--- a/storage/mroonga/lib/mrn_multiple_column_key_codec.cpp
++++ b/storage/mroonga/lib/mrn_multiple_column_key_codec.cpp
+@@ -470,9 +470,10 @@ namespace mrn {
+     long long int long_long_value;
+     mrn_byte_order_host_to_network(&long_long_value, grn_key, data_size);
+     int max_bit = (data_size * 8 - 1);
+-    *((long long int *)mysql_key) =
++    long_long_value =
+       long_long_value ^ (((long_long_value ^ (1LL << max_bit)) >> max_bit) |
+                          (1LL << max_bit));
++    memcpy(mysql_key, &long_long_value, sizeof(long_long_value));
+     DBUG_VOID_RETURN;
+   }
+ 
