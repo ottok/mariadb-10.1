@@ -1,5 +1,6 @@
 mariadb-10.0 (10.0.28-0ubuntu0.16.10.1) yakkety-security; urgency=high
 
+  [ Otto Kekäläinen ]
   * SECURITY UPDATE: New upstream release 10.0.28. Includes fixes for the
     following security vulnerabilities (LP: #1638125):
     - CVE-2016-8283
@@ -21,8 +22,13 @@ mariadb-10.0 (10.0.28-0ubuntu0.16.10.1) yakkety-security; urgency=high
     - CVE-2016-3615
     - CVE-2016-3521
     - CVE-2016-3477
+  * Add Ubuntu Developers as maintainer in d/control
 
- -- Otto Kekäläinen <otto@debian.org>  Mon, 31 Oct 2016 22:59:15 +0200
+  [ Vicențiu Ciorbaru ]
+  * Fix connect.upd test in armhf
+  * Fix mroonga/storage.index_read_multiple_double test in armhf
+
+ -- Otto Kekäläinen <otto@debian.org>  Thu, 01 Dec 2016 13:36:08 +0200
 
 mariadb-10.0 (10.0.25-1) unstable; urgency=low
 
