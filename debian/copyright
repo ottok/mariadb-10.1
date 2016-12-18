@@ -131,33 +131,40 @@ License: GPL-2
 Files: debian/*
 Copyright:
  1997-1998, Scott Hanson <shanson@debian.org>
- 1997, Christian Schwarz <schwarz@debian.org>
+ 1997 Christian Schwarz <schwarz@debian.org>
  1999-2007, 2009, Christian Hammers <ch@debian.org>
  2000-2001, Christopher C. Chimelis <chris@debian.org>
- 2001, Matthew Wilcox <willy@debian.org>
- 2005-2007, sean finney <seanius@debian.org>
- 2006, Adam Conrad <adconrad@0c3.net>
+ 2001 Matthew Wilcox <willy@debian.org>
+ 2005-2007, Sean Finney <seanius@debian.org>
+ 2006 Adam Conrad <adconrad@0c3.net>
  2007-2011, Norbert Tretkowski <norbert@tretkowski.de>
  2007-2008, Monty Taylor <mordred@inaugust.com>
- 2008, Devin Carraway <devin@debian.org>
- 2008, Steffen Joeris <white@debian.org>
- 2009, Canonical Ltd
- 2010, Xavier Oswald <xoswald@debian.org>
- 2011, Clint Byrum <clint@ubuntu.com>
- 2011, Ondřej Surý <ondrej@debian.org>
- 2012, Nicholas Bamber <nicholas@periapt.co.uk>
- 2013, Kristian Nielsen <knielsen@askmonty.org>
- 2013-2015, Otto Kekäläinen <otto@seravo.fi>
+ 2008 Devin Carraway <devin@debian.org>
+ 2008 Steffen Joeris <white@debian.org>
+ 2009 Canonical Ltd
+ 2010 Xavier Oswald <xoswald@debian.org>
+ 2011 Clint Byrum <clint@ubuntu.com>
+ 2011 Ondřej Surý <ondrej@debian.org>
+ 2012 Nicholas Bamber <nicholas@periapt.co.uk>
+ 2013,2016 Kristian Nielsen <knielsen@askmonty.org>
+ 2013-2016 Otto Kekäläinen <otto@seravo.fi>
  2014 Julien Muchembled <jm@jmuchemb.eu>
  2014 Tobias Frost <tobi@coldtobi.de>
  2015 Andreas Beckmann <anbe@debian.org>
- 2015 Arnaud Fontaine <arnau@debian.org>
- 2015 Daniel Black <daniel.black@openquery.com.au>
+ 2015-2016 Arnaud Fontaine <arnau@debian.org>
+ 2015-2016 Daniel Black <daniel.black@openquery.com.au>
  2015 Israel Tsadok <itsadok@gmail.com>
  2015 Jan Wagner <waja@cyconet.org>
  2015 Jean Weisbuch <jean@phpnet.org>
  2015 Olaf van der Spek <olafvdspek@gmail.com>
- 2015 Robie Basak <robie.basak@canonical.com>
+ 2015-2106 Robie Basak <robie.basak@canonical.com>
+ 2016 Axel Beckert abe@debian.org
+ 2016 Dieter Adriaenssens dieter.adriaenssens@gmail.com
+ 2016 Ian Gilfillan ian@mariadb.org
+ 2016 James Cowgill jcowgill@debian.org
+ 2016 Paul Gevers elbrus@debian.org
+ 2016 Samuel Thibault sthibault@debian.org
+ 2016 Vicențiu Ciorbaru vicentiu@mariadb.org
 License: GPL-2+
 
 Files: plugin/feedback/*
