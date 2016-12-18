@@ -1,2 +1,0 @@
-# OK, embedded has same source
-mariadb-server-core-10.0: embedded-library usr/sbin/mysqld: libmysqlclient

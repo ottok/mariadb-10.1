@@ -1,2 +1,0 @@
-# embedded libs are OK
-libmariadbclient18: embedded-library usr/lib/x86_64-linux-gnu/libmariadbclient.so.18.0.0: libmysqlclient
