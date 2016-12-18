@@ -128,6 +128,8 @@
 ###############################################################
 # Some preparations
 ###############################################################
+set global sql_mode='';
+set local sql_mode='';
 # The sync_slave_with_master is needed to make the xids deterministic.
 sync_slave_with_master;
 
@@ -146,13 +148,10 @@ eval CREATE TABLE mysqltest1.t1 (f1 BIGINT) ENGINE=$engine_type;
 # Prevent Bug#26687 rpl_ddl test fails if run with --innodb option
 # The testscript (suite/rpl/rpl_ddl.test) + the expected result need that the
 # slave uses MyISAM for the table mysqltest.t1.
-# This is not valid in case of suite/rpl_ndb/rpl_ndb_ddl.test which sources
-# also this script.
 sync_slave_with_master;
 connection slave;
 if (`SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-     WHERE TABLE_SCHEMA = 'mysqltest1' AND TABLE_NAME = 't1'
-           AND ENGINE <> 'MyISAM' AND '$engine_type' <> 'NDB'`)
+     WHERE TABLE_SCHEMA = 'mysqltest1' AND TABLE_NAME = 't1' AND ENGINE <> 'MyISAM'`)
 {
    skip This test needs on slave side: InnoDB disabled, default engine: MyISAM;
 }
@@ -612,3 +611,5 @@ DROP TEMPORARY TABLE mysqltest1.t22;
 DROP DATABASE mysqltest1;
 # mysqltest2 was alreday DROPPED some tests before.
 DROP DATABASE mysqltest3;
+
+set global sql_mode=default;

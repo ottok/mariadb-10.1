@@ -20,6 +20,8 @@ mysqld_ld_preload=
 mysqld_ld_library_path=
 flush_caches=0
 numa_interleave=0
+wsrep_on=0
+dry_run=0
 
 # Initial logging status: error log is not open, and not using syslog
 logging=init
@@ -80,6 +82,7 @@ Usage: $0 [OPTIONS]
   --malloc-lib=LIB           Preload shared library LIB if available
   --mysqld=FILE              Use the specified file as mysqld
   --mysqld-version=VERSION   Use "mysqld-VERSION" as mysqld
+  --dry-run                  Simulate the start to detect errors but don't start
   --nice=NICE                Set the scheduling priority of mysqld
   --no-auto-restart          Exit after starting mysqld
   --nowatch                  Exit after starting mysqld
@@ -130,6 +133,7 @@ my_which ()
 }
 
 log_generic () {
+  [ $dry_run -eq 1 ] && return
   priority="$1"
   shift
 
@@ -155,7 +159,7 @@ log_notice () {
 }
 
 eval_log_error () {
-  cmd="$1"
+  local cmd="$1"
   case $logging in
     file) cmd="$cmd >> "`shell_quote_string "$err_log"`" 2>&1" ;;
     syslog)
@@ -189,6 +193,89 @@ shell_quote_string() {
   # This sed command makes sure that any special chars are quoted,
   # so the arg gets passed exactly to the server.
   echo "$1" | sed -e 's,\([^a-zA-Z0-9/_.=-]\),\\\1,g'
+}
+
+wsrep_pick_url() {
+  [ $# -eq 0 ] && return 0
+
+  log_error "WSREP: 'wsrep_urls' is DEPRECATED! Use wsrep_cluster_address to specify multiple addresses instead."
+
+  if ! which nc >/dev/null; then
+    log_error "ERROR: nc tool not found in PATH! Make sure you have it installed."
+    return 1
+  fi
+
+  local url
+  # Assuming URL in the form scheme://host:port
+  # If host and port are not NULL, the liveness of URL is assumed to be tested
+  # If port part is absent, the url is returned literally and unconditionally
+  # If every URL has port but none is reachable, nothing is returned
+  for url in `echo $@ | sed s/,/\ /g` 0; do
+    local host=`echo $url | cut -d \: -f 2 | sed s/^\\\/\\\///`
+    local port=`echo $url | cut -d \: -f 3`
+    [ -z "$port" ] && break
+    nc -z "$host" $port >/dev/null && break
+  done
+
+  if [ "$url" == "0" ]; then
+    log_error "ERROR: none of the URLs in '$@' is reachable."
+    return 1
+  fi
+
+  echo $url
+}
+
+# Run mysqld with --wsrep-recover and parse recovered position from log.
+# Position will be stored in wsrep_start_position_opt global.
+wsrep_start_position_opt=""
+wsrep_recover_position() {
+  local mysqld_cmd="$@"
+  local euid=$(id -u)
+  local ret=0
+
+  local wr_logfile=$(mktemp $DATADIR/wsrep_recovery.XXXXXX)
+
+  # safety checks
+  if [ -z $wr_logfile ]; then
+    log_error "WSREP: mktemp failed"
+    return 1
+  fi
+
+  if [ -f $wr_logfile ]; then
+    [ "$euid" = "0" ] && chown $user $wr_logfile
+    chmod 600 $wr_logfile
+  else
+    log_error "WSREP: mktemp failed"
+    return 1
+  fi
+
+  local wr_pidfile="$DATADIR/"`@HOSTNAME@`"-recover.pid"
+
+  local wr_options="--log_error='$wr_logfile' --pid-file='$wr_pidfile'"
+
+  log_notice "WSREP: Running position recovery with $wr_options"
+
+  eval_log_error "$mysqld_cmd --wsrep_recover $wr_options"
+
+  local rp="$(grep 'WSREP: Recovered position:' $wr_logfile)"
+  if [ -z "$rp" ]; then
+    local skipped="$(grep WSREP $wr_logfile | grep 'skipping position recovery')"
+    if [ -z "$skipped" ]; then
+      log_error "WSREP: Failed to recover position: '`cat $wr_logfile`'"
+      ret=1
+    else
+      log_notice "WSREP: Position recovery skipped"
+    fi
+  else
+    local start_pos="$(echo $rp | sed 's/.*WSREP\:\ Recovered\ position://' \
+        | sed 's/^[ \t]*//')"
+    log_notice "WSREP: Recovered position $start_pos"
+    wsrep_start_position_opt="--wsrep_start_position=$start_pos"
+  fi
+
+  [ $ret -eq 0 ] && rm $wr_logfile
+
+  return $ret
 }
 
 parse_arguments() {
@@ -234,6 +321,7 @@ parse_arguments() {
           MYSQLD="mysqld"
         fi
         ;;
+      --dry[-_]run) dry_run=1 ;;
       --nice=*) niceness="$val" ;;
       --nowatch|--no[-_]watch|--no[-_]auto[-_]restart) nowatch=1 ;;
       --open[-_]files[-_]limit=*) open_files="$val" ;;
@@ -244,6 +332,30 @@ parse_arguments() {
       --timezone=*) TZ="$val"; export TZ; ;;
       --flush[-_]caches) flush_caches=1 ;;
       --numa[-_]interleave) numa_interleave=1 ;;
+      --wsrep[-_]on)
+        wsrep_on=1
+        append_arg_to_args "$arg"
+        ;;
+      --skip[-_]wsrep[-_]on)
+        wsrep_on=0
+        append_arg_to_args "$arg"
+        ;;
+      --wsrep[-_]on=*)
+        if echo $val | grep -iq '\(ON\|1\)'; then
+          wsrep_on=1
+        else
+          wsrep_on=0
+        fi
+        append_arg_to_args "$arg"
+        ;;
+      --wsrep[-_]urls=*) wsrep_urls="$val"; ;;
+      --wsrep[-_]provider=*)
+        if test -n "$val" && test "$val" != "none"
+        then
+          wsrep_restart=1
+        fi
+        append_arg_to_args "$arg"
+        ;;
 
       --help) usage ;;
 
@@ -626,10 +738,6 @@ else
   logging=syslog
 fi
 
-# close stdout and stderr, everything goes to $logging now
-exec 1>&-
-exec 2>&-
-
 USER_OPTION=""
 if test -w / -o "$USER" = "root"
 then
@@ -765,7 +873,7 @@ fi
 #
 # If there exists an old pid file, check if the daemon is already running
 # Note: The switches to 'ps' may depend on your operating system
-if test -f "$pid_file"
+if test -f "$pid_file" && [ $dry_run -eq 0 ]
 then
   PID=`cat "$pid_file"`
   if @CHECK_PID@
@@ -841,6 +949,7 @@ fi
 #fi
 
 cmd="`mysqld_ld_preload_text`$NOHUP_NICENESS"
+[ $dry_run -eq 1 ] && cmd=''
 
 #
 # Set mysqld's memory interleave policy.
@@ -860,7 +969,7 @@ then
   fi
 
   # Launch mysqld with numactl.
-  cmd="$cmd numactl --interleave=all"
+  [ $dry_run -eq 0 ] && cmd="$cmd numactl --interleave=all"
 elif test $numa_interleave -eq 1
 then
   log_error "--numa-interleave is not supported on this platform"
@@ -873,8 +982,14 @@ do
   cmd="$cmd "`shell_quote_string "$i"`
 done
 cmd="$cmd $args"
+[ $dry_run -eq 1 ] && return
+
 # Avoid 'nohup: ignoring input' warning
 test -n "$NOHUP_NICENESS" && cmd="$cmd < /dev/null"
+
+# close stdout and stderr, everything goes to $logging now
+exec 1>&-
+exec 2>&-
 
 log_notice "Starting $MYSQLD daemon with databases from $DATADIR"
 
@@ -885,13 +1000,34 @@ max_fast_restarts=5
 # flag whether a usable sleep command exists
 have_sleep=1
 
+# maximum number of wsrep restarts
+max_wsrep_restarts=0
+
 while true
 do
   rm -f "$pid_file"	# Some extra safety
 
   start_time=`date +%M%S`
 
-  eval_log_error "$cmd"
+  # Perform wsrep position recovery if wsrep_on=1, skip otherwise.
+  if test $wsrep_on -eq 1
+  then
+    # this sets wsrep_start_position_opt
+    wsrep_recover_position "$cmd"
+
+    [ $? -ne 0 ] && exit 1 #
+
+    [ -n "$wsrep_urls" ] && url=`wsrep_pick_url $wsrep_urls` # check connect address
+
+    if [ -z "$url" ]
+    then
+      eval_log_error "$cmd $wsrep_start_position_opt"
+    else
+      eval_log_error "$cmd $wsrep_start_position_opt --wsrep_cluster_address=$url"
+    fi
+  else
+    eval_log_error "$cmd"
+  fi
 
   if [ $want_syslog -eq 0 -a ! -f "$err_log" ]; then
     touch "$err_log"                    # hypothetical: log was renamed but not
@@ -961,6 +1097,20 @@ do
       I=`expr $I + 1`
     done
   fi
+
+  if [ -n "$wsrep_restart" ]
+  then
+    if [ $wsrep_restart -le $max_wsrep_restarts ]
+    then
+      wsrep_restart=`expr $wsrep_restart + 1`
+      log_notice "WSREP: sleeping 15 seconds before restart"
+      sleep 15
+    else
+      log_notice "WSREP: not restarting wsrep node automatically"
+      break
+    fi
+  fi
+
   log_notice "mysqld restarted"
   if test -n "$CRASH_SCRIPT"
   then

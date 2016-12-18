@@ -115,8 +115,25 @@ static void do_outer_field_to_null_str(Copy_field *copy)
 }
 
 
-int
-set_field_to_null(Field *field)
+static int set_bad_null_error(Field *field, int err)
+{
+  switch (field->table->in_use->count_cuted_fields) {
+  case CHECK_FIELD_WARN:
+    field->set_warning(Sql_condition::WARN_LEVEL_WARN, err, 1);
+    /* fall through */
+  case CHECK_FIELD_IGNORE:
+    return 0;
+  case CHECK_FIELD_ERROR_FOR_NULL:
+    if (!field->table->in_use->no_errors)
+      my_error(ER_BAD_NULL_ERROR, MYF(0), field->field_name);
+    return -1;
+  }
+  DBUG_ASSERT(0); // impossible
+  return -1;
+}
+
+
+int set_field_to_null(Field *field)
 {
   if (field->table->null_catch_flags & CHECK_ROW_FOR_NULLS_TO_REJECT)
   {
@@ -130,21 +147,39 @@ set_field_to_null(Field *field)
     return 0;
   }
   field->reset();
-  switch (field->table->in_use->count_cuted_fields) {
-  case CHECK_FIELD_WARN:
-    field->set_warning(Sql_condition::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
-    /* fall through */
-  case CHECK_FIELD_IGNORE:
-    return 0;
-  case CHECK_FIELD_ERROR_FOR_NULL:
-    if (!field->table->in_use->no_errors)
-      my_error(ER_BAD_NULL_ERROR, MYF(0), field->field_name);
-    return -1;
-  }
-  DBUG_ASSERT(0); // impossible
-  return -1;
+  return set_bad_null_error(field, WARN_DATA_TRUNCATED);
 }
 
+
+/**
+  Set TIMESTAMP to NOW(), AUTO_INCREMENT to the next number, or report an error
+
+  @param field           Field to update
+
+  @retval
+    0    Field could take 0 or an automatic conversion was used
+  @retval
+    -1   Field could not take NULL and no conversion was used.
+    If no_conversion was not set, an error message is printed
+*/
+
+int convert_null_to_field_value_or_error(Field *field)
+{
+  if (field->type() == MYSQL_TYPE_TIMESTAMP)
+  {
+    ((Field_timestamp*) field)->set_time();
+    return 0;
+  }
+
+  field->reset(); // Note: we ignore any potential failure of reset() here.
+
+  if (field == field->table->next_number_field)
+  {
+    field->table->auto_increment_field_not_null= FALSE;
+    return 0;                             // field is set in fill_record()
+  }
+  return set_bad_null_error(field, ER_BAD_NULL_ERROR);
+}
 
 /**
   Set field to NULL or TIMESTAMP or to next auto_increment number.
@@ -180,38 +215,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
   if (no_conversions)
     return -1;
 
-  /*
-    Check if this is a special type, which will get a special walue
-    when set to NULL (TIMESTAMP fields which allow setting to NULL
-    are handled by first check).
-  */
-  if (field->type() == MYSQL_TYPE_TIMESTAMP)
-  {
-    ((Field_timestamp*) field)->set_time();
-    return 0;					// Ok to set time to NULL
-  }
-  
-  // Note: we ignore any potential failure of reset() here.
-  field->reset();
-
-  if (field == field->table->next_number_field)
-  {
-    field->table->auto_increment_field_not_null= FALSE;
-    return 0;				  // field is set in fill_record()
-  }
-  switch (field->table->in_use->count_cuted_fields) {
-  case CHECK_FIELD_WARN:
-    field->set_warning(Sql_condition::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
-    /* fall through */
-  case CHECK_FIELD_IGNORE:
-    return 0;
-  case CHECK_FIELD_ERROR_FOR_NULL:
-    if (!field->table->in_use->no_errors)
-      my_error(ER_BAD_NULL_ERROR, MYF(0), field->field_name);
-    return -1;
-  }
-  DBUG_ASSERT(0); // impossible
-  return -1;
+  return convert_null_to_field_value_or_error(field);
 }
 
 
@@ -625,9 +629,6 @@ void Copy_field::set(uchar *to,Field *from)
     Field_blob::store. Is this in order to trigger the call to 
     well_formed_copy_nchars, by changing the pointer copy->tmp.ptr()?
     That call will take place anyway in all known cases.
-
-  - The above causes a truncation to MAX_FIELD_WIDTH. Is this the intended 
-    effect? Truncation is handled by well_formed_copy_nchars anyway.
  */
 void Copy_field::set(Field *to,Field *from,bool save)
 {
@@ -850,7 +851,8 @@ bool memcpy_field_possible(Field *to,Field *from)
           from->charset() == to->charset() &&
           (!sql_mode_for_dates(to->table->in_use) ||
            (from->type()!= MYSQL_TYPE_DATE &&
-            from->type()!= MYSQL_TYPE_DATETIME)) &&
+            from->type()!= MYSQL_TYPE_DATETIME &&
+            from->type()!= MYSQL_TYPE_TIMESTAMP)) &&
           (from_real_type != MYSQL_TYPE_VARCHAR ||
            ((Field_varstring*)from)->length_bytes ==
            ((Field_varstring*)to)->length_bytes));

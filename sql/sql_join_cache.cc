@@ -318,7 +318,7 @@ void JOIN_CACHE::collect_info_on_key_args()
     The allocated arrays are adjacent.
   
   NOTES
-    The memory is allocated in join->thd->memroot
+    The memory is allocated in join->thd->mem_root
 
   RETURN VALUE
     pointer to the first array  
@@ -328,8 +328,8 @@ int JOIN_CACHE::alloc_fields()
 {
   uint ptr_cnt= external_key_arg_fields+blobs+1;
   uint fields_size= sizeof(CACHE_FIELD)*fields;
-  field_descr= (CACHE_FIELD*) sql_alloc(fields_size +
-                                        sizeof(CACHE_FIELD*)*ptr_cnt);
+  field_descr= (CACHE_FIELD*) join->thd->alloc(fields_size +
+                                               sizeof(CACHE_FIELD*)*ptr_cnt);
   blob_ptr= (CACHE_FIELD **) ((uchar *) field_descr + fields_size);
   return (field_descr == NULL);
 }  
@@ -2260,7 +2260,7 @@ enum_nested_loop_state JOIN_CACHE::join_matching_records(bool skip_last)
     */
     goto finish;
   }
-  
+
   while (!(error= join_tab_scan->next()))   
   {
     if (join->thd->check_killed())
@@ -2277,11 +2277,13 @@ enum_nested_loop_state JOIN_CACHE::join_matching_records(bool skip_last)
     /* Prepare to read matching candidates from the join buffer */
     if (prepare_look_for_matches(skip_last))
       continue;
+    join_tab->jbuf_tracker->r_scans++;
 
     uchar *rec_ptr;
     /* Read each possible candidate from the buffer and look for matches */
     while ((rec_ptr= get_next_candidate_for_match()))
-    { 
+    {
+      join_tab->jbuf_tracker->r_rows++;
       /* 
         If only the first match is needed, and, it has been already found for
         the next record read from the join buffer, then the record is skipped.
@@ -2451,6 +2453,8 @@ inline bool JOIN_CACHE::check_match(uchar *rec_ptr)
 
   if (join_tab->select && join_tab->select->skip_record(join->thd) <= 0)
     DBUG_RETURN(FALSE);
+  
+  join_tab->jbuf_tracker->r_rows_after_where++;
 
   if (!join_tab->is_last_inner_table())
     DBUG_RETURN(TRUE);
@@ -2574,9 +2578,11 @@ finish:
     none
 */ 
 
-void JOIN_CACHE::save_explain_data(struct st_explain_bka_type *explain)
+void JOIN_CACHE::save_explain_data(EXPLAIN_BKA_TYPE *explain)
 {
   explain->incremental= MY_TEST(prev_cache);
+
+  explain->join_buffer_size= get_join_buffer_size();
 
   switch (get_join_alg()) {
   case BNL_JOIN_ALG:
@@ -2614,19 +2620,20 @@ static void add_mrr_explain_info(String *str, uint mrr_mode, handler *file)
                                            sizeof(mrr_str_buf));
   if (len > 0)
   {
-    str->append(STRING_WITH_LEN("; "));
+    if (str->length())
+      str->append(STRING_WITH_LEN("; "));
     str->append(mrr_str_buf, len);
   }
 }
 
-void JOIN_CACHE_BKA::save_explain_data(struct st_explain_bka_type *explain)
+void JOIN_CACHE_BKA::save_explain_data(EXPLAIN_BKA_TYPE *explain)
 {
   JOIN_CACHE::save_explain_data(explain); 
   add_mrr_explain_info(&explain->mrr_type, mrr_mode, join_tab->table->file);
 }
 
 
-void JOIN_CACHE_BKAH::save_explain_data(struct st_explain_bka_type *explain)
+void JOIN_CACHE_BKAH::save_explain_data(EXPLAIN_BKA_TYPE *explain)
 {
   JOIN_CACHE::save_explain_data(explain); 
   add_mrr_explain_info(&explain->mrr_type, mrr_mode, join_tab->table->file);
@@ -2673,7 +2680,7 @@ int JOIN_CACHE_HASHED::init(bool for_explain)
   if ((rc= JOIN_CACHE::init(for_explain)) || for_explain)
     DBUG_RETURN (rc); 
 
-  if (!(key_buff= (uchar*) sql_alloc(key_length)))
+  if (!(key_buff= (uchar*) join->thd->alloc(key_length)))
     DBUG_RETURN(1);
 
   /* Take into account a reference to the next record in the key chain */
@@ -3333,6 +3340,7 @@ int JOIN_TAB_SCAN::open()
 {
   save_or_restore_used_tabs(join_tab, FALSE);
   is_first_record= TRUE;
+  join_tab->tracker->r_scans++;
   return join_init_read_record(join_tab);
 }
 
@@ -3371,8 +3379,14 @@ int JOIN_TAB_SCAN::next()
     is_first_record= FALSE;
   else
     err= info->read_record(info);
-  if (!err && table->vfield)
-    update_virtual_fields(thd, table);
+
+  if (!err)
+  {
+    join_tab->tracker->r_rows++;
+    if (table->vfield)
+      update_virtual_fields(thd, table);
+  }
+
   while (!err && select && (skip_rc= select->skip_record(thd)) <= 0)
   {
     if (thd->check_killed() || skip_rc < 0) 
@@ -3382,9 +3396,16 @@ int JOIN_TAB_SCAN::next()
       meet the condition pushed to the table join_tab.
     */
     err= info->read_record(info);
-    if (!err && table->vfield)
-      update_virtual_fields(thd, table);
-  } 
+    if (!err)
+    {
+      join_tab->tracker->r_rows++;
+      if (table->vfield)
+        update_virtual_fields(thd, table);
+    }
+  }
+
+  if (!err)
+    join_tab->tracker->r_rows_after_where++;
   return err; 
 }
 

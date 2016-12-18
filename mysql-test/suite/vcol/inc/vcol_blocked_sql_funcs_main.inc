@@ -87,6 +87,10 @@ create table t1 (a datetime, b datetime as (utc_time()));
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a datetime, b datetime as (utc_timestamp()));
 
+--echo # WEEK() - one argument version
+-- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
+create table t1 (a datetime, b datetime as (week(a)));
+
 --echo # MATCH()
 if (!$skip_full_text_checks)
 {
@@ -97,6 +101,18 @@ if (!$skip_full_text_checks)
 --echo # BENCHMARK()
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED
 create table t1 (a varchar(1024), b varchar(1024) as (benchmark(a,3)));
+
+--echo # CHARSET()
+-- error ER_CONST_EXPR_IN_VCOL
+create table t1 (a varchar(64), b varchar(64) as (charset(a)));
+
+--echo # COERCIBILITY()
+-- error ER_CONST_EXPR_IN_VCOL
+create table t1 (a varchar(64), b int as (coercibility(a)));
+
+--echo # COLLATION()
+-- error ER_CONST_EXPR_IN_VCOL
+create table t1 (a varchar(64), b varchar(64) as (collation(a)));
 
 --echo # CONNECTION_ID()
 -- error ER_VIRTUAL_COLUMN_FUNCTION_IS_NOT_ALLOWED

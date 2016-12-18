@@ -272,8 +272,14 @@ common_1_lev_code:
 static int
 create_query_string(THD *thd, String *buf)
 {
+  buf->length(0);
   /* Append the "CREATE" part of the query */
-  if (buf->append(STRING_WITH_LEN("CREATE ")))
+  if (thd->lex->create_info.or_replace())
+  {
+    if (buf->append(STRING_WITH_LEN("CREATE OR REPLACE ")))
+      return 1;
+  }
+  else if (buf->append(STRING_WITH_LEN("CREATE ")))
     return 1;
   /* Append definer */
   append_definer(thd, buf, &(thd->lex->definer->user), &(thd->lex->definer->host));
@@ -292,8 +298,7 @@ create_query_string(THD *thd, String *buf)
 
   @param[in,out]  thd            THD
   @param[in]      parse_data     Event's data from parsing stage
-  @param[in]      if_not_exists  Whether IF NOT EXISTS was
-                                 specified
+
   In case there is an event with the same name (db) and
   IF NOT EXISTS is specified, an warning is put into the stack.
   @sa Events::drop_event for the notes about locking, pre-locking
@@ -304,8 +309,7 @@ create_query_string(THD *thd, String *buf)
 */
 
 bool
-Events::create_event(THD *thd, Event_parse_data *parse_data,
-                     bool if_not_exists)
+Events::create_event(THD *thd, Event_parse_data *parse_data)
 {
   bool ret;
   bool event_already_exists;
@@ -329,6 +333,10 @@ Events::create_event(THD *thd, Event_parse_data *parse_data,
   if (check_access(thd, EVENT_ACL, parse_data->dbname.str, NULL, NULL, 0, 0))
     DBUG_RETURN(TRUE);
 
+  if (lock_object_name(thd, MDL_key::EVENT,
+                       parse_data->dbname.str, parse_data->name.str))
+    DBUG_RETURN(TRUE);
+
   if (check_db_dir_existence(parse_data->dbname.str))
   {
     my_error(ER_BAD_DB_ERROR, MYF(0), parse_data->dbname.str);
@@ -343,12 +351,11 @@ Events::create_event(THD *thd, Event_parse_data *parse_data,
   */
   save_binlog_format= thd->set_current_stmt_binlog_format_stmt();
 
-  if (lock_object_name(thd, MDL_key::EVENT,
-                       parse_data->dbname.str, parse_data->name.str))
-    DBUG_RETURN(TRUE);
+  if (thd->lex->create_info.or_replace() && event_queue)
+    event_queue->drop_event(thd, parse_data->dbname, parse_data->name);
 
   /* On error conditions my_error() is called so no need to handle here */
-  if (!(ret= db_repository->create_event(thd, parse_data, if_not_exists,
+  if (!(ret= db_repository->create_event(thd, parse_data,
                                          &event_already_exists)))
   {
     Event_queue_element *new_element;
@@ -382,7 +389,8 @@ Events::create_event(THD *thd, Event_parse_data *parse_data,
     {
       /* Binlog the create event. */
       DBUG_ASSERT(thd->query() && thd->query_length());
-      String log_query;
+      char buffer[1024];
+      String log_query(buffer, sizeof(buffer), &my_charset_bin);
       if (create_query_string(thd, &log_query))
       {
         my_message_sql(ER_STARTUP,
@@ -446,6 +454,16 @@ Events::update_event(THD *thd, Event_parse_data *parse_data,
 
   if (check_access(thd, EVENT_ACL, parse_data->dbname.str, NULL, NULL, 0, 0))
     DBUG_RETURN(TRUE);
+  if (lock_object_name(thd, MDL_key::EVENT,
+                       parse_data->dbname.str, parse_data->name.str))
+    DBUG_RETURN(TRUE);
+
+  if (check_db_dir_existence(parse_data->dbname.str))
+  {
+    my_error(ER_BAD_DB_ERROR, MYF(0), parse_data->dbname.str);
+    DBUG_RETURN(TRUE);
+  }
+
 
   if (new_dbname)                               /* It's a rename */
   {
@@ -468,6 +486,13 @@ Events::update_event(THD *thd, Event_parse_data *parse_data,
     if (check_access(thd, EVENT_ACL, new_dbname->str, NULL, NULL, 0, 0))
       DBUG_RETURN(TRUE);
 
+    /*
+     Acquire mdl exclusive lock on target database name.
+    */
+    if (lock_object_name(thd, MDL_key::EVENT,
+                         new_dbname->str, new_name->str))
+      DBUG_RETURN(TRUE);
+
     /* Check that the target database exists */
     if (check_db_dir_existence(new_dbname->str))
     {
@@ -481,10 +506,6 @@ Events::update_event(THD *thd, Event_parse_data *parse_data,
     so that all supporting tables are updated for UPDATE EVENT command.
   */
   save_binlog_format= thd->set_current_stmt_binlog_format_stmt();
-
-  if (lock_object_name(thd, MDL_key::EVENT,
-                       parse_data->dbname.str, parse_data->name.str))
-    DBUG_RETURN(TRUE);
 
   /* On error conditions my_error() is called so no need to handle here */
   if (!(ret= db_repository->update_event(thd, parse_data,
@@ -627,36 +648,45 @@ send_show_create_event(THD *thd, Event_timed *et, Protocol *protocol)
   List<Item> field_list;
   LEX_STRING sql_mode;
   const String *tz_name;
-
+  MEM_ROOT *mem_root= thd->mem_root;
   DBUG_ENTER("send_show_create_event");
 
   show_str.length(0);
   if (et->get_create_event(thd, &show_str))
     DBUG_RETURN(TRUE);
 
-  field_list.push_back(new Item_empty_string("Event", NAME_CHAR_LEN));
+  field_list.push_back(new (mem_root)
+                       Item_empty_string(thd, "Event", NAME_CHAR_LEN),
+                       mem_root);
 
   if (sql_mode_string_representation(thd, et->sql_mode, &sql_mode))
     DBUG_RETURN(TRUE);
 
-  field_list.push_back(new Item_empty_string("sql_mode", (uint) sql_mode.length));
+  field_list.push_back(new (mem_root)
+                       Item_empty_string(thd, "sql_mode",
+                                         (uint) sql_mode.length), mem_root);
 
   tz_name= et->time_zone->get_name();
 
-  field_list.push_back(new Item_empty_string("time_zone",
-                                             tz_name->length()));
+  field_list.push_back(new (mem_root)
+                       Item_empty_string(thd, "time_zone", tz_name->length()),
+                       mem_root);
 
-  field_list.push_back(new Item_empty_string("Create Event",
-                                             show_str.length()));
+  field_list.push_back(new (mem_root)
+                       Item_empty_string(thd, "Create Event",
+                                         show_str.length()), mem_root);
 
-  field_list.push_back(
-    new Item_empty_string("character_set_client", MY_CS_NAME_SIZE));
+  field_list.push_back(new (mem_root)
+                       Item_empty_string(thd, "character_set_client",
+                                         MY_CS_NAME_SIZE), mem_root);
 
-  field_list.push_back(
-    new Item_empty_string("collation_connection", MY_CS_NAME_SIZE));
+  field_list.push_back(new (mem_root)
+                       Item_empty_string(thd, "collation_connection",
+                                         MY_CS_NAME_SIZE), mem_root);
 
-  field_list.push_back(
-    new Item_empty_string("Database Collation", MY_CS_NAME_SIZE));
+  field_list.push_back(new (mem_root)
+                       Item_empty_string(thd, "Database Collation",
+                                         MY_CS_NAME_SIZE), mem_root);
 
   if (protocol->send_result_set_metadata(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
@@ -1143,7 +1173,6 @@ Events::load_events_from_db(THD *thd)
       delete et;
       goto end;
     }
-
     /**
       Since the Event_queue_element object could be deleted inside
       Event_queue::create_event we should save the value of dropped flag
@@ -1192,6 +1221,21 @@ end:
   DBUG_RETURN(ret);
 }
 
+#ifdef WITH_WSREP
+int wsrep_create_event_query(THD *thd, uchar** buf, size_t* buf_len)
+{
+  char buffer[1024];
+  String log_query(buffer, sizeof(buffer), &my_charset_bin);
+
+  if (create_query_string(thd, &log_query))
+  {
+    WSREP_WARN("events create string failed: schema: %s, query: %s",
+               (thd->db ? thd->db : "(null)"), thd->query());
+    return 1;
+  }
+  return wsrep_to_buf_helper(thd, log_query.ptr(), log_query.length(), buf, buf_len);
+}
+#endif /* WITH_WSREP */
 /**
   @} (End of group Event_Scheduler)
 */

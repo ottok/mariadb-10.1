@@ -374,7 +374,8 @@ bool mysql_ha_open(THD *thd, TABLE_LIST *tables, SQL_HANDLER *reopen)
 
   /* Always read all columns */
   table->read_set= &table->s->all_set;
-  table->vcol_set= &table->s->all_set;
+  if (table->vcol_set)
+    table->vcol_set= &table->s->all_set;
 
   /* Restore the state. */
   thd->set_open_tables(backup_open_tables);
@@ -1133,7 +1134,7 @@ void mysql_ha_flush(THD *thd)
         ((hash_tables->table->mdl_ticket &&
          hash_tables->table->mdl_ticket->has_pending_conflicting_lock()) ||
          (!hash_tables->table->s->tmp_table &&
-          hash_tables->table->s->tdc.flushed)))
+          hash_tables->table->s->tdc->flushed)))
       mysql_ha_close_table(hash_tables);
   }
 

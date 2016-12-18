@@ -580,7 +580,7 @@ bool simple_pred(Item_func *func_item, Item **args, bool *inv_order)
         if (!item->const_item())
           return 0;
         args[i]= item;
-        if (check_item1_shorter_item2(args[0], args[1]))
+        if (check_item1_shorter_item2(args[0], args[i]))
           return 0;
       }
     }
@@ -656,12 +656,13 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
   if (!cond)
     DBUG_RETURN(TRUE);
   Field *field= field_part->field;
-  if (cond->used_tables() & OUTER_REF_TABLE_BIT)
+  table_map cond_used_tables= cond->used_tables();
+  if (cond_used_tables & OUTER_REF_TABLE_BIT)
   { 
     DBUG_RETURN(FALSE);
   } 
-  if (!(cond->used_tables() & field->table->map) &&
-      MY_TEST(cond->used_tables() & ~PSEUDO_TABLE_BITS))
+  if (!(cond_used_tables & field->table->map) &&
+      MY_TEST(cond_used_tables & ~PSEUDO_TABLE_BITS))
   {
     /* Condition doesn't restrict the used table */
     DBUG_RETURN(!cond->const_item());

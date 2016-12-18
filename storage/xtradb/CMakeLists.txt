@@ -18,6 +18,17 @@
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckCSourceCompiles)
 INCLUDE(CheckCSourceRuns)
+INCLUDE(lz4)
+INCLUDE(lzo)
+INCLUDE(lzma)
+INCLUDE(bzip2)
+INCLUDE(snappy)
+
+MYSQL_CHECK_LZ4()
+MYSQL_CHECK_LZO()
+MYSQL_CHECK_LZMA()
+MYSQL_CHECK_BZIP2()
+MYSQL_CHECK_SNAPPY()
 
 IF(CMAKE_CROSSCOMPILING)
   # Use CHECK_C_SOURCE_COMPILES instead of CHECK_C_SOURCE_RUNS when
@@ -35,12 +46,14 @@ ENDIF()
 
 # OS tests
 IF(UNIX)
+	
   IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     CHECK_INCLUDE_FILES (libaio.h HAVE_LIBAIO_H)
     IF (XTRADB_PREFER_STATIC_LIBAIO)
       SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
     ENDIF()
     FIND_LIBRARY(AIO_LIBRARY aio)
+    MARK_AS_ADVANCED(AIO_LIBRARY)
     IF(AIO_LIBRARY)
       CHECK_LIBRARY_EXISTS(${AIO_LIBRARY} io_queue_init "" HAVE_LIBAIO)
       IF(HAVE_LIBAIO AND HAVE_LIBAIO_H)
@@ -357,7 +370,9 @@ SET(INNOBASE_SOURCES
 	btr/btr0btr.cc
 	btr/btr0cur.cc
 	btr/btr0pcur.cc
+	btr/btr0scrub.cc
 	btr/btr0sea.cc
+	btr/btr0defragment.cc
 	buf/buf0buddy.cc
 	buf/buf0buf.cc
 	buf/buf0dblwr.cc
@@ -366,6 +381,7 @@ SET(INNOBASE_SOURCES
 	buf/buf0flu.cc
 	buf/buf0lru.cc
 	buf/buf0rea.cc
+	buf/buf0mtflu.cc
 	data/data0data.cc
 	data/data0type.cc
 	dict/dict0boot.cc
@@ -379,6 +395,8 @@ SET(INNOBASE_SOURCES
 	eval/eval0eval.cc
 	eval/eval0proc.cc
 	fil/fil0fil.cc
+	fil/fil0pagecompress.cc
+	fil/fil0crypt.cc
 	fsp/fsp0fsp.cc
 	fut/fut0fut.cc
 	fut/fut0lst.cc
@@ -405,6 +423,7 @@ SET(INNOBASE_SOURCES
 	log/log0log.cc
 	log/log0online.cc
 	log/log0recv.cc
+	log/log0crypt.cc
 	mach/mach0data.cc
 	mem/mem0mem.cc
 	mem/mem0pool.cc
@@ -469,27 +488,21 @@ SET(INNOBASE_SOURCES
 	ut/ut0rnd.cc
 	ut/ut0ut.cc
 	ut/ut0vec.cc
-	ut/ut0wqueue.cc)
+	ut/ut0wqueue.cc
+	ut/ut0timer.cc)
 
-# These files have unused result errors, so we skip Werror
-CHECK_C_COMPILER_FLAG("-Werror" HAVE_WERROR)
-IF(HAVE_WERROR)
-  INCLUDE(${MYSQL_CMAKE_SCRIPT_DIR}/compile_flags.cmake)
-  ADD_COMPILE_FLAGS(page/page0zip.c COMPILE_FLAGS "-Wno-error")
-  ADD_COMPILE_FLAGS(ut/ut0ut.c      COMPILE_FLAGS "-Wno-error")
-ENDIF()
-
-IF(WITH_INNODB)
-  # Legacy option
-  SET(WITH_INNOBASE_STORAGE_ENGINE TRUE)
+IF(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
+    enable_language(ASM)
+    LIST(APPEND INNOBASE_SOURCES
+       ut/crc32_power8/crc32.S
+       ut/crc32_power8/crc32_wrapper.c
+       )
 ENDIF()
 
 MYSQL_ADD_PLUGIN(xtradb ${INNOBASE_SOURCES} STORAGE_ENGINE
-  DEFAULT
-  RECOMPILE_FOR_EMBEDDED
+  DEFAULT RECOMPILE_FOR_EMBEDDED
   LINK_LIBRARIES ${ZLIB_LIBRARY} ${LINKER_SCRIPT})
 
 IF(TARGET xtradb AND NOT XTRADB_OK)
   MESSAGE(FATAL_ERROR "Percona XtraDB is not supported on this platform")
 ENDIF()
-

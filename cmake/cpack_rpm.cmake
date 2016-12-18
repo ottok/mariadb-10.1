@@ -28,7 +28,7 @@ SET(CPACK_COMPONENTS_ALL Server ManPagesServer IniFiles Server_Scripts
                          ManPagesTest Readme ManPagesClient Test 
                          Common Client SharedLibraries ClientPlugins)
 
-SET(CPACK_RPM_PACKAGE_NAME "MariaDB")
+SET(CPACK_RPM_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
 SET(CPACK_PACKAGE_FILE_NAME "${CPACK_RPM_PACKAGE_NAME}-${VERSION}-${RPM}-${CMAKE_SYSTEM_PROCESSOR}")
 
 SET(CPACK_RPM_PACKAGE_RELEASE "1%{?dist}")
@@ -36,8 +36,8 @@ SET(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
 SET(CPACK_RPM_PACKAGE_RELOCATABLE FALSE)
 SET(CPACK_PACKAGE_RELOCATABLE FALSE)
 SET(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
-SET(CPACK_RPM_PACKAGE_URL "http://mariadb.org")
-SET(CPACK_RPM_PACKAGE_SUMMARY "MariaDB: a very fast and robust SQL database server")
+SET(CPACK_RPM_PACKAGE_SUMMARY ${CPACK_PACKAGE_SUMMARY})
+SET(CPACK_RPM_PACKAGE_URL ${CPACK_PACKAGE_URL})
 SET(CPACK_RPM_PACKAGE_DESCRIPTION "${CPACK_RPM_PACKAGE_SUMMARY}
 
 It is GPL v2 licensed, which means you can use the it free of charge under the
@@ -55,8 +55,8 @@ SET(CPACK_RPM_SPEC_MORE_DEFINE "
 %define mysqldatadir ${INSTALL_MYSQLDATADIR}
 %define mysqld_user  mysql
 %define mysqld_group mysql
-%define _bindir     ${CMAKE_INSTALL_PREFIX}/${INSTALL_BINDIR}
-%define _sbindir    ${CMAKE_INSTALL_PREFIX}/${INSTALL_SBINDIR}
+%define _bindir     ${INSTALL_BINDIRABS}
+%define _sbindir    ${INSTALL_SBINDIRABS}
 %define _sysconfdir ${INSTALL_SYSCONFDIR}
 ")
 
@@ -78,14 +78,17 @@ SET(ignored
   "%ignore ${CMAKE_INSTALL_PREFIX}/bin"
   "%ignore ${CMAKE_INSTALL_PREFIX}/include"
   "%ignore ${CMAKE_INSTALL_PREFIX}/lib"
+  "%ignore ${CMAKE_INSTALL_PREFIX}/lib/systemd"
+  "%ignore ${CMAKE_INSTALL_PREFIX}/lib/systemd/system"
   "%ignore ${CMAKE_INSTALL_PREFIX}/lib64"
   "%ignore ${CMAKE_INSTALL_PREFIX}/sbin"
   "%ignore ${CMAKE_INSTALL_PREFIX}/share"
   "%ignore ${CMAKE_INSTALL_PREFIX}/share/aclocal"
   "%ignore ${CMAKE_INSTALL_PREFIX}/share/doc"
   "%ignore ${CMAKE_INSTALL_PREFIX}/share/man"
-  "%ignore ${CMAKE_INSTALL_PREFIX}/share/man/man1*"
-  "%ignore ${CMAKE_INSTALL_PREFIX}/share/man/man8*"
+  "%ignore ${CMAKE_INSTALL_PREFIX}/share/man/man1"
+  "%ignore ${CMAKE_INSTALL_PREFIX}/share/man/man8"
+  "%ignore ${CMAKE_INSTALL_PREFIX}/share/pkgconfig"
   )
 
 SET(CPACK_RPM_server_USER_FILELIST ${ignored} "%config(noreplace) ${INSTALL_SYSCONF2DIR}/*")
@@ -122,6 +125,7 @@ SETA(CPACK_RPM_server_PACKAGE_OBSOLETES
   "MySQL"
   "mysql-server"
   "MySQL-server"
+  "MariaDB-Galera-server"
   "MySQL-OurDelta-server")
 SETA(CPACK_RPM_server_PACKAGE_PROVIDES
   "MariaDB"
@@ -149,9 +153,15 @@ SETA(CPACK_RPM_test_PACKAGE_OBSOLETES
 SETA(CPACK_RPM_test_PACKAGE_PROVIDES
   "MySQL-test")
 
-SETA(CPACK_RPM_server_PACKAGE_REQUIRES 
-   ${CPACK_RPM_PACKAGE_REQUIRES}
-   "MariaDB-client")
+SETA(CPACK_RPM_server_PACKAGE_REQUIRES
+  "${CPACK_RPM_PACKAGE_REQUIRES}"
+  "MariaDB-client")
+
+IF(WITH_WSREP)
+SETA(CPACK_RPM_server_PACKAGE_REQUIRES
+  "galera" "rsync" "lsof" "grep" "gawk" "iproute"
+  "coreutils" "findutils" "tar" "which")
+ENDIF()
 
 SET(CPACK_RPM_server_PRE_INSTALL_SCRIPT_FILE ${CMAKE_SOURCE_DIR}/support-files/rpm/server-prein.sh)
 SET(CPACK_RPM_server_PRE_UNINSTALL_SCRIPT_FILE ${CMAKE_SOURCE_DIR}/support-files/rpm/server-preun.sh)
@@ -169,7 +179,7 @@ MACRO(ALTERNATIVE_NAME real alt)
   SET(p "CPACK_RPM_${real}_PACKAGE_PROVIDES")
   SET(${p} "${${p}} ${alt} = ${ver} ${alt}%{?_isa} = ${ver} config(${alt}) = ${ver}")
   SET(o "CPACK_RPM_${real}_PACKAGE_OBSOLETES")
-  SET(${o} "${${o}} ${alt} ${alt}%{_isa}")
+  SET(${o} "${${o}} ${alt} ${alt}%{?_isa}")
 ENDMACRO(ALTERNATIVE_NAME)
 
 ALTERNATIVE_NAME("devel"  "mysql-devel")

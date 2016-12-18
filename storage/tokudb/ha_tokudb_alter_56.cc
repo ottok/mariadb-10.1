@@ -25,7 +25,7 @@ Copyright (c) 2006, 2015, Percona and/or its affiliates. All rights reserved.
 
 #if TOKU_INCLUDE_ALTER_56
 
-#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099
+#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 101099
 #define TOKU_ALTER_RENAME ALTER_RENAME
 #define DYNAMIC_ARRAY_ELEMENTS_TYPE size_t
 #elif (50600 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50699) || \
@@ -185,7 +185,7 @@ static ulong fix_handler_flags(
 
     ulong handler_flags = ha_alter_info->handler_flags;
 
-#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099
+#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100199
     // This is automatically supported, hide the flag from later checks
     handler_flags &= ~Alter_inplace_info::ALTER_PARTITIONED;
 #endif
@@ -906,13 +906,13 @@ bool ha_tokudb::commit_inplace_alter_table(
     if (commit) {
 #if (50613 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50699) || \
     (50700 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50799) || \
-    (100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099)
+    (100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100199)
         if (ha_alter_info->group_commit_ctx) {
             ha_alter_info->group_commit_ctx = NULL;
         }
 #endif
 #if (50500 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50599) || \
-    (100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099)
+    (100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100199)
 #if WITH_PARTITION_STORAGE_ENGINE
         if (TOKU_PARTITION_WRITE_FRM_DATA || altered_table->part_info == NULL) {
 #else

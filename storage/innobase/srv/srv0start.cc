@@ -3,6 +3,7 @@
 Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
 Copyright (c) 2008, Google Inc.
 Copyright (c) 2009, Percona Inc.
+Copyright (c) 2013, 2016, MariaDB Corporation
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -42,6 +43,7 @@ Created 2/16/1996 Heikki Tuuri
 #include "pars0pars.h"
 #include "row0ftsort.h"
 #include "ut0mem.h"
+#include "ut0timer.h"
 #include "mem0mem.h"
 #include "data0data.h"
 #include "data0type.h"
@@ -51,6 +53,7 @@ Created 2/16/1996 Heikki Tuuri
 #include "os0file.h"
 #include "os0thread.h"
 #include "fil0fil.h"
+#include "fil0crypt.h"
 #include "fsp0fsp.h"
 #include "rem0rec.h"
 #include "mtr0mtr.h"
@@ -66,12 +69,17 @@ Created 2/16/1996 Heikki Tuuri
 #include "ibuf0ibuf.h"
 #include "srv0start.h"
 #include "srv0srv.h"
+#include "btr0defragment.h"
+
+#include <mysql/service_wsrep.h>
+
 #ifndef UNIV_HOTBACKUP
 # include "trx0rseg.h"
 # include "os0proc.h"
 # include "sync0sync.h"
 # include "buf0flu.h"
 # include "buf0rea.h"
+# include "buf0mtflu.h"
 # include "dict0boot.h"
 # include "dict0load.h"
 # include "dict0stats_bg.h"
@@ -94,6 +102,7 @@ Created 2/16/1996 Heikki Tuuri
 # include "os0sync.h"
 # include "zlib.h"
 # include "ut0crc32.h"
+# include "btr0scrub.h"
 
 /** Log sequence number immediately after startup */
 UNIV_INTERN lsn_t	srv_start_lsn;
@@ -129,7 +138,11 @@ static os_file_t	files[1000];
 /** io_handler_thread parameters for thread identification */
 static ulint		n[SRV_MAX_N_IO_THREADS + 6];
 /** io_handler_thread identifiers, 32 is the maximum number of purge threads  */
-static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 6 + 32];
+/** 6 is the ? */
+#define	START_OLD_THREAD_CNT	(SRV_MAX_N_IO_THREADS + 6 + 32)
+static os_thread_id_t	thread_ids[SRV_MAX_N_IO_THREADS + 6 + 32 + MTFLUSH_MAX_WORKER];
+/* Thread contex data for multi-threaded flush */
+void *mtflush_ctx=NULL;
 
 /** Thead handles */
 static os_thread_t	thread_handles[SRV_MAX_N_IO_THREADS + 6 + 32];
@@ -489,7 +502,8 @@ DECLARE_THREAD(io_handler_thread)(
 	segment = *((ulint*) arg);
 
 #ifdef UNIV_DEBUG_THREAD_CREATION
-	fprintf(stderr, "Io handler thread %lu starts, id %lu\n", segment,
+	ib_logf(IB_LOG_LEVEL_INFO,
+		"Io handler thread %lu starts, id %lu\n", segment,
 		os_thread_pf(os_thread_get_curr_id()));
 #endif
 
@@ -547,7 +561,7 @@ create_log_file(
 	*file = os_file_create(
 		innodb_file_log_key, name,
 		OS_FILE_CREATE|OS_FILE_ON_ERROR_NO_EXIT, OS_FILE_NORMAL,
-		OS_LOG_FILE, &ret);
+		OS_LOG_FILE, &ret, FALSE);
 
 	if (!ret) {
 		ib_logf(IB_LOG_LEVEL_ERROR, "Cannot create %s", name);
@@ -660,7 +674,9 @@ create_log_files(
 	fil_space_create(
 		logfilename, SRV_LOG_SPACE_FIRST_ID,
 		fsp_flags_set_page_size(0, UNIV_PAGE_SIZE),
-		FIL_LOG);
+		FIL_LOG,
+		NULL /* no encryption yet */,
+		true /* this is create */);
 	ut_a(fil_validate());
 
 	logfile0 = fil_node_create(
@@ -754,7 +770,7 @@ open_log_file(
 
 	*file = os_file_create(innodb_file_log_key, name,
 			       OS_FILE_OPEN, OS_FILE_AIO,
-			       OS_LOG_FILE, &ret);
+			       OS_LOG_FILE, &ret, FALSE);
 	if (!ret) {
 		ib_logf(IB_LOG_LEVEL_ERROR, "Unable to open '%s'", name);
 		return(DB_ERROR);
@@ -798,6 +814,7 @@ open_or_create_data_files(
 	ulint		space;
 	ulint		rounded_size_pages;
 	char		name[10000];
+	fil_space_crypt_t*    crypt_data=NULL;
 
 	if (srv_n_data_files >= 1000) {
 
@@ -845,7 +862,7 @@ open_or_create_data_files(
 
 			files[i] = os_file_create(
 				innodb_file_data_key, name, OS_FILE_CREATE,
-				OS_FILE_NORMAL, OS_DATA_FILE, &ret);
+				OS_FILE_NORMAL, OS_DATA_FILE, &ret, FALSE);
 
 			if (srv_read_only_mode) {
 
@@ -888,7 +905,7 @@ open_or_create_data_files(
 
 			files[i] = os_file_create(
 				innodb_file_data_key, name, OS_FILE_OPEN_RAW,
-				OS_FILE_NORMAL, OS_DATA_FILE, &ret);
+				OS_FILE_NORMAL, OS_DATA_FILE, &ret, FALSE);
 
 			if (!ret) {
 				ib_logf(IB_LOG_LEVEL_ERROR,
@@ -903,7 +920,7 @@ open_or_create_data_files(
 #ifdef UNIV_LOG_ARCHIVE
 				min_arch_log_no, max_arch_log_no,
 #endif /* UNIV_LOG_ARCHIVE */
-				min_flushed_lsn, max_flushed_lsn);
+				min_flushed_lsn, max_flushed_lsn, NULL);
 
 			/* If first page is valid, don't overwrite DB.
 			It prevents overwriting DB when mysql_install_db
@@ -939,17 +956,17 @@ open_or_create_data_files(
 				files[i] = os_file_create(
 					innodb_file_data_key,
 					name, OS_FILE_OPEN_RAW,
-					OS_FILE_NORMAL, OS_DATA_FILE, &ret);
+					OS_FILE_NORMAL, OS_DATA_FILE, &ret, FALSE);
 			} else if (i == 0) {
 				files[i] = os_file_create(
 					innodb_file_data_key,
 					name, OS_FILE_OPEN_RETRY,
-					OS_FILE_NORMAL, OS_DATA_FILE, &ret);
+					OS_FILE_NORMAL, OS_DATA_FILE, &ret, FALSE);
 			} else {
 				files[i] = os_file_create(
 					innodb_file_data_key,
 					name, OS_FILE_OPEN, OS_FILE_NORMAL,
-					OS_DATA_FILE, &ret);
+					OS_DATA_FILE, &ret, FALSE);
 			}
 
 			if (!ret) {
@@ -1040,7 +1057,7 @@ check_first_page:
 #ifdef UNIV_LOG_ARCHIVE
 				min_arch_log_no, max_arch_log_no,
 #endif /* UNIV_LOG_ARCHIVE */
-				min_flushed_lsn, max_flushed_lsn);
+				min_flushed_lsn, max_flushed_lsn, &crypt_data);
 
 			if (check_msg) {
 
@@ -1140,8 +1157,14 @@ check_first_page:
 		ut_a(ret);
 
 		if (i == 0) {
+			if (!crypt_data) {
+				crypt_data = fil_space_create_crypt_data(FIL_SPACE_ENCRYPTION_DEFAULT, FIL_DEFAULT_ENCRYPTION_KEY);
+			}
+
 			flags = fsp_flags_set_page_size(0, UNIV_PAGE_SIZE);
-			fil_space_create(name, 0, flags, FIL_TABLESPACE);
+
+			fil_space_create(name, 0, flags, FIL_TABLESPACE,
+					crypt_data, (*create_new_db) == true);
 		}
 
 		ut_a(fil_validate());
@@ -1175,7 +1198,7 @@ srv_undo_tablespace_create(
 		innodb_file_data_key,
 		name,
 		srv_read_only_mode ? OS_FILE_OPEN : OS_FILE_CREATE,
-		OS_FILE_NORMAL, OS_DATA_FILE, &ret);
+		OS_FILE_NORMAL, OS_DATA_FILE, &ret, FALSE);
 
 	if (srv_read_only_mode && ret) {
 		ib_logf(IB_LOG_LEVEL_INFO,
@@ -1262,7 +1285,8 @@ srv_undo_tablespace_open(
 		| OS_FILE_ON_ERROR_SILENT,
 		OS_FILE_NORMAL,
 		OS_DATA_FILE,
-		&ret);
+		&ret,
+		FALSE);
 
 	/* If the file open was successful then load the tablespace. */
 
@@ -1286,7 +1310,9 @@ srv_undo_tablespace_open(
 
 		/* Set the compressed page size to 0 (non-compressed) */
 		flags = fsp_flags_set_page_size(0, UNIV_PAGE_SIZE);
-		fil_space_create(name, space, flags, FIL_TABLESPACE);
+		fil_space_create(name, space, flags, FIL_TABLESPACE,
+				NULL /* no encryption */,
+				true /* create */);
 
 		ut_a(fil_validate());
 
@@ -1564,6 +1590,9 @@ innobase_start_or_create_for_mysql(void)
 	size_t		dirnamelen;
 	bool		sys_datafiles_created = false;
 
+	/* This should be initialized early */
+	ut_init_timer();
+
 	high_level_read_only = srv_read_only_mode
 		|| srv_force_recovery > SRV_FORCE_NO_TRX_UNDO;
 
@@ -1624,53 +1653,45 @@ innobase_start_or_create_for_mysql(void)
 	}
 
 #ifdef UNIV_DEBUG
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		" InnoDB: !!!!!!!! UNIV_DEBUG switched on !!!!!!!!!\n");
+	ib_logf(IB_LOG_LEVEL_INFO,
+		" InnoDB: !!!!!!!! UNIV_DEBUG switched on !!!!!!!!!");
 #endif
 
 #ifdef UNIV_IBUF_DEBUG
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		" InnoDB: !!!!!!!! UNIV_IBUF_DEBUG switched on !!!!!!!!!\n");
+	ib_logf(IB_LOG_LEVEL_INFO,
+		" InnoDB: !!!!!!!! UNIV_IBUF_DEBUG switched on !!!!!!!!!");
 # ifdef UNIV_IBUF_COUNT_DEBUG
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
+	ib_logf(IB_LOG_LEVEL_INFO,
 		" InnoDB: !!!!!!!! UNIV_IBUF_COUNT_DEBUG switched on "
-		"!!!!!!!!!\n");
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		" InnoDB: Crash recovery will fail with UNIV_IBUF_COUNT_DEBUG\n");
+		"!!!!!!!!!");
+	ib_logf(IB_LOG_LEVEL_INFO,
+		" InnoDB: Crash recovery will fail with UNIV_IBUF_COUNT_DEBUG");
 # endif
 #endif
 
 #ifdef UNIV_BLOB_DEBUG
-	fprintf(stderr,
+	ib_logf(IB_LOG_LEVEL_INFO,
 		"InnoDB: !!!!!!!! UNIV_BLOB_DEBUG switched on !!!!!!!!!\n"
-		"InnoDB: Server restart may fail with UNIV_BLOB_DEBUG\n");
+		"InnoDB: Server restart may fail with UNIV_BLOB_DEBUG");
 #endif /* UNIV_BLOB_DEBUG */
 
 #ifdef UNIV_SYNC_DEBUG
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		" InnoDB: !!!!!!!! UNIV_SYNC_DEBUG switched on !!!!!!!!!\n");
+	ib_logf(IB_LOG_LEVEL_INFO,
+		" InnoDB: !!!!!!!! UNIV_SYNC_DEBUG switched on !!!!!!!!!");
 #endif
 
 #ifdef UNIV_SEARCH_DEBUG
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		" InnoDB: !!!!!!!! UNIV_SEARCH_DEBUG switched on !!!!!!!!!\n");
+	ib_logf(IB_LOG_LEVEL_INFO,
+		" InnoDB: !!!!!!!! UNIV_SEARCH_DEBUG switched on !!!!!!!!!");
 #endif
 
 #ifdef UNIV_LOG_LSN_DEBUG
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		" InnoDB: !!!!!!!! UNIV_LOG_LSN_DEBUG switched on !!!!!!!!!\n");
+	ib_logf(IB_LOG_LEVEL_INFO,
+		" InnoDB: !!!!!!!! UNIV_LOG_LSN_DEBUG switched on !!!!!!!!!");
 #endif /* UNIV_LOG_LSN_DEBUG */
 #ifdef UNIV_MEM_DEBUG
-	ut_print_timestamp(stderr);
-	fprintf(stderr,
-		" InnoDB: !!!!!!!! UNIV_MEM_DEBUG switched on !!!!!!!!!\n");
+	ib_logf(IB_LOG_LEVEL_INFO,
+		" InnoDB: !!!!!!!! UNIV_MEM_DEBUG switched on !!!!!!!!!");
 #endif
 
 	if (srv_use_sys_malloc) {
@@ -1861,9 +1882,13 @@ innobase_start_or_create_for_mysql(void)
 
 	srv_boot();
 
-	ib_logf(IB_LOG_LEVEL_INFO,
-		"%s CPU crc32 instructions",
-		ut_crc32_sse2_enabled ? "Using" : "Not using");
+	if (ut_crc32_sse2_enabled) {
+		ib_logf(IB_LOG_LEVEL_INFO, "Using SSE crc32 instructions");
+	} else if (ut_crc32_power8_enabled) {
+		ib_logf(IB_LOG_LEVEL_INFO, "Using POWER8 crc32 instructions");
+	} else {
+		ib_logf(IB_LOG_LEVEL_INFO, "Using generic crc32 instructions");
+	}
 
 	if (!srv_read_only_mode) {
 
@@ -2271,7 +2296,9 @@ innobase_start_or_create_for_mysql(void)
 		fil_space_create(logfilename,
 				 SRV_LOG_SPACE_FIRST_ID,
 				 fsp_flags_set_page_size(0, UNIV_PAGE_SIZE),
-				 FIL_LOG);
+				 FIL_LOG,
+				 NULL /* no encryption yet */,
+				 true /* create */);
 
 		ut_a(fil_validate());
 
@@ -2293,7 +2320,7 @@ innobase_start_or_create_for_mysql(void)
 		/* Create the file space object for archived logs. Under
 		MySQL, no archiving ever done. */
 		fil_space_create("arch_log_space", SRV_LOG_SPACE_FIRST_ID + 1,
-				 0, FIL_LOG);
+			0, FIL_LOG, NULL, true);
 #endif /* UNIV_LOG_ARCHIVE */
 		log_group_init(0, i, srv_log_file_size * UNIV_PAGE_SIZE,
 			       SRV_LOG_SPACE_FIRST_ID,
@@ -2325,6 +2352,11 @@ files_checked:
 	can also be used by recovery if it tries to drop some table */
 	if (!srv_read_only_mode) {
 		dict_stats_thread_init();
+	}
+
+	if (!srv_read_only_mode && srv_scrub_log) {
+		/* TODO(minliz): have/use log_scrub_thread_init() instead? */
+		log_scrub_event = os_event_create();
 	}
 
 	trx_sys_file_format_init();
@@ -2762,6 +2794,20 @@ files_checked:
 	}
 
 	if (!srv_read_only_mode) {
+
+		if (srv_use_mtflush) {
+			/* Start multi-threaded flush threads */
+			mtflush_ctx = buf_mtflu_handler_init(
+				srv_mtflush_threads,
+				srv_buf_pool_instances);
+
+			/* Set up the thread ids */
+			buf_mtflu_set_thread_ids(
+				srv_mtflush_threads,
+				mtflush_ctx,
+				(thread_ids + 6 + 32));
+		}
+
 		buf_flush_page_cleaner_thread_handle = os_thread_create(buf_flush_page_cleaner_thread, NULL, NULL);
 		buf_flush_page_cleaner_thread_started = true;
 	}
@@ -2897,6 +2943,15 @@ files_checked:
 			(ulong) srv_force_recovery);
 	}
 
+	if (!srv_read_only_mode) {
+		/*
+		  Create a checkpoint before logging anything new, so that
+		  the current encryption key in use is definitely logged
+		  before any log blocks encrypted with that key.
+		*/
+		log_make_checkpoint_at(LSN_MAX, TRUE);
+	}
+
 	if (srv_force_recovery == 0) {
 		/* In the insert buffer we may have even bigger tablespace
 		id's, because we may have dropped those tablespaces, but
@@ -2907,9 +2962,24 @@ files_checked:
 	}
 
 	if (!srv_read_only_mode) {
+#ifdef WITH_WSREP
+		/*
+		  Create the dump/load thread only when not running with
+		  --wsrep-recover.
+		*/
+		if (!wsrep_recovery) {
+#endif /* WITH_WSREP */
 		/* Create the buffer pool dump/load thread */
-		buf_dump_thread_handle = os_thread_create(buf_dump_thread, NULL, NULL);
+		buf_dump_thread_handle=
+			os_thread_create(buf_dump_thread, NULL, NULL);
 		buf_dump_thread_started = true;
+#ifdef WITH_WSREP
+		} else {
+			ib_logf(IB_LOG_LEVEL_WARN,
+				"Skipping buffer pool dump/restore during "
+				"wsrep recovery.");
+		}
+#endif /* WITH_WSREP */
 
 		/* Create the dict stats gathering thread */
 		dict_stats_thread_handle = os_thread_create(dict_stats_thread, NULL, NULL);
@@ -2917,7 +2987,22 @@ files_checked:
 
 		/* Create the thread that will optimize the FTS sub-system. */
 		fts_optimize_init();
+
+		/* Create thread(s) that handles key rotation */
+		fil_system_enter();
+		fil_crypt_threads_init();
+		fil_system_exit();
+
+		/* Create the log scrub thread */
+		if (srv_scrub_log)
+			os_thread_create(log_scrub_thread, NULL, NULL);
 	}
+
+	/* Init data for datafile scrub threads */
+	btr_scrub_init();
+
+	/* Initialize online defragmentation. */
+	btr_defragment_init();
 
 	srv_was_started = TRUE;
 
@@ -2979,6 +3064,9 @@ innobase_shutdown_for_mysql(void)
 		fts_optimize_start_shutdown();
 
 		fts_optimize_end();
+
+		/* Shutdown key rotation threads */
+		fil_crypt_threads_end();
 	}
 
 	/* 1. Flush the buffer pool to disk, write the current lsn to
@@ -3028,6 +3116,13 @@ innobase_shutdown_for_mysql(void)
 		/* f. dict_stats_thread is signaled from
 		logs_empty_and_mark_files_at_shutdown() and should have
 		already quit or is quitting right now. */
+
+
+		if (srv_use_mtflush) {
+			/* g. Exit the multi threaded flush threads */
+
+			buf_mtflu_io_thread_exit();
+		}
 
 		os_mutex_enter(os_sync_mutex);
 
@@ -3080,7 +3175,19 @@ innobase_shutdown_for_mysql(void)
 
 	if (!srv_read_only_mode) {
 		dict_stats_thread_deinit();
+		if (srv_scrub_log) {
+			/* TODO(minliz): have/use log_scrub_thread_deinit() instead? */
+			os_event_free(log_scrub_event);
+			log_scrub_event = NULL;
+		}
 	}
+
+	if (!srv_read_only_mode) {
+		fil_crypt_threads_cleanup();
+	}
+
+	/* Cleanup data for datafile scrubbing */
+	btr_scrub_cleanup();
 
 #ifdef __WIN__
 	/* MDEV-361: ha_innodb.dll leaks handles on Windows

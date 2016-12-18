@@ -33,7 +33,7 @@
   And many others
 */
 
-#define MTEST_VERSION "3.4"
+#define MTEST_VERSION "3.5"
 
 #include "client_priv.h"
 #include <mysql_version.h>
@@ -1729,11 +1729,11 @@ int cat_file(DYNAMIC_STRING* ds, const char* filename)
   while((len= my_read(fd, (uchar*)&buff,
                       sizeof(buff)-1, MYF(0))) > 0)
   {
-    char *p= buff, *start= buff;
-    while (p < buff+len)
+    char *p= buff, *start= buff,*end=buff+len;
+    while (p < end)
     {
       /* Convert cr/lf to lf */
-      if (*p == '\r' && *(p+1) && *(p+1)== '\n')
+      if (*p == '\r' && p+1 < end && *(p+1)== '\n')
       {
         /* Add fake newline instead of cr and output the line */
         *p= '\n';
@@ -2634,12 +2634,11 @@ void var_query_set(VAR *var, const char *query, const char** query_end)
 {
   char *end = (char*)((query_end && *query_end) ?
 		      *query_end : query + strlen(query));
-  MYSQL_RES *res;
+  MYSQL_RES *UNINIT_VAR(res);
   MYSQL_ROW row;
   MYSQL* mysql = cur_con->mysql;
   DYNAMIC_STRING ds_query;
   DBUG_ENTER("var_query_set");
-  LINT_INIT(res);
 
   if (!mysql)
   {
@@ -2685,7 +2684,7 @@ void var_query_set(VAR *var, const char *query, const char** query_end)
     report_or_die("Query '%s' didn't return a result set", ds_query.str);
     dynstr_free(&ds_query);
     eval_expr(var, "", 0);
-    return;
+    DBUG_VOID_RETURN;
   }
   dynstr_free(&ds_query);
 
@@ -2818,7 +2817,7 @@ void var_set_query_get_value(struct st_command *command, VAR *var)
 {
   long row_no;
   int col_no= -1;
-  MYSQL_RES* res;
+  MYSQL_RES* UNINIT_VAR(res);
   MYSQL* mysql= cur_con->mysql;
 
   static DYNAMIC_STRING ds_query;
@@ -2831,7 +2830,6 @@ void var_set_query_get_value(struct st_command *command, VAR *var)
   };
 
   DBUG_ENTER("var_set_query_get_value");
-  LINT_INIT(res);
 
   if (!mysql)
   {
@@ -3391,16 +3389,32 @@ void do_exec(struct st_command *command)
     ds_result= &ds_sorted;
   }
 
+#ifdef _WIN32
+   /* Workaround for CRT bug, MDEV-9409 */
+  _setmode(fileno(res_file), O_BINARY);
+#endif
+
   while (fgets(buf, sizeof(buf), res_file))
   {
+    int len = (int)strlen(buf);
+#ifdef _WIN32
+    /* Strip '\r' off newlines. */
+    if (len > 1 && buf[len-2] == '\r' && buf[len-1] == '\n')
+    {
+      buf[len-2] = '\n';
+      buf[len-1] = 0;
+      len--;
+    }
+#endif
     if (disable_result_log)
     {
-      buf[strlen(buf)-1]=0;
+      if (len)
+        buf[len-1] = 0;
       DBUG_PRINT("exec_result",("%s", buf));
     }
     else
     {
-      replace_dynstr_append(ds_result, buf);
+      replace_dynstr_append_mem(ds_result, buf, len);
     }
   }
   error= pclose(res_file);
@@ -4753,10 +4767,6 @@ void do_sync_with_master(struct st_command *command)
 }
 
 
-/*
-  when ndb binlog is on, this call will wait until last updated epoch
-  (locally in the mysqld) has been received into the binlog
-*/
 int do_save_master_pos()
 {
   MYSQL_RES *res;
@@ -4765,144 +4775,6 @@ int do_save_master_pos()
   const char *query;
   DBUG_ENTER("do_save_master_pos");
 
-#ifdef HAVE_NDB_BINLOG
-  /*
-    Wait for ndb binlog to be up-to-date with all changes
-    done on the local mysql server
-  */
-  {
-    ulong have_ndbcluster;
-    if (mysql_query(mysql, query= "show variables like 'have_ndbcluster'"))
-      die("'%s' failed: %d %s", query,
-          mysql_errno(mysql), mysql_error(mysql));
-    if (!(res= mysql_store_result(mysql)))
-      die("mysql_store_result() returned NULL for '%s'", query);
-    if (!(row= mysql_fetch_row(res)))
-      die("Query '%s' returned empty result", query);
-
-    have_ndbcluster= strcmp("YES", row[1]) == 0;
-    mysql_free_result(res);
-
-    if (have_ndbcluster)
-    {
-      ulonglong start_epoch= 0, handled_epoch= 0,
-	latest_epoch=0, latest_trans_epoch=0,
-	latest_handled_binlog_epoch= 0, latest_received_binlog_epoch= 0,
-	latest_applied_binlog_epoch= 0;
-      int count= 0;
-      int do_continue= 1;
-      while (do_continue)
-      {
-        const char binlog[]= "binlog";
-	const char latest_epoch_str[]=
-          "latest_epoch=";
-        const char latest_trans_epoch_str[]=
-          "latest_trans_epoch=";
-	const char latest_received_binlog_epoch_str[]=
-	  "latest_received_binlog_epoch";
-        const char latest_handled_binlog_epoch_str[]=
-          "latest_handled_binlog_epoch=";
-        const char latest_applied_binlog_epoch_str[]=
-          "latest_applied_binlog_epoch=";
-        if (count)
-          my_sleep(100*1000); /* 100ms */
-        if (mysql_query(mysql, query= "show engine ndb status"))
-          die("failed in '%s': %d %s", query,
-              mysql_errno(mysql), mysql_error(mysql));
-        if (!(res= mysql_store_result(mysql)))
-          die("mysql_store_result() returned NULL for '%s'", query);
-        while ((row= mysql_fetch_row(res)))
-        {
-          if (strcmp(row[1], binlog) == 0)
-          {
-            const char *status= row[2];
-
-	    /* latest_epoch */
-	    while (*status && strncmp(status, latest_epoch_str,
-				      sizeof(latest_epoch_str)-1))
-	      status++;
-	    if (*status)
-            {
-	      status+= sizeof(latest_epoch_str)-1;
-	      latest_epoch= strtoull(status, (char**) 0, 10);
-	    }
-	    else
-	      die("result does not contain '%s' in '%s'",
-		  latest_epoch_str, query);
-	    /* latest_trans_epoch */
-	    while (*status && strncmp(status, latest_trans_epoch_str,
-				      sizeof(latest_trans_epoch_str)-1))
-	      status++;
-	    if (*status)
-	    {
-	      status+= sizeof(latest_trans_epoch_str)-1;
-	      latest_trans_epoch= strtoull(status, (char**) 0, 10);
-	    }
-	    else
-	      die("result does not contain '%s' in '%s'",
-		  latest_trans_epoch_str, query);
-	    /* latest_received_binlog_epoch */
-	    while (*status &&
-		   strncmp(status, latest_received_binlog_epoch_str,
-			   sizeof(latest_received_binlog_epoch_str)-1))
-	      status++;
-	    if (*status)
-	    {
-	      status+= sizeof(latest_received_binlog_epoch_str)-1;
-	      latest_received_binlog_epoch= strtoull(status, (char**) 0, 10);
-	    }
-	    else
-	      die("result does not contain '%s' in '%s'",
-		  latest_received_binlog_epoch_str, query);
-	    /* latest_handled_binlog */
-	    while (*status &&
-		   strncmp(status, latest_handled_binlog_epoch_str,
-			   sizeof(latest_handled_binlog_epoch_str)-1))
-	      status++;
-	    if (*status)
-	    {
-	      status+= sizeof(latest_handled_binlog_epoch_str)-1;
-	      latest_handled_binlog_epoch= strtoull(status, (char**) 0, 10);
-	    }
-	    else
-	      die("result does not contain '%s' in '%s'",
-		  latest_handled_binlog_epoch_str, query);
-	    /* latest_applied_binlog_epoch */
-	    while (*status &&
-		   strncmp(status, latest_applied_binlog_epoch_str,
-			   sizeof(latest_applied_binlog_epoch_str)-1))
-	      status++;
-	    if (*status)
-	    {
-	      status+= sizeof(latest_applied_binlog_epoch_str)-1;
-	      latest_applied_binlog_epoch= strtoull(status, (char**) 0, 10);
-	    }
-	    else
-	      die("result does not contain '%s' in '%s'",
-		  latest_applied_binlog_epoch_str, query);
-	    if (count == 0)
-	      start_epoch= latest_trans_epoch;
-	    break;
-	  }
-	}
-	if (!row)
-	  die("result does not contain '%s' in '%s'",
-	      binlog, query);
-	if (latest_handled_binlog_epoch > handled_epoch)
-	  count= 0;
-	handled_epoch= latest_handled_binlog_epoch;
-	count++;
-	if (latest_handled_binlog_epoch >= start_epoch)
-          do_continue= 0;
-        else if (count > 300) /* 30s */
-	{
-	  break;
-        }
-        mysql_free_result(res);
-      }
-    }
-  }
-#endif
   if (mysql_query(mysql, query= "show master status"))
     die("failed in 'show master status': %d %s",
 	mysql_errno(mysql), mysql_error(mysql));
@@ -5153,7 +5025,7 @@ static int my_kill(int pid, int sig)
 
 void do_shutdown_server(struct st_command *command)
 {
-  long timeout=60;
+  long timeout= opt_wait_for_pos_timeout ? opt_wait_for_pos_timeout / 5 : 300;
   int pid;
   DYNAMIC_STRING ds_pidfile_name;
   MYSQL* mysql = cur_con->mysql;
@@ -5222,7 +5094,6 @@ void do_shutdown_server(struct st_command *command)
   (void)my_kill(pid, 9);
 
   DBUG_VOID_RETURN;
-
 }
 
 
@@ -10246,7 +10117,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
   {
     /* find the match */
     err_code= regexec(&r,str_p, r.re_nsub+1, subs,
-                         (str_p == string) ? REG_NOTBOL : 0);
+                         (str_p == string) ? 0 : REG_NOTBOL);
 
     /* if regular expression error (eg. bad syntax, or out of memory) */
     if (err_code && err_code != REG_NOMATCH)

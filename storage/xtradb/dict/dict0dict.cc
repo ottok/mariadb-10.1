@@ -2,7 +2,7 @@
 
 Copyright (c) 1996, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2012, Facebook Inc.
-Copyright (c) 2014, 2015, MariaDB Corporation.
+Copyright (c) 2013, 2015, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -314,10 +314,10 @@ dict_get_db_name_len(
 Reserves the dictionary system mutex for MySQL. */
 UNIV_INTERN
 void
-dict_mutex_enter_for_mysql(void)
+dict_mutex_enter_for_mysql_func(const char * file, ulint line)
 /*============================*/
 {
-	mutex_enter(&(dict_sys->mutex));
+	mutex_enter_func(&(dict_sys->mutex), file, line);
 }
 
 /********************************************************************//**
@@ -502,7 +502,7 @@ dict_table_try_drop_aborted(
 
 	if (table == NULL) {
 		table = dict_table_open_on_id_low(
-			table_id, DICT_ERR_IGNORE_NONE);
+			table_id, DICT_ERR_IGNORE_NONE, FALSE);
 	} else {
 		ut_ad(table->id == table_id);
 	}
@@ -876,16 +876,23 @@ dict_index_get_nth_col_or_prefix_pos(
 /*=================================*/
 	const dict_index_t*	index,		/*!< in: index */
 	ulint			n,		/*!< in: column number */
-	ibool			inc_prefix)	/*!< in: TRUE=consider
+	ibool			inc_prefix,	/*!< in: TRUE=consider
 						column prefixes too */
+	ulint*			prefix_col_pos)	/*!< out: col num if prefix */
 {
 	const dict_field_t*	field;
 	const dict_col_t*	col;
 	ulint			pos;
 	ulint			n_fields;
+	ulint			prefixed_pos_dummy;
 
 	ut_ad(index);
 	ut_ad(index->magic_n == DICT_INDEX_MAGIC_N);
+
+	if (!prefix_col_pos) {
+		prefix_col_pos = &prefixed_pos_dummy;
+	}
+	*prefix_col_pos = ULINT_UNDEFINED;
 
 	col = dict_table_get_nth_col(index->table, n);
 
@@ -899,10 +906,11 @@ dict_index_get_nth_col_or_prefix_pos(
 	for (pos = 0; pos < n_fields; pos++) {
 		field = dict_index_get_nth_field(index, pos);
 
-		if (col == field->col
-		    && (inc_prefix || field->prefix_len == 0)) {
-
-			return(pos);
+		if (col == field->col) {
+			*prefix_col_pos = pos;
+			if (inc_prefix || field->prefix_len == 0) {
+				return(pos);
+			}
 		}
 	}
 
@@ -1014,7 +1022,8 @@ dict_table_open_on_id(
 		table_id,
 		table_op == DICT_TABLE_OP_LOAD_TABLESPACE
 		? DICT_ERR_IGNORE_RECOVER_LOCK
-		: DICT_ERR_IGNORE_NONE);
+		: DICT_ERR_IGNORE_NONE,
+		table_op == DICT_TABLE_OP_OPEN_ONLY_IF_CACHED);
 
 	if (table != NULL) {
 
@@ -1046,7 +1055,7 @@ dict_table_get_nth_col_pos(
 	ulint			n)	/*!< in: column number */
 {
 	return(dict_index_get_nth_col_pos(dict_table_get_first_index(table),
-					  n));
+					  n, NULL));
 }
 
 /********************************************************************//**
@@ -1176,8 +1185,28 @@ dict_table_open_on_name(
 
 	if (table != NULL) {
 
-		/* If table is corrupted, return NULL */
+		/* If table is encrypted return table */
 		if (ignore_err == DICT_ERR_IGNORE_NONE
+			&& table->is_encrypted) {
+			/* Make life easy for drop table. */
+			if (table->can_be_evicted) {
+				dict_table_move_from_lru_to_non_lru(table);
+			}
+
+			if (table->can_be_evicted) {
+				dict_move_to_mru(table);
+			}
+
+			++table->n_ref_count;
+
+			if (!dict_locked) {
+				mutex_exit(&dict_sys->mutex);
+			}
+
+			return (table);
+		}
+		/* If table is corrupted, return NULL */
+		else if (ignore_err == DICT_ERR_IGNORE_NONE
 		    && table->corrupted) {
 
 			/* Make life easy for drop table. */
@@ -1536,7 +1565,7 @@ dict_table_move_from_non_lru_to_lru(
 /**********************************************************************//**
 Looks for an index with the given id given a table instance.
 @return	index or NULL */
-static
+UNIV_INTERN
 dict_index_t*
 dict_table_find_index_on_id(
 /*========================*/
@@ -2679,6 +2708,13 @@ undo_size_ok:
 	new_index->stat_index_size = 1;
 	new_index->stat_n_leaf_pages = 1;
 
+	new_index->stat_defrag_n_pages_freed = 0;
+	new_index->stat_defrag_n_page_split = 0;
+
+	new_index->stat_defrag_sample_next_slot = 0;
+	memset(&new_index->stat_defrag_data_size_sample,
+	       0x0, sizeof(ulint) * STAT_DEFRAG_DATA_SIZE_N_SAMPLE);
+
 	/* Add the new index as the last index for the table */
 
 	UT_LIST_ADD_LAST(indexes, table->indexes, new_index);
@@ -3448,7 +3484,29 @@ dict_foreign_find_index(
 
 	return(NULL);
 }
-
+#ifdef WITH_WSREP
+dict_index_t*
+wsrep_dict_foreign_find_index(
+/*====================*/
+	dict_table_t*	table,	/*!< in: table */
+	const char**	col_names, /*!< in: column names, or NULL
+					to use table->col_names */
+	const char**	columns,/*!< in: array of column names */
+	ulint		n_cols,	/*!< in: number of columns */
+	dict_index_t*	types_idx, /*!< in: NULL or an index to whose types the
+				   column types must match */
+	ibool		check_charsets,
+				/*!< in: whether to check charsets.
+				only has an effect if types_idx != NULL */
+	ulint		check_null)
+				/*!< in: nonzero if none of the columns must
+				be declared NOT NULL */
+{
+	return dict_foreign_find_index(
+		table, col_names, columns, n_cols, types_idx, check_charsets,
+		check_null, NULL, NULL, NULL);
+}
+#endif /* WITH_WSREP */
 /**********************************************************************//**
 Report an error in a foreign key definition. */
 static
@@ -6259,15 +6317,10 @@ dict_set_corrupted_index_cache_only(
 	/* Mark the table as corrupted only if the clustered index
 	is corrupted */
 	if (dict_index_is_clust(index)) {
-		dict_table_t*	corrupt_table;
-
-		corrupt_table = (table != NULL) ? table : index->table;
 		ut_ad((index->table != NULL) || (table != NULL)
 		      || index->table  == table);
 
-		if (corrupt_table) {
-			corrupt_table->corrupted = TRUE;
-		}
+		table->corrupted = TRUE;
 	}
 
 	index->type |= DICT_CORRUPT;

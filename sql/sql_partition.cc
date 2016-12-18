@@ -66,6 +66,7 @@
                                         // mysql_*_alter_copy_data
 #include "opt_range.h"                  // store_key_image_to_rec
 #include "sql_alter.h"                  // Alter_table_ctx
+#include "sql_select.h"
 
 #include <algorithm>
 using std::max;
@@ -193,14 +194,14 @@ static int cmp_rec_and_tuple_prune(part_column_list_val *val,
     item                                New converted item
 */
 
-Item* convert_charset_partition_constant(Item *item, const CHARSET_INFO *cs)
+Item* convert_charset_partition_constant(Item *item, CHARSET_INFO *cs)
 {
   THD *thd= current_thd;
   Name_resolution_context *context= &thd->lex->current_select->context;
   TABLE_LIST *save_list= context->table_list;
   const char *save_where= thd->where;
 
-  item= item->safe_charset_converter(cs);
+  item= item->safe_charset_converter(thd, cs);
   context->table_list= NULL;
   thd->where= "convert character set partition constant";
   if (!item || item->fix_fields(thd, (Item**)NULL))
@@ -1028,7 +1029,7 @@ static bool fix_fields_part_func(THD *thd, Item* func_expr, TABLE *table,
     else
       push_warning(thd, Sql_condition::WARN_LEVEL_WARN,
                    ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR,
-                   ER(ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR));
+                   ER_THD(thd, ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR));
   }
 
   if ((!is_sub_part) && (error= check_signed_flag(part_info)))
@@ -1754,7 +1755,7 @@ bool fix_partition_func(THD *thd, TABLE *table,
     goto end;
   if (unlikely(set_up_partition_bitmaps(thd, part_info)))
     goto end;
-  if (unlikely(part_info->set_up_charset_field_preps()))
+  if (unlikely(part_info->set_up_charset_field_preps(thd)))
   {
     my_error(ER_PARTITION_FUNCTION_IS_NOT_ALLOWED, MYF(0));
     goto end;
@@ -2220,7 +2221,7 @@ static int add_column_list_values(File fptr, partition_info *part_info,
       else
       {
         String *res;
-        const CHARSET_INFO *field_cs;
+        CHARSET_INFO *field_cs;
         bool need_cs_check= FALSE;
         Item_result result_type= STRING_RESULT;
 
@@ -2651,8 +2652,7 @@ char *generate_partition_syntax(partition_info *part_info,
   {
     if (!use_sql_alloc)
       my_free(buf);
-    else
-      buf= NULL;
+    buf= NULL;
   }
   else
     buf[*buf_length]= 0;
@@ -4290,7 +4290,7 @@ bool mysql_unpack_partition(THD *thd,
 {
   bool result= TRUE;
   partition_info *part_info;
-  const CHARSET_INFO *old_character_set_client=
+  CHARSET_INFO *old_character_set_client=
     thd->variables.character_set_client;
   LEX *old_lex= thd->lex;
   LEX lex;
@@ -4483,7 +4483,7 @@ static int fast_end_partition(THD *thd, ulonglong copied,
 
   query_cache_invalidate3(thd, table_list, 0);
 
-  my_snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
+  my_snprintf(tmp_name, sizeof(tmp_name), ER_THD(thd, ER_INSERT_INFO),
               (ulong) (copied + deleted),
               (ulong) deleted,
               (ulong) 0);
@@ -4722,7 +4722,7 @@ uint prep_alter_part_table(THD *thd, TABLE *table, Alter_info *alter_info,
   thd->work_part_info= thd->lex->part_info;
 
   if (thd->work_part_info &&
-      !(thd->work_part_info= thd->lex->part_info->get_clone()))
+      !(thd->work_part_info= thd->lex->part_info->get_clone(thd)))
     DBUG_RETURN(TRUE);
 
   /* ALTER_ADMIN_PARTITION is handled in mysql_admin_table */
@@ -4802,7 +4802,7 @@ uint prep_alter_part_table(THD *thd, TABLE *table, Alter_info *alter_info,
             Create copy of partition_info to avoid modifying original
             TABLE::part_info, to keep it safe for later use.
           */
-          if (!(tab_part_info= tab_part_info->get_clone()))
+          if (!(tab_part_info= tab_part_info->get_clone(thd)))
             DBUG_RETURN(TRUE);
         }
 
@@ -4853,7 +4853,7 @@ uint prep_alter_part_table(THD *thd, TABLE *table, Alter_info *alter_info,
         we read data from old version of table using this TABLE object
         while copying them to new version of table.
       */
-      if (!(tab_part_info= tab_part_info->get_clone()))
+      if (!(tab_part_info= tab_part_info->get_clone(thd)))
         DBUG_RETURN(TRUE);
     }
     DBUG_PRINT("info", ("*fast_alter_table flags: 0x%x", flags));
@@ -5150,7 +5150,7 @@ that are reorganised.
           partition_element *part_elem= alt_it++;
           if (*fast_alter_table)
             part_elem->part_state= PART_TO_BE_ADDED;
-          if (tab_part_info->partitions.push_back(part_elem))
+          if (tab_part_info->partitions.push_back(part_elem, thd->mem_root))
           {
             mem_alloc_error(1);
             goto err;
@@ -5457,7 +5457,8 @@ the generated partition syntax in a correct manner.
             else
               tab_max_range= part_elem->range_value;
             if (*fast_alter_table &&
-                tab_part_info->temp_partitions.push_back(part_elem))
+                tab_part_info->temp_partitions.push_back(part_elem,
+                                                         thd->mem_root))
             {
               mem_alloc_error(1);
               goto err;
@@ -5641,7 +5642,7 @@ the generated partition syntax in a correct manner.
 
           Create a copy of TABLE::part_info to be able to modify it freely.
         */
-        if (!(tab_part_info= tab_part_info->get_clone()))
+        if (!(tab_part_info= tab_part_info->get_clone(thd)))
           DBUG_RETURN(TRUE);
         thd->work_part_info= tab_part_info;
         if (create_info->used_fields & HA_CREATE_USED_ENGINE &&
@@ -6632,7 +6633,7 @@ void handle_alter_part_error(ALTER_PARTITION_PARAM_TYPE *lpt,
       }
     }
     /* Ensure the share is destroyed and reopened. */
-    part_info= lpt->part_info->get_clone();
+    part_info= lpt->part_info->get_clone(thd);
     close_all_tables_for_name(thd, table->s, HA_EXTRA_NOT_USED, NULL);
   }
   else
@@ -6650,7 +6651,7 @@ err_exclusive_lock:
       the table cache.
     */
     mysql_lock_remove(thd, thd->lock, table);
-    part_info= lpt->part_info->get_clone();
+    part_info= lpt->part_info->get_clone(thd);
     close_thread_table(thd, &thd->open_tables);
     lpt->table_list->table= NULL;
   }
@@ -6892,7 +6893,7 @@ uint fast_alter_partition_table(THD *thd, TABLE *table,
       1) Write the new frm, pack it and then delete it
       2) Perform the change within the handler
     */
-    if (mysql_write_frm(lpt, WFRM_WRITE_SHADOW | WFRM_PACK_FRM) ||
+    if (mysql_write_frm(lpt, WFRM_WRITE_SHADOW) ||
         mysql_change_partitions(lpt))
     {
       goto err;
@@ -7288,8 +7289,10 @@ void mem_alloc_error(size_t size)
 /**
   Return comma-separated list of used partitions in the provided given string.
 
+    @param      mem_root   Where to allocate following list
     @param      part_info  Partitioning info
     @param[out] parts      The resulting list of string to fill
+    @param[out] used_partitions_list result list to fill
 
     Generate a list of used partitions (from bits in part_info->read_partitions
     bitmap), and store it into the provided String object.
@@ -7300,7 +7303,10 @@ void mem_alloc_error(size_t size)
     that was written or locked.
 */
 
-void make_used_partitions_str(partition_info *part_info, String *parts_str)
+void make_used_partitions_str(MEM_ROOT *alloc,
+                              partition_info *part_info,
+                              String *parts_str,
+                              String_list &used_partitions_list)
 {
   parts_str->length(0);
   partition_element *pe;
@@ -7319,6 +7325,7 @@ void make_used_partitions_str(partition_info *part_info, String *parts_str)
         {
           if (parts_str->length())
             parts_str->append(',');
+          uint index= parts_str->length();
           parts_str->append(head_pe->partition_name,
                            strlen(head_pe->partition_name),
                            system_charset_info);
@@ -7326,6 +7333,7 @@ void make_used_partitions_str(partition_info *part_info, String *parts_str)
           parts_str->append(pe->partition_name,
                            strlen(pe->partition_name),
                            system_charset_info);
+          used_partitions_list.append_str(alloc, parts_str->ptr() + index);
         }
         partition_id++;
       }
@@ -7339,6 +7347,7 @@ void make_used_partitions_str(partition_info *part_info, String *parts_str)
       {
         if (parts_str->length())
           parts_str->append(',');
+        used_partitions_list.append_str(alloc, pe->partition_name);
         parts_str->append(pe->partition_name, strlen(pe->partition_name),
                          system_charset_info);
       }

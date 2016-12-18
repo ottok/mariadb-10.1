@@ -44,11 +44,10 @@ FUNCTION (INSTALL_DEBUG_SYMBOLS)
     ENDIF()
 	
     set(comp "")
-    IF(ARG_COMPONENT STREQUAL "Server")
-      IF(target MATCHES "mysqld" OR type MATCHES "MODULE")
-        #MESSAGE("PDB: ${targets}")
-        SET(comp Server)
-      ENDIF()
+   
+    IF(target MATCHES "mysqld" OR type MATCHES "MODULE")
+      #MESSAGE("PDB: ${targets}")
+      SET(comp Server)
     ENDIF()
  
     IF(NOT comp MATCHES Server)
@@ -126,13 +125,7 @@ FUNCTION(INSTALL_SCRIPT)
     SET(COMP)
   ENDIF()
 
-  INSTALL(FILES 
-    ${script}
-    DESTINATION ${ARG_DESTINATION}
-    PERMISSIONS OWNER_READ OWNER_WRITE 
-    OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE  ${COMP}
-  )
+  INSTALL(PROGRAMS ${script} DESTINATION ${ARG_DESTINATION} ${COMP})
   INSTALL_MANPAGE(${script})
 ENDFUNCTION()
 
@@ -208,6 +201,7 @@ IF(WIN32)
     FIND_PROGRAM(SIGNTOOL_EXECUTABLE signtool 
       PATHS "$ENV{ProgramFiles}/Microsoft SDKs/Windows/v7.0A/bin"
       "$ENV{ProgramFiles}/Windows Kits/8.0/bin/x86"
+      "$ENV{ProgramFiles}/Windows Kits/8.1/bin/x86"
     )
     IF(NOT SIGNTOOL_EXECUTABLE)
       MESSAGE(FATAL_ERROR 
@@ -314,7 +308,7 @@ FUNCTION(INSTALL_DEBUG_TARGET target)
     MESSAGE(FATAL_ERROR "Need DESTINATION parameter for INSTALL_DEBUG_TARGET")
   ENDIF()
   GET_TARGET_PROPERTY(target_location ${target} LOCATION)
-  IF(CMAKE_GENERATOR MATCHES "Makefiles")
+  IF(CMAKE_GENERATOR MATCHES "Makefiles|Ninja")
    STRING(REPLACE "${CMAKE_BINARY_DIR}" "${DEBUGBUILDDIR}"  debug_target_location "${target_location}")
   ELSE()
    STRING(REPLACE "${CMAKE_CFG_INTDIR}" "Debug"  debug_target_location "${target_location}" )

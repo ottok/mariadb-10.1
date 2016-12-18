@@ -106,10 +106,10 @@ struct tablevec_entry {
 
 struct expr_user_lock : private noncopyable {
   expr_user_lock(THD *thd, int timeout)
-    : lck_key("handlersocket_wr", 16, &my_charset_latin1),
-      lck_timeout(timeout),
-      lck_func_get_lock(&lck_key, &lck_timeout),
-      lck_func_release_lock(&lck_key)
+    : lck_key(thd, "handlersocket_wr", 16, &my_charset_latin1),
+      lck_timeout(thd, timeout),
+      lck_func_get_lock(thd, &lck_key, &lck_timeout),
+      lck_func_release_lock(thd, &lck_key)
   {
     lck_key.fix_fields(thd, 0);
     lck_timeout.fix_fields(thd, 0);
@@ -304,6 +304,7 @@ dbcontext::init_thread(const void *stack_bottom, volatile int& shutdown_flag)
       thd->db = 0;
       thd->db = my_strdup("handlersocket", MYF(0));
     }
+    thd->variables.option_bits |= OPTION_TABLE_LOCK;
     my_pthread_setspecific_ptr(THR_THD, thd);
     DBG_THR(fprintf(stderr, "HNDSOCK x0 %p\n", thd));
   }
@@ -343,7 +344,7 @@ void
 dbcontext::term_thread()
 {
   DBG_THR(fprintf(stderr, "HNDSOCK thread end %p\n", thd));
-  unlock_tables_if();
+  close_tables_if();
   my_pthread_setspecific_ptr(THR_THD, 0);
   {
     pthread_mutex_lock(&LOCK_thread_count);
@@ -1016,7 +1017,7 @@ dbcontext::cmd_open(dbcallback_i& cb, const cmd_open_args& arg)
     tables.mdl_request.init(MDL_key::TABLE, arg.dbn, arg.tbl,
       for_write_flag ? MDL_SHARED_WRITE : MDL_SHARED_READ, MDL_TRANSACTION);
     Open_table_context ot_act(thd, 0);
-    if (!open_table(thd, &tables, thd->mem_root, &ot_act)) {
+    if (!open_table(thd, &tables, &ot_act)) {
       table = tables.table;
     }
     #else

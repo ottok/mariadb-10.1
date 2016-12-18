@@ -6,12 +6,13 @@
 #############################################################################
 # Change Author: JBM
 # Change Date: 2006-01-16
-# Change: Added Order by for NDB
 ##########
 
 # Includes
 -- source include/have_binlog_format_row.inc
 -- source include/master-slave.inc
+set global sql_mode="";
+set local sql_mode="";
 
 # Begin clean up test section
 connection master;
@@ -59,3 +60,6 @@ sync_slave_with_master;
 
 # End of 5.0 test case
 --source include/rpl_end.inc
+
+set global sql_mode=default;
+set local sql_mode=default;

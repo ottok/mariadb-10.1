@@ -143,3 +143,45 @@ SELECT '' LIKE '1' ESCAPE COUNT(1);
 --echo #
 SELECT 'a' LIKE REPEAT('',0);
 SELECT 'a' LIKE EXTRACTVALUE('bar','qux');
+
+--echo #
+--echo # End of 10.0 tests
+--echo #
+
+--echo #
+--echo # Start of 10.1 tests
+--echo #
+
+--echo #
+--echo # MDEV-8257 Erroneous "Impossible where" when mixing decimal comparison and LIKE
+--echo #
+CREATE TABLE t1 (a DECIMAL(8,2));
+INSERT INTO t1 VALUES (10),(20);
+SELECT * FROM t1 WHERE a=10.0;
+SELECT * FROM t1 WHERE a LIKE 10.00;
+SELECT * FROM t1 WHERE a=10.0 AND a LIKE 10.00;
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a=10.0 AND a LIKE 10.00;
+DROP TABLE t1;
+
+--echo #
+--echo # MDEV-8599 "WHERE varchar_field LIKE temporal_const" does not use range optimizer
+--echo #
+CREATE TABLE t1 (a VARCHAR(10) CHARACTER SET latin1, KEY(a)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES ('00:00:00');
+INSERT INTO t1 VALUES ('00:00:01');
+INSERT INTO t1 VALUES ('00:00:02');
+INSERT INTO t1 VALUES ('00:00:03');
+INSERT INTO t1 VALUES ('00:00:04');
+INSERT INTO t1 VALUES ('00:00:05');
+INSERT INTO t1 VALUES ('00:00:06');
+INSERT INTO t1 VALUES ('00:00:07');
+EXPLAIN SELECT * FROM t1 WHERE a LIKE '00:00:00';
+EXPLAIN SELECT * FROM t1 WHERE a LIKE TIME'00:00:00';
+SELECT * FROM t1 WHERE a LIKE '00:00:00';
+SELECT * FROM t1 WHERE a LIKE TIME'00:00:00';
+DROP TABLE t1;
+
+
+--echo #
+--echo # End of 10.1 tests
+--echo #

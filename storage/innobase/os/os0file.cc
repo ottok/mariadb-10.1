@@ -2,6 +2,7 @@
 
 Copyright (c) 1995, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2009, Percona Inc.
+Copyright (c) 2013, 2016, MariaDB Corporation.
 
 Portions of this file contain modifications contributed and copyrighted
 by Percona Inc.. Those modifications are
@@ -42,8 +43,15 @@ Created 10/21/1995 Heikki Tuuri
 #include "srv0srv.h"
 #include "srv0start.h"
 #include "fil0fil.h"
+#include "fil0crypt.h"
+#include "fsp0fsp.h"
+#include "fil0pagecompress.h"
 #include "buf0buf.h"
 #include "srv0mon.h"
+#include "srv0srv.h"
+#ifdef HAVE_LINUX_UNISTD_H
+#include "unistd.h"
+#endif
 #ifndef UNIV_HOTBACKUP
 # include "os0sync.h"
 # include "os0thread.h"
@@ -58,6 +66,34 @@ Created 10/21/1995 Heikki Tuuri
 
 #if defined(LINUX_NATIVE_AIO)
 #include <libaio.h>
+#endif
+
+#if defined(UNIV_LINUX) && defined(HAVE_SYS_IOCTL_H)
+# include <sys/ioctl.h>
+# ifndef DFS_IOCTL_ATOMIC_WRITE_SET
+#  define DFS_IOCTL_ATOMIC_WRITE_SET _IOW(0x95, 2, uint)
+# endif
+#endif
+
+#if defined(UNIV_LINUX) && defined(HAVE_SYS_STATVFS_H)
+#include <sys/statvfs.h>
+#endif
+
+#if defined(UNIV_LINUX) && defined(HAVE_LINUX_FALLOC_H)
+#include <linux/falloc.h>
+#endif
+
+#ifdef HAVE_FALLOC_PUNCH_HOLE_AND_KEEP_SIZE
+# include <fcntl.h>
+# include <linux/falloc.h>
+#endif /* HAVE_FALLOC_PUNCH_HOLE_AND_KEEP_SIZE */
+
+#ifdef HAVE_LZO
+#include "lzo/lzo1x.h"
+#endif
+
+#ifdef HAVE_SNAPPY
+#include "snappy-c.h"
 #endif
 
 /** Insert buffer segment id */
@@ -76,6 +112,7 @@ UNIV_INTERN ulint	os_innodb_umask = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;
 #else
 /** Umask for creating files */
 UNIV_INTERN ulint	os_innodb_umask	= 0;
+#define ECANCELED  125
 #endif /* __WIN__ */
 
 #ifndef UNIV_HOTBACKUP
@@ -86,6 +123,12 @@ UNIV_INTERN os_ib_mutex_t	os_file_seek_mutexes[OS_FILE_N_SEEK_MUTEXES];
 
 /* In simulated aio, merge at most this many consecutive i/os */
 #define OS_AIO_MERGE_N_CONSECUTIVE	64
+
+#ifdef WITH_INNODB_DISALLOW_WRITES
+#define WAIT_ALLOW_WRITES() os_event_wait(srv_allow_writes_event)
+#else
+#define WAIT_ALLOW_WRITES() do { } while (0)
+#endif /* WITH_INNODB_DISALLOW_WRITES */
 
 /**********************************************************************
 
@@ -162,6 +205,9 @@ struct os_aio_slot_t{
 					write */
 	byte*		buf;		/*!< buffer used in i/o */
 	ulint		type;		/*!< OS_FILE_READ or OS_FILE_WRITE */
+	ulint		is_log;		/*!< 1 if OS_FILE_LOG or 0 */
+	ulint		page_size;      /*!< UNIV_PAGE_SIZE or zip_size */
+
 	os_offset_t	offset;		/*!< file offset in bytes */
 	os_file_t	file;		/*!< file where to read or write */
 	const char*	name;		/*!< file name or path */
@@ -175,6 +221,16 @@ struct os_aio_slot_t{
 					and which can be used to identify
 					which pending aio operation was
 					completed */
+	ulint           bitmap;
+
+	ulint*          write_size;     /*!< Actual write size initialized
+					after fist successfull trim
+					operation for this page and if
+					initialized we do not trim again if
+					actual page size does not decrease. */
+
+	ulint           file_block_size;/*!< file block size */
+
 #ifdef WIN_ASYNC_IO
 	HANDLE		handle;		/*!< handle object we need in the
 					OVERLAPPED struct */
@@ -293,6 +349,68 @@ UNIV_INTERN ulint	os_file_n_pending_pwrites = 0;
 UNIV_INTERN ulint	os_n_pending_writes = 0;
 /** Number of pending read operations */
 UNIV_INTERN ulint	os_n_pending_reads = 0;
+
+/** After first fallocate failure we will disable os_file_trim */
+UNIV_INTERN ibool       os_fallocate_failed = FALSE;
+
+/**********************************************************************//**
+Directly manipulate the allocated disk space by deallocating for the file referred to
+by fd  for  the  byte range starting at offset and continuing for len bytes.
+Within the specified range, partial file system blocks are zeroed, and whole
+file system blocks are removed from the file.  After a successful call,
+subsequent reads from  this range will return zeroes.
+@return	true if success, false if error */
+UNIV_INTERN
+ibool
+os_file_trim(
+/*=========*/
+	os_aio_slot_t*	slot); /*!< in: slot structure     */
+
+/****************************************************************//**
+Does error handling when a file operation fails.
+@return	TRUE if we should retry the operation */
+ibool
+os_file_handle_error_no_exit(
+/*=========================*/
+	const char*	name,		/*!< in: name of a file or NULL */
+	const char*	operation,	/*!< in: operation */
+	ibool		on_error_silent,/*!< in: if TRUE then don't print
+					any message to the log. */
+	const char*	file,		/*!< in: file name */
+	const ulint	line);		/*!< in: line */
+
+/****************************************************************//**
+Tries to enable the atomic write feature, if available, for the specified file
+handle.
+@return TRUE if success */
+static __attribute__((warn_unused_result))
+ibool
+os_file_set_atomic_writes(
+/*======================*/
+	const char*	name	/*!< in: name of the file */
+	__attribute__((unused)),
+	os_file_t	file	/*!< in: handle to the file */
+	__attribute__((unused)))
+{
+#ifdef DFS_IOCTL_ATOMIC_WRITE_SET
+	int	atomic_option	= 1;
+
+	if (ioctl(file, DFS_IOCTL_ATOMIC_WRITE_SET, &atomic_option)) {
+
+		fprintf(stderr, "InnoDB: Warning:Trying to enable atomic writes on "
+			"file %s on non-supported platform!\n", name);
+		os_file_handle_error_no_exit(name, "ioctl", FALSE, __FILE__, __LINE__);
+		return(FALSE);
+	}
+
+	return(TRUE);
+#else
+	fprintf(stderr, "InnoDB: Error: trying to enable atomic writes on "
+		"file %s on non-supported platform!\n", name);
+	return(FALSE);
+#endif
+}
+
 
 #ifdef UNIV_DEBUG
 # ifndef UNIV_HOTBACKUP
@@ -439,6 +557,19 @@ os_file_get_last_error_low(
 				"InnoDB: because of either a thread exit"
 				" or an application request.\n"
 				"InnoDB: Retry attempt is made.\n");
+		} else if (err == ECANCELED || err == ENOTTY) {
+			if (strerror(err) != NULL) {
+				fprintf(stderr,
+					"InnoDB: Error number %d"
+					" means '%s'.\n",
+					err, strerror(err));
+			}
+
+			if(srv_use_atomic_writes) {
+				fprintf(stderr,
+					"InnoDB: Error trying to enable atomic writes on "
+					"non-supported destination!\n");
+			}
 		} else {
 			fprintf(stderr,
 				"InnoDB: Some operating system error numbers"
@@ -503,6 +634,19 @@ os_file_get_last_error_low(
 				"InnoDB: The error means mysqld does not have"
 				" the access rights to\n"
 				"InnoDB: the directory.\n");
+		} else if (err == ECANCELED || err == ENOTTY) {
+			if (strerror(err) != NULL) {
+				fprintf(stderr,
+					"InnoDB: Error number %d"
+					" means '%s'.\n",
+					err, strerror(err));
+			}
+
+			if(srv_use_atomic_writes) {
+				fprintf(stderr,
+					"InnoDB: Error trying to enable atomic writes on "
+					"non-supported destination!\n");
+			}
 		} else {
 			if (strerror(err) != NULL) {
 				fprintf(stderr,
@@ -536,6 +680,9 @@ os_file_get_last_error_low(
 	case ENOTDIR:
 	case EISDIR:
 		return(OS_FILE_PATH_ERROR);
+	case ECANCELED:
+	case ENOTTY:
+                return(OS_FILE_OPERATION_NOT_SUPPORTED);
 	case EAGAIN:
 		if (srv_use_native_aio) {
 			return(OS_FILE_AIO_RESOURCES_RESERVED);
@@ -582,9 +729,11 @@ os_file_handle_error_cond_exit(
 	const char*	operation,	/*!< in: operation */
 	ibool		should_exit,	/*!< in: call exit(3) if unknown error
 					and this parameter is TRUE */
-	ibool		on_error_silent)/*!< in: if TRUE then don't print
+	ibool		on_error_silent,/*!< in: if TRUE then don't print
 					any message to the log iff it is
 					an unknown non-fatal error */
+	const char*     file,           /*!< in: file name */
+	const ulint     line)           /*!< in: line */
 {
 	ulint	err;
 
@@ -613,6 +762,9 @@ os_file_handle_error_cond_exit(
 		fprintf(stderr,
 			"  InnoDB: Disk is full. Try to clean the disk"
 			" to free space.\n");
+
+		fprintf(stderr,
+			" InnoDB: at file %s and at line %ld\n", file, line);
 
 		os_has_said_disk_full = TRUE;
 
@@ -649,6 +801,12 @@ os_file_handle_error_cond_exit(
 		to the log. */
 
 		if (should_exit || !on_error_silent) {
+			fprintf(stderr,
+				" InnoDB: Operation %s to file %s and at line %ld\n",
+				operation, file, line);
+		}
+
+		if (should_exit || !on_error_silent) {
 			ib_logf(IB_LOG_LEVEL_ERROR, "File %s: '%s' returned OS "
 				"error " ULINTPF ".%s", name ? name : "(unknown)",
 				operation, err, should_exit
@@ -671,10 +829,12 @@ ibool
 os_file_handle_error(
 /*=================*/
 	const char*	name,		/*!< in: name of a file or NULL */
-	const char*	operation)	/*!< in: operation */
+	const char*	operation,	/*!< in: operation */
+	const char*     file,           /*!< in: file name */
+	const ulint     line)           /*!< in: line */
 {
 	/* exit in case of unknown error */
-	return(os_file_handle_error_cond_exit(name, operation, TRUE, FALSE));
+	return(os_file_handle_error_cond_exit(name, operation, TRUE, FALSE, file, line));
 }
 
 /****************************************************************//**
@@ -685,12 +845,14 @@ os_file_handle_error_no_exit(
 /*=========================*/
 	const char*	name,		/*!< in: name of a file or NULL */
 	const char*	operation,	/*!< in: operation */
-	ibool		on_error_silent)/*!< in: if TRUE then don't print
+	ibool		on_error_silent,/*!< in: if TRUE then don't print
 					any message to the log. */
+	const char*     file,           /*!< in: file name */
+	const ulint     line)           /*!< in: line */
 {
 	/* don't exit in case of unknown error */
 	return(os_file_handle_error_cond_exit(
-			name, operation, FALSE, on_error_silent));
+			name, operation, FALSE, on_error_silent, file, line));
 }
 
 #undef USE_FILE_LOCK
@@ -768,6 +930,7 @@ os_file_create_tmpfile(
 	const char*	path)
 {
 	FILE*	file	= NULL;
+	WAIT_ALLOW_WRITES();
 	int	fd	= innobase_mysql_tmpfile(path);
 
 	ut_ad(!srv_read_only_mode);
@@ -832,7 +995,7 @@ os_file_opendir(
 	if (dir == INVALID_HANDLE_VALUE) {
 
 		if (error_is_fatal) {
-			os_file_handle_error(dirname, "opendir");
+			os_file_handle_error(dirname, "opendir", __FILE__, __LINE__);
 		}
 
 		return(NULL);
@@ -843,7 +1006,7 @@ os_file_opendir(
 	dir = opendir(dirname);
 
 	if (dir == NULL && error_is_fatal) {
-		os_file_handle_error(dirname, "opendir");
+		os_file_handle_error(dirname, "opendir", __FILE__, __LINE__);
 	}
 
 	return(dir);
@@ -865,7 +1028,7 @@ os_file_closedir(
 	ret = FindClose(dir);
 
 	if (!ret) {
-		os_file_handle_error_no_exit(NULL, "closedir", FALSE);
+		os_file_handle_error_no_exit(NULL, "closedir", FALSE, __FILE__, __LINE__);
 
 		return(-1);
 	}
@@ -877,7 +1040,7 @@ os_file_closedir(
 	ret = closedir(dir);
 
 	if (ret) {
-		os_file_handle_error_no_exit(NULL, "closedir", FALSE);
+		os_file_handle_error_no_exit(NULL, "closedir", FALSE, __FILE__, __LINE__);
 	}
 
 	return(ret);
@@ -949,7 +1112,7 @@ next_file:
 
 		return(1);
 	} else {
-		os_file_handle_error_no_exit(NULL, "readdir_next_file", FALSE);
+		os_file_handle_error_no_exit(NULL, "readdir_next_file", FALSE, __FILE__, __LINE__);
 		return(-1);
 	}
 #else
@@ -1035,7 +1198,7 @@ next_file:
 			goto next_file;
 		}
 
-		os_file_handle_error_no_exit(full_path, "stat", FALSE);
+		os_file_handle_error_no_exit(full_path, "stat", FALSE, __FILE__, __LINE__);
 
 		ut_free(full_path);
 
@@ -1086,7 +1249,7 @@ os_file_create_directory(
 		  && !fail_if_exists))) {
 
 		os_file_handle_error_no_exit(
-			pathname, "CreateDirectory", FALSE);
+			pathname, "CreateDirectory", FALSE, __FILE__, __LINE__);
 
 		return(FALSE);
 	}
@@ -1094,12 +1257,13 @@ os_file_create_directory(
 	return(TRUE);
 #else
 	int	rcode;
+	WAIT_ALLOW_WRITES();
 
 	rcode = mkdir(pathname, 0770);
 
 	if (!(rcode == 0 || (errno == EEXIST && !fail_if_exists))) {
 		/* failure */
-		os_file_handle_error_no_exit(pathname, "mkdir", FALSE);
+		os_file_handle_error_no_exit(pathname, "mkdir", FALSE, __FILE__, __LINE__);
 
 		return(FALSE);
 	}
@@ -1209,7 +1373,7 @@ os_file_create_simple_func(
 
 			retry = os_file_handle_error(
 				name, create_mode == OS_FILE_OPEN ?
-				"open" : "create");
+				"open" : "create", __FILE__, __LINE__);
 
 		} else {
 			*success = TRUE;
@@ -1220,6 +1384,8 @@ os_file_create_simple_func(
 
 #else /* __WIN__ */
 	int		create_flag;
+	if (create_mode != OS_FILE_OPEN && create_mode != OS_FILE_OPEN_RAW)
+		WAIT_ALLOW_WRITES();
 
 	ut_a(!(create_mode & OS_FILE_ON_ERROR_SILENT));
 	ut_a(!(create_mode & OS_FILE_ON_ERROR_NO_EXIT));
@@ -1277,7 +1443,7 @@ os_file_create_simple_func(
 			retry = os_file_handle_error(
 				name,
 				create_mode == OS_FILE_OPEN
-				?  "open" : "create");
+				?  "open" : "create", __FILE__, __LINE__);
 		} else {
 			*success = TRUE;
 			retry = false;
@@ -1288,7 +1454,7 @@ os_file_create_simple_func(
 #ifdef USE_FILE_LOCK
 	if (!srv_read_only_mode
 	    && *success
-	    && access_type == OS_FILE_READ_WRITE
+	    && (access_type == OS_FILE_READ_WRITE)
 	    && os_file_lock(file, name)) {
 
 		*success = FALSE;
@@ -1319,9 +1485,12 @@ os_file_create_simple_no_error_handling_func(
 				OS_FILE_READ_WRITE, or
 				OS_FILE_READ_ALLOW_DELETE; the last option is
 				used by a backup program reading the file */
-	ibool*		success)/*!< out: TRUE if succeed, FALSE if error */
+	ibool*		success,/*!< out: TRUE if succeed, FALSE if error */
+	ulint           atomic_writes) /*! in: atomic writes table option
+				       value */
 {
 	os_file_t	file;
+	atomic_writes_t awrites = (atomic_writes_t) atomic_writes;
 
 	*success = FALSE;
 #ifdef __WIN__
@@ -1382,12 +1551,31 @@ os_file_create_simple_no_error_handling_func(
 			  attributes,
 			  NULL);		// No template file
 
+	/* If we have proper file handle and atomic writes should be used,
+	try to set atomic writes and if that fails when creating a new
+	table, produce a error. If atomic writes are used on existing
+	file, ignore error and use traditional writes for that file */
+	if (file != INVALID_HANDLE_VALUE
+	    && (awrites == ATOMIC_WRITES_ON ||
+		(srv_use_atomic_writes && awrites == ATOMIC_WRITES_DEFAULT))
+	    && !os_file_set_atomic_writes(name, file)) {
+		if (create_mode == OS_FILE_CREATE) {
+			fprintf(stderr, "InnoDB: Error: Can't create file using atomic writes\n");
+			CloseHandle(file);
+			os_file_delete_if_exists_func(name);
+			*success = FALSE;
+			file = INVALID_HANDLE_VALUE;
+		}
+	}
+
 	*success = (file != INVALID_HANDLE_VALUE);
 #else /* __WIN__ */
 	int		create_flag;
 	const char*	mode_str	= NULL;
 
 	ut_a(name);
+	if (create_mode != OS_FILE_OPEN && create_mode != OS_FILE_OPEN_RAW)
+		WAIT_ALLOW_WRITES();
 
 	ut_a(!(create_mode & OS_FILE_ON_ERROR_SILENT));
 	ut_a(!(create_mode & OS_FILE_ON_ERROR_NO_EXIT));
@@ -1407,7 +1595,7 @@ os_file_create_simple_no_error_handling_func(
 		} else {
 
 			ut_a(access_type == OS_FILE_READ_WRITE
-			     || access_type == OS_FILE_READ_ALLOW_DELETE);
+				|| access_type == OS_FILE_READ_ALLOW_DELETE);
 
 			create_flag = O_RDWR;
 		}
@@ -1439,18 +1627,18 @@ os_file_create_simple_no_error_handling_func(
 	/* This function is always called for data files, we should disable
 	OS caching (O_DIRECT) here as we do in os_file_create_func(), so
 	we open the same file in the same mode, see man page of open(2). */
-	if (!srv_read_only_mode
-	    && *success
-	    && (srv_unix_file_flush_method == SRV_UNIX_O_DIRECT
-		|| srv_unix_file_flush_method == SRV_UNIX_O_DIRECT_NO_FSYNC)) {
+       if (!srv_read_only_mode
+	   && *success
+	   && (srv_unix_file_flush_method == SRV_UNIX_O_DIRECT
+	       || srv_unix_file_flush_method == SRV_UNIX_O_DIRECT_NO_FSYNC)) {
 
-		os_file_set_nocache(file, name, mode_str);
+	       os_file_set_nocache(file, name, mode_str);
 	}
 
 #ifdef USE_FILE_LOCK
 	if (!srv_read_only_mode
 	    && *success
-	    && access_type == OS_FILE_READ_WRITE
+	    && (access_type == OS_FILE_READ_WRITE)
 	    && os_file_lock(file, name)) {
 
 		*success = FALSE;
@@ -1459,6 +1647,24 @@ os_file_create_simple_no_error_handling_func(
 
 	}
 #endif /* USE_FILE_LOCK */
+
+	/* If we have proper file handle and atomic writes should be used,
+	try to set atomic writes and if that fails when creating a new
+	table, produce a error. If atomic writes are used on existing
+	file, ignore error and use traditional writes for that file */
+	if (file != -1
+	    && (awrites == ATOMIC_WRITES_ON ||
+		(srv_use_atomic_writes && awrites == ATOMIC_WRITES_DEFAULT))
+	    && !os_file_set_atomic_writes(name, file)) {
+		if (create_mode == OS_FILE_CREATE) {
+			fprintf(stderr, "InnoDB: Error: Can't create file using atomic writes\n");
+			close(file);
+			os_file_delete_if_exists_func(name);
+			*success = FALSE;
+			file = -1;
+		}
+	}
+
 
 #endif /* __WIN__ */
 
@@ -1471,8 +1677,8 @@ UNIV_INTERN
 void
 os_file_set_nocache(
 /*================*/
-	int		fd		/*!< in: file descriptor to alter */
-					MY_ATTRIBUTE((unused)),
+	os_file_t	fd		/*!< in: file descriptor to alter */
+					__attribute__((unused)),
 	const char*	file_name	/*!< in: used in the diagnostic
 					message */
 					MY_ATTRIBUTE((unused)),
@@ -1544,12 +1750,15 @@ os_file_create_func(
 				async i/o or unbuffered i/o: look in the
 				function source code for the exact rules */
 	ulint		type,	/*!< in: OS_DATA_FILE or OS_LOG_FILE */
-	ibool*		success)/*!< out: TRUE if succeed, FALSE if error */
+	ibool*		success,/*!< out: TRUE if succeed, FALSE if error */
+	ulint           atomic_writes) /*! in: atomic writes table option
+				       value */
 {
 	os_file_t	file;
 	ibool		retry;
 	ibool		on_error_no_exit;
 	ibool		on_error_silent;
+	atomic_writes_t awrites = (atomic_writes_t) atomic_writes;
 
 #ifdef __WIN__
 	DBUG_EXECUTE_IF(
@@ -1682,9 +1891,9 @@ os_file_create_func(
 
 			if (on_error_no_exit) {
 				retry = os_file_handle_error_no_exit(
-					name, operation, on_error_silent);
+					name, operation, on_error_silent, __FILE__, __LINE__);
 			} else {
-				retry = os_file_handle_error(name, operation);
+				retry = os_file_handle_error(name, operation, __FILE__, __LINE__);
 			}
 		} else {
 			*success = TRUE;
@@ -1693,9 +1902,27 @@ os_file_create_func(
 
 	} while (retry);
 
+	/* If we have proper file handle and atomic writes should be used,
+	try to set atomic writes and if that fails when creating a new
+	table, produce a error. If atomic writes are used on existing
+	file, ignore error and use traditional writes for that file */
+	if (file != INVALID_HANDLE_VALUE && type == OS_DATA_FILE
+	    && (awrites == ATOMIC_WRITES_ON ||
+		(srv_use_atomic_writes && awrites == ATOMIC_WRITES_DEFAULT))
+	    && !os_file_set_atomic_writes(name, file)) {
+		if (create_mode == OS_FILE_CREATE) {
+			fprintf(stderr, "InnoDB: Error: Can't create file using atomic writes\n");
+			CloseHandle(file);
+			os_file_delete_if_exists_func(name);
+			*success = FALSE;
+			file = INVALID_HANDLE_VALUE;
+		}
+	}
 #else /* __WIN__ */
 	int		create_flag;
 	const char*	mode_str	= NULL;
+	if (create_mode != OS_FILE_OPEN && create_mode != OS_FILE_OPEN_RAW)
+		WAIT_ALLOW_WRITES();
 
 	on_error_no_exit = create_mode & OS_FILE_ON_ERROR_NO_EXIT
 		? TRUE : FALSE;
@@ -1767,9 +1994,9 @@ os_file_create_func(
 
 			if (on_error_no_exit) {
 				retry = os_file_handle_error_no_exit(
-					name, operation, on_error_silent);
+					name, operation, on_error_silent, __FILE__, __LINE__);
 			} else {
-				retry = os_file_handle_error(name, operation);
+				retry = os_file_handle_error(name, operation, __FILE__, __LINE__);
 			}
 		} else {
 			*success = TRUE;
@@ -1779,14 +2006,13 @@ os_file_create_func(
 	} while (retry);
 
 	/* We disable OS caching (O_DIRECT) only on data files */
+       if (!srv_read_only_mode
+	   && *success
+	   && type != OS_LOG_FILE
+	   && (srv_unix_file_flush_method == SRV_UNIX_O_DIRECT
+	       || srv_unix_file_flush_method == SRV_UNIX_O_DIRECT_NO_FSYNC)) {
 
-	if (!srv_read_only_mode
-	    && *success
-	    && type != OS_LOG_FILE
-	    && (srv_unix_file_flush_method == SRV_UNIX_O_DIRECT
-		|| srv_unix_file_flush_method == SRV_UNIX_O_DIRECT_NO_FSYNC)) {
-
-		os_file_set_nocache(file, name, mode_str);
+	       os_file_set_nocache(file, name, mode_str);
 	}
 
 #ifdef USE_FILE_LOCK
@@ -1821,6 +2047,22 @@ os_file_create_func(
 	}
 #endif /* USE_FILE_LOCK */
 
+	/* If we have proper file handle and atomic writes should be used,
+	try to set atomic writes and if that fails when creating a new
+	table, produce a error. If atomic writes are used on existing
+	file, ignore error and use traditional writes for that file */
+	if (file != -1 && type == OS_DATA_FILE
+	    && (awrites == ATOMIC_WRITES_ON ||
+		(srv_use_atomic_writes && awrites == ATOMIC_WRITES_DEFAULT))
+	    && !os_file_set_atomic_writes(name, file)) {
+		if (create_mode == OS_FILE_CREATE) {
+			fprintf(stderr, "InnoDB: Error: Can't create file using atomic writes\n");
+			close(file);
+			os_file_delete_if_exists_func(name);
+			*success = FALSE;
+			file = -1;
+		}
+	}
 #endif /* __WIN__ */
 
 	return(file);
@@ -1875,11 +2117,12 @@ loop:
 	goto loop;
 #else
 	int	ret;
+	WAIT_ALLOW_WRITES();
 
 	ret = unlink(name);
 
 	if (ret != 0 && errno != ENOENT) {
-		os_file_handle_error_no_exit(name, "delete", FALSE);
+		os_file_handle_error_no_exit(name, "delete", FALSE, __FILE__, __LINE__);
 
 		return(false);
 	}
@@ -1939,11 +2182,12 @@ loop:
 	goto loop;
 #else
 	int	ret;
+	WAIT_ALLOW_WRITES();
 
 	ret = unlink(name);
 
 	if (ret != 0) {
-		os_file_handle_error_no_exit(name, "delete", FALSE);
+		os_file_handle_error_no_exit(name, "delete", FALSE, __FILE__, __LINE__);
 
 		return(false);
 	}
@@ -1987,16 +2231,17 @@ os_file_rename_func(
 		return(TRUE);
 	}
 
-	os_file_handle_error_no_exit(oldpath, "rename", FALSE);
+	os_file_handle_error_no_exit(oldpath, "rename", FALSE, __FILE__, __LINE__);
 
 	return(FALSE);
 #else
 	int	ret;
+	WAIT_ALLOW_WRITES();
 
 	ret = rename(oldpath, newpath);
 
 	if (ret != 0) {
-		os_file_handle_error_no_exit(oldpath, "rename", FALSE);
+		os_file_handle_error_no_exit(oldpath, "rename", FALSE, __FILE__, __LINE__);
 
 		return(FALSE);
 	}
@@ -2025,7 +2270,7 @@ os_file_close_func(
 		return(TRUE);
 	}
 
-	os_file_handle_error(NULL, "close");
+	os_file_handle_error(NULL, "close", __FILE__, __LINE__);
 
 	return(FALSE);
 #else
@@ -2034,7 +2279,7 @@ os_file_close_func(
 	ret = close(file);
 
 	if (ret == -1) {
-		os_file_handle_error(NULL, "close");
+		os_file_handle_error(NULL, "close", __FILE__, __LINE__);
 
 		return(FALSE);
 	}
@@ -2134,14 +2379,14 @@ os_file_set_size(
 			fprintf(stderr, "InnoDB: Error: preallocating file "
 				"space for file \'%s\' failed.  Current size "
 				"%lu, desired size %lu\n",
-				name, (long unsigned) current_size, (long unsigned) size);
-			os_file_handle_error_no_exit(name, "posix_fallocate", FALSE);
+				name, current_size, size);
+			os_file_handle_error_no_exit(name, "posix_fallocate", FALSE, __FILE__, __LINE__);
+
 			return(FALSE);
 		}
 		return(TRUE);
 	}
 #endif
-
 
 	/* Write up to 1 megabyte at a time. */
 	buf_size = ut_min(64, (ulint) (size / UNIV_PAGE_SIZE))
@@ -2169,6 +2414,7 @@ os_file_set_size(
 		}
 
 		ret = os_file_write(name, file, buf, current_size, n_bytes);
+
 		if (!ret) {
 			ut_free(buf2);
 			goto error_handling;
@@ -2216,6 +2462,7 @@ os_file_set_eof(
 	HANDLE h = (HANDLE) _get_osfhandle(fileno(file));
 	return(SetEndOfFile(h));
 #else /* __WIN__ */
+	WAIT_ALLOW_WRITES();
 	return(!ftruncate(fileno(file), ftell(file)));
 #endif /* __WIN__ */
 }
@@ -2299,7 +2546,7 @@ os_file_flush_func(
 		return(TRUE);
 	}
 
-	os_file_handle_error(NULL, "flush");
+	os_file_handle_error(NULL, "flush", __FILE__, __LINE__);
 
 	/* It is a fatal error if a file flush does not succeed, because then
 	the database can get corrupt on disk */
@@ -2308,6 +2555,7 @@ os_file_flush_func(
 	return(FALSE);
 #else
 	int	ret;
+	WAIT_ALLOW_WRITES();
 
 #if defined(HAVE_DARWIN_THREADS)
 # ifndef F_FULLFSYNC
@@ -2353,7 +2601,7 @@ os_file_flush_func(
 
 	ib_logf(IB_LOG_LEVEL_ERROR, "The OS said file flush did not succeed");
 
-	os_file_handle_error(NULL, "flush");
+	os_file_handle_error(NULL, "flush", __FILE__, __LINE__);
 
 	/* It is a fatal error if a file flush does not succeed, because then
 	the database can get corrupt on disk */
@@ -2687,7 +2935,7 @@ try_again:
 #ifdef __WIN__
 error_handling:
 #endif
-	retry = os_file_handle_error(NULL, "read");
+	retry = os_file_handle_error(NULL, "read", __FILE__, __LINE__);
 
 	if (retry) {
 		goto try_again;
@@ -2818,7 +3066,7 @@ try_again:
 #ifdef __WIN__
 error_handling:
 #endif
-	retry = os_file_handle_error_no_exit(NULL, "read", FALSE);
+	retry = os_file_handle_error_no_exit(NULL, "read", FALSE, __FILE__, __LINE__);
 
 	if (retry) {
 		goto try_again;
@@ -2889,6 +3137,7 @@ os_file_write_func(
 
 	ut_ad(buf);
 	ut_ad(n > 0);
+
 retry:
 	low = (DWORD) offset & 0xFFFFFFFF;
 	high = (DWORD) (offset >> 32);
@@ -3020,6 +3269,7 @@ retry:
 	return(FALSE);
 #else
 	ssize_t	ret;
+	WAIT_ALLOW_WRITES();
 
 	ret = os_file_pwrite(file, buf, n, offset);
 
@@ -3093,7 +3343,7 @@ os_file_status(
 	} else if (ret) {
 		/* file exists, but stat call failed */
 
-		os_file_handle_error_no_exit(path, "stat", FALSE);
+		os_file_handle_error_no_exit(path, "stat", FALSE, __FILE__, __LINE__);
 
 		return(FALSE);
 	}
@@ -3121,7 +3371,7 @@ os_file_status(
 	} else if (ret) {
 		/* file exists, but stat call failed */
 
-		os_file_handle_error_no_exit(path, "stat", FALSE);
+		os_file_handle_error_no_exit(path, "stat", FALSE, __FILE__, __LINE__);
 
 		return(FALSE);
 	}
@@ -3170,7 +3420,7 @@ os_file_get_status(
 	} else if (ret) {
 		/* file exists, but stat call failed */
 
-		os_file_handle_error_no_exit(path, "stat", FALSE);
+		os_file_handle_error_no_exit(path, "stat", FALSE, __FILE__, __LINE__);
 
 		return(DB_FAIL);
 
@@ -3223,7 +3473,7 @@ os_file_get_status(
 	} else if (ret) {
 		/* file exists, but stat call failed */
 
-		os_file_handle_error_no_exit(path, "stat", FALSE);
+		os_file_handle_error_no_exit(path, "stat", FALSE, __FILE__, __LINE__);
 
 		return(DB_FAIL);
 
@@ -3790,7 +4040,8 @@ os_aio_array_create(
 	array->slots = static_cast<os_aio_slot_t*>(
 		ut_malloc(n * sizeof(*array->slots)));
 
-	memset(array->slots, 0x0, sizeof(n * sizeof(*array->slots)));
+	memset(array->slots, 0x0, n * sizeof(*array->slots));
+
 #ifdef __WIN__
 	array->handles = static_cast<HANDLE*>(ut_malloc(n * sizeof(HANDLE)));
 #endif /* __WIN__ */
@@ -3879,8 +4130,7 @@ os_aio_array_free(
 	os_aio_array_t*& array)	/*!< in, own: array to free */
 {
 #ifdef WIN_ASYNC_IO
-	ulint	i;
-
+	ulint i;
 	for (i = 0; i < array->n_slots; i++) {
 		os_aio_slot_t*	slot = os_aio_array_get_nth_slot(array, i);
 		CloseHandle(slot->handle);
@@ -4223,6 +4473,7 @@ os_aio_slot_t*
 os_aio_array_reserve_slot(
 /*======================*/
 	ulint		type,	/*!< in: OS_FILE_READ or OS_FILE_WRITE */
+	ulint		is_log,	/*!< in: 1 is OS_FILE_LOG or 0 */
 	os_aio_array_t*	array,	/*!< in: aio array */
 	fil_node_t*	message1,/*!< in: message to be passed along with
 				the aio operation */
@@ -4234,7 +4485,13 @@ os_aio_array_reserve_slot(
 	void*		buf,	/*!< in: buffer where to read or from which
 				to write */
 	os_offset_t	offset,	/*!< in: file offset */
-	ulint		len)	/*!< in: length of the block to read or write */
+	ulint		len,	/*!< in: length of the block to read or write */
+	ulint           page_size, /*!< in: page size in bytes */
+	ulint*		write_size)/*!< in/out: Actual write size initialized
+			       after fist successfull trim
+			       operation for this page and if
+			       initialized we do not trim again if
+			       actual page size does not decrease. */
 {
 	os_aio_slot_t*	slot = NULL;
 #ifdef WIN_ASYNC_IO
@@ -4321,9 +4578,17 @@ found:
 	slot->name     = name;
 	slot->len      = len;
 	slot->type     = type;
-	slot->buf      = static_cast<byte*>(buf);
 	slot->offset   = offset;
 	slot->io_already_done = FALSE;
+	slot->write_size = write_size;
+	slot->is_log   = is_log;
+	slot->page_size = page_size;
+
+	if (message1) {
+		slot->file_block_size = fil_node_get_block_size(message1);
+	}
+
+	slot->buf      = static_cast<byte*>(buf);
 
 #ifdef WIN_ASYNC_IO
 	control = &slot->control;
@@ -4574,6 +4839,7 @@ ibool
 os_aio_func(
 /*========*/
 	ulint		type,	/*!< in: OS_FILE_READ or OS_FILE_WRITE */
+	ulint		is_log,	/*!< in: 1 is OS_FILE_LOG or 0 */
 	ulint		mode,	/*!< in: OS_AIO_NORMAL, ..., possibly ORed
 				to OS_AIO_SIMULATED_WAKE_LATER: the
 				last flag advises this function not to wake
@@ -4594,18 +4860,25 @@ os_aio_func(
 				to write */
 	os_offset_t	offset,	/*!< in: file offset where to read or write */
 	ulint		n,	/*!< in: number of bytes to read or write */
+	ulint           page_size, /*!< in: page size in bytes */
 	fil_node_t*	message1,/*!< in: message for the aio handler
 				(can be used to identify a completed
 				aio operation); ignored if mode is
 				OS_AIO_SYNC */
-	void*		message2)/*!< in: message for the aio handler
+	void*		message2,/*!< in: message for the aio handler
 				(can be used to identify a completed
 				aio operation); ignored if mode is
 				OS_AIO_SYNC */
+	ulint*		write_size)/*!< in/out: Actual write size initialized
+			       after fist successfull trim
+			       operation for this page and if
+			       initialized we do not trim again if
+			       actual page size does not decrease. */
 {
 	os_aio_array_t*	array;
 	os_aio_slot_t*	slot;
 #ifdef WIN_ASYNC_IO
+	void* buffer = NULL;
 	ibool		retval;
 	BOOL		ret		= TRUE;
 	DWORD		len		= (DWORD) n;
@@ -4623,6 +4896,7 @@ os_aio_func(
 #ifdef WIN_ASYNC_IO
 	ut_ad((n & 0xFFFFFFFFUL) == n);
 #endif
+
 
 	wake_later = mode & OS_AIO_SIMULATED_WAKE_LATER;
 	mode = mode & (~OS_AIO_SIMULATED_WAKE_LATER);
@@ -4663,7 +4937,8 @@ os_aio_func(
 				os_has_said_disk_full = FALSE; ret = 0; errno = 28;);
 
 			if (!ret) {
-				os_file_handle_error_cond_exit(name, "os_file_write_func", TRUE, FALSE);
+				os_file_handle_error_cond_exit(name, "os_file_write_func", TRUE, FALSE,
+							       __FILE__, __LINE__);
 			}
 		}
 
@@ -4712,8 +4987,9 @@ try_again:
 		array = NULL; /* Eliminate compiler warning */
 	}
 
-	slot = os_aio_array_reserve_slot(type, array, message1, message2, file,
-					 name, buf, offset, n);
+	slot = os_aio_array_reserve_slot(type, is_log, array, message1, message2, file,
+					 name, buf, offset, n, page_size, write_size);
+
 	if (type == OS_FILE_READ) {
 		if (srv_use_native_aio) {
 			os_n_file_reads++;
@@ -4739,7 +5015,10 @@ try_again:
 		if (srv_use_native_aio) {
 			os_n_file_writes++;
 #ifdef WIN_ASYNC_IO
-			ret = WriteFile(file, buf, (DWORD) n, &len,
+
+			n = slot->len;
+			buffer = buf;
+			ret = WriteFile(file, buffer, (DWORD) n, &len,
 					&(slot->control));
 
 #elif defined(LINUX_NATIVE_AIO)
@@ -4793,7 +5072,7 @@ err_exit:
 	os_aio_array_free_slot(array, slot);
 
 	if (os_file_handle_error(
-		name,type == OS_FILE_READ ? "aio read" : "aio write")) {
+		name,type == OS_FILE_READ ? "aio read" : "aio write", __FILE__, __LINE__)) {
 
 		goto try_again;
 	}
@@ -4906,9 +5185,17 @@ os_aio_windows_handle(
 	if (ret && len == slot->len) {
 
 		ret_val = TRUE;
-	} else if (os_file_handle_error(slot->name, "Windows aio")) {
+	} else if (!ret || (len != slot->len)) {
 
-		retry = TRUE;
+		if (!ret) {
+			if (os_file_handle_error(slot->name, "Windows aio", __FILE__, __LINE__)) {
+				retry = TRUE;
+			} else {
+				ret_val = FALSE;
+			}
+		} else {
+			retry = TRUE;
+		}
 	} else {
 
 		ret_val = FALSE;
@@ -4934,12 +5221,11 @@ os_aio_windows_handle(
 
 		ut_a((slot->len & 0xFFFFFFFFUL) == slot->len);
 
-		switch (slot->type) {
-		case OS_FILE_WRITE:
+ 		switch (slot->type) {
+ 		case OS_FILE_WRITE:
 			ret = WriteFile(slot->file, slot->buf,
 					(DWORD) slot->len, &len,
 					&(slot->control));
-
 			break;
 		case OS_FILE_READ:
 			ret = ReadFile(slot->file, slot->buf,
@@ -4968,6 +5254,14 @@ os_aio_windows_handle(
 		}
 
 		ret_val = ret && len == slot->len;
+	}
+
+	if (slot->type == OS_FILE_WRITE &&
+	    !slot->is_log &&
+	    srv_use_trim &&
+	    os_fallocate_failed == FALSE) {
+		// Deallocate unused blocks from file system
+		os_file_trim(slot);
 	}
 
 	os_aio_array_free_slot(array, slot);
@@ -5058,6 +5352,14 @@ retry:
 
 			/* We have not overstepped to next segment. */
 			ut_a(slot->pos < end_pos);
+
+			if (slot->type == OS_FILE_WRITE &&
+			    !slot->is_log &&
+			    srv_use_trim &&
+			    os_fallocate_failed == FALSE) {
+				// Deallocate unused blocks from file system
+				os_file_trim(slot);
+			}
 
 			/* Mark this request as completed. The error handling
 			will be done in the calling function. */
@@ -5202,6 +5504,13 @@ found:
 	} else {
 		errno = -slot->ret;
 
+		if (slot->ret == 0) {
+			fprintf(stderr, 
+				"InnoDB: Number of bytes after aio %d requested %lu\n"
+				"InnoDB: from file %s\n",
+				slot->n_bytes, slot->len, slot->name);
+		}
+
 		/* os_file_handle_error does tell us if we should retry
 		this IO. As it stands now, we don't do this retry when
 		reaping requests from a different context than
@@ -5209,7 +5518,7 @@ found:
 		windows and linux native AIO.
 		We should probably look into this to transparently
 		re-submit the IO. */
-		os_file_handle_error(slot->name, "Linux aio");
+		os_file_handle_error(slot->name, "Linux aio", __FILE__, __LINE__);
 
 		ret = FALSE;
 	}
@@ -5493,7 +5802,8 @@ consecutive_loop:
 			errno = 28;);
 
 		if (!ret) {
-			os_file_handle_error_cond_exit(aio_slot->name, "os_file_write_func", TRUE, FALSE);
+			os_file_handle_error_cond_exit(aio_slot->name, "os_file_write_func", TRUE, FALSE,
+						       __FILE__, __LINE__);
 		}
 
 	} else {
@@ -5889,4 +6199,230 @@ os_aio_all_slots_free(void)
 }
 #endif /* UNIV_DEBUG */
 
+#ifdef _WIN32
+#include <winioctl.h>
+#ifndef FSCTL_FILE_LEVEL_TRIM
+#define FSCTL_FILE_LEVEL_TRIM  CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 130, METHOD_BUFFERED, FILE_WRITE_DATA)
+typedef struct _FILE_LEVEL_TRIM_RANGE {
+  DWORDLONG Offset;
+  DWORDLONG Length;
+} FILE_LEVEL_TRIM_RANGE, *PFILE_LEVEL_TRIM_RANGE;
+
+typedef struct _FILE_LEVEL_TRIM {
+  DWORD                 Key;
+  DWORD                 NumRanges;
+  FILE_LEVEL_TRIM_RANGE Ranges[1];
+} FILE_LEVEL_TRIM, *PFILE_LEVEL_TRIM;
+#endif
+#endif
+
+/**********************************************************************//**
+Directly manipulate the allocated disk space by deallocating for the file referred to
+by fd  for  the  byte range starting at offset and continuing for len bytes.
+Within the specified range, partial file system blocks are zeroed, and whole
+file system blocks are removed from the file.  After a successful call,
+subsequent reads from  this range will return zeroes.
+@return	true if success, false if error */
+UNIV_INTERN
+ibool
+os_file_trim(
+/*=========*/
+	os_aio_slot_t*	slot) /*!< in: slot structure     */
+{
+
+	size_t len = slot->len;
+	size_t trim_len = slot->page_size - len;
+	os_offset_t off = slot->offset + len;
+	size_t bsize = slot->file_block_size;
+
+#ifdef UNIV_TRIM_DEBUG
+	fprintf(stderr, "Note: TRIM: write_size %lu trim_len %lu len %lu off %lu bz %lu\n",
+		slot->write_size ? *slot->write_size : 0, trim_len, len, off, bsize);
+#endif
+
+	// Nothing to do if trim length is zero or if actual write
+	// size is initialized and it is smaller than current write size.
+	// In first write if we trim we set write_size to actual bytes
+	// written and rest of the page is trimmed. In following writes
+	// there is no need to trim again if write_size only increases
+	// because rest of the page is already trimmed. If actual write
+	// size decreases we need to trim again.
+	if (trim_len == 0 ||
+	    (slot->write_size &&
+		    *slot->write_size > 0 &&
+		    len >= *slot->write_size)) {
+
+		if (slot->write_size) {
+			if (*slot->write_size > 0 && len >= *slot->write_size) {
+				srv_stats.page_compressed_trim_op_saved.inc();
+			}
+
+			*slot->write_size = len;
+		}
+
+		return (TRUE);
+	}
+
+#ifdef __linux__
+#if defined(HAVE_FALLOC_PUNCH_HOLE_AND_KEEP_SIZE)
+	int ret = fallocate(slot->file, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE, off, trim_len);
+
+	if (ret) {
+		/* After first failure do not try to trim again */
+		os_fallocate_failed = TRUE;
+		srv_use_trim = FALSE;
+		ut_print_timestamp(stderr);
+		fprintf(stderr,
+			"  InnoDB: Warning: fallocate call failed with error code %d.\n"
+			"  InnoDB: start: %lu len: %lu payload: %lu\n"
+			"  InnoDB: Disabling fallocate for now.\n", errno, off, trim_len, len);
+
+		os_file_handle_error_no_exit(slot->name,
+			" fallocate(FALLOC_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE) ",
+			FALSE, __FILE__, __LINE__);
+
+		if (slot->write_size) {
+			*slot->write_size = 0;
+		}
+
+		return (FALSE);
+	} else {
+		if (slot->write_size) {
+			*slot->write_size = len;
+		}
+	}
+#else
+	ut_print_timestamp(stderr);
+	fprintf(stderr,
+		"  InnoDB: Warning: fallocate not supported on this installation."
+		"  InnoDB: Disabling fallocate for now.");
+	os_fallocate_failed = TRUE;
+	srv_use_trim = FALSE;
+	if (slot->write_size) {
+		*slot->write_size = 0;
+	}
+
+#endif /* HAVE_FALLOC_PUNCH_HOLE_AND_KEEP_SIZE ... */
+
+#elif defined(_WIN32)
+	FILE_LEVEL_TRIM flt;
+	flt.Key = 0;
+	flt.NumRanges = 1;
+	flt.Ranges[0].Offset = off;
+	flt.Ranges[0].Length = trim_len;
+
+	BOOL ret = DeviceIoControl(slot->file, FSCTL_FILE_LEVEL_TRIM,
+		&flt, sizeof(flt), NULL, NULL, NULL, NULL);
+
+	if (!ret) {
+		/* After first failure do not try to trim again */
+		os_fallocate_failed = TRUE;
+		srv_use_trim=FALSE;
+		ut_print_timestamp(stderr);
+		fprintf(stderr,
+			"  InnoDB: Warning: fallocate call failed with error.\n"
+			"  InnoDB: start: %lu len: %lu payload: %lu\n"
+			"  InnoDB: Disabling fallocate for now.\n", off, trim_len, len);
+
+		os_file_handle_error_no_exit(slot->name,
+			" DeviceIOControl(FSCTL_FILE_LEVEL_TRIM) ",
+			FALSE, __FILE__, __LINE__);
+
+		if (slot->write_size) {
+			*slot->write_size = 0;
+		}
+		return (FALSE);
+	} else {
+		if (slot->write_size) {
+			*slot->write_size = len;
+		}
+	}
+#endif
+
+	switch(bsize) {
+	case 512:
+		srv_stats.page_compression_trim_sect512.add((trim_len / bsize));
+		break;
+	case 1024:
+		srv_stats.page_compression_trim_sect1024.add((trim_len / bsize));
+		break;
+	case 2948:
+		srv_stats.page_compression_trim_sect2048.add((trim_len / bsize));
+		break;
+	case 4096:
+		srv_stats.page_compression_trim_sect4096.add((trim_len / bsize));
+		break;
+	case 8192:
+		srv_stats.page_compression_trim_sect8192.add((trim_len / bsize));
+		break;
+	case 16384:
+		srv_stats.page_compression_trim_sect16384.add((trim_len / bsize));
+		break;
+	case 32768:
+		srv_stats.page_compression_trim_sect32768.add((trim_len / bsize));
+		break;
+	default:
+		break;
+	}
+
+	srv_stats.page_compressed_trim_op.inc();
+
+	return (TRUE);
+
+}
 #endif /* !UNIV_HOTBACKUP */
+
+/***********************************************************************//**
+Try to get number of bytes per sector from file system.
+@return	file block size */
+UNIV_INTERN
+ulint
+os_file_get_block_size(
+/*===================*/
+	os_file_t	file,	/*!< in: handle to a file */
+	const char*	name)	/*!< in: file name */
+{
+	ulint		fblock_size = 512;
+
+#if defined(UNIV_LINUX) && defined(HAVE_SYS_STATVFS_H)
+	struct statvfs  fstat;
+	int		err;
+
+	err = fstatvfs(file, &fstat);
+
+	if (err != 0) {
+		fprintf(stderr, "InnoDB: Warning: fstatvfs() failed on file %s\n", name);
+		os_file_handle_error_no_exit(name, "fstatvfs()", FALSE, __FILE__, __LINE__);
+	} else {
+		fblock_size = fstat.f_bsize;
+	}
+#endif /* UNIV_LINUX */
+#ifdef __WIN__
+	{
+		DWORD SectorsPerCluster = 0;
+		DWORD BytesPerSector = 0;
+		DWORD NumberOfFreeClusters = 0;
+		DWORD TotalNumberOfClusters = 0;
+
+		/*
+		if (GetFreeSpace((LPCTSTR)name, &SectorsPerCluster, &BytesPerSector, &NumberOfFreeClusters, &TotalNumberOfClusters)) {
+			fblock_size = BytesPerSector;
+		} else {
+			fprintf(stderr, "InnoDB: Warning: GetFreeSpace() failed on file %s\n", name);
+			os_file_handle_error_no_exit(name, "GetFreeSpace()", FALSE, __FILE__, __LINE__);
+		}
+		*/
+	}
+#endif /* __WIN__*/
+
+	/* Currently we support file block size up to 4Kb */
+	if (fblock_size > 4096 || fblock_size < 512) {
+		if (fblock_size < 512) {
+			fblock_size = 512;
+		} else {
+			fblock_size = 4096;
+		}
+	}
+
+	return fblock_size;
+}

@@ -22,6 +22,8 @@
   This code needs extra visibility in the lexer structures
 */
 
+#define MYSQL_LEX 1
+
 #include "my_global.h"
 #include "my_sys.h"
 #include "pfs_instr.h"

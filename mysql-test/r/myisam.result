@@ -656,7 +656,7 @@ test.t2	984116287
 drop table t1, t2;
 show variables like 'myisam_stats_method';
 Variable_name	Value
-myisam_stats_method	nulls_unequal
+myisam_stats_method	NULLS_UNEQUAL
 create table t1 (a int, key(a));
 insert into t1 values (0),(1),(2),(3),(4);
 insert into t1 select NULL from t1;
@@ -677,7 +677,7 @@ t1	1	a	1	a	A	10	NULL	NULL	YES	BTREE
 set myisam_stats_method=nulls_equal;
 show variables like 'myisam_stats_method';
 Variable_name	Value
-myisam_stats_method	nulls_equal
+myisam_stats_method	NULLS_EQUAL
 insert into t1 values (11);
 delete from t1 where a=11;
 analyze table t1;
@@ -697,7 +697,7 @@ t1	1	a	1	a	A	5	NULL	NULL	YES	BTREE
 set myisam_stats_method=DEFAULT;
 show variables like 'myisam_stats_method';
 Variable_name	Value
-myisam_stats_method	nulls_unequal
+myisam_stats_method	NULLS_UNEQUAL
 insert into t1 values (11);
 delete from t1 where a=11;
 analyze table t1;
@@ -718,7 +718,7 @@ drop table t1;
 set myisam_stats_method=nulls_ignored;
 show variables like 'myisam_stats_method';
 Variable_name	Value
-myisam_stats_method	nulls_ignored
+myisam_stats_method	NULLS_IGNORED
 create table t1 (
 a char(3), b char(4), c char(5), d char(6),
 key(a,b,c,d)
@@ -1243,7 +1243,7 @@ alter table t1 add unique(v);
 ERROR 23000: Duplicate entry '{ ' for key 'v_2'
 alter table t1 add key(v);
 Warnings:
-Note	1831	Duplicate index 'v_2' defined on the table 'test.t1'. This is deprecated and will be disallowed in a future release.
+Note	1831	Duplicate index `v_2`. This is deprecated and will be disallowed in a future release.
 select concat('*',v,'*',c,'*',t,'*') as qq from t1 where v='a';
 qq
 *a*a*a*
@@ -2442,8 +2442,8 @@ SET myisam_repair_threads=2;
 SET myisam_sort_buffer_size=4096;
 CREATE TABLE t1(a CHAR(255), KEY(a), KEY(a), KEY(a));
 Warnings:
-Note	1831	Duplicate index 'a_2' defined on the table 'test.t1'. This is deprecated and will be disallowed in a future release.
-Note	1831	Duplicate index 'a_3' defined on the table 'test.t1'. This is deprecated and will be disallowed in a future release.
+Note	1831	Duplicate index `a_2`. This is deprecated and will be disallowed in a future release.
+Note	1831	Duplicate index `a_3`. This is deprecated and will be disallowed in a future release.
 INSERT INTO t1 VALUES (0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(0),(1),(2),(3);
 REPAIR TABLE t1;
 Table	Op	Msg_type	Msg_text

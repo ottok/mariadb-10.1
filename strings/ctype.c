@@ -1030,19 +1030,18 @@ my_charset_is_ascii_compatible(CHARSET_INFO *cs)
   @return Number of bytes copied to 'to' string
 */
 
-static uint32
-my_convert_internal(char *to, uint32 to_length,
-                    CHARSET_INFO *to_cs,
-                    const char *from, uint32 from_length,
-                    CHARSET_INFO *from_cs, uint *errors)
+uint32
+my_convert_using_func(char *to, uint32 to_length,
+                      CHARSET_INFO *to_cs, my_charset_conv_wc_mb wc_mb,
+                      const char *from, uint32 from_length,
+                      CHARSET_INFO *from_cs, my_charset_conv_mb_wc mb_wc,
+                      uint *errors)
 {
   int         cnvres;
   my_wc_t     wc;
   const uchar *from_end= (const uchar*) from + from_length;
   char *to_start= to;
   uchar *to_end= (uchar*) to + to_length;
-  my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
-  my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
   uint error_count= 0;
 
   while (1)
@@ -1119,8 +1118,11 @@ my_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
     immediately switch to slow mb_wc->wc_mb method.
   */
   if ((to_cs->state | from_cs->state) & MY_CS_NONASCII)
-    return my_convert_internal(to, to_length, to_cs,
-                               from, from_length, from_cs, errors);
+    return my_convert_using_func(to, to_length,
+                                 to_cs, to_cs->cset->wc_mb,
+                                 from, from_length,
+                                 from_cs, from_cs->cset->mb_wc,
+                                 errors);
 
   length= length2= MY_MIN(to_length, from_length);
 
@@ -1152,12 +1154,87 @@ my_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
       uint32 copied_length= length2 - length;
       to_length-= copied_length;
       from_length-= copied_length;
-      return copied_length + my_convert_internal(to, to_length, to_cs,
-                                                 from, from_length, from_cs,
-                                                 errors);
+      return copied_length + my_convert_using_func(to, to_length, to_cs,
+                                                   to_cs->cset->wc_mb,
+                                                   from, from_length, from_cs,
+                                                   from_cs->cset->mb_wc,
+                                                   errors);
     }
   }
 
   DBUG_ASSERT(FALSE); // Should never get to here
   return 0;           // Make compiler happy
+}
+
+
+size_t
+my_convert_fix(CHARSET_INFO *to_cs, char *to, size_t to_length,
+               CHARSET_INFO *from_cs, const char *from, size_t from_length,
+               size_t nchars, MY_STRCONV_STATUS *status)
+{
+  int cnvres;
+  my_wc_t wc;
+  my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
+  my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
+  const uchar *from_end= (const uchar*) from + from_length;
+  uchar *to_end= (uchar*) to + to_length;
+  char *to_start= to;
+
+  DBUG_ASSERT(to_cs != &my_charset_bin);
+  DBUG_ASSERT(from_cs != &my_charset_bin);
+
+  status->m_native_copy_status.m_well_formed_error_pos= NULL;
+  status->m_cannot_convert_error_pos= NULL;
+
+  for ( ; nchars; nchars--)
+  {
+    const char *from_prev= from;
+    if ((cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from, from_end)) > 0)
+      from+= cnvres;
+    else if (cnvres == MY_CS_ILSEQ)
+    {
+      if (!status->m_native_copy_status.m_well_formed_error_pos)
+        status->m_native_copy_status.m_well_formed_error_pos= from;
+      from++;
+      wc= '?';
+    }
+    else if (cnvres > MY_CS_TOOSMALL)
+    {
+      /*
+        A correct multibyte sequence detected
+        But it doesn't have Unicode mapping.
+      */
+      if (!status->m_cannot_convert_error_pos)
+        status->m_cannot_convert_error_pos= from;
+      from+= (-cnvres);
+      wc= '?';
+    }
+    else
+    {
+      if ((uchar *) from >= from_end)
+        break; // End of line
+      // Incomplete byte sequence
+      if (!status->m_native_copy_status.m_well_formed_error_pos)
+        status->m_native_copy_status.m_well_formed_error_pos= from;
+      from++;
+      wc= '?';
+    }
+outp:
+    if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
+      to+= cnvres;
+    else if (cnvres == MY_CS_ILUNI && wc != '?')
+    {
+      if (!status->m_cannot_convert_error_pos)
+        status->m_cannot_convert_error_pos= from_prev;
+      wc= '?';
+      goto outp;
+    }
+    else
+    {
+      from= from_prev;
+      break;
+    }
+  }
+  status->m_native_copy_status.m_source_end_pos= from;
+  return to - to_start;
 }

@@ -394,6 +394,7 @@ select a,count(*) from t1 group by a;
 set big_tables=1;
 select a,count(*) from t1 group by a;
 drop table t1;
+set big_tables=0;
 
 #
 # Test of GROUP BY ... ORDER BY NULL optimization
@@ -485,9 +486,12 @@ create table t1 (a integer, b integer, c integer);
 insert into t1 (a,b) values (1,2),(1,3),(2,5);
 select a, 0.1*0+1 r2, sum(1) r1 from t1 where a = 1 group  by a having r1>1 and r2=1;
 # rand(100)*10 will be < 2 only for the first row (of 6)
-select a, round(rand(100)*10) r2, sum(1) r1 from t1 where a = 1 group  by a having r1>1 and r2<=2;
+select a, round(rand(100)*10) r2, sum(1) r1 from t1 where a = 1 group by a having r1>1 and r2<=2;
+select a, round(rand(100)*10) r2, sum(1) r1 from t1  group by a having r1>1 and r2<=2;
 select a,sum(b) from t1 where a=1 group by c;
 select a*sum(b) from t1 where a=1 group by c;
+select a*sum(b) as f1 from t1 where a=1 group by c having f1 <= 10;
+select a,a*sum(b) as f1 from t1 where a=1 group by c having a*sum(b)+0 <= 10;
 select sum(a)*sum(b) from t1 where a=1 group by c;
 select a,sum(b) from t1 where a=1 group by c having a=1;
 select a as d,sum(b) from t1 where a=1 group by c having d=1;
@@ -1346,9 +1350,9 @@ let $query=SELECT SQL_BIG_RESULT col1 AS field1, col1 AS field2
            FROM t1 GROUP BY field1, field2;
 
 # Needs to be range to exercise bug
---eval EXPLAIN $query;
+--eval EXPLAIN $query
 FLUSH STATUS;
---eval $query;
+--eval $query
 SHOW SESSION STATUS LIKE 'Sort_scan%';
 
 CREATE VIEW v1 AS SELECT * FROM t1;
@@ -1369,12 +1373,21 @@ select col1 f1, col1 f2 from t1 order by f2, f1+0;
 select col1 f1, col1 f2 from t1 order by f2, f1+0;
 
 explain
+select col1 f1, col1 f2 from t1 group by f1;
+select col1 f1, col1 f2 from t1 group by f1;
+
+explain
+select col1 f1, col1 f2 from t1 group by f1, f2;
+select col1 f1, col1 f2 from t1 group by f1, f2;
+
+explain
 select col1 f1, col1 f2 from t1 group by f2 order by f2, f1;
 select col1 f1, col1 f2 from t1 group by f2 order by f2, f1;
 
 explain
 select col1 f1, col1 f2 from t1 group by f1, f2 order by f2, f1;
 select col1 f1, col1 f2 from t1 group by f1, f2 order by f2, f1;
+
 
 CREATE TABLE t2(
  col1 int, 
@@ -1386,9 +1399,20 @@ INSERT INTO t2(col1, col2) VALUES
    (11,10),(12,9),(13,8),(14,7),(15,6),(16,5),(17,4),(18,3),(19,2),(20,1);
 
 explain
+select col1 f1, col2 f2, col1 f3 from t2 group by f1;
+explain
+select SQL_BIG_RESULT col1 f1, col2 f2, col1 f3 from t2 group by f1;
+explain
+select col1 f1, col2 f2, col1 f3 from t2 group by f1, f2;
+explain
+select col1 f1, col1 f2 from t2 group by f1, 1+1;
+
+explain
 select col1 f1, col2 f2, col1 f3 from t2 group by f1, f2, f3+0;
 select col1 f1, col2 f2, col1 f3 from t2 group by f1, f2, f3+0;
 
+explain
+select col1 f1, col2 f2, col1 f3 from t2 order by f1,f2;
 explain
 select col1 f1, col2 f2, col1 f3 from t2 order by f1, f2, f3+0;
 select col1 f1, col2 f2, col1 f3 from t2 order by f1, f2, f3+0;
@@ -1690,6 +1714,18 @@ SELECT MAX(i), c FROM t1
 WHERE c != 'qux' AND ( SELECT SUM(j) FROM t1, t2 ) IS NOT NULL GROUP BY c;
 drop table t1,t2;
 
+--echo #
+--echo # ONLY_FULL_GROUP_BY references
+--echo #
+
+set @save_sql_mode = @@sql_mode;
+set sql_mode='ONLY_FULL_GROUP_BY';
+create table t1 (a int, b int);
+select a+b as x from t1 group by x having x > 1;
+select a as x from t1 group by x having x > 1;
+select a from t1 group by a having a > 1;
+drop table t1;
+set sql_mode= @save_sql_mode;
 #
 # End of MariaDB 5.5 tests
 #
@@ -1742,4 +1778,76 @@ DROP TABLE t1;
 DROP TABLE where_subselect;
 
 --echo # End of Bug #58782
+
+--echo #
+--echo # MDEV-8988: Apparently valid SQL query gives wrong result (nested WHERE)
+--echo #
+create table t0(a int);
+insert into t0 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
+
+create table t1 (a int, b int, c int);
+insert into t1 select A.a + 10*B.a, A.a, A.a + 10*B.a from t0 A, t0 B;
+insert into t1 values (NULL, NULL, NULL);
+
+create table t2 (c int, col1 int, key(c));
+insert into t2 select t1.a, 100000 from t1;
+analyze table t2;
+
+explain 
+select 
+  max(a)+ (select col1 from t2 where t2.c=t1.c)
+from t1 
+group by t1.b;
+
+select 
+  max(a) + (select col1 from t2 where t2.c=t1.c)
+from t1 
+group by t1.b;
+
+drop table t0,t1,t2;
+
+--echo #
+--echo # MDEV-9602 crash in st_key::actual_rec_per_key when group by constant
+--echo #
+
+create table t1 (a date not null,unique (a)) engine=innodb;
+select distinct a from t1 group by 'a';
+insert into t1 values("2001-02-02"),("2001-02-03");
+select distinct a from t1 group by 'a';
+drop table t1;
+
+--echo #
+--echo # MDEV-10324: Server crash in get_sel_arg_for_keypart or Assertion `n < size()' failed in Mem_root_array
+--echo #
+CREATE TABLE t1 (
+  job_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  job_cmd varbinary(60) NOT NULL DEFAULT '',
+  job_namespace int(11) NOT NULL,
+  job_title varbinary(255) NOT NULL,
+  job_params blob NOT NULL,
+  job_timestamp varbinary(14) DEFAULT NULL,
+  job_random int(10) unsigned NOT NULL DEFAULT '0',
+  job_token varbinary(32) NOT NULL DEFAULT '',
+  job_token_timestamp varbinary(14) DEFAULT NULL,
+  job_sha1 varbinary(32) NOT NULL DEFAULT '',
+  job_attempts int(10) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (job_id),
+  KEY job_cmd (job_cmd,job_namespace,job_title,job_params(128)),
+  KEY job_timestamp (job_timestamp),
+  KEY job_sha1 (job_sha1),
+  KEY job_cmd_token (job_cmd,job_token,job_random),
+  KEY job_cmd_token_id (job_cmd,job_token,job_id)
+);
+ 
+INSERT INTO t1 VALUES 
+    (NULL, 'foo', 1, 'foo', 'foo', 'foo', 1, 'foo', 'foo', 'foo', 1),
+    (NULL, 'bar', 2, 'bar', 'bar', 'bar', 2, 'bar', 'bar', 'bar', 2);
+    
+SELECT DISTINCT job_cmd  FROM t1 WHERE job_cmd IN ('foobar','null');
+drop table t1;
+
+CREATE TABLE t1 (f1 INT NOT NULL, f2 VARCHAR(3) NOT NULL, KEY(f1), KEY(f2, f1));
+INSERT INTO t1 VALUES (0,'foo'),(1,'bar');
+SELECT 1 IN ( SELECT COUNT( DISTINCT f2 ) FROM t1 WHERE f1 <= 4 );
+drop table t1;
 

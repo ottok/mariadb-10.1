@@ -1,6 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 2005, 2016, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 2005, 2016, Oracle and/or its affiliates
+Copyright (c) 2013, 2016, MariaDB Corporation. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -299,6 +300,29 @@ ha_innobase::check_if_supported_inplace_alter(
 
 	update_thd();
 	trx_search_latch_release_if_reserved(prebuilt->trx);
+
+	/* Change on engine specific table options require rebuild of the
+	table */
+	if (ha_alter_info->handler_flags
+		& Alter_inplace_info::CHANGE_CREATE_OPTION) {
+		ha_table_option_struct *new_options= ha_alter_info->create_info->option_struct;
+		ha_table_option_struct *old_options= table->s->option_struct;
+
+		if (new_options->page_compressed != old_options->page_compressed ||
+		    new_options->page_compression_level != old_options->page_compression_level ||
+			new_options->atomic_writes != old_options->atomic_writes) {
+			ha_alter_info->unsupported_reason = innobase_get_err_msg(
+				ER_ALTER_OPERATION_NOT_SUPPORTED_REASON);
+			DBUG_RETURN(HA_ALTER_INPLACE_NOT_SUPPORTED);
+		}
+
+		if (new_options->encryption != old_options->encryption ||
+			new_options->encryption_key_id != old_options->encryption_key_id) {
+			ha_alter_info->unsupported_reason = innobase_get_err_msg(
+				ER_ALTER_OPERATION_NOT_SUPPORTED_REASON);
+			DBUG_RETURN(HA_ALTER_INPLACE_NOT_SUPPORTED);
+		}
+	}
 
 	if (ha_alter_info->handler_flags
 	    & ~(INNOBASE_INPLACE_IGNORE
@@ -1261,7 +1285,8 @@ innobase_rec_to_mysql(
 
 		field->reset();
 
-		ipos = dict_index_get_nth_col_or_prefix_pos(index, i, TRUE);
+		ipos = dict_index_get_nth_col_or_prefix_pos(index, i, TRUE,
+							    NULL);
 
 		if (ipos == ULINT_UNDEFINED
 		    || rec_offs_nth_extern(offsets, ipos)) {
@@ -1313,7 +1338,8 @@ innobase_fields_to_mysql(
 
 		field->reset();
 
-		ipos = dict_index_get_nth_col_or_prefix_pos(index, i, TRUE);
+		ipos = dict_index_get_nth_col_or_prefix_pos(index, i, TRUE,
+							    NULL);
 
 		if (ipos == ULINT_UNDEFINED
 		    || dfield_is_ext(&fields[ipos])
@@ -2856,6 +2882,7 @@ prepare_inplace_alter_table_dict(
 	to rebuild the table with a temporary name. */
 
 	if (new_clustered) {
+		fil_space_crypt_t* crypt_data;
 		const char*	new_table_name
 			= dict_mem_create_temporary_tablename(
 				ctx->heap,
@@ -2863,6 +2890,15 @@ prepare_inplace_alter_table_dict(
 				ctx->new_table->id);
 		ulint		n_cols;
 		dtuple_t*	add_cols;
+		ulint		key_id = FIL_DEFAULT_ENCRYPTION_KEY;
+		fil_encryption_t mode = FIL_SPACE_ENCRYPTION_DEFAULT;
+
+		crypt_data = fil_space_get_crypt_data(ctx->prebuilt->table->space);
+
+		if (crypt_data) {
+			key_id = crypt_data->key_id;
+			mode = crypt_data->encryption;
+		}
 
 		if (innobase_check_foreigns(
 			    ha_alter_info, altered_table, old_table,
@@ -2994,7 +3030,7 @@ prepare_inplace_alter_table_dict(
 		}
 
 		error = row_create_table_for_mysql(
-			ctx->new_table, ctx->trx, false);
+			ctx->new_table, ctx->trx, false, mode, key_id);
 
 		switch (error) {
 			dict_table_t*	temp_table;
@@ -3484,6 +3520,11 @@ ha_innobase::prepare_inplace_alter_table(
 	DBUG_ASSERT(ha_alter_info->create_info);
 	DBUG_ASSERT(!srv_read_only_mode);
 
+	/* Init online ddl status variables */
+	onlineddl_rowlog_rows = 0;
+	onlineddl_rowlog_pct_used = 0;
+	onlineddl_pct_progress = 0;
+
 	MONITOR_ATOMIC_INC(MONITOR_PENDING_ALTER_TABLE);
 
 #ifdef UNIV_DEBUG
@@ -3506,6 +3547,17 @@ ha_innobase::prepare_inplace_alter_table(
 
 	if (ha_alter_info->handler_flags
 	    & Alter_inplace_info::CHANGE_CREATE_OPTION) {
+		/* Check engine specific table options */
+		if (const char* invalid_tbopt = check_table_options(
+				user_thd, altered_table,
+				ha_alter_info->create_info,
+				prebuilt->table->space != 0,
+				srv_file_format)) {
+			my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+				 table_type(), invalid_tbopt);
+			goto err_exit_no_heap;
+		}
+
 		if (const char* invalid_opt = create_options_are_invalid(
 			    user_thd, altered_table,
 			    ha_alter_info->create_info,
@@ -4151,6 +4203,11 @@ oom:
 			ctx->thr, prebuilt->table, altered_table);
 	}
 
+	/* Init online ddl status variables */
+	onlineddl_rowlog_rows = 0;
+	onlineddl_rowlog_pct_used = 0;
+	onlineddl_pct_progress = 0;
+
 	DEBUG_SYNC_C("inplace_after_index_build");
 
 	DBUG_EXECUTE_IF("create_index_fail",
@@ -4202,6 +4259,13 @@ oom:
 			 : ha_alter_info->key_info_buffer[
 				 prebuilt->trx->error_key_num].name);
 		break;
+	case DB_DECRYPTION_FAILED: {
+		String str;
+		const char* engine= table_type();
+		get_error_message(HA_ERR_DECRYPTION_FAILED, &str);
+		my_error(ER_GET_ERRMSG, MYF(0), HA_ERR_DECRYPTION_FAILED, str.c_ptr(), engine);
+		break;
+	}
 	default:
 		my_error_innodb(error,
 				table_share->table_name.str,

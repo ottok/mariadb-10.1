@@ -286,6 +286,18 @@ innobase_casedn_str(
 /*================*/
 	char*	a);	/*!< in/out: string to put in lower case */
 
+#ifdef WITH_WSREP
+UNIV_INTERN
+int
+wsrep_innobase_kill_one_trx(void * const thd_ptr,
+                            const trx_t * const bf_trx,
+                            trx_t *victim_trx,
+                            ibool signal);
+int wsrep_innobase_mysql_sort(int mysql_type, uint charset_number,
+                             unsigned char* str, unsigned int str_length,
+                             unsigned int buf_length);
+#endif /* WITH_WSREP */
+
 /**********************************************************************//**
 Determines the connection character set.
 @return	connection character set */
@@ -630,6 +642,16 @@ UNIV_INTERN
 void
 ib_push_warning(
 	trx_t*		trx,	/*!< in: trx */
+	ulint		error,	/*!< in: error code to push as warning */
+	const char	*format,/*!< in: warning message */
+	...);
+
+/********************************************************************//**
+Helper function to push warnings from InnoDB internals to SQL-layer. */
+UNIV_INTERN
+void
+ib_push_warning(
+	void*		ithd,	/*!< in: thd */
 	ulint		error,	/*!< in: error code to push as warning */
 	const char	*format,/*!< in: warning message */
 	...);

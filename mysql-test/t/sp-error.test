@@ -1766,11 +1766,10 @@ CREATE IF NOT EXISTS PROCEDURE bug14702()
 BEGIN
 END;
 
---error ER_PARSE_ERROR
 CREATE PROCEDURE IF NOT EXISTS bug14702()
 BEGIN
 END;
-
+DROP PROCEDURE IF EXISTS bug14702;
 
 #
 # BUG#20953: create proc with a create view that uses local
@@ -2051,13 +2050,8 @@ delimiter ;|
 --disable_warnings
 drop function if exists bug20701;
 --enable_warnings
-#
-# This was disabled in 5.1.12. See bug #20701
-# When collation support in SP is implemented, then this test should
-# be removed.
-#
---error ER_NOT_SUPPORTED_YET
 create function bug20701() returns varchar(25) binary return "test";
+drop function bug20701;
 create function bug20701() returns varchar(25) return "test";
 drop function bug20701;
 
@@ -2612,7 +2606,7 @@ delimiter |;
 CREATE PROCEDURE p1()
   BEGIN
     DECLARE c INT DEFAULT 0;
-    DECLARE CONTINUE HANDLER FOR SQLWARNING SET c = c + 1;
+    DECLARE CONTINUE HANDLER FOR SQLSTATE '22007' SET c = c + 1;
     CALL p2();
     CALL p3();
     CALL p4();
@@ -2647,7 +2641,7 @@ CREATE PROCEDURE p5()
 CREATE PROCEDURE P6()
   BEGIN
     DECLARE c INT DEFAULT 0;
-    DECLARE CONTINUE HANDLER FOR SQLWARNING SET c = c + 1;
+    DECLARE CONTINUE HANDLER FOR SQLSTATE '22007' SET c = c + 1;
     CALL p5();
     SELECT c;
   END|

@@ -16,6 +16,8 @@
 
 # Default values that applies to all MySQL Servers
 [mysqld]
+disable-getopt-prefix-matching
+
 open-files-limit=           1024
 local-infile
 character-set-server=      latin1
@@ -42,6 +44,8 @@ loose-feedback-user-info=  mysql-test
 loose-feedback-debug-startup-interval=20
 loose-feedback-debug-first-interval=60
 loose-feedback-debug-interval=60
+
+loose-pam-debug
 
 loose-innodb_data_file_path=      ibdata1:12M:autoextend
 loose-innodb_buffer_pool_size=    8M

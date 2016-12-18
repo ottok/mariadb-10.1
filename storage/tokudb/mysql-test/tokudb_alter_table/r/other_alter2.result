@@ -52,7 +52,7 @@ foo	CREATE TABLE `foo` (
   `cc` int(11),
   `dd` int(11) DEFAULT NULL,
   `ee` int(11) DEFAULT NULL,
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(20) DEFAULT NULL,
   `c` int(11) DEFAULT NULL,
   `d` int(11) DEFAULT NULL,
@@ -61,7 +61,7 @@ foo	CREATE TABLE `foo` (
   UNIQUE KEY `c` (`c`),
   KEY `d` (`d`),
   KEY `b` (`b`) `clustering`=yes
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 show create table foo_isam;
 Table	Create Table
 foo_isam	CREATE TABLE `foo_isam` (
@@ -70,7 +70,7 @@ foo_isam	CREATE TABLE `foo_isam` (
   `cc` int(11),
   `dd` int(11) DEFAULT NULL,
   `ee` int(11) DEFAULT NULL,
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(20) DEFAULT NULL,
   `c` int(11) DEFAULT NULL,
   `d` int(11) DEFAULT NULL,

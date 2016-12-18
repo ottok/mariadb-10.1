@@ -1596,3 +1596,98 @@ DROP TABLE t1;
 --echo #
 SELECT STDDEV_POP(f) FROM (SELECT "1e+309" AS f UNION SELECT "-1e+309" AS f) tbl;
 SELECT STDDEV(f) FROM (SELECT 1.7976931348623157e+308 AS f UNION SELECT -1.7976931348623157e+308 AS f) tbl;
+
+--echo #
+--echo # MDEV-8852 Implicit or explicit CAST from MAX(string) to INT,DOUBLE,DECIMAL does not produce warnings
+--echo #
+SELECT MAX('x') << 1, CAST(MAX('x') AS DOUBLE), CAST(MAX('x') AS DECIMAL);
+
+
+--echo #
+--echo #  MDEV-8918 Wrong result for CAST(AVG(a) AS SIGNED)
+--echo #
+CREATE TABLE t1 (id INT, a BIGINT);
+INSERT INTO t1 VALUES (1,0x7FFFFFFFFFFFFFFF),(2,0x7FFFFFFFFFFFFFFF);
+SELECT id, AVG(a) AS avg, CAST(MIN(a) AS SIGNED) AS cast_min FROM t1 GROUP BY id HAVING avg!=123 ORDER BY id;
+SELECT id, AVG(a) AS avg, CAST(AVG(a) AS SIGNED) AS cast_avg FROM t1 GROUP BY id HAVING avg!=123 ORDER BY id;
+DROP TABLE t1;
+
+--echo #
+--echo # MDEV-9656 Assertion `0' failed in Item_sum_field::get_tmp_table_field()
+--echo #
+CREATE TABLE t1 (i INT);
+INSERT INTO t1 VALUES (1),(2);
+SELECT DISTINCT VAR_POP(1) FROM t1 GROUP BY @a := 's';
+DROP TABLE t1;
+
+--echo #
+--echo # MDEV-8921 Wrong result for CAST(AVG(double_column) AS SIGNED)
+--echo #
+CREATE TABLE t1 (id INT, a DOUBLE);
+INSERT INTO t1 VALUES (1,0x7FFFFFFFFFFFFFFF),(2,0x7FFFFFFFFFFFFFFF);
+SELECT id, AVG(a) AS avg, CAST(MIN(a) AS SIGNED) AS cast_min,CAST(AVG(a) AS SIGNED) AS cast_avg FROM t1 GROUP BY id HAVING avg!=123 ORDER BY id;
+DROP TABLE t1;
+CREATE TABLE t1 (a DOUBLE);
+INSERT INTO t1 VALUES (0x7FFFFFFFFFFFFFFF);
+SELECT MIN(a), SUM(a), CAST(SUM(a) AS SIGNED), CAST(AVG(a) AS SIGNED) FROM t1;
+DROP TABLE t1;
+
+--echo #
+--echo # MDEV-7195 AVG() loses precision in INT context
+--echo #
+CREATE TABLE t1 (
+  auto SERIAL,
+  fld1 bigint unsigned NOT NULL,
+  companynr tinyint(2) unsigned zerofill DEFAULT '00' NOT NULL,
+  UNIQUE fld1 (fld1)
+);
+INSERT INTO t1 VALUES (1,0x7FFFFFFFFFFFFFFF,00);
+INSERT INTO t1 VALUES (2,0x7FFFFFFFFFFFFFFE,37);
+INSERT INTO t1 VALUES (3,0x7FFFFFFFFFFFFFFC,37);
+SELECT companynr, AVG(fld1), AVG(fld1)<<0 AS avg1, CAST(AVG(fld1) AS UNSIGNED)<<0 AS avg2 FROM t1 GROUP BY companynr;
+DROP TABLE t1;
+
+--echo #
+--echo # case where aggregate resolved in the local SELECT
+--echo # but outer ones are checked
+--echo #
+create table t10 (a int , b int, c int);
+insert into t10 values (0,0,0),(1,1,1);
+create table t11 as select * from t10;
+create table t12 as select * from t10;
+explain extended select a from t10 where c<3 or a in (select c from t12 union select max(t10.b) from t11 group by t11.c);
+drop table t10,t11,t12;
+--echo #
+--echo # MDEV-10017: Get unexpected `Empty Set` for correlated subquery
+--echo # with aggregate functions
+--echo #
+
+create table t1(c1 int, c2 int, c3 int);
+insert into t1 values(1,1,1),(2,2,2),(3,3,3);
+select * from t1;
+create table t2(c1 int, c2 int);
+insert into t2 values(2,2);
+select * from t2;
+--error ER_INVALID_GROUP_FUNC_USE
+explain extended
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+c) from t2 tt));
+--error ER_INVALID_GROUP_FUNC_USE
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+c) from t2 tt));
+
+explain extended
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+tt.c1) from t2 tt));
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+tt.c1) from t2 tt));
+drop table t1,t2;
+
+--echo #
+--echo # MDEV-10556 Assertion `0' failed in virtual void Item_sum_field::set_result_field(Field*)
+--echo #
+
+CREATE TABLE t1 (i INT, KEY(i)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES (10),(20),(30);
+SELECT DISTINCT STDDEV(1) FROM t1 GROUP BY i ORDER BY BENCHMARK(0, BIT_XOR(i));
+DROP TABLE t1;
+
+--echo #
+--echo # End of 10.1 tests
+--echo #

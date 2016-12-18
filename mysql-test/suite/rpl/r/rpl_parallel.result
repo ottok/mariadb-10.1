@@ -1,4 +1,5 @@
-include/rpl_init.inc [topology=1->2]
+include/master-slave.inc
+[connection master]
 SET @old_parallel_threads=@@GLOBAL.slave_parallel_threads;
 SET GLOBAL slave_parallel_threads=10;
 ERROR HY000: This operation cannot be performed as you have a running slave ''; run STOP SLAVE '' first
@@ -1226,6 +1227,59 @@ include/stop_slave.inc
 SET GLOBAL debug_dbug=@old_dbug;
 SET GLOBAL slave_parallel_threads=10;
 include/start_slave.inc
+*** MDEV-6676 - test syntax of @@slave_parallel_mode ***
+Parallel_Mode = 'conservative'
+include/stop_slave.inc
+SET GLOBAL slave_parallel_mode='aggressive';
+Parallel_Mode = 'aggressive'
+SET GLOBAL slave_parallel_mode='conservative';
+Parallel_Mode = 'conservative'
+*** MDEV-6676 - test that empty parallel_mode does not replicate in parallel ***
+INSERT INTO t2 VALUES (1040);
+include/save_master_gtid.inc
+SET GLOBAL slave_parallel_mode='none';
+SET @old_dbug= @@GLOBAL.debug_dbug;
+SET GLOBAL debug_dbug="+d,slave_crash_if_parallel_apply";
+include/start_slave.inc
+include/sync_with_master_gtid.inc
+SELECT * FROM t2 WHERE a >= 1040 ORDER BY a;
+a
+1040
+include/stop_slave.inc
+SET GLOBAL debug_dbug=@old_dbug;
+*** MDEV-6676 - test disabling domain-based parallel replication ***
+SET gtid_domain_id = 1;
+INSERT INTO t2 VALUES (1041);
+INSERT INTO t2 VALUES (1042);
+INSERT INTO t2 VALUES (1043);
+INSERT INTO t2 VALUES (1044);
+INSERT INTO t2 VALUES (1045);
+INSERT INTO t2 VALUES (1046);
+DELETE FROM t2 WHERE a >= 1041;
+SET gtid_domain_id = 2;
+INSERT INTO t2 VALUES (1041);
+INSERT INTO t2 VALUES (1042);
+INSERT INTO t2 VALUES (1043);
+INSERT INTO t2 VALUES (1044);
+INSERT INTO t2 VALUES (1045);
+INSERT INTO t2 VALUES (1046);
+SET gtid_domain_id = 0;
+include/save_master_gtid.inc
+SET GLOBAL slave_parallel_mode=minimal;
+include/start_slave.inc
+include/sync_with_master_gtid.inc
+SELECT * FROM t2 WHERE a >= 1040 ORDER BY a;
+a
+1040
+1041
+1042
+1043
+1044
+1045
+1046
+include/stop_slave.inc
+SET GLOBAL slave_parallel_mode='conservative';
+include/start_slave.inc
 *** MDEV-7847: "Slave worker thread retried transaction 10 time(s) in vain, giving up", followed by replication hanging ***
 *** MDEV-7882: Excessive transaction retry in parallel replication ***
 CREATE TABLE t7 (a int PRIMARY KEY, b INT) ENGINE=InnoDB;
@@ -1693,21 +1747,21 @@ SET GLOBAL debug_dbug=@old_dbug;
 include/start_slave.inc
 *** MDEV-8725: Assertion on ROLLBACK statement in the binary log ***
 BEGIN;
-INSERT INTO t2 VALUES (200);
-INSERT INTO t1 VALUES (200);
-INSERT INTO t2 VALUES (201);
+INSERT INTO t2 VALUES (2000);
+INSERT INTO t1 VALUES (2000);
+INSERT INTO t2 VALUES (2001);
 ROLLBACK;
-SELECT * FROM t1 WHERE a>=200 ORDER BY a;
+SELECT * FROM t1 WHERE a>=2000 ORDER BY a;
 a
-200
-SELECT * FROM t2 WHERE a>=200 ORDER BY a;
+2000
+SELECT * FROM t2 WHERE a>=2000 ORDER BY a;
 a
 include/save_master_gtid.inc
 include/sync_with_master_gtid.inc
-SELECT * FROM t1 WHERE a>=200 ORDER BY a;
+SELECT * FROM t1 WHERE a>=2000 ORDER BY a;
 a
-200
-SELECT * FROM t2 WHERE a>=200 ORDER BY a;
+2000
+SELECT * FROM t2 WHERE a>=2000 ORDER BY a;
 a
 include/stop_slave.inc
 SET GLOBAL slave_parallel_threads=@old_parallel_threads;

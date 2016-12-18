@@ -16,6 +16,7 @@
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/include
                     ${CMAKE_SOURCE_DIR}/sql
+                    ${CMAKE_BINARY_DIR}/sql
                     ${PCRE_INCLUDES}
                     ${SSL_INCLUDE_DIRS})
 
@@ -111,9 +112,7 @@ cursor_by_user.cc
 ha_perfschema.cc
 pfs.cc
 pfs_account.cc
-pfs_atomic.cc
 pfs_autosize.cc
-pfs_check.cc
 pfs_column_values.cc
 pfs_con_slice.cc
 pfs_defaults.cc
@@ -183,6 +182,9 @@ table_session_account_connect_attrs.cc
 )
 
 MYSQL_ADD_PLUGIN(perfschema ${PERFSCHEMA_SOURCES} STORAGE_ENGINE DEFAULT STATIC_ONLY)
-IF(WITH_PERFSCHEMA_STORAGE_ENGINE AND WITH_UNIT_TESTS)
-  ADD_SUBDIRECTORY(unittest)
-ENDIF()
+IF (TARGET perfschema)
+  ADD_DEPENDENCIES(perfschema GenServerSource)
+  IF(WITH_UNIT_TESTS)
+    ADD_SUBDIRECTORY(unittest)
+  ENDIF(WITH_UNIT_TESTS)
+ENDIF(TARGET perfschema)

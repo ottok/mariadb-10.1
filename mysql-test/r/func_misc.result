@@ -100,8 +100,8 @@ create table t1 as select uuid(), length(uuid());
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `uuid()` varchar(36) CHARACTER SET utf8 NOT NULL DEFAULT '',
-  `length(uuid())` int(10) NOT NULL DEFAULT '0'
+  `uuid()` varchar(36) CHARACTER SET utf8 NOT NULL,
+  `length(uuid())` int(10) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 drop table t1;
 create table t1 select INET_ATON('255.255.0.1') as `a`;
@@ -295,6 +295,8 @@ INSERT INTO t1 VALUES ('', 0);
 SELECT COALESCE(a) = COALESCE(b) FROM t1;
 COALESCE(a) = COALESCE(b)
 1
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: ''
 DROP TABLE t1;
 #
 # Bug #54461: crash with longblob and union or update with subquery
@@ -334,10 +336,7 @@ CREATE TABLE t1 (a char(2) not null );
 INSERT INTO t1 VALUES (4),(7),(1);
 set @optimizer_switch_save= @@optimizer_switch;
 set optimizer_switch='materialization=off';
-CREATE TABLE tv (e char(2) not null ) engine=mysql;
-Warnings:
-Warning	1286	Unknown storage engine 'mysql'
-Warning	1266	Using storage engine MyISAM for table 'tv'
+CREATE TABLE tv (e char(2) not null );
 INSERT INTO tv VALUES (1);
 CREATE ALGORITHM=MERGE VIEW v_merge AS SELECT * FROM tv;
 CREATE ALGORITHM=MERGE VIEW vm AS SELECT * FROM tv;
@@ -1387,6 +1386,46 @@ INET6_NTOA(ip)	HEX(ip)	LENGTH(ip)
 
 DROP TABLE t1;
 DROP TABLE t2;
+#
+# MDEV-4018 : Microseconds in GET_LOCK()
+#
+# -> Switching to connection 'default'
+select is_used_lock('test') = connection_id();
+is_used_lock('test') = connection_id()
+NULL
+# GET_LOCK returns 1 if it manages to acquire a lock
+select get_lock('test', 0);
+get_lock('test', 0)
+1
+# -> Switching to connection 'con1'
+select is_used_lock('test') = connection_id();
+is_used_lock('test') = connection_id()
+0
+select get_lock('test', 0);
+get_lock('test', 0)
+0
+select get_lock('test', 1.0);
+get_lock('test', 1.0)
+0
+select get_lock('test', 1.5);
+get_lock('test', 1.5)
+0
+select get_lock('test', 0.1);
+get_lock('test', 0.1)
+0
+select get_lock('test', 0.000001);
+get_lock('test', 0.000001)
+0
+select get_lock('test', 0.0000000000000001);
+get_lock('test', 0.0000000000000001)
+0
+# -> Switching to connection 'default'
+select is_used_lock('test') = connection_id();
+is_used_lock('test') = connection_id()
+1
+select release_lock('test');
+release_lock('test')
+1
 
 # -- Done.
 

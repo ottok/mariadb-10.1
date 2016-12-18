@@ -426,7 +426,8 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
     {
       if (!my_isspace(&my_charset_latin1,*val))
       {
-	make_truncated_value_warning(current_thd, Sql_condition::WARN_LEVEL_WARN,
+	make_truncated_value_warning(current_thd,
+                                     Sql_condition::WARN_LEVEL_WARN,
                                      val_begin, length,
 				     cached_timestamp_type, NullS);
 	break;
@@ -437,10 +438,12 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 
 err:
   {
+    THD *thd= current_thd;
     char buff[128];
     strmake(buff, val_begin, MY_MIN(length, sizeof(buff)-1));
-    push_warning_printf(current_thd, Sql_condition::WARN_LEVEL_WARN,
-                        ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
+    push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
+                        ER_WRONG_VALUE_FOR_TYPE,
+                        ER_THD(thd, ER_WRONG_VALUE_FOR_TYPE),
                         date_time_type, buff, "str_to_date");
   }
   DBUG_RETURN(1);
@@ -1093,7 +1096,7 @@ void Item_func_dayname::fix_length_and_dec()
 String* Item_func_dayname::val_str(String* str)
 {
   DBUG_ASSERT(fixed == 1);
-  uint weekday=(uint) val_int();		// Always Item_func_daynr()
+  uint weekday=(uint) val_int();		// Always Item_func_weekday()
   const char *day_name;
   uint err;
 
@@ -1297,10 +1300,11 @@ bool get_interval_value(Item *args,interval_type int_type, INTERVAL *interval)
     interval->neg= my_decimal2seconds(val, &second, &second_part);
     if (second == LONGLONG_MAX)
     {
+      THD *thd= current_thd;
       ErrConvDecimal err(val);
-      push_warning_printf(current_thd, Sql_condition::WARN_LEVEL_WARN,
+      push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
                           ER_TRUNCATED_WRONG_VALUE,
-                          ER(ER_TRUNCATED_WRONG_VALUE), "DECIMAL",
+                          ER_THD(thd, ER_TRUNCATED_WRONG_VALUE), "DECIMAL",
                           err.ptr());
       return true;
     }
@@ -1625,8 +1629,8 @@ bool Item_func_curtime::fix_fields(THD *thd, Item **items)
 {
   if (decimals > TIME_SECOND_PART_DIGITS)
   {
-    my_error(ER_TOO_BIG_PRECISION, MYF(0), decimals, func_name(),
-             TIME_SECOND_PART_DIGITS);
+    my_error(ER_TOO_BIG_PRECISION, MYF(0), static_cast<ulonglong>(decimals),
+             func_name(), TIME_SECOND_PART_DIGITS);
     return 1;
   }
   return Item_timefunc::fix_fields(thd, items);
@@ -1687,8 +1691,8 @@ bool Item_func_now::fix_fields(THD *thd, Item **items)
 {
   if (decimals > TIME_SECOND_PART_DIGITS)
   {
-    my_error(ER_TOO_BIG_PRECISION, MYF(0), decimals, func_name(),
-             TIME_SECOND_PART_DIGITS);
+    my_error(ER_TOO_BIG_PRECISION, MYF(0), static_cast<ulonglong>(decimals),
+             func_name(), TIME_SECOND_PART_DIGITS);
     return 1;
   }
   return Item_temporal_func::fix_fields(thd, items);
@@ -2061,7 +2065,7 @@ void Item_date_add_interval::fix_length_and_dec()
   enum_field_types arg0_field_type;
 
   /*
-    The field type for the result of an Item_date function is defined as
+    The field type for the result of an Item_datefunc is defined as
     follows:
 
     - If first arg is a MYSQL_TYPE_DATETIME result is MYSQL_TYPE_DATETIME
@@ -2114,8 +2118,6 @@ void Item_date_add_interval::fix_length_and_dec()
   Item_temporal_func::fix_length_and_dec();
 }
 
-
-/* Here arg[1] is a Item_interval object */
 
 bool Item_date_add_interval::get_date(MYSQL_TIME *ltime, ulonglong fuzzy_date)
 {
@@ -2190,26 +2192,26 @@ void Item_extract::fix_length_and_dec()
 {
   maybe_null=1;					// If wrong date
   switch (int_type) {
-  case INTERVAL_YEAR:		max_length=4; date_value=1; break;
-  case INTERVAL_YEAR_MONTH:	max_length=6; date_value=1; break;
-  case INTERVAL_QUARTER:        max_length=2; date_value=1; break;
-  case INTERVAL_MONTH:		max_length=2; date_value=1; break;
-  case INTERVAL_WEEK:		max_length=2; date_value=1; break;
-  case INTERVAL_DAY:		max_length=2; date_value=1; break;
-  case INTERVAL_DAY_HOUR:	max_length=9; date_value=0; break;
-  case INTERVAL_DAY_MINUTE:	max_length=11; date_value=0; break;
-  case INTERVAL_DAY_SECOND:	max_length=13; date_value=0; break;
-  case INTERVAL_HOUR:		max_length=2; date_value=0; break;
-  case INTERVAL_HOUR_MINUTE:	max_length=4; date_value=0; break;
-  case INTERVAL_HOUR_SECOND:	max_length=6; date_value=0; break;
-  case INTERVAL_MINUTE:		max_length=2; date_value=0; break;
-  case INTERVAL_MINUTE_SECOND:	max_length=4; date_value=0; break;
-  case INTERVAL_SECOND:		max_length=2; date_value=0; break;
-  case INTERVAL_MICROSECOND:	max_length=2; date_value=0; break;
-  case INTERVAL_DAY_MICROSECOND: max_length=20; date_value=0; break;
-  case INTERVAL_HOUR_MICROSECOND: max_length=13; date_value=0; break;
-  case INTERVAL_MINUTE_MICROSECOND: max_length=11; date_value=0; break;
-  case INTERVAL_SECOND_MICROSECOND: max_length=9; date_value=0; break;
+  case INTERVAL_YEAR:             set_date_length(4); break; // YYYY
+  case INTERVAL_YEAR_MONTH:       set_date_length(6); break; // YYYYMM
+  case INTERVAL_QUARTER:          set_date_length(2); break; // 1..4
+  case INTERVAL_MONTH:            set_date_length(2); break; // MM
+  case INTERVAL_WEEK:             set_date_length(2); break; // 0..52
+  case INTERVAL_DAY:              set_date_length(2); break; // DD
+  case INTERVAL_DAY_HOUR:         set_time_length(4); break; // DDhh
+  case INTERVAL_DAY_MINUTE:       set_time_length(6); break; // DDhhmm
+  case INTERVAL_DAY_SECOND:       set_time_length(8); break; // DDhhmmss
+  case INTERVAL_HOUR:             set_time_length(2); break; // hh
+  case INTERVAL_HOUR_MINUTE:      set_time_length(4); break; // hhmm
+  case INTERVAL_HOUR_SECOND:      set_time_length(6); break; // hhmmss
+  case INTERVAL_MINUTE:           set_time_length(2); break; // mm
+  case INTERVAL_MINUTE_SECOND:    set_time_length(4); break; // mmss
+  case INTERVAL_SECOND:           set_time_length(2); break; // ss
+  case INTERVAL_MICROSECOND:      set_time_length(6); break; // ffffff
+  case INTERVAL_DAY_MICROSECOND:  set_time_length(14); break; // DDhhmmssffffff
+  case INTERVAL_HOUR_MICROSECOND: set_time_length(12); break; // hhmmssffffff
+  case INTERVAL_MINUTE_MICROSECOND: set_time_length(10); break; // mmssffffff
+  case INTERVAL_SECOND_MICROSECOND: set_time_length(8); break; // ssffffff
   case INTERVAL_LAST: DBUG_ASSERT(0); break; /* purecov: deadcode */
   }
 }
@@ -2356,105 +2358,124 @@ void Item_char_typecast::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
+
+void Item_char_typecast::check_truncation_with_warn(String *src, uint dstlen)
+{
+  if (dstlen < src->length())
+  {
+    THD *thd= current_thd;
+    char char_type[40];
+    ErrConvString err(src);
+    my_snprintf(char_type, sizeof(char_type), "%s(%lu)",
+                cast_cs == &my_charset_bin ? "BINARY" : "CHAR",
+                (ulong) cast_length);
+    push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
+                        ER_TRUNCATED_WRONG_VALUE,
+                        ER_THD(thd, ER_TRUNCATED_WRONG_VALUE), char_type,
+                        err.ptr());
+  }
+}
+
+
+String *Item_char_typecast::reuse(String *src, uint32 length)
+{
+  DBUG_ASSERT(length <= src->length());
+  check_truncation_with_warn(src, length);
+  tmp_value.set(src->ptr(), length, cast_cs);
+  return &tmp_value;
+}
+
+
+/*
+  Make a copy, to handle conversion or fix bad bytes.
+*/
+String *Item_char_typecast::copy(String *str, CHARSET_INFO *strcs)
+{
+  String_copier_for_item copier(current_thd);
+  if (copier.copy_with_warn(cast_cs, &tmp_value, strcs,
+                            str->ptr(), str->length(), cast_length))
+  {
+    null_value= 1; // In strict mode: malformed data or could not convert
+    return 0;
+  }
+  check_truncation_with_warn(str, copier.source_end_pos() - str->ptr());
+  return &tmp_value;
+}
+
+
+uint Item_char_typecast::adjusted_length_with_warn(uint length)
+{
+  if (length <= current_thd->variables.max_allowed_packet)
+    return length;
+
+  THD *thd= current_thd;
+  push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
+                      ER_WARN_ALLOWED_PACKET_OVERFLOWED,
+                      ER_THD(thd, ER_WARN_ALLOWED_PACKET_OVERFLOWED),
+                      cast_cs == &my_charset_bin ?
+                      "cast_as_binary" : func_name(),
+                      thd->variables.max_allowed_packet);
+  return thd->variables.max_allowed_packet;
+}
+
+
 String *Item_char_typecast::val_str(String *str)
 {
   DBUG_ASSERT(fixed == 1);
   String *res;
-  uint32 length;
 
-  if (cast_length != ~0U &&
-      cast_length > current_thd->variables.max_allowed_packet)
+  if (has_explicit_length())
+    cast_length= adjusted_length_with_warn(cast_length);
+
+  if (!(res= args[0]->val_str(str)))
   {
-    push_warning_printf(current_thd, Sql_condition::WARN_LEVEL_WARN,
-			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
-			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			cast_cs == &my_charset_bin ?
-                        "cast_as_binary" : func_name(),
-                        current_thd->variables.max_allowed_packet);
-    cast_length= current_thd->variables.max_allowed_packet;
+    null_value= 1;
+    return 0;
   }
 
-  if (!charset_conversion)
+  if (cast_cs == &my_charset_bin &&
+      has_explicit_length() &&
+      cast_length > res->length())
   {
-    if (!(res= args[0]->val_str(str)))
+    // Special case: pad binary value with trailing 0x00
+    DBUG_ASSERT(cast_length <= current_thd->variables.max_allowed_packet);
+    if (res->alloced_length() < cast_length)
     {
-      null_value= 1;
-      return 0;
+      str_value.alloc(cast_length);
+      str_value.copy(*res);
+      res= &str_value;
     }
+    bzero((char*) res->ptr() + res->length(), cast_length - res->length());
+    res->length(cast_length);
+    res->set_charset(&my_charset_bin);
   }
   else
   {
     /*
-      Convert character set if differ
       from_cs is 0 in the case where the result set may vary between calls,
       for example with dynamic columns.
     */
-    uint dummy_errors;
-    if (!(res= args[0]->val_str(str)) ||
-        tmp_value.copy(res->ptr(), res->length(),
-                       from_cs ? from_cs  : res->charset(),
-                       cast_cs, &dummy_errors))
+    CHARSET_INFO *cs= from_cs ? from_cs : res->charset();
+    if (!charset_conversion)
     {
-      null_value= 1;
-      return 0;
-    }
-    res= &tmp_value;
-  }
-
-  res->set_charset(cast_cs);
-
-  /*
-    Cut the tail if cast with length
-    and the result is longer than cast length, e.g.
-    CAST('string' AS CHAR(1))
-  */
-  if (cast_length != ~0U)
-  {
-    if (res->length() > (length= (uint32) res->charpos(cast_length)))
-    {                                           // Safe even if const arg
-      char char_type[40];
-      my_snprintf(char_type, sizeof(char_type), "%s(%lu)",
-                  cast_cs == &my_charset_bin ? "BINARY" : "CHAR",
-                  (ulong) length);
-
-      if (!res->alloced_length())
-      {                                         // Don't change const str
-        str_value= *res;                        // Not malloced string
-        res= &str_value;
-      }
-      ErrConvString err(res);
-      push_warning_printf(current_thd, Sql_condition::WARN_LEVEL_WARN,
-                          ER_TRUNCATED_WRONG_VALUE,
-                          ER(ER_TRUNCATED_WRONG_VALUE), char_type,
-                          err.ptr());
-      res->length((uint) length);
-    }
-    else if (cast_cs == &my_charset_bin && res->length() < cast_length)
-    {
-      if (res->alloced_length() < cast_length)
+      // Try to reuse the original string (if well formed).
+      MY_STRCOPY_STATUS status;
+      cs->cset->well_formed_char_length(cs, res->ptr(), res->end(),
+                                        cast_length, &status);
+      if (!status.m_well_formed_error_pos)
       {
-        str_value.alloc(cast_length);
-        str_value.copy(*res);
-        res= &str_value;
+        res= reuse(res, status.m_source_end_pos - res->ptr());
       }
-      bzero((char*) res->ptr() + res->length(), cast_length - res->length());
-      res->length(cast_length);
+      goto end;
     }
+    // Character set conversion, or bad bytes were found.
+    if (!(res= copy(res, cs)))
+      return 0;
   }
-  null_value= 0;
 
-  if (res->length() > current_thd->variables.max_allowed_packet)
-  {
-    push_warning_printf(current_thd, Sql_condition::WARN_LEVEL_WARN,
-			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
-			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			cast_cs == &my_charset_bin ?
-                        "cast_as_binary" : func_name(),
-                        current_thd->variables.max_allowed_packet);
-    null_value= 1;
-    return 0;
-  }
-  return res;
+end:
+  return ((null_value= (res->length() >
+                        adjusted_length_with_warn(res->length())))) ? 0 : res;
 }
 
 
@@ -2733,8 +2754,6 @@ void Item_func_add_time::print(String *str, enum_query_type query_type)
 bool Item_func_timediff::get_date(MYSQL_TIME *ltime, ulonglong fuzzy_date)
 {
   DBUG_ASSERT(fixed == 1);
-  longlong seconds;
-  long microseconds;
   int l_sign= 1;
   MYSQL_TIME l_time1,l_time2,l_time3;
   ErrConvTime str(&l_time3);
@@ -2751,31 +2770,7 @@ bool Item_func_timediff::get_date(MYSQL_TIME *ltime, ulonglong fuzzy_date)
   if (l_time1.neg != l_time2.neg)
     l_sign= -l_sign;
 
-  bzero((char *)&l_time3, sizeof(l_time3));
-  
-  l_time3.neg= calc_time_diff(&l_time1, &l_time2, l_sign,
-			      &seconds, &microseconds);
-
-  /*
-    For MYSQL_TIMESTAMP_TIME only:
-      If first argument was negative and diff between arguments
-      is non-zero we need to swap sign to get proper result.
-  */
-  if (l_time1.neg && (seconds || microseconds))
-    l_time3.neg= 1-l_time3.neg;         // Swap sign of result
-
-  /*
-    seconds is longlong, when casted to long it may become a small number
-    even if the original seconds value was too large and invalid.
-    as a workaround we limit seconds by a large invalid long number
-    ("invalid" means > TIME_MAX_SECOND)
-  */
-  set_if_smaller(seconds, INT_MAX32);
-
-  calc_time_from_sec(&l_time3, (long) seconds, microseconds);
-
-  if ((fuzzy_date & TIME_NO_ZERO_DATE) && (seconds == 0) &&
-      (microseconds == 0))
+  if (calc_time_diff(&l_time1, &l_time2, l_sign, &l_time3, fuzzy_date))
     return (null_value= 1);
 
   *ltime= l_time3;

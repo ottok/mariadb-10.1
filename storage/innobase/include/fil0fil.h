@@ -1,6 +1,7 @@
 /*****************************************************************************
 
-Copyright (c) 1995, 2016, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 1995, 2016, Oracle and/or its affiliates.
+Copyright (c) 2013, 2016, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -25,7 +26,6 @@ Created 10/25/1995 Heikki Tuuri
 
 #ifndef fil0fil_h
 #define fil0fil_h
-
 #include "univ.i"
 
 #ifndef UNIV_INNOCHECKSUM
@@ -126,16 +126,27 @@ extern fil_addr_t	fil_addr_null;
 					MySQL/InnoDB 5.1.7 or later, the
 					contents of this field is valid
 					for all uncompressed pages. */
-#define FIL_PAGE_FILE_FLUSH_LSN	26	/*!< this is only defined for the
-					first page in a system tablespace
-					data file (ibdata*, not *.ibd):
-					the file has been flushed to disk
-					at least up to this lsn */
+#define FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION 26 /*!< for the first page
+					in a system tablespace data file
+					(ibdata*, not *.ibd): the file has
+					been flushed to disk at least up
+					to this lsn
+					for other pages: a 32-bit key version
+					used to encrypt the page + 32-bit checksum
+					or 64 bits of zero if no encryption
+					*/
 #define FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID  34 /*!< starting from 4.1.x this
 					contains the space id of the page */
 #define FIL_PAGE_SPACE_ID  FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID
 
 #define FIL_PAGE_DATA		38	/*!< start of the data on the page */
+/* Following are used when page compression is used */
+#define FIL_PAGE_COMPRESSED_SIZE 2      /*!< Number of bytes used to store
+					actual payload data size on
+					compressed pages. */
+#define FIL_PAGE_COMPRESSION_METHOD_SIZE 2
+					/*!< Number of bytes used to store
+					actual compression method. */
 /* @} */
 /** File page trailer @{ */
 #define FIL_PAGE_END_LSN_OLD_CHKSUM 8	/*!< the low 4 bytes of this are used
@@ -146,6 +157,9 @@ extern fil_addr_t	fil_addr_null;
 /* @} */
 
 /** File page types (values of FIL_PAGE_TYPE) @{ */
+#define FIL_PAGE_PAGE_COMPRESSED_ENCRYPTED 37401 /*!< Page is compressed and
+						 then encrypted */
+#define FIL_PAGE_PAGE_COMPRESSED 34354  /*!< page compressed page */
 #define FIL_PAGE_INDEX		17855	/*!< B-tree node */
 #define FIL_PAGE_UNDO_LOG	2	/*!< Undo log page */
 #define FIL_PAGE_INODE		3	/*!< Index node */
@@ -160,7 +174,8 @@ extern fil_addr_t	fil_addr_null;
 #define FIL_PAGE_TYPE_BLOB	10	/*!< Uncompressed BLOB page */
 #define FIL_PAGE_TYPE_ZBLOB	11	/*!< First compressed BLOB page */
 #define FIL_PAGE_TYPE_ZBLOB2	12	/*!< Subsequent compressed BLOB page */
-#define FIL_PAGE_TYPE_LAST	FIL_PAGE_TYPE_ZBLOB2
+#define FIL_PAGE_TYPE_COMPRESSED	13	/*!< Compressed page */
+#define FIL_PAGE_TYPE_LAST	FIL_PAGE_TYPE_COMPRESSED
 					/*!< Last page type */
 /* @} */
 
@@ -170,6 +185,9 @@ extern fil_addr_t	fil_addr_null;
 /* @} */
 
 #ifndef UNIV_INNOCHECKSUM
+
+/* structure containing encryption specification */
+typedef struct fil_space_crypt_struct fil_space_crypt_t;
 
 /** The number of fsyncs done to the log */
 extern ulint	fil_n_log_flushes;
@@ -191,9 +209,12 @@ struct fsp_open_info {
 	lsn_t		lsn;		/*!< Flushed LSN from header page */
 	ulint		id;		/*!< Space ID */
 	ulint		flags;		/*!< Tablespace flags */
+	ulint		encryption_error; /*!< if an encryption error occurs */
 #ifdef UNIV_LOG_ARCHIVE
 	ulint		arch_log_no;	/*!< latest archived log file number */
 #endif /* UNIV_LOG_ARCHIVE */
+	fil_space_crypt_t* crypt_data;	/*!< crypt data */
+	dict_table_t*	table;		/*!< table */
 };
 
 struct fil_space_t;
@@ -228,6 +249,7 @@ struct fil_node_t {
 	ib_int64_t	flush_counter;/*!< up to what
 				modification_counter value we have
 				flushed the modifications to disk */
+	ulint		file_block_size;/*!< file system block size */
 	UT_LIST_NODE_T(fil_node_t) chain;
 				/*!< link field for the file chain */
 	UT_LIST_NODE_T(fil_node_t) LRU;
@@ -305,8 +327,20 @@ struct fil_space_t {
 	bool		is_in_unflushed_spaces;
 				/*!< true if this space is currently in
 				unflushed_spaces */
+	bool		printed_compression_failure;
+				/*!< true if we have already printed
+				compression failure */
+	fil_space_crypt_t* crypt_data;
+				/*!< tablespace crypt data or NULL */
+	bool		page_0_crypt_read;
+				/*!< tablespace crypt data has been
+				read */
+	ulint		file_block_size;
+				/*!< file system block size */
+
 	UT_LIST_NODE_T(fil_space_t) space_list;
 				/*!< list of all spaces */
+
 	ulint		magic_n;/*!< FIL_SPACE_MAGIC_N */
 };
 
@@ -401,6 +435,7 @@ ulint
 fil_space_get_type(
 /*===============*/
 	ulint	id);	/*!< in: space id */
+
 #endif /* !UNIV_HOTBACKUP */
 /*******************************************************************//**
 Appends a new file to the chain of files of a space. File must be closed.
@@ -441,7 +476,10 @@ fil_space_create(
 	ulint		id,	/*!< in: space id */
 	ulint		zip_size,/*!< in: compressed page size, or
 				0 for uncompressed tablespaces */
-	ulint		purpose);/*!< in: FIL_TABLESPACE, or FIL_LOG if log */
+	ulint		purpose, /*!< in: FIL_TABLESPACE, or FIL_LOG if log */
+	fil_space_crypt_t* crypt_data, /*!< in: crypt data */
+	bool		create_table); /*!< in: true if create table */
+
 /*******************************************************************//**
 Assigns a new space id for a new single-table tablespace. This works simply by
 incrementing the global counter. If 4 billion id's is not enough, we may need
@@ -580,9 +618,11 @@ fil_read_first_page(
 #endif /* UNIV_LOG_ARCHIVE */
 	lsn_t*		min_flushed_lsn,	/*!< out: min of flushed
 						lsn values in data files */
-	lsn_t*		max_flushed_lsn)	/*!< out: max of flushed
+	lsn_t*		max_flushed_lsn,	/*!< out: max of flushed
 						lsn values in data files */
-	MY_ATTRIBUTE((warn_unused_result));
+	fil_space_crypt_t** crypt_data)		/*!< out: crypt data */
+
+	__attribute__((warn_unused_result));
 /*******************************************************************//**
 Increments the count of pending operation, if space is not being deleted.
 @return	TRUE if being deleted, and operation should be skipped */
@@ -758,6 +798,9 @@ char*
 fil_read_link_file(
 /*===============*/
 	const char*	name);		/*!< in: tablespace name */
+
+#include "fil0crypt.h"
+
 /*******************************************************************//**
 Creates a new single-table tablespace to a database directory of MySQL.
 Database directories are under the 'datadir' of MySQL. The datadir is the
@@ -776,10 +819,12 @@ fil_create_new_single_table_tablespace(
 	const char*	dir_path,	/*!< in: NULL or a dir path */
 	ulint		flags,		/*!< in: tablespace flags */
 	ulint		flags2,		/*!< in: table flags2 */
-	ulint		size)		/*!< in: the initial size of the
+	ulint		size,		/*!< in: the initial size of the
 					tablespace file in pages,
 					must be >= FIL_IBD_FILE_INITIAL_SIZE */
-	MY_ATTRIBUTE((nonnull, warn_unused_result));
+	fil_encryption_t mode,	/*!< in: encryption mode */
+	ulint		key_id)	/*!< in: encryption key_id */
+	__attribute__((nonnull, warn_unused_result));
 #ifndef UNIV_HOTBACKUP
 /********************************************************************//**
 Tries to open a single-table tablespace and optionally checks the space id is
@@ -812,8 +857,9 @@ fil_open_single_table_tablespace(
 	ulint		flags,		/*!< in: tablespace flags */
 	const char*	tablename,	/*!< in: table name in the
 					databasename/tablename format */
-	const char*	filepath)	/*!< in: tablespace filepath */
-	MY_ATTRIBUTE((nonnull(5), warn_unused_result));
+	const char*	filepath,	/*!< in: tablespace filepath */
+	dict_table_t*	table)		/*!< in: table */
+	__attribute__((nonnull(5), warn_unused_result));
 
 #endif /* !UNIV_HOTBACKUP */
 /********************************************************************//**
@@ -960,9 +1006,14 @@ fil_io(
 	void*	buf,		/*!< in/out: buffer where to store read data
 				or from where to write; in aio this must be
 				appropriately aligned */
-	void*	message)	/*!< in: message for aio handler if non-sync
+	void*	message,	/*!< in: message for aio handler if non-sync
 				aio used, else ignored */
-	MY_ATTRIBUTE((nonnull(8)));
+	ulint*	write_size)	/*!< in/out: Actual write size initialized
+			       after fist successfull trim
+			       operation for this page and if
+			       initialized we do not trim again if
+			       actual page size does not decrease. */
+	__attribute__((nonnull(8)));
 /**********************************************************************//**
 Waits for an aio operation to complete. This function is used to write the
 handler for completed requests. The aio array of pending requests is divided
@@ -1211,6 +1262,14 @@ fil_user_tablespace_restore_page(
 					write buffer */
 
 /*******************************************************************//**
+Return space flags */
+UNIV_INLINE
+ulint
+fil_space_flags(
+/*===========*/
+	fil_space_t*	space);	/*!< in: space */
+
+/*******************************************************************//**
 Returns a pointer to the file_space_t that is in the memory cache
 associated with a space id.
 @return	file_space_t pointer, NULL if space not found */
@@ -1219,4 +1278,81 @@ fil_space_get(
 /*==========*/
 	ulint	id);	/*!< in: space id */
 #endif /* !UNIV_INNOCHECKSUM */
+
+/****************************************************************//**
+Acquire fil_system mutex */
+void
+fil_system_enter(void);
+/*==================*/
+/****************************************************************//**
+Release fil_system mutex */
+void
+fil_system_exit(void);
+/*==================*/
+
+#ifndef UNIV_INNOCHECKSUM
+/*******************************************************************//**
+Returns the table space by a given id, NULL if not found. */
+fil_space_t*
+fil_space_found_by_id(
+/*==================*/
+	ulint	id);	/*!< in: space id */
+
+/*******************************************************************//**
+Returns the table space by a given id, NULL if not found. */
+fil_space_t*
+fil_space_get_by_id(
+/*================*/
+	ulint	id);	/*!< in: space id */
+
+/******************************************************************
+Get id of first tablespace or ULINT_UNDEFINED if none */
+UNIV_INTERN
+ulint
+fil_get_first_space();
+/*=================*/
+
+/******************************************************************
+Get id of next tablespace or ULINT_UNDEFINED if none */
+UNIV_INTERN
+ulint
+fil_get_next_space(
+/*===============*/
+	ulint id);      /*!< in: space id */
+
+/******************************************************************
+Get id of first tablespace that has node or ULINT_UNDEFINED if none */
+UNIV_INTERN
+ulint
+fil_get_first_space_safe();
+/*======================*/
+
+/******************************************************************
+Get id of next tablespace that has node or ULINT_UNDEFINED if none */
+UNIV_INTERN
+ulint
+fil_get_next_space_safe(
+/*====================*/
+	ulint	id);	/*!< in: previous space id */
+
+
+/*******************************************************************//**
+Returns the block size of the file space
+@return	block size */
+UNIV_INTERN
+ulint
+fil_space_get_block_size(
+/*=====================*/
+	ulint	id,	/*!< in: space id */
+	ulint   offset, /*!< in: page offset */
+	ulint   len);	/*!< in: page len */
+
+#endif /* UNIV_INNOCHECKSUM */
+
+#ifndef UNIV_INNOCHECKSUM
+#ifndef UNIV_NONINL
+#include "fil0fil.ic"
+#endif
+#endif
+
 #endif /* fil0fil_h */

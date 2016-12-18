@@ -183,15 +183,15 @@ a	b	c
 0	1	y,n
 drop table t1,t2;
 CREATE TABLE t1 (
-ts TIMESTAMP,
+ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 tsv TIMESTAMP AS (ADDDATE(ts, INTERVAL 1 DAY)) VIRTUAL
 ) ENGINE=MyISAM;
 INSERT INTO t1 (tsv) VALUES (DEFAULT);
 Warnings:
-Warning	1292	Incorrect datetime value: '0000-00-00'
+Warning	1292	Incorrect datetime value: '0000-00-00 00:00:00'
 INSERT DELAYED INTO t1 (tsv) VALUES (DEFAULT);
 Warnings:
-Warning	1292	Incorrect datetime value: '0000-00-00'
+Warning	1292	Incorrect datetime value: '0000-00-00 00:00:00'
 FLUSH TABLES;
 SELECT COUNT(*) FROM t1;
 COUNT(*)
@@ -330,3 +330,48 @@ t1	CREATE TABLE `t1` (
   `c1` varchar(50) COLLATE latin1_general_ci DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
 drop table t1;
+#
+# Start of 10.1 tests
+#
+#
+# MDEV-8441 Bad SHOW CREATE TABLE output for a table with a virtual column
+#
+CREATE TABLE t1 (a DATETIME, b TIMESTAMP AS (TIMESTAMP(a)));
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` datetime DEFAULT NULL,
+  `b` timestamp AS (TIMESTAMP(a)) VIRTUAL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+DROP TABLE t1;
+CREATE TABLE t1 (a DATETIME, b TIMESTAMP AS (TIMESTAMP(a)),c TIMESTAMP);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` datetime DEFAULT NULL,
+  `b` timestamp AS (TIMESTAMP(a)) VIRTUAL,
+  `c` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+DROP TABLE t1;
+#
+# MDEV-8839 COLUMN_GET() produces warnings with no data
+#
+SET @aaa= COLUMN_CREATE('price', _binary 0xF0F1F2F3F4F5F6F7);
+SELECT COLUMN_GET(@aaa, 'price' AS DECIMAL) aaa;
+aaa
+0
+Warnings:
+Warning	1918	Encountered illegal value '\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7' when converting to DECIMAL
+SELECT COLUMN_GET(@aaa, 'price' AS INT) aaa;
+aaa
+0
+Warnings:
+Warning	1918	Encountered illegal value '\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7' when converting to INT
+SELECT COLUMN_GET(@aaa, 'price' AS DOUBLE) aaa;
+aaa
+0
+Warnings:
+Warning	1918	Encountered illegal value '\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7' when converting to DOUBLE
+#
+# End of 10.1 tests
+#

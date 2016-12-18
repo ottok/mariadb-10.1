@@ -579,7 +579,7 @@ cli_safe_read(MYSQL *mysql)
 restart:
   if (net->vio != 0)
     len= my_net_read_packet(net, 0);
-  
+
   if (len == packet_error || len == 0)
   {
     DBUG_PRINT("error",("Wrong connection or packet. fd: %s  len: %lu",
@@ -3088,7 +3088,7 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
 		       uint port, const char *unix_socket,ulong client_flag)
 {
   char		buff[NAME_LEN+USERNAME_LENGTH+100];
-  int           scramble_data_len, pkt_scramble_len= 0;
+  int           scramble_data_len, UNINIT_VAR(pkt_scramble_len);
   char          *end,*host_info= 0, *server_version_end, *pkt_end;
   char          *scramble_data;
   const char    *scramble_plugin;
@@ -3101,7 +3101,6 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
   struct	sockaddr_un UNIXaddr;
 #endif
   DBUG_ENTER("mysql_real_connect");
-  LINT_INIT(pkt_scramble_len);
 
   DBUG_PRINT("enter",("host: %s  db: %s  user: %s (client)",
 		      host ? host : "(Null)",
@@ -3409,7 +3408,7 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
   if (mysql->options.extension && mysql->options.extension->async_context)
     net->vio->async_context= mysql->options.extension->async_context;
 
-  if (my_net_init(net, net->vio, MYF(0)))
+  if (my_net_init(net, net->vio, 0, MYF(0)))
   {
     vio_delete(net->vio);
     net->vio = 0;

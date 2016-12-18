@@ -522,6 +522,7 @@ NULL	9
 	3
 b	1
 drop table t1;
+set big_tables=0;
 create table t1 (a int not null, b int not null);
 insert into t1 values (1,1),(1,2),(3,1),(3,2),(2,2),(2,1);
 create table t2 (a int not null, b int not null, key(a));
@@ -659,7 +660,10 @@ insert into t1 (a,b) values (1,2),(1,3),(2,5);
 select a, 0.1*0+1 r2, sum(1) r1 from t1 where a = 1 group  by a having r1>1 and r2=1;
 a	r2	r1
 1	1.0	2
-select a, round(rand(100)*10) r2, sum(1) r1 from t1 where a = 1 group  by a having r1>1 and r2<=2;
+select a, round(rand(100)*10) r2, sum(1) r1 from t1 where a = 1 group by a having r1>1 and r2<=2;
+a	r2	r1
+1	2	2
+select a, round(rand(100)*10) r2, sum(1) r1 from t1  group by a having r1>1 and r2<=2;
 a	r2	r1
 1	2	2
 select a,sum(b) from t1 where a=1 group by c;
@@ -668,6 +672,12 @@ a	sum(b)
 select a*sum(b) from t1 where a=1 group by c;
 a*sum(b)
 5
+select a*sum(b) as f1 from t1 where a=1 group by c having f1 <= 10;
+f1
+5
+select a,a*sum(b) as f1 from t1 where a=1 group by c having a*sum(b)+0 <= 10;
+a	f1
+1	5
 select sum(a)*sum(b) from t1 where a=1 group by c;
 sum(a)*sum(b)
 10
@@ -1988,12 +1998,12 @@ SHOW SESSION STATUS LIKE 'Sort_scan%';
 Variable_name	Value
 Sort_scan	0
 EXPLAIN SELECT SQL_BIG_RESULT col1 AS field1, col1 AS field2
-FROM t1 GROUP BY field1, field2;;
+FROM t1 GROUP BY field1, field2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	NULL	idx	5	NULL	20	Using index; Using filesort
 FLUSH STATUS;
 SELECT SQL_BIG_RESULT col1 AS field1, col1 AS field2
-FROM t1 GROUP BY field1, field2;;
+FROM t1 GROUP BY field1, field2;
 field1	field2
 1	1
 2	2
@@ -2082,6 +2092,58 @@ f1	f2
 19	19
 20	20
 explain
+select col1 f1, col1 f2 from t1 group by f1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	idx	5	NULL	20	Using index
+select col1 f1, col1 f2 from t1 group by f1;
+f1	f2
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+10	10
+11	11
+12	12
+13	13
+14	14
+15	15
+16	16
+17	17
+18	18
+19	19
+20	20
+explain
+select col1 f1, col1 f2 from t1 group by f1, f2;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	idx	5	NULL	20	Using index
+select col1 f1, col1 f2 from t1 group by f1, f2;
+f1	f2
+1	1
+2	2
+3	3
+4	4
+5	5
+6	6
+7	7
+8	8
+9	9
+10	10
+11	11
+12	12
+13	13
+14	14
+15	15
+16	16
+17	17
+18	18
+19	19
+20	20
+explain
 select col1 f1, col1 f2 from t1 group by f2 order by f2, f1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	index	NULL	idx	5	NULL	20	Using index
@@ -2141,6 +2203,22 @@ INSERT INTO t2(col1, col2) VALUES
 (1,20),(2,19),(3,18),(4,17),(5,16),(6,15),(7,14),(8,13),(9,12),(10,11),
 (11,10),(12,9),(13,8),(14,7),(15,6),(16,5),(17,4),(18,3),(19,2),(20,1);
 explain
+select col1 f1, col2 f2, col1 f3 from t2 group by f1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t2	range	NULL	idx	5	NULL	7	Using index for group-by
+explain
+select SQL_BIG_RESULT col1 f1, col2 f2, col1 f3 from t2 group by f1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t2	range	NULL	idx	5	NULL	7	Using index for group-by
+explain
+select col1 f1, col2 f2, col1 f3 from t2 group by f1, f2;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t2	index	NULL	idx	10	NULL	20	Using index
+explain
+select col1 f1, col1 f2 from t2 group by f1, 1+1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t2	range	NULL	idx	5	NULL	7	Using index for group-by
+explain
 select col1 f1, col2 f2, col1 f3 from t2 group by f1, f2, f3+0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	index	NULL	idx	10	NULL	20	Using index; Using temporary; Using filesort
@@ -2166,6 +2244,10 @@ f1	f2	f3
 18	3	18
 19	2	19
 20	1	20
+explain
+select col1 f1, col2 f2, col1 f3 from t2 order by f1,f2;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t2	index	NULL	idx	10	NULL	20	Using index
 explain
 select col1 f1, col2 f2, col1 f3 from t2 order by f1, f2, f3+0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -2207,20 +2289,16 @@ field1	field2
 2004-10-11 18:13:00	1
 2009-02-19 02:05:00	5
 Warnings:
-Warning	1292	Truncated incorrect DOUBLE value: 'x'
 Warning	1292	Truncated incorrect DOUBLE value: 'g'
 Warning	1292	Truncated incorrect DOUBLE value: 'o'
-Warning	1292	Truncated incorrect DOUBLE value: 'g'
 Warning	1292	Truncated incorrect DOUBLE value: 'v'
 SELECT alias2.f3 AS field1 , alias2.f1 AS field2 FROM t1 AS alias1 JOIN t1 AS alias2 ON alias2.f1 = alias1.f2 AND alias2.f1 != alias1.f4 GROUP BY field1 , field2 ;
 field1	field2
 2004-10-11 18:13:00	1
 2009-02-19 02:05:00	5
 Warnings:
-Warning	1292	Truncated incorrect DOUBLE value: 'x'
 Warning	1292	Truncated incorrect DOUBLE value: 'g'
 Warning	1292	Truncated incorrect DOUBLE value: 'o'
-Warning	1292	Truncated incorrect DOUBLE value: 'g'
 Warning	1292	Truncated incorrect DOUBLE value: 'v'
 SET SESSION SQL_MODE=default;
 drop table t1;
@@ -2518,6 +2596,20 @@ MAX(i)	c
 7	foo
 drop table t1,t2;
 #
+# ONLY_FULL_GROUP_BY references
+#
+set @save_sql_mode = @@sql_mode;
+set sql_mode='ONLY_FULL_GROUP_BY';
+create table t1 (a int, b int);
+select a+b as x from t1 group by x having x > 1;
+x
+select a as x from t1 group by x having x > 1;
+x
+select a from t1 group by a having a > 1;
+a
+drop table t1;
+set sql_mode= @save_sql_mode;
+#
 # Bug #58782
 # Missing rows with SELECT .. WHERE .. IN subquery 
 # with full GROUP BY and no aggr
@@ -2562,3 +2654,89 @@ field1	field2
 DROP TABLE t1;
 DROP TABLE where_subselect;
 # End of Bug #58782
+#
+# MDEV-8988: Apparently valid SQL query gives wrong result (nested WHERE)
+#
+create table t0(a int);
+insert into t0 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
+create table t1 (a int, b int, c int);
+insert into t1 select A.a + 10*B.a, A.a, A.a + 10*B.a from t0 A, t0 B;
+insert into t1 values (NULL, NULL, NULL);
+create table t2 (c int, col1 int, key(c));
+insert into t2 select t1.a, 100000 from t1;
+analyze table t2;
+Table	Op	Msg_type	Msg_text
+test.t2	analyze	status	Table is already up to date
+explain 
+select 
+max(a)+ (select col1 from t2 where t2.c=t1.c)
+from t1 
+group by t1.b;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	101	Using temporary; Using filesort
+2	DEPENDENT SUBQUERY	t2	ref	c	c	5	func	1	
+select 
+max(a) + (select col1 from t2 where t2.c=t1.c)
+from t1 
+group by t1.b;
+max(a) + (select col1 from t2 where t2.c=t1.c)
+NULL
+100090
+100091
+100092
+100093
+100094
+100095
+100096
+100097
+100098
+100099
+drop table t0,t1,t2;
+#
+# MDEV-9602 crash in st_key::actual_rec_per_key when group by constant
+#
+create table t1 (a date not null,unique (a)) engine=innodb;
+Warnings:
+Warning	1286	Unknown storage engine 'innodb'
+Warning	1266	Using storage engine MyISAM for table 't1'
+select distinct a from t1 group by 'a';
+a
+insert into t1 values("2001-02-02"),("2001-02-03");
+select distinct a from t1 group by 'a';
+a
+2001-02-02
+drop table t1;
+#
+# MDEV-10324: Server crash in get_sel_arg_for_keypart or Assertion `n < size()' failed in Mem_root_array
+#
+CREATE TABLE t1 (
+job_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+job_cmd varbinary(60) NOT NULL DEFAULT '',
+job_namespace int(11) NOT NULL,
+job_title varbinary(255) NOT NULL,
+job_params blob NOT NULL,
+job_timestamp varbinary(14) DEFAULT NULL,
+job_random int(10) unsigned NOT NULL DEFAULT '0',
+job_token varbinary(32) NOT NULL DEFAULT '',
+job_token_timestamp varbinary(14) DEFAULT NULL,
+job_sha1 varbinary(32) NOT NULL DEFAULT '',
+job_attempts int(10) unsigned NOT NULL DEFAULT '0',
+PRIMARY KEY (job_id),
+KEY job_cmd (job_cmd,job_namespace,job_title,job_params(128)),
+KEY job_timestamp (job_timestamp),
+KEY job_sha1 (job_sha1),
+KEY job_cmd_token (job_cmd,job_token,job_random),
+KEY job_cmd_token_id (job_cmd,job_token,job_id)
+);
+INSERT INTO t1 VALUES 
+(NULL, 'foo', 1, 'foo', 'foo', 'foo', 1, 'foo', 'foo', 'foo', 1),
+(NULL, 'bar', 2, 'bar', 'bar', 'bar', 2, 'bar', 'bar', 'bar', 2);
+SELECT DISTINCT job_cmd  FROM t1 WHERE job_cmd IN ('foobar','null');
+job_cmd
+drop table t1;
+CREATE TABLE t1 (f1 INT NOT NULL, f2 VARCHAR(3) NOT NULL, KEY(f1), KEY(f2, f1));
+INSERT INTO t1 VALUES (0,'foo'),(1,'bar');
+SELECT 1 IN ( SELECT COUNT( DISTINCT f2 ) FROM t1 WHERE f1 <= 4 );
+1 IN ( SELECT COUNT( DISTINCT f2 ) FROM t1 WHERE f1 <= 4 )
+0
+drop table t1;

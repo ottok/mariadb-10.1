@@ -13,15 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-INCLUDE_DIRECTORIES(
-${CMAKE_SOURCE_DIR}/include 
-${ZLIB_INCLUDE_DIR}
-# Following is for perror, in case NDB is compiled in.
-${CMAKE_SOURCE_DIR}/storage/ndb/include
-${CMAKE_SOURCE_DIR}/storage/ndb/include/util  
-${CMAKE_SOURCE_DIR}/storage/ndb/include/ndbapi
-${CMAKE_SOURCE_DIR}/storage/ndb/include/portlib
-${CMAKE_SOURCE_DIR}/storage/ndb/include/mgmapi)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include ${ZLIB_INCLUDE_DIR})
 
 # Default install component for the files is Server here
 SET(MYSQL_INSTALL_COMPONENT Server)
@@ -72,17 +64,7 @@ IF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
 ENDIF()
 ENDIF()
 
-MYSQL_ADD_EXECUTABLE(replace replace.c COMPONENT Server)
-TARGET_LINK_LIBRARIES(replace mysys)
-IF(UNIX)
-  MYSQL_ADD_EXECUTABLE(resolve_stack_dump resolve_stack_dump.c)
-  TARGET_LINK_LIBRARIES(resolve_stack_dump mysys)
-
-  MYSQL_ADD_EXECUTABLE(mysql_waitpid mysql_waitpid.c COMPONENT Client)
-  TARGET_LINK_LIBRARIES(mysql_waitpid mysys)
-ENDIF()
-
-
+IF(WITH_INNOBASE_STORAGE_ENGINE OR WITH_XTRADB_STORAGE_ENGINE)
   # Add path to the InnoDB headers
   INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}/storage/innobase/include
@@ -90,6 +72,7 @@ ENDIF()
 
   # We use the InnoDB code directly in case the code changes.
   ADD_DEFINITIONS("-DUNIV_INNOCHECKSUM")
+
   SET(INNOBASE_SOURCES
       ../storage/innobase/buf/buf0checksum.cc
       ../storage/innobase/ut/ut0crc32.cc
@@ -97,7 +80,26 @@ ENDIF()
       ../storage/innobase/page/page0zip.cc
       )
 
+  IF(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
+      enable_language(ASM)
+      LIST(APPEND INNOBASE_SOURCES
+         ../storage/innobase/ut/crc32_power8/crc32.S
+         ../storage/innobase/ut/crc32_power8/crc32_wrapper.c
+         )
+  ENDIF()
+
   MYSQL_ADD_EXECUTABLE(innochecksum innochecksum.cc ${INNOBASE_SOURCES})
   TARGET_LINK_LIBRARIES(innochecksum mysys mysys_ssl)
   ADD_DEPENDENCIES(innochecksum GenError)
+ENDIF()
 
+MYSQL_ADD_EXECUTABLE(replace replace.c COMPONENT Server)
+TARGET_LINK_LIBRARIES(replace mysys)
+
+IF(UNIX)
+  MYSQL_ADD_EXECUTABLE(resolve_stack_dump resolve_stack_dump.c)
+  TARGET_LINK_LIBRARIES(resolve_stack_dump mysys)
+
+  MYSQL_ADD_EXECUTABLE(mysql_waitpid mysql_waitpid.c COMPONENT Client)
+  TARGET_LINK_LIBRARIES(mysql_waitpid mysys)
+ENDIF()

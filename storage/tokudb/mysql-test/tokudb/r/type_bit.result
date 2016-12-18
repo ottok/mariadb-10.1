@@ -43,7 +43,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` bit(1) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=ENGINE DEFAULT CHARSET=latin1
 drop table t1;
 create table t1 (a bit(64));
 insert into t1 values 
@@ -498,7 +498,7 @@ show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` bit(7) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=ENGINE DEFAULT CHARSET=latin1
 drop table t1, t2;
 create table t1 (id1 int(11), b1 bit(1));
 create table t2 (id2 int(11), b2 bit(1));
@@ -713,7 +713,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f1` bit(2) NOT NULL DEFAULT b'10',
   `f2` bit(14) NOT NULL DEFAULT b'11110000111100'
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci `compression`='tokudb_zlib'
+) ENGINE=ENGINE DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci
 INSERT INTO t1 (f1) VALUES (DEFAULT);
 INSERT INTO t1 VALUES (b'', b'');
 SELECT HEX(f1), HEX(f2) FROM t1;
@@ -785,7 +785,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` bit(8) DEFAULT NULL,
   KEY `a` (`a`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=ENGINE DEFAULT CHARSET=latin1
 drop table t1;
 #
 # Bug#50591 bit(31) causes Duplicate entry '1-NULL' for key 'group_key'
