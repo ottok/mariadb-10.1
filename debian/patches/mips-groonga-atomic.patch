@@ -7,7 +7,7 @@ Author: James Cowgill <jcowgill@debian.org>
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/storage/mroonga/vendor/groonga/CMakeLists.txt
 +++ b/storage/mroonga/vendor/groonga/CMakeLists.txt
-@@ -256,6 +256,8 @@ endmacro()
+@@ -234,6 +234,8 @@ endmacro()
  include(build/ac_macros/check_headers.m4)
  include(build/ac_macros/check_functions.m4)
  

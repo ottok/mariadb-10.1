@@ -1,14 +1,11 @@
 libmariadbclient-rename.patch
 scripts__mysql_create_system_tables__no_test.patch
 scripts__mysqld_safe.sh__signals.patch
-scripts__mysql_install_db.sh__no_test.patch
-scripts__mysql_config__libs.patch
 mysql-test__db_test.patch
 replace_dash_with_bash_mbug675185.patch
 extend_default_test_timeout_for_tokudb.patch
 remove_rename_mariadb-server_files_in.patch
 innodb_simulate_comp_test_speedup.patch
-fix-spelling-errors.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
 mdev-8375-passwordless-root-via-socket-auth.patch
