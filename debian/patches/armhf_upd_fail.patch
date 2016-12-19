@@ -3,11 +3,9 @@ Description: Prevent unaligned memory access on armhf in connect storage engine
  code uses the same logic and should be fixed upstream.
 Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
 
-diff --git a/storage/connect/value.cpp b/storage/connect/value.cpp
-index 64d0e13..bef035d 100644
 --- a/storage/connect/value.cpp
 +++ b/storage/connect/value.cpp
-@@ -796,7 +796,7 @@ uchar TYPVAL<uchar>::GetTypedValue(PVBLK blk, int n)
+@@ -796,7 +796,7 @@ uchar TYPVAL<uchar>::GetTypedValue(PVBLK
  template <class TYPE>
  void TYPVAL<TYPE>::SetBinValue(void *p)
    {
@@ -16,7 +14,7 @@ index 64d0e13..bef035d 100644
    Null = false;
    } // end of SetBinValue
  
-@@ -819,7 +819,7 @@ bool TYPVAL<TYPE>::GetBinValue(void *buf, int buflen, bool go)
+@@ -819,7 +819,7 @@ bool TYPVAL<TYPE>::GetBinValue(void *buf
  //#endif
  
    if (go)
