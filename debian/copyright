@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: MariaDB 10.0
+Upstream-Name: MariaDB Server
 Upstream-Contact: https://mariadb.org/jira
 Source: https://github.com/MariaDB/server
 Comment:
