@@ -1,3 +1,9 @@
+mariadb-10.1 (10.1.20-1) UNRELEASED; urgency=low
+
+  * New upstream release 10.1.20
+
+ -- Otto Kekäläinen <otto@debian.org>  Mon, 19 Dec 2016 13:56:49 +0200
+
 mariadb-10.0 (10.0.28-3) UNRELEASED; urgency=low
 
   * Open a new changelog entry
