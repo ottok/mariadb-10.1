@@ -47,16 +47,17 @@ static char *check_struct_option(char *cur_arg, char *key_name);
   order of their arguments must correspond to each other.
 */
 static const char *special_opt_prefix[]=
-{"skip", "disable", "enable", "maximum", "loose", 0};
+{"skip", "disable", "enable", "maximum", "loose", "autoset", 0};
 static const uint special_opt_prefix_lengths[]=
-{ 4,      7,         6,        7,         5,      0};
+{ 4,      7,         6,        7,         5,       7,        0};
 enum enum_special_opt
-{ OPT_SKIP, OPT_DISABLE, OPT_ENABLE, OPT_MAXIMUM, OPT_LOOSE};
+{ OPT_SKIP, OPT_DISABLE, OPT_ENABLE, OPT_MAXIMUM, OPT_LOOSE, OPT_AUTOSET};
 
 char *disabled_my_option= (char*) "0";
 char *enabled_my_option= (char*) "1";
+char *autoset_my_option= (char*) "auto";
 
-/* 
+/*
    This is a flag that can be set in client programs. 0 means that
    my_getopt will not print error messages, but the client should do
    it by itself
@@ -64,12 +65,20 @@ char *enabled_my_option= (char*) "1";
 
 my_bool my_getopt_print_errors= 1;
 
-/* 
+/*
    This is a flag that can be set in client programs. 1 means that
    my_getopt will skip over options it does not know how to handle.
 */
 
 my_bool my_getopt_skip_unknown= 0;
+
+
+/*
+   This is a flag that can be set in client programs. 1 means that
+   my_getopt will reconize command line options by their unambiguous
+   prefixes. 0 means an option must be always specified in full.
+*/
+my_bool my_getopt_prefix_matching= 1;
 
 static void default_reporter(enum loglevel level,
                              const char *format, ...)
@@ -190,7 +199,7 @@ int handle_options(int *argc, char ***argv,
 {
   uint UNINIT_VAR(opt_found), argvpos= 0, length;
   my_bool end_of_options= 0, must_be_var, set_maximum_value,
-          option_is_loose;
+          option_is_loose, option_is_autoset;
   char **pos, **pos_end, *optend, *opt_str, key_name[FN_REFLEN];
   const char *UNINIT_VAR(prev_found);
   const struct my_option *optp;
@@ -241,6 +250,7 @@ int handle_options(int *argc, char ***argv,
       must_be_var=       0;
       set_maximum_value= 0;
       option_is_loose=   0;
+      option_is_autoset= 0;
 
       cur_arg++;		/* skip '-' */
       if (*cur_arg == '-')      /* check for long option, */
@@ -289,6 +299,8 @@ int handle_options(int *argc, char ***argv,
                 length-= special_opt_prefix_lengths[i] + 1;
 		if (i == OPT_LOOSE)
 		  option_is_loose= 1;
+		else if (i == OPT_AUTOSET)
+		  option_is_autoset= 1;
 		if ((opt_found= findopt(opt_str, length, &optp, &prev_found)))
 		{
 		  if (opt_found > 1)
@@ -450,6 +462,36 @@ int handle_options(int *argc, char ***argv,
 	  }
 	  argument= optend;
 	}
+	else if (option_is_autoset)
+	{
+	  if (optend)
+	  {
+	    my_getopt_error_reporter(ERROR_LEVEL,
+                                     "%s: automatically set "
+                                     "option '--%s' cannot take an argument",
+                                     my_progname, optp->name);
+
+	    DBUG_RETURN(EXIT_NO_ARGUMENT_ALLOWED);
+	  }
+	  /*
+	    We support automatic setup only via get_one_option and only for
+	    marked options.
+	  */
+	  if (!get_one_option ||
+	      !(optp->var_type & GET_AUTO))
+	  {
+	    my_getopt_error_reporter(option_is_loose ?
+				     WARNING_LEVEL : ERROR_LEVEL,
+                                     "%s: automatic setup request is "
+				     "unsupported by option '--%s'",
+                                     my_progname, optp->name);
+	    if (!option_is_loose)
+	      DBUG_RETURN(EXIT_ARGUMENT_INVALID);
+	    continue;
+	  }
+	  else
+            argument= autoset_my_option;
+	}
 	else if (optp->arg_type == REQUIRED_ARG && !optend)
 	{
 	  /* Check if there are more arguments after this one,
@@ -577,7 +619,8 @@ int handle_options(int *argc, char ***argv,
           (*argc)--; /* option handled (short), decrease argument count */
 	continue;
       }
-      if (((error= setval(optp, value, argument, set_maximum_value))) &&
+      if ((!option_is_autoset) &&
+	  ((error= setval(optp, value, argument, set_maximum_value))) &&
           !option_is_loose)
 	DBUG_RETURN(error);
       if (get_one_option && get_one_option(optp->id, optp, argument))
@@ -851,6 +894,9 @@ static int findopt(char *optpat, uint length,
       if (!opt->name[length])		/* Exact match */
 	DBUG_RETURN(1);
 
+      if (!my_getopt_prefix_matching)
+        continue;
+
       if (!count)
       {
         /* We only need to know one prev */
@@ -867,6 +913,14 @@ static int findopt(char *optpat, uint length,
       }
     }
   }
+
+  if (count == 1)
+    my_getopt_error_reporter(INFORMATION_LEVEL,
+                             "Using unique option prefix '%.*s' is error-prone "
+                             "and can break in the future. "
+                             "Please use the full name '%s' instead.",
+                             length, optpat, *ffname);
+
   DBUG_RETURN(count);
 }
 
@@ -1259,7 +1313,8 @@ void my_cleanup_options(const struct my_option *options)
 
   SYNOPSIS
     init_variables()
-    options		Array of options
+    options              Array of options
+    func_init_one_value  Call this function to init the variable
 
   NOTES
     We will initialize the value that is pointed to by options->value.
@@ -1268,7 +1323,7 @@ void my_cleanup_options(const struct my_option *options)
 */
 
 static void init_variables(const struct my_option *options,
-                           init_func_p init_one_value)
+                           init_func_p func_init_one_value)
 {
   DBUG_ENTER("init_variables");
   for (; options->name; options++)
@@ -1281,11 +1336,11 @@ static void init_variables(const struct my_option *options,
       set the value to default value.
     */
     if (options->u_max_value)
-      init_one_value(options, options->u_max_value, options->max_value);
+      func_init_one_value(options, options->u_max_value, options->max_value);
     value= (options->var_type & GET_ASK_ADDR ?
 		  (*getopt_get_addr)("", 0, options, 0) : options->value);
     if (value)
-      init_one_value(options, value, options->def_value);
+      func_init_one_value(options, value, options->def_value);
   }
   DBUG_VOID_RETURN;
 }
@@ -1300,6 +1355,48 @@ static uint print_name(const struct my_option *optp)
   return s - optp->name;
 }
 
+/** prints option comment with indentation and wrapping.
+
+  The comment column starts at startpos, and has width of width
+  Current cursor position is curpos, returns new cursor position
+
+  @note can print one character beyond width!
+*/
+static uint print_comment(const char *comment,
+                          int curpos, int startpos, int width)
+{
+  const char *end= strend(comment);
+  int endpos= startpos + width;
+
+  for (; curpos < startpos; curpos++)
+    putchar(' ');
+
+  if (*comment == '.' || *comment == ',')
+  {
+    putchar(*comment);
+    comment++;
+    curpos++;
+  }
+
+  while (end - comment > endpos - curpos)
+  {
+    const char *line_end;
+    for (line_end= comment + endpos - curpos;
+         line_end > comment && *line_end != ' ';
+         line_end--);
+    for (; comment < line_end; comment++)
+      putchar(*comment);
+    while (*comment == ' ')
+      comment++; /* skip the space, as a newline will take it's place now */
+    putchar('\n');
+    for (curpos= 0; curpos < startpos; curpos++)
+      putchar(' ');
+  }
+  printf("%s", comment);
+  return curpos + (end - comment);
+}
+
+
 /*
   function: my_print_options
 
@@ -1309,12 +1406,12 @@ static uint print_name(const struct my_option *optp)
 void my_print_help(const struct my_option *options)
 {
   uint col, name_space= 22, comment_space= 57;
-  const char *line_end;
   const struct my_option *optp;
   DBUG_ENTER("my_print_help");
 
   for (optp= options; optp->name; optp++)
   {
+    const char *typelib_help= 0;
     if (!optp->comment)
       continue;
     if (optp->id && optp->id < 256)
@@ -1353,29 +1450,51 @@ void my_print_help(const struct my_option *options)
 	       optp->arg_type == OPT_ARG ? "]" : "");
 	col+= (optp->arg_type == OPT_ARG) ? 5 : 3;
       }
-      if (col > name_space && optp->comment && *optp->comment)
+    }
+    if (optp->comment && *optp->comment)
+    {
+      uint count;
+
+      if (col > name_space)
       {
 	putchar('\n');
 	col= 0;
       }
-    }
-    for (; col < name_space; col++)
-      putchar(' ');
-    if (optp->comment && *optp->comment)
-    {
-      const char *comment= optp->comment, *end= strend(comment);
 
-      while ((uint) (end - comment) > comment_space)
+      col= print_comment(optp->comment, col, name_space, comment_space);
+      if (optp->var_type & GET_AUTO)
       {
-	for (line_end= comment + comment_space; *line_end != ' '; line_end--);
-	for (; comment != line_end; comment++)
-	  putchar(*comment);
-	comment++; /* skip the space, as a newline will take it's place now */
-	putchar('\n');
-	for (col= 0; col < name_space; col++)
-	  putchar(' ');
+        col= print_comment(" (Automatically configured unless set explicitly)",
+                           col, name_space, comment_space);
       }
-      printf("%s", comment);
+
+      switch (optp->var_type & GET_TYPE_MASK) {
+      case GET_ENUM:
+        typelib_help= ". One of: ";
+        count= optp->typelib->count;
+        break;
+      case GET_SET: 
+        typelib_help= ". Any combination of: ";
+        count= optp->typelib->count;
+        break;
+      case GET_FLAGSET:
+        typelib_help= ". Takes a comma-separated list of option=value pairs, "
+          "where value is on, off, or default, and options are: ";
+        count= optp->typelib->count - 1;
+        break;
+      }
+      if (typelib_help &&
+          strstr(optp->comment, optp->typelib->type_names[0]) == NULL)
+      {
+        uint i;
+        col= print_comment(typelib_help, col, name_space, comment_space);
+        col= print_comment(optp->typelib->type_names[0], col, name_space, comment_space);
+        for (i= 1; i < count; i++)
+        {
+          col= print_comment(", ", col, name_space, comment_space);
+          col= print_comment(optp->typelib->type_names[i], col, name_space, comment_space);
+        }
+      }
     }
     putchar('\n');
     if ((optp->var_type & GET_TYPE_MASK) == GET_BOOL)

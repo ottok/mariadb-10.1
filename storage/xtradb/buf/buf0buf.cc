@@ -2,6 +2,7 @@
 
 Copyright (c) 1995, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2008, Google Inc.
+Copyright (c) 2013, 2016, MariaDB Corporation. All Rights Reserved.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -39,6 +40,7 @@ Created 11/5/1995 Heikki Tuuri
 #include "mem0mem.h"
 #include "btr0btr.h"
 #include "fil0fil.h"
+#include "fil0crypt.h"
 #ifndef UNIV_HOTBACKUP
 #include "buf0buddy.h"
 #include "lock0lock.h"
@@ -59,9 +61,29 @@ Created 11/5/1995 Heikki Tuuri
 #endif // HAVE_LIBNUMA
 #include "trx0trx.h"
 #include "srv0start.h"
+#include "ut0byte.h"
+#include "fil0pagecompress.h"
+#include "ha_prototypes.h"
+
+/* Enable this for checksum error messages. */
+//#ifdef UNIV_DEBUG
+//#define UNIV_DEBUG_LEVEL2 1
+//#endif
 
 /* prototypes for new functions added to ha_innodb.cc */
 trx_t* innobase_get_trx();
+
+/********************************************************************//**
+Check if page is maybe compressed, encrypted or both when we encounter
+corrupted page. Note that we can't be 100% sure if page is corrupted
+or decrypt/decompress just failed.
+*/
+static
+ibool
+buf_page_check_corrupt(
+/*===================*/
+	buf_page_t*	bpage);	/*!< in/out: buffer page read from
+					disk */
 
 static inline
 void
@@ -93,6 +115,10 @@ _increment_page_get_statistics(buf_block_t* block, trx_t* trx)
 	trx->distinct_page_access_hash[block_hash_byte] |= (byte) 0x01 << block_hash_offset;
 	return;
 }
+
+#ifdef HAVE_LZO
+#include "lzo/lzo1x.h"
+#endif
 
 /*
 		IMPLEMENTATION OF THE BUFFER POOL
@@ -573,6 +599,14 @@ buf_page_is_checksum_valid_crc32(
 {
 	ib_uint32_t	crc32 = buf_calc_page_crc32(read_buf);
 
+#ifdef UNIV_DEBUG_LEVEL2
+	if (!(checksum_field1 == crc32 && checksum_field2 == crc32)) {
+		ib_logf(IB_LOG_LEVEL_INFO,
+			"Page checksum crc32 not valid field1 %lu field2 %lu crc32 %lu.",
+			checksum_field1, checksum_field2, (ulint)crc32);
+	}
+#endif
+
 	return(checksum_field1 == crc32 && checksum_field2 == crc32);
 }
 
@@ -600,6 +634,13 @@ buf_page_is_checksum_valid_innodb(
 
 	if (checksum_field2 != mach_read_from_4(read_buf + FIL_PAGE_LSN)
 	    && checksum_field2 != buf_calc_page_old_checksum(read_buf)) {
+#ifdef UNIV_DEBUG_LEVEL2
+		ib_logf(IB_LOG_LEVEL_INFO,
+			"Page checksum innodb not valid field1 %lu field2 %lu crc32 %lu lsn %lu.",
+			checksum_field1, checksum_field2, buf_calc_page_old_checksum(read_buf),
+			mach_read_from_4(read_buf + FIL_PAGE_LSN)
+		);
+#endif
 		return(false);
 	}
 
@@ -610,6 +651,13 @@ buf_page_is_checksum_valid_innodb(
 
 	if (checksum_field1 != 0
 	    && checksum_field1 != buf_calc_page_new_checksum(read_buf)) {
+#ifdef UNIV_DEBUG_LEVEL2
+		ib_logf(IB_LOG_LEVEL_INFO,
+			"Page checksum innodb not valid field1 %lu field2 %lu crc32 %lu lsn %lu.",
+			checksum_field1, checksum_field2, buf_calc_page_new_checksum(read_buf),
+			mach_read_from_4(read_buf + FIL_PAGE_LSN)
+		);
+#endif
 		return(false);
 	}
 
@@ -628,6 +676,16 @@ buf_page_is_checksum_valid_none(
 	ulint		checksum_field1,
 	ulint		checksum_field2)
 {
+#ifdef UNIV_DEBUG_LEVEL2
+	if (!(checksum_field1 == checksum_field2 || checksum_field1 == BUF_NO_CHECKSUM_MAGIC)) {
+		ib_logf(IB_LOG_LEVEL_INFO,
+			"Page checksum none not valid field1 %lu field2 %lu crc32 %lu lsn %lu.",
+			checksum_field1, checksum_field2, BUF_NO_CHECKSUM_MAGIC,
+			mach_read_from_4(read_buf + FIL_PAGE_LSN)
+		);
+	}
+#endif
+
 	return(checksum_field1 == checksum_field2
 	       && checksum_field1 == BUF_NO_CHECKSUM_MAGIC);
 }
@@ -647,14 +705,32 @@ buf_page_is_corrupted(
 {
 	ulint		checksum_field1;
 	ulint		checksum_field2;
+	ulint 		space_id = mach_read_from_4(
+		read_buf + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
+	fil_space_crypt_t* crypt_data = fil_space_get_crypt_data(space_id);
+	bool page_encrypted = false;
 
-	if (!zip_size
+	/* Page is encrypted if encryption information is found from
+	tablespace and page contains used key_version. This is true
+	also for pages first compressed and then encrypted. */
+	if (crypt_data &&
+	    crypt_data->type != CRYPT_SCHEME_UNENCRYPTED &&
+	    fil_page_is_encrypted(read_buf)) {
+		page_encrypted = true;
+	}
+
+	if (!page_encrypted && !zip_size
 	    && memcmp(read_buf + FIL_PAGE_LSN + 4,
 		      read_buf + UNIV_PAGE_SIZE
 		      - FIL_PAGE_END_LSN_OLD_CHKSUM + 4, 4)) {
 
 		/* Stored log sequence numbers at the start and the end
 		of page do not match */
+
+		ib_logf(IB_LOG_LEVEL_INFO,
+			"Log sequence number at the start %lu and the end %lu do not match.",
+			mach_read_from_4(read_buf + FIL_PAGE_LSN + 4),
+			mach_read_from_4(read_buf + UNIV_PAGE_SIZE - FIL_PAGE_END_LSN_OLD_CHKSUM + 4));
 
 		return(TRUE);
 	}
@@ -702,6 +778,10 @@ buf_page_is_corrupted(
 		return(!page_zip_verify_checksum(read_buf, zip_size));
 	}
 
+	if (page_encrypted) {
+		return (FALSE);
+	}
+
 	checksum_field1 = mach_read_from_4(
 		read_buf + FIL_PAGE_SPACE_OR_CHKSUM);
 
@@ -719,6 +799,9 @@ buf_page_is_corrupted(
 		/* make sure that the page is really empty */
 		for (ulint i = 0; i < UNIV_PAGE_SIZE; i++) {
 			if (read_buf[i] != 0) {
+				ib_logf(IB_LOG_LEVEL_INFO,
+					"Checksum fields zero but page is not empty.");
+
 				return(TRUE);
 			}
 		}
@@ -729,7 +812,7 @@ buf_page_is_corrupted(
 	DBUG_EXECUTE_IF("buf_page_is_corrupt_failure", return(TRUE); );
 
 	ulint	page_no = mach_read_from_4(read_buf + FIL_PAGE_OFFSET);
-	ulint	space_id = mach_read_from_4(read_buf + FIL_PAGE_SPACE_ID);
+
 	const srv_checksum_algorithm_t	curr_algo =
 		static_cast<srv_checksum_algorithm_t>(srv_checksum_algorithm);
 
@@ -863,13 +946,6 @@ buf_page_print(
 #endif /* !UNIV_HOTBACKUP */
 	ulint		size = zip_size;
 
-	if (!read_buf) {
-		fprintf(stderr,
-			" InnoDB: Not dumping page as (in memory) pointer "
-			"is NULL\n");
-		return;
-	}
-
 	if (!size) {
 		size = UNIV_PAGE_SIZE;
 	}
@@ -958,6 +1034,11 @@ buf_page_print(
 			mach_read_from_4(read_buf + FIL_PAGE_OFFSET),
 			mach_read_from_4(read_buf
 					 + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID));
+
+		ulint page_type = fil_page_get_type(read_buf);
+
+		fprintf(stderr, "InnoDB: page type %ld meaning %s\n", page_type,
+			fil_get_page_type_name(page_type));
 	}
 
 #ifndef UNIV_HOTBACKUP
@@ -1108,11 +1189,20 @@ buf_block_init(
 	block->frame = frame;
 
 	block->page.buf_pool_index = buf_pool_index(buf_pool);
+	block->page.flush_type = BUF_FLUSH_LRU;
 	block->page.state = BUF_BLOCK_NOT_USED;
 	block->page.buf_fix_count = 0;
 	block->page.io_fix = BUF_IO_NONE;
-
+	block->page.key_version = 0;
+	block->page.page_encrypted = false;
+	block->page.page_compressed = false;
+	block->page.encrypted = false;
+	block->page.stored_checksum = BUF_NO_CHECKSUM_MAGIC;
+	block->page.calculated_checksum = BUF_NO_CHECKSUM_MAGIC;
+	block->page.real_size = 0;
+	block->page.write_size = 0;
 	block->modify_clock = 0;
+	block->page.slot = NULL;
 
 #if defined UNIV_DEBUG_FILE_ACCESSES || defined UNIV_DEBUG
 	block->page.file_page_was_freed = FALSE;
@@ -1479,7 +1569,16 @@ buf_pool_init_instance(
 
 	/* All fields are initialized by mem_zalloc(). */
 
+	/* Initialize the temporal memory array and slots */
+	buf_pool->tmp_arr = (buf_tmp_array_t *)mem_zalloc(sizeof(buf_tmp_array_t));
+	ulint n_slots = srv_n_read_io_threads * srv_n_write_io_threads * (8 * OS_AIO_N_PENDING_IOS_PER_THREAD);
+	buf_pool->tmp_arr->n_slots = n_slots;
+	buf_pool->tmp_arr->slots = (buf_tmp_buffer_t*)mem_zalloc(sizeof(buf_tmp_buffer_t) * n_slots);
+
 	buf_pool->try_LRU_scan = TRUE;
+
+	DBUG_EXECUTE_IF("buf_pool_init_instance_force_oom",
+		return(DB_ERROR); );
 
 	return(DB_SUCCESS);
 }
@@ -1550,6 +1649,32 @@ buf_pool_free_instance(
 	ha_clear(buf_pool->page_hash);
 	hash_table_free(buf_pool->page_hash);
 	hash_table_free(buf_pool->zip_hash);
+
+	/* Free all used temporary slots */
+	if (buf_pool->tmp_arr) {
+		for(ulint i = 0; i < buf_pool->tmp_arr->n_slots; i++) {
+			buf_tmp_buffer_t* slot = &(buf_pool->tmp_arr->slots[i]);
+#ifdef HAVE_LZO
+			if (slot && slot->lzo_mem) {
+				ut_free(slot->lzo_mem);
+				slot->lzo_mem = NULL;
+			}
+#endif
+			if (slot && slot->crypt_buf_free) {
+				ut_free(slot->crypt_buf_free);
+				slot->crypt_buf_free = NULL;
+			}
+
+			if (slot && slot->comp_buf_free) {
+				ut_free(slot->comp_buf_free);
+				slot->comp_buf_free = NULL;
+			}
+		}
+	}
+
+	mem_free(buf_pool->tmp_arr->slots);
+	mem_free(buf_pool->tmp_arr);
+	buf_pool->tmp_arr = NULL;
 }
 
 /********************************************************************//**
@@ -2243,7 +2368,7 @@ lookup:
 		/* Page not in buf_pool: needs to be read from file */
 
 		ut_ad(!hash_lock);
-		buf_read_page(space, zip_size, offset, trx);
+		buf_read_page(space, zip_size, offset, trx, NULL);
 
 #if defined UNIV_DEBUG || defined UNIV_BUF_DEBUG
 		ut_a(++buf_dbg_counter % 5771 || buf_validate());
@@ -2527,12 +2652,25 @@ buf_block_align_instance(
 				ut_ad(page_get_page_no(page_align(ptr))
 				      == 0xffffffff);
 				break;
-			case BUF_BLOCK_FILE_PAGE:
+			case BUF_BLOCK_FILE_PAGE: {
+				ulint space =  page_get_space_id(page_align(ptr));
+				ulint offset = page_get_page_no(page_align(ptr));
+
+				if (block->page.space != space ||
+					block->page.offset != offset) {
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"Corruption: Block space_id %lu != page space_id %lu or "
+						"Block offset %lu != page offset %lu",
+						(ulint)block->page.space, space,
+						(ulint)block->page.offset, offset);
+				}
+
 				ut_ad(block->page.space
-				      == page_get_space_id(page_align(ptr)));
+					== page_get_space_id(page_align(ptr)));
 				ut_ad(block->page.offset
 				      == page_get_page_no(page_align(ptr)));
 				break;
+			}
 			}
 
 			mutex_exit(&block->mutex);
@@ -2749,7 +2887,8 @@ buf_page_get_gen(
 				BUF_GET_IF_IN_POOL_OR_WATCH */
 	const char*	file,	/*!< in: file name */
 	ulint		line,	/*!< in: line where called */
-	mtr_t*		mtr)	/*!< in: mini-transaction */
+	mtr_t*		mtr,	/*!< in: mini-transaction */
+	dberr_t*        err)	/*!< out: error code */
 {
 	buf_block_t*	block;
 	ulint		fold;
@@ -2767,6 +2906,11 @@ buf_page_get_gen(
 	ut_ad((rw_latch == RW_S_LATCH)
 	      || (rw_latch == RW_X_LATCH)
 	      || (rw_latch == RW_NO_LATCH));
+
+	if (err) {
+		*err = DB_SUCCESS;
+	}
+
 #ifdef UNIV_DEBUG
 	switch (mode) {
 	case BUF_GET_NO_LATCH:
@@ -2830,6 +2974,8 @@ loop:
 	}
 
 	if (block == NULL) {
+		buf_page_t*	bpage=NULL;
+
 		/* Page not in buf_pool: needs to be read from file */
 
 		if (mode == BUF_GET_IF_IN_POOL_OR_WATCH) {
@@ -2864,35 +3010,97 @@ loop:
 			return(NULL);
 		}
 
-		if (buf_read_page(space, zip_size, offset, trx)) {
+		if (buf_read_page(space, zip_size, offset, trx, &bpage)) {
 			buf_read_ahead_random(space, zip_size, offset,
 					      ibuf_inside(mtr), trx);
 
 			retries = 0;
 		} else if (retries < BUF_PAGE_READ_MAX_RETRIES) {
 			++retries;
+
+			bool corrupted = true;
+
+			if (bpage) {
+				corrupted = buf_page_check_corrupt(bpage);
+			}
+
+			/* Do not try again for encrypted pages */
+			if (!corrupted) {
+				ib_mutex_t* pmutex = buf_page_get_mutex(bpage);
+				mutex_enter(&buf_pool->LRU_list_mutex);
+				mutex_enter(pmutex);
+
+				ut_ad(buf_pool->n_pend_reads > 0);
+				os_atomic_decrement_ulint(&buf_pool->n_pend_reads, 1);
+				buf_page_set_io_fix(bpage, BUF_IO_NONE);
+
+				if (!buf_LRU_free_page(bpage, true)) {
+					mutex_exit(&buf_pool->LRU_list_mutex);
+				}
+
+				mutex_exit(pmutex);
+				rw_lock_x_unlock_gen(&((buf_block_t*) bpage)->lock,
+					     BUF_IO_READ);
+
+				if (err) {
+					*err = DB_DECRYPTION_FAILED;
+				}
+
+				return (NULL);
+			}
+
 			DBUG_EXECUTE_IF(
 				"innodb_page_corruption_retries",
 				retries = BUF_PAGE_READ_MAX_RETRIES;
 			);
 		} else {
-			fprintf(stderr, "InnoDB: Error: Unable"
-				" to read tablespace %lu page no"
-				" %lu into the buffer pool after"
-				" %lu attempts\n"
-				"InnoDB: The most probable cause"
-				" of this error may be that the"
-				" table has been corrupted.\n"
-				"InnoDB: You can try to fix this"
-				" problem by using"
-				" innodb_force_recovery.\n"
-				"InnoDB: Please see reference manual"
-				" for more details.\n"
-				"InnoDB: Aborting...\n",
-				space, offset,
-				BUF_PAGE_READ_MAX_RETRIES);
+			bool corrupted = true;
 
-			ut_error;
+			if (bpage) {
+				corrupted = buf_page_check_corrupt(bpage);
+			}
+
+			if (corrupted) {
+				fprintf(stderr, "InnoDB: Error: Unable"
+					" to read tablespace %lu page no"
+					" %lu into the buffer pool after"
+					" %lu attempts\n"
+					"InnoDB: The most probable cause"
+					" of this error may be that the"
+					" table has been corrupted.\n"
+					"InnoDB: You can try to fix this"
+					" problem by using"
+					" innodb_force_recovery.\n"
+					"InnoDB: Please see reference manual"
+					" for more details.\n"
+					"InnoDB: Aborting...\n",
+					space, offset,
+					BUF_PAGE_READ_MAX_RETRIES);
+
+				ut_error;
+			} else {
+				ib_mutex_t* pmutex = buf_page_get_mutex(bpage);
+				mutex_enter(&buf_pool->LRU_list_mutex);
+				mutex_enter(pmutex);
+
+				ut_ad(buf_pool->n_pend_reads > 0);
+				os_atomic_decrement_ulint(&buf_pool->n_pend_reads, 1);
+				buf_page_set_io_fix(bpage, BUF_IO_NONE);
+
+				if (!buf_LRU_free_page(bpage, true)) {
+					mutex_exit(&buf_pool->LRU_list_mutex);
+				}
+
+				mutex_exit(pmutex);
+				rw_lock_x_unlock_gen(&((buf_block_t*) bpage)->lock,
+					     BUF_IO_READ);
+
+				if (err) {
+					*err = DB_DECRYPTION_FAILED;
+				}
+
+				return (NULL);
+			}
 		}
 
 #if defined UNIV_DEBUG || defined UNIV_BUF_DEBUG
@@ -3556,11 +3764,13 @@ page is not in the buffer pool it is not loaded and NULL is returned.
 Suitable for using when holding the lock_sys_t::mutex.
 @return	pointer to a page or NULL */
 UNIV_INTERN
-const buf_block_t*
+buf_block_t*
 buf_page_try_get_func(
 /*==================*/
 	ulint		space_id,/*!< in: tablespace id */
 	ulint		page_no,/*!< in: page number */
+	ulint		rw_latch,/*!< in: RW_S_LATCH, RW_X_LATCH */
+	bool		possibly_freed,
 	const char*	file,	/*!< in: file name */
 	ulint		line,	/*!< in: line where called */
 	mtr_t*		mtr)	/*!< in: mini-transaction */
@@ -3598,8 +3808,12 @@ buf_page_try_get_func(
 	buf_block_buf_fix_inc(block, file, line);
 	mutex_exit(&block->mutex);
 
-	fix_type = MTR_MEMO_PAGE_S_FIX;
-	success = rw_lock_s_lock_nowait(&block->lock, file, line);
+	if (rw_latch == RW_S_LATCH) {
+		fix_type = MTR_MEMO_PAGE_S_FIX;
+		success = rw_lock_s_lock_nowait(&block->lock, file, line);
+	} else {
+		success = false;
+	}
 
 	if (!success) {
 		/* Let us try to get an X-latch. If the current thread
@@ -3624,9 +3838,11 @@ buf_page_try_get_func(
 	ut_a(buf_block_get_state(block) == BUF_BLOCK_FILE_PAGE);
 #endif /* UNIV_DEBUG || UNIV_BUF_DEBUG */
 #if defined UNIV_DEBUG_FILE_ACCESSES || defined UNIV_DEBUG
-	mutex_enter(&block->mutex);
-	ut_a(!block->page.file_page_was_freed);
-	mutex_exit(&block->mutex);
+	if (!possibly_freed) {
+		mutex_enter(&block->mutex);
+		ut_a(!block->page.file_page_was_freed);
+		mutex_exit(&block->mutex);
+	}
 #endif /* UNIV_DEBUG_FILE_ACCESSES || UNIV_DEBUG */
 	buf_block_dbg_add_level(block, SYNC_NO_ORDER_CHECK);
 
@@ -3655,6 +3871,15 @@ buf_page_init_low(
 	bpage->access_time = 0;
 	bpage->newest_modification = 0;
 	bpage->oldest_modification = 0;
+	bpage->write_size = 0;
+	bpage->key_version = 0;
+	bpage->stored_checksum = BUF_NO_CHECKSUM_MAGIC;
+	bpage->calculated_checksum = BUF_NO_CHECKSUM_MAGIC;
+	bpage->page_encrypted = false;
+	bpage->page_compressed = false;
+	bpage->encrypted = false;
+	bpage->real_size = 0;
+
 	HASH_INVALIDATE(bpage, hash);
 	bpage->is_corrupt = FALSE;
 #if defined UNIV_DEBUG_FILE_ACCESSES || defined UNIV_DEBUG
@@ -3961,6 +4186,8 @@ err_exit:
 		page_zip_set_size(&bpage->zip, zip_size);
 		bpage->zip.data = (page_zip_t*) data;
 
+		bpage->slot = NULL;
+
 		mutex_enter(&buf_pool->zip_mutex);
 		UNIV_MEM_DESC(bpage->zip.data,
 			      page_zip_get_size(&bpage->zip));
@@ -4179,7 +4406,7 @@ buf_page_create(
 	Then InnoDB could in a crash recovery print a big, false, corruption
 	warning if the stamp contains an lsn bigger than the ib_logfile lsn. */
 
-	memset(frame + FIL_PAGE_FILE_FLUSH_LSN, 0, 8);
+	memset(frame + FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION, 0, 8);
 
 #if defined UNIV_DEBUG || defined UNIV_BUF_DEBUG
 	ut_a(++buf_dbg_counter % 5771 || buf_validate());
@@ -4320,35 +4547,122 @@ buf_mark_space_corrupt(
 
 	/* First unfix and release lock on the bpage */
 	ut_ad(!mutex_own(&buf_pool->LRU_list_mutex));
-	mutex_enter(&buf_pool->LRU_list_mutex);
-	rw_lock_x_lock(hash_lock);
-	mutex_enter(buf_page_get_mutex(bpage));
-	ut_ad(buf_page_get_io_fix(bpage) == BUF_IO_READ);
-	ut_ad(bpage->buf_fix_count == 0);
 
-	/* Set BUF_IO_NONE before we remove the block from LRU list */
-	buf_page_set_io_fix(bpage, BUF_IO_NONE);
+	if (!bpage->encrypted) {
+		mutex_enter(&buf_pool->LRU_list_mutex);
+		rw_lock_x_lock(hash_lock);
+		mutex_enter(buf_page_get_mutex(bpage));
+		ut_ad(buf_page_get_io_fix(bpage) == BUF_IO_READ);
+		ut_ad(bpage->buf_fix_count == 0);
 
-	if (uncompressed) {
-		rw_lock_x_unlock_gen(
-			&((buf_block_t*) bpage)->lock,
-			BUF_IO_READ);
+		/* Set BUF_IO_NONE before we remove the block from LRU list */
+		buf_page_set_io_fix(bpage, BUF_IO_NONE);
+
+		if (uncompressed) {
+			rw_lock_x_unlock_gen(
+				&((buf_block_t*) bpage)->lock,
+				BUF_IO_READ);
+		}
 	}
 
 	/* Find the table with specified space id, and mark it corrupted */
 	if (dict_set_corrupted_by_space(space)) {
-		buf_LRU_free_one_page(bpage);
+		if (!bpage->encrypted) {
+			buf_LRU_free_one_page(bpage);
+		}
 	} else {
-		mutex_exit(buf_page_get_mutex(bpage));
+		if (!bpage->encrypted) {
+			mutex_exit(buf_page_get_mutex(bpage));
+		}
 		ret = FALSE;
 	}
 
-	mutex_exit(&buf_pool->LRU_list_mutex);
-
-	ut_ad(buf_pool->n_pend_reads > 0);
-	os_atomic_decrement_ulint(&buf_pool->n_pend_reads, 1);
+	if(!bpage->encrypted) {
+		mutex_exit(&buf_pool->LRU_list_mutex);
+		ut_ad(buf_pool->n_pend_reads > 0);
+		os_atomic_decrement_ulint(&buf_pool->n_pend_reads, 1);
+	}
 
 	return(ret);
+}
+
+/********************************************************************//**
+Check if page is maybe compressed, encrypted or both when we encounter
+corrupted page. Note that we can't be 100% sure if page is corrupted
+or decrypt/decompress just failed.
+*/
+static
+ibool
+buf_page_check_corrupt(
+/*===================*/
+	buf_page_t*	bpage)	/*!< in/out: buffer page read from disk */
+{
+	ulint zip_size = buf_page_get_zip_size(bpage);
+	byte* dst_frame = (zip_size) ? bpage->zip.data :
+		((buf_block_t*) bpage)->frame;
+	bool page_compressed = bpage->page_encrypted;
+	ulint stored_checksum = bpage->stored_checksum;
+	ulint calculated_checksum = bpage->calculated_checksum;
+	bool page_compressed_encrypted = bpage->page_compressed;
+	ulint space_id = mach_read_from_4(
+		dst_frame + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
+	fil_space_crypt_t* crypt_data = fil_space_get_crypt_data(space_id);
+	fil_space_t* space = fil_space_found_by_id(space_id);
+	bool corrupted = true;
+	ulint key_version = bpage->key_version;
+
+	if (key_version != 0 || page_compressed_encrypted) {
+		bpage->encrypted = true;
+	}
+
+	if (key_version != 0 ||
+		(crypt_data && crypt_data->type != CRYPT_SCHEME_UNENCRYPTED) ||
+		page_compressed || page_compressed_encrypted) {
+
+		/* Page is really corrupted if post encryption stored
+		checksum does not match calculated checksum after page was
+		read. For pages compressed and then encrypted, there is no
+		checksum. */
+		corrupted = (!page_compressed_encrypted && stored_checksum != calculated_checksum);
+
+		if (corrupted) {
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"%s: Block in space_id %lu in file %s corrupted.",
+				page_compressed_encrypted ? "Maybe corruption" : "Corruption",
+				space_id, space ? space->name : "NULL");
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"Page based on contents %s encrypted.",
+				(key_version == 0 && page_compressed_encrypted == false) ? "not" : "maybe");
+			if (stored_checksum != BUF_NO_CHECKSUM_MAGIC || calculated_checksum != BUF_NO_CHECKSUM_MAGIC) {
+				ib_logf(IB_LOG_LEVEL_ERROR,
+					"Page stored checksum %lu but calculated checksum %lu.",
+					stored_checksum, calculated_checksum);
+			}
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"Reason could be that key_version %lu in page "
+				"or in crypt_data %p could not be found.",
+				key_version, crypt_data);
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"Reason could be also that key management plugin is not found or"
+				" used encryption algorithm or method does not match.");
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"Based on page page compressed %d, compressed and encrypted %d.",
+				page_compressed, page_compressed_encrypted);
+		} else {
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"Block in space_id %lu in file %s encrypted.",
+				space_id, space ? space->name : "NULL");
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"However key management plugin or used key_id %lu is not found or"
+				" used encryption algorithm or method does not match.",
+				key_version);
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"Marking tablespace as missing. You may drop this table or"
+				" install correct key management plugin and key file.");
+		}
+	}
+
+	return corrupted;
 }
 
 /********************************************************************//**
@@ -4366,6 +4680,7 @@ buf_page_io_complete(
 	const ibool	uncompressed = (buf_page_get_state(bpage)
 					== BUF_BLOCK_FILE_PAGE);
 	bool		have_LRU_mutex = false;
+	fil_space_t*	space = NULL;
 
 	ut_a(buf_page_in_file(bpage));
 
@@ -4383,6 +4698,21 @@ buf_page_io_complete(
 		ulint	read_space_id;
 		byte*	frame;
 
+		if (!buf_page_decrypt_after_read(bpage)) {
+			/* encryption error! */
+			if (buf_page_get_zip_size(bpage)) {
+				frame = bpage->zip.data;
+			} else {
+				frame = ((buf_block_t*) bpage)->frame;
+			}
+
+			ib_logf(IB_LOG_LEVEL_INFO,
+				"Page %u in tablespace %u encryption error key_version %u.",
+				bpage->offset, bpage->space, bpage->key_version);
+
+			goto database_corrupted;
+		}
+
 		if (buf_page_get_zip_size(bpage)) {
 			frame = bpage->zip.data;
 			os_atomic_increment_ulint(&buf_pool->n_pend_unzip, 1);
@@ -4392,7 +4722,12 @@ buf_page_io_complete(
 
 				os_atomic_decrement_ulint(
 					&buf_pool->n_pend_unzip, 1);
-				goto corrupt;
+
+				ib_logf(IB_LOG_LEVEL_INFO,
+					"Page %u in tablespace %u zip_decompress failure.",
+					bpage->offset, bpage->space);
+
+				goto database_corrupted;
 			}
 			os_atomic_decrement_ulint(&buf_pool->n_pend_unzip, 1);
 		} else {
@@ -4440,94 +4775,120 @@ buf_page_io_complete(
 
 		if (UNIV_LIKELY(!bpage->is_corrupt ||
 				!srv_pass_corrupt_table)) {
-		/* From version 3.23.38 up we store the page checksum
-		to the 4 first bytes of the page end lsn field */
+			/* From version 3.23.38 up we store the page checksum
+			to the 4 first bytes of the page end lsn field */
 
-		if (buf_page_is_corrupted(true, frame,
-					  buf_page_get_zip_size(bpage))) {
+			if (buf_page_is_corrupted(true, frame,
+					buf_page_get_zip_size(bpage))) {
 
-			/* Not a real corruption if it was triggered by
-			error injection */
-			DBUG_EXECUTE_IF("buf_page_is_corrupt_failure",
-				if (bpage->space > TRX_SYS_SPACE
-				    && buf_mark_space_corrupt(bpage)) {
-					ib_logf(IB_LOG_LEVEL_INFO,
-						"Simulated page corruption");
-					return(true);
+				/* Not a real corruption if it was triggered by
+				error injection */
+				DBUG_EXECUTE_IF("buf_page_is_corrupt_failure",
+					if (bpage->space > TRX_SYS_SPACE
+						&& buf_mark_space_corrupt(bpage)) {
+						ib_logf(IB_LOG_LEVEL_INFO,
+							"Simulated page corruption");
+						return(true);
+					}
+					goto page_not_corrupt;
+					;);
+database_corrupted:
+
+				bool corrupted = buf_page_check_corrupt(bpage);
+
+				if (corrupted) {
+					fil_system_enter();
+					space = fil_space_get_by_id(bpage->space);
+					fil_system_exit();
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"Database page corruption on disk"
+						" or a failed");
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"Space %u file %s read of page %u.",
+						bpage->space,
+						space ? space->name : "NULL",
+						bpage->offset);
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"You may have to recover"
+						" from a backup.");
+
+
+					buf_page_print(frame, buf_page_get_zip_size(bpage),
+						BUF_PAGE_PRINT_NO_CRASH);
+
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"It is also possible that your operating"
+						"system has corrupted its own file cache.");
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"and rebooting your computer removes the error.");
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"If the corrupt page is an index page you can also try to");
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"fix the corruption by dumping, dropping, and reimporting");
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"the corrupt table. You can use CHECK");
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"TABLE to scan your table for corruption.");
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"See also "
+						REFMAN "forcing-innodb-recovery.html"
+						" about forcing recovery.");
 				}
-				goto page_not_corrupt;
-				;);
-corrupt:
-			fprintf(stderr,
-				"InnoDB: Database page corruption on disk"
-				" or a failed\n"
-				"InnoDB: file read of page %u.\n"
-				"InnoDB: You may have to recover"
-				" from a backup.\n",
-				bpage->offset);
-			buf_page_print(frame, buf_page_get_zip_size(bpage),
-				       BUF_PAGE_PRINT_NO_CRASH);
-			fprintf(stderr,
-				"InnoDB: Database page corruption on disk"
-				" or a failed\n"
-				"InnoDB: file read of page %u.\n"
-				"InnoDB: You may have to recover"
-				" from a backup.\n",
-				bpage->offset);
-			fputs("InnoDB: It is also possible that"
-			      " your operating\n"
-			      "InnoDB: system has corrupted its"
-			      " own file cache\n"
-			      "InnoDB: and rebooting your computer"
-			      " removes the\n"
-			      "InnoDB: error.\n"
-			      "InnoDB: If the corrupt page is an index page\n"
-			      "InnoDB: you can also try to"
-			      " fix the corruption\n"
-			      "InnoDB: by dumping, dropping,"
-			      " and reimporting\n"
-			      "InnoDB: the corrupt table."
-			      " You can use CHECK\n"
-			      "InnoDB: TABLE to scan your"
-			      " table for corruption.\n"
-			      "InnoDB: See also "
-			      REFMAN "forcing-innodb-recovery.html\n"
-			      "InnoDB: about forcing recovery.\n", stderr);
 
-			if (srv_pass_corrupt_table && bpage->space != 0
-			    && bpage->space < SRV_LOG_SPACE_FIRST_ID) {
-				trx_t*	trx;
+				if (srv_pass_corrupt_table && bpage->space != 0
+					&& bpage->space < SRV_LOG_SPACE_FIRST_ID) {
+					trx_t*	trx;
 
-				fprintf(stderr,
-					"InnoDB: space %u will be treated as corrupt.\n",
-					bpage->space);
-				fil_space_set_corrupt(bpage->space);
+					fprintf(stderr,
+						"InnoDB: space %u will be treated as corrupt.\n",
+						bpage->space);
+					fil_space_set_corrupt(bpage->space);
 
-				trx = innobase_get_trx();
-				if (trx && trx->dict_operation_lock_mode == RW_X_LATCH) {
-					dict_table_set_corrupt_by_space(bpage->space, FALSE);
-				} else {
-					dict_table_set_corrupt_by_space(bpage->space, TRUE);
+					trx = innobase_get_trx();
+					if (trx && trx->dict_operation_lock_mode == RW_X_LATCH) {
+						dict_table_set_corrupt_by_space(bpage->space, FALSE);
+					} else {
+						dict_table_set_corrupt_by_space(bpage->space, TRUE);
+					}
+					bpage->is_corrupt = TRUE;
 				}
-				bpage->is_corrupt = TRUE;
-			} else
-			if (srv_force_recovery < SRV_FORCE_IGNORE_CORRUPT) {
-				/* If page space id is larger than TRX_SYS_SPACE
-				(0), we will attempt to mark the corresponding
-				table as corrupted instead of crashing server */
-				if (bpage->space > TRX_SYS_SPACE
-				    && buf_mark_space_corrupt(bpage)) {
-					return(false);
-				} else {
-					fputs("InnoDB: Ending processing"
-					      " because of"
-					      " a corrupt database page.\n",
-					      stderr);
 
-					ut_error;
+				if (srv_force_recovery < SRV_FORCE_IGNORE_CORRUPT) {
+					/* If page space id is larger than TRX_SYS_SPACE
+					(0), we will attempt to mark the corresponding
+					table as corrupted instead of crashing server */
+					if (bpage->space > TRX_SYS_SPACE
+						&& buf_mark_space_corrupt(bpage)) {
+						return(false);
+					} else {
+						corrupted = buf_page_check_corrupt(bpage);
+						ulint key_version = bpage->key_version;
+
+						if (corrupted) {
+							ib_logf(IB_LOG_LEVEL_ERROR,
+								"Ending processing because of a corrupt database page.");
+
+							ut_error;
+						}
+
+						ib_push_warning(innobase_get_trx(), DB_DECRYPTION_FAILED,
+							"Table in tablespace %lu encrypted."
+							"However key management plugin or used key_id %lu is not found or"
+							" used encryption algorithm or method does not match."
+							" Can't continue opening the table.",
+							(ulint)bpage->space, key_version);
+
+						if (bpage->space > TRX_SYS_SPACE) {
+							if (corrupted) {
+								buf_mark_space_corrupt(bpage);
+							}
+						} else {
+							ut_error;
+						}
+						return(false);
+					}
 				}
 			}
-		}
 		} /**/
 
 		DBUG_EXECUTE_IF("buf_page_is_corrupt_failure",
@@ -4551,17 +4912,33 @@ corrupt:
 
 				block = NULL;
 				update_ibuf_bitmap = FALSE;
-
 			} else {
 
 				block = (buf_block_t *) bpage;
 				update_ibuf_bitmap = TRUE;
 			}
 
-			ibuf_merge_or_delete_for_page(
-				block, bpage->space,
-				bpage->offset, buf_page_get_zip_size(bpage),
-				update_ibuf_bitmap);
+			if (bpage && bpage->encrypted) {
+				fprintf(stderr,
+					"InnoDB: Warning: Table in tablespace %lu encrypted."
+					"However key management plugin or used key_id %u is not found or"
+					" used encryption algorithm or method does not match."
+					" Can't continue opening the table.\n",
+					(ulint)bpage->space, bpage->key_version);
+			} else {
+				ibuf_merge_or_delete_for_page(
+					block, bpage->space,
+					bpage->offset, buf_page_get_zip_size(bpage),
+					update_ibuf_bitmap);
+			}
+
+		}
+	} else {
+		/* io_type == BUF_IO_WRITE */
+		if (bpage->slot) {
+			/* Mark slot free */
+			bpage->slot->reserved = false;
+			bpage->slot = NULL;
 		}
 	}
 
@@ -4697,21 +5074,23 @@ buf_all_freed_instance(
 		mutex_exit(&buf_pool->LRU_list_mutex);
 
 		if (UNIV_LIKELY_NULL(block)) {
-			fil_space_t* space = fil_space_get(block->page.space);
-			ib_logf(IB_LOG_LEVEL_ERROR,
-				"Page %u %u still fixed or dirty.",
-				block->page.space,
-				block->page.offset);
-			ib_logf(IB_LOG_LEVEL_ERROR,
-				"Page oldest_modification %lu fix_count %d io_fix %d.",
-				block->page.oldest_modification,
-				block->page.buf_fix_count,
-				buf_page_get_io_fix(&block->page));
-			ib_logf(IB_LOG_LEVEL_ERROR,
-				"Page space_id %u name %s.",
-				block->page.space,
-				(space && space->name) ? space->name : "NULL");
-			ut_error;
+				if (block->page.key_version == 0) {
+				fil_space_t* space = fil_space_get(block->page.space);
+				ib_logf(IB_LOG_LEVEL_ERROR,
+					"Page %u %u still fixed or dirty.",
+					block->page.space,
+					block->page.offset);
+				ib_logf(IB_LOG_LEVEL_ERROR,
+					"Page oldest_modification %lu fix_count %d io_fix %d.",
+					block->page.oldest_modification,
+					block->page.buf_fix_count,
+					buf_page_get_io_fix(&block->page));
+				ib_logf(IB_LOG_LEVEL_ERROR,
+					"Page space_id %u name %s.",
+					block->page.space,
+					(space && space->name) ? space->name : "NULL");
+				ut_error;
+			}
 		}
 	}
 
@@ -5838,3 +6217,354 @@ buf_page_init_for_backup_restore(
 	}
 }
 #endif /* !UNIV_HOTBACKUP */
+
+/*********************************************************************//**
+Aquire LRU list mutex */
+void
+buf_pool_mutex_enter(
+/*=================*/
+	buf_pool_t*	buf_pool) /*!< in: buffer pool */
+{
+	ut_ad(!mutex_own(&buf_pool->LRU_list_mutex));
+	mutex_enter(&buf_pool->LRU_list_mutex);
+}
+/*********************************************************************//**
+Exit LRU list mutex */
+void
+buf_pool_mutex_exit(
+/*================*/
+	buf_pool_t*	buf_pool) /*!< in: buffer pool */
+{
+	ut_ad(mutex_own(&buf_pool->LRU_list_mutex));
+	mutex_exit(&buf_pool->LRU_list_mutex);
+}
+
+/********************************************************************//**
+Reserve unused slot from temporary memory array and allocate necessary
+temporary memory if not yet allocated.
+@return reserved slot */
+UNIV_INTERN
+buf_tmp_buffer_t*
+buf_pool_reserve_tmp_slot(
+/*======================*/
+	buf_pool_t*	buf_pool,	/*!< in: buffer pool where to
+					reserve */
+	bool		compressed)	/*!< in: is file space compressed */
+{
+	buf_tmp_buffer_t *free_slot=NULL;
+
+	/* Array is protected by buf_pool mutex */
+	buf_pool_mutex_enter(buf_pool);
+
+	for(ulint i = 0; i < buf_pool->tmp_arr->n_slots; i++) {
+		buf_tmp_buffer_t *slot = &buf_pool->tmp_arr->slots[i];
+
+		if(slot->reserved == false) {
+			free_slot = slot;
+			break;
+		}
+	}
+
+	/* We assume that free slot is found */
+	ut_a(free_slot != NULL);
+	free_slot->reserved = true;
+	/* Now that we have reserved this slot we can release
+	buf_pool mutex */
+	buf_pool_mutex_exit(buf_pool);
+
+	/* Allocate temporary memory for encryption/decryption */
+	if (free_slot->crypt_buf_free == NULL) {
+		free_slot->crypt_buf_free = static_cast<byte *>(ut_malloc(UNIV_PAGE_SIZE*2));
+		free_slot->crypt_buf = static_cast<byte *>(ut_align(free_slot->crypt_buf_free, UNIV_PAGE_SIZE));
+		memset(free_slot->crypt_buf_free, 0, UNIV_PAGE_SIZE *2);
+	}
+
+	/* For page compressed tables allocate temporary memory for
+	compression/decompression */
+	if (compressed && free_slot->comp_buf_free == NULL) {
+		free_slot->comp_buf_free = static_cast<byte *>(ut_malloc(UNIV_PAGE_SIZE*2));
+		free_slot->comp_buf = static_cast<byte *>(ut_align(free_slot->comp_buf_free, UNIV_PAGE_SIZE));
+		memset(free_slot->comp_buf_free, 0, UNIV_PAGE_SIZE *2);
+#ifdef HAVE_LZO
+		free_slot->lzo_mem = static_cast<byte *>(ut_malloc(LZO1X_1_15_MEM_COMPRESS));
+		memset(free_slot->lzo_mem, 0, LZO1X_1_15_MEM_COMPRESS);
+#endif
+	}
+
+	return (free_slot);
+}
+
+/********************************************************************//**
+Encrypts a buffer page right before it's flushed to disk
+*/
+byte*
+buf_page_encrypt_before_write(
+/*==========================*/
+	buf_page_t*	bpage,		/*!< in/out: buffer page to be flushed */
+	byte*		src_frame,	/*!< in: src frame */
+	ulint		space_id)	/*!< in: space id */
+{
+	fil_space_crypt_t* crypt_data = fil_space_get_crypt_data(space_id);
+	ulint zip_size = buf_page_get_zip_size(bpage);
+	ulint page_size = (zip_size) ? zip_size : UNIV_PAGE_SIZE;
+	buf_pool_t* buf_pool = buf_pool_from_bpage(bpage);
+	bool page_compressed = fil_space_is_page_compressed(bpage->space);
+	bool encrypted = true;
+
+	bpage->real_size = UNIV_PAGE_SIZE;
+
+	fil_page_type_validate(src_frame);
+
+	if (bpage->offset == 0) {
+		/* Page 0 of a tablespace is not encrypted/compressed */
+		ut_ad(bpage->key_version == 0);
+		return src_frame;
+	}
+
+	if (bpage->space == TRX_SYS_SPACE && bpage->offset == TRX_SYS_PAGE_NO) {
+		/* don't encrypt/compress page as it contains address to dblwr buffer */
+		bpage->key_version = 0;
+		return src_frame;
+	}
+
+	if (crypt_data != NULL && crypt_data->not_encrypted()) {
+		/* Encryption is disabled */
+		encrypted = false;
+	}
+
+	if (!srv_encrypt_tables && (crypt_data == NULL || crypt_data->is_default_encryption())) {
+		/* Encryption is disabled */
+		encrypted = false;
+	}
+
+	/* Is encryption needed? */
+	if (crypt_data == NULL || crypt_data->type == CRYPT_SCHEME_UNENCRYPTED) {
+		/* An unencrypted table */
+		bpage->key_version = 0;
+		encrypted = false;
+	}
+
+	if (!encrypted && !page_compressed) {
+		/* No need to encrypt or page compress the page */
+		return src_frame;
+	}
+
+	/* Find free slot from temporary memory array */
+	buf_tmp_buffer_t* slot = buf_pool_reserve_tmp_slot(buf_pool, page_compressed);
+	slot->out_buf = NULL;
+	bpage->slot = slot;
+
+	byte *dst_frame = slot->crypt_buf;
+
+	if (!page_compressed) {
+		/* Encrypt page content */
+		byte* tmp = fil_space_encrypt(bpage->space,
+					      bpage->offset,
+					      bpage->newest_modification,
+					      src_frame,
+					      zip_size,
+					      dst_frame);
+
+		ulint key_version = mach_read_from_4(dst_frame + FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION);
+		ut_ad(key_version == 0 || key_version >= bpage->key_version);
+		bpage->key_version = key_version;
+		bpage->real_size = page_size;
+		slot->out_buf = dst_frame = tmp;
+
+#ifdef UNIV_DEBUG
+		fil_page_type_validate(tmp);
+#endif
+
+	} else {
+		/* First we compress the page content */
+		ulint out_len = 0;
+		ulint block_size = fil_space_get_block_size(bpage->space, bpage->offset, page_size);
+
+		byte *tmp = fil_compress_page(bpage->space,
+					(byte *)src_frame,
+					slot->comp_buf,
+					page_size,
+					fil_space_get_page_compression_level(bpage->space),
+					block_size,
+					encrypted,
+					&out_len,
+					IF_LZO(slot->lzo_mem, NULL)
+					);
+
+		bpage->real_size = out_len;
+
+#ifdef UNIV_DEBUG
+		fil_page_type_validate(tmp);
+#endif
+
+		if(encrypted) {
+
+			/* And then we encrypt the page content */
+			tmp = fil_space_encrypt(bpage->space,
+						bpage->offset,
+						bpage->newest_modification,
+						tmp,
+						zip_size,
+						dst_frame);
+		}
+
+		slot->out_buf = dst_frame = tmp;
+	}
+
+#ifdef UNIV_DEBUG
+	fil_page_type_validate(dst_frame);
+#endif
+
+	// return dst_frame which will be written
+	return dst_frame;
+}
+
+/********************************************************************//**
+Decrypt page after it has been read from disk
+*/
+ibool
+buf_page_decrypt_after_read(
+/*========================*/
+	buf_page_t*	bpage)	/*!< in/out: buffer page read from disk */
+{
+	ulint zip_size = buf_page_get_zip_size(bpage);
+	ulint size = (zip_size) ? zip_size : UNIV_PAGE_SIZE;
+
+	byte* dst_frame = (zip_size) ? bpage->zip.data :
+		((buf_block_t*) bpage)->frame;
+	unsigned key_version =
+		mach_read_from_4(dst_frame + FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION);
+	bool page_compressed = fil_page_is_compressed(dst_frame);
+	bool page_compressed_encrypted = fil_page_is_compressed_encrypted(dst_frame);
+	buf_pool_t* buf_pool = buf_pool_from_bpage(bpage);
+	bool success = true;
+	ulint 		space_id = mach_read_from_4(
+		dst_frame + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
+	fil_space_crypt_t* crypt_data = fil_space_get_crypt_data(space_id);
+
+	/* Page is encrypted if encryption information is found from
+	tablespace and page contains used key_version. This is true
+	also for pages first compressed and then encrypted. */
+	if (!crypt_data ||
+	    (crypt_data &&
+	     crypt_data->type == CRYPT_SCHEME_UNENCRYPTED &&
+	     key_version != 0)) {
+		byte*	frame = NULL;
+
+		if (buf_page_get_zip_size(bpage)) {
+			frame = bpage->zip.data;
+		} else {
+			frame = ((buf_block_t*) bpage)->frame;
+		}
+
+		/* If page is not corrupted at this point, page can't be
+		encrypted, thus set key_version to 0. If page is corrupted,
+		we assume at this point that it is encrypted as page
+		contained key_version != 0. Note that page could still be
+		really corrupted. This we will find out after decrypt by
+		checking page checksums. */
+		if (!buf_page_is_corrupted(false, frame, buf_page_get_zip_size(bpage))) {
+			key_version = 0;
+		}
+	}
+
+	/* If page is encrypted read post-encryption checksum */
+	if (!page_compressed_encrypted && key_version != 0) {
+		bpage->stored_checksum = mach_read_from_4(dst_frame +  + FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION + 4);
+	}
+
+	ut_ad(bpage->key_version == 0);
+
+	if (bpage->offset == 0) {
+		/* File header pages are not encrypted/compressed */
+		return (TRUE);
+	}
+
+	/* Store these for corruption check */
+	bpage->key_version = key_version;
+	bpage->page_encrypted = page_compressed_encrypted;
+	bpage->page_compressed = page_compressed;
+
+	if (page_compressed) {
+		/* the page we read is unencrypted */
+		/* Find free slot from temporary memory array */
+		buf_tmp_buffer_t* slot = buf_pool_reserve_tmp_slot(buf_pool, page_compressed);
+
+#ifdef UNIV_DEBUG
+		fil_page_type_validate(dst_frame);
+#endif
+
+		/* decompress using comp_buf to dst_frame */
+		fil_decompress_page(slot->comp_buf,
+			dst_frame,
+			size,
+			&bpage->write_size);
+
+		/* Mark this slot as free */
+		slot->reserved = false;
+		key_version = 0;
+
+#ifdef UNIV_DEBUG
+		fil_page_type_validate(dst_frame);
+#endif
+	} else {
+		buf_tmp_buffer_t* slot = NULL;
+
+		if (key_version) {
+			/* Find free slot from temporary memory array */
+			slot = buf_pool_reserve_tmp_slot(buf_pool, page_compressed);
+
+#ifdef UNIV_DEBUG
+			fil_page_type_validate(dst_frame);
+#endif
+
+			/* Calculate checksum before decrypt, this will be
+			used later to find out if incorrect key was used. */
+			if (!page_compressed_encrypted) {
+				bpage->calculated_checksum = fil_crypt_calculate_checksum(zip_size, dst_frame);
+			}
+
+			/* decrypt using crypt_buf to dst_frame */
+			byte* res = fil_space_decrypt(bpage->space,
+						slot->crypt_buf,
+						size,
+						dst_frame);
+
+			if (!res) {
+				bpage->encrypted = true;
+				success = false;
+			}
+#ifdef UNIV_DEBUG
+			fil_page_type_validate(dst_frame);
+#endif
+		}
+
+		if (page_compressed_encrypted && success) {
+			if (!slot) {
+				slot = buf_pool_reserve_tmp_slot(buf_pool, page_compressed);
+			}
+
+#ifdef UNIV_DEBUG
+			fil_page_type_validate(dst_frame);
+#endif
+			/* decompress using comp_buf to dst_frame */
+			fil_decompress_page(slot->comp_buf,
+					dst_frame,
+					size,
+					&bpage->write_size);
+
+#ifdef UNIV_DEBUG
+			fil_page_type_validate(dst_frame);
+#endif
+		}
+
+		/* Mark this slot as free */
+		if (slot) {
+			slot->reserved = false;
+		}
+	}
+
+	bpage->key_version = key_version;
+
+	return (success);
+}

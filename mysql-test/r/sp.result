@@ -791,7 +791,7 @@ comment 'Characteristics procedure test'
   insert into t1 values ("chistics", 1)|
 show create procedure chistics|
 Procedure	sql_mode	Create Procedure	character_set_client	collation_connection	Database Collation
-chistics		CREATE DEFINER=`root`@`localhost` PROCEDURE `chistics`()
+chistics	NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION	CREATE DEFINER=`root`@`localhost` PROCEDURE `chistics`()
     MODIFIES SQL DATA
     COMMENT 'Characteristics procedure test'
 insert into t1 values ("chistics", 1)	latin1	latin1_swedish_ci	latin1_swedish_ci
@@ -803,7 +803,7 @@ delete from t1|
 alter procedure chistics sql security invoker|
 show create procedure chistics|
 Procedure	sql_mode	Create Procedure	character_set_client	collation_connection	Database Collation
-chistics		CREATE DEFINER=`root`@`localhost` PROCEDURE `chistics`()
+chistics	NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION	CREATE DEFINER=`root`@`localhost` PROCEDURE `chistics`()
     MODIFIES SQL DATA
     SQL SECURITY INVOKER
     COMMENT 'Characteristics procedure test'
@@ -818,7 +818,7 @@ comment 'Characteristics procedure test'
   return 42|
 show create function chistics|
 Function	sql_mode	Create Function	character_set_client	collation_connection	Database Collation
-chistics		CREATE DEFINER=`root`@`localhost` FUNCTION `chistics`() RETURNS int(11)
+chistics	NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION	CREATE DEFINER=`root`@`localhost` FUNCTION `chistics`() RETURNS int(11)
     DETERMINISTIC
     SQL SECURITY INVOKER
     COMMENT 'Characteristics procedure test'
@@ -831,7 +831,7 @@ no sql
 comment 'Characteristics function test'|
 show create function chistics|
 Function	sql_mode	Create Function	character_set_client	collation_connection	Database Collation
-chistics		CREATE DEFINER=`root`@`localhost` FUNCTION `chistics`() RETURNS int(11)
+chistics	NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION	CREATE DEFINER=`root`@`localhost` FUNCTION `chistics`() RETURNS int(11)
     NO SQL
     DETERMINISTIC
     SQL SECURITY INVOKER
@@ -3548,7 +3548,10 @@ begin
 set f1= concat( 'hello', f1 );
 return f1;
 end|
-ERROR 42000: This version of MariaDB doesn't yet support 'return value collation'
+select collation(bug9048("foo"))|
+collation(bug9048("foo"))
+latin1_bin
+drop function bug9048|
 drop procedure if exists bug12849_1|
 create procedure bug12849_1(inout x char) select x into x|
 set @var='a'|
@@ -6069,7 +6072,7 @@ insert into examplebug20777 values (1, 9223372036854775806, 9223372036854775807,
 show create table examplebug20777;
 Table	Create Table
 examplebug20777	CREATE TABLE `examplebug20777` (
-  `i` int(1) NOT NULL DEFAULT '0',
+  `i` int(1) NOT NULL,
   `2**63-2` bigint(20) unsigned DEFAULT NULL,
   `2**63-1` bigint(20) unsigned DEFAULT NULL,
   `2**63` bigint(20) unsigned DEFAULT NULL,
@@ -7099,7 +7102,7 @@ CAST('10 ' as UNSIGNED INTEGER)
 1
 Warnings:
 Warning	1265	Data truncated for column 'a' at row 1
-Warning	1292	Truncated incorrect INTEGER value: '10 '
+Note	1292	Truncated incorrect INTEGER value: '10 '
 DROP PROCEDURE p1;
 DROP PROCEDURE IF EXISTS p1;
 DROP PROCEDURE IF EXISTS p2;
@@ -7125,7 +7128,7 @@ CAST('10 ' as UNSIGNED INTEGER)
 2
 2
 Warnings:
-Warning	1292	Truncated incorrect INTEGER value: '10 '
+Note	1292	Truncated incorrect INTEGER value: '10 '
 DROP PROCEDURE p1;
 DROP PROCEDURE p2;
 DROP PROCEDURE p3;
@@ -7859,6 +7862,45 @@ v1
 6
 DROP PROCEDURE p1;
 DROP TABLE t1;
+#
+# MDEV-10713: signal 11 error on multi-table update - crash in
+# handler::increment_statistics or in make_select or assertion
+# failure pfs_thread == ((PFS_thread*) pthread_getspecific((THR_PFS)))
+#
+CREATE TABLE `t1` (
+`CLOSE_YN` varchar(10) COLLATE utf8_bin DEFAULT NULL
+) DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;
+CREATE TABLE `t2` (
+`ap_close_to` varchar(8) COLLATE utf8_bin DEFAULT NULL
+) DEFAULT CHARSET=utf8 COLLATE=utf8_bin ;
+insert t1 values (1);
+CREATE  FUNCTION `f1`(`P_DC_CD` VARBINARY(50), `P_SYS_DATE` DATETIME) RETURNS datetime
+DETERMINISTIC
+SQL SECURITY INVOKER
+BEGIN
+DECLARE V_SYS_DATE DATETIME;
+SELECT now() AS LOC_DATE INTO V_SYS_DATE ;
+RETURN v_sys_date ;
+END $$
+update t1 S
+JOIN
+(
+SELECT CASE
+WHEN DATE_FORMAT( f1('F01', NOW()) , '%Y%m%d') <= CLOSE_YMD
+THEN '99991231'
+	     ELSE '' END ACCOUNT_APPLY_YYYYMMDD
+FROM (
+select case
+when 'AP'='AP'
+                   then ap_close_to
+end AS CLOSE_YMD
+from t2
+) A
+) X
+SET S.CLOSE_YN = ''
+where 1=1;
+drop function if exists f1;
+drop table t1,t2;
 # End of 5.5 test
 #
 #  MDEV-7040: Crash in field_conv, memcpy_field_possible, part#2
@@ -7913,3 +7955,80 @@ set global table_open_cache= @tmp_toc;
 set global table_definition_cache= @tmp_tdc;
 drop procedure p1;
 drop table t1,t2,t3,t4,t5,t6;
+# End of 10.0 test
+CREATE FUNCTION f(f1 VARCHAR(64) COLLATE latin1_german2_ci)
+RETURNS VARCHAR(64)
+BEGIN
+RETURN 'str';
+END|
+DROP FUNCTION f|
+CREATE FUNCTION f(f1 VARCHAR(64))
+RETURNS VARCHAR(64) COLLATE latin1_german2_ci
+BEGIN
+RETURN 'str';
+END|
+DROP FUNCTION f|
+CREATE FUNCTION f(f1 VARCHAR(64))
+RETURNS VARCHAR(64)
+BEGIN
+DECLARE f2 VARCHAR(64) COLLATE latin1_german2_ci;
+RETURN 'str';
+END|
+DROP FUNCTION f|
+#
+# MDEV-7023: Error 2027: Malformed packet and assertion
+# `field_types == 0 || field_types[field_pos] == MYSQL_TYPE_INT24 ||
+#field_types[field_pos] == MYSQL_TYPE_LONG' failure in
+#Protocol_text::store_long
+#
+create table t1 (i int);
+create table t2 (i int);
+create function f() returns int 
+begin 
+analyze insert into t1 values (1); 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+create function f() returns int 
+begin 
+analyze insert t1 select * from t2; 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+create function f() returns int 
+begin 
+analyze delete from t1; 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+create function f() returns int 
+begin 
+analyze delete t1 from t1,t2; 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+create function f() returns int 
+begin 
+analyze update t1 set i=1; 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+create function f() returns int 
+begin 
+analyze update t1,t2 set i=1; 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+create function f() returns int 
+begin 
+analyze replace t1 set i=1; 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+create function f() returns int 
+begin 
+analyze replace t1 select * from t2; 
+return 1; 
+end |
+ERROR 0A000: Not allowed to return a result set from a function
+drop table t1,t2;

@@ -9,8 +9,8 @@ sleep(1)
 0
 Warnings:
 Warning	1620	Plugin is busy and will be uninstalled on shutdown
-drop table t1;
 install plugin innodb soname 'ha_innodb';
+drop table t1;
 create table t2(a int not null primary key) engine=innodb;
 insert into t2 values(1);
 drop table t2;

@@ -33,7 +33,6 @@ typedef struct st_mysql_rows MYSQL_ROWS;
 class Protocol
 {
 protected:
-  THD	 *thd;
   String *packet;
   /* Used by net_store_data() for charset conversions */
   String *convert;
@@ -71,7 +70,7 @@ protected:
                           const char *sql_state);
 
 public:
-  Protocol() {}
+  THD	 *thd;
   Protocol(THD *thd_arg) { init(thd_arg); }
   virtual ~Protocol() {}
   void init(THD* thd_arg);
@@ -139,6 +138,10 @@ public:
   virtual enum enum_protocol_type type()= 0;
 
   void end_statement();
+
+  friend int send_answer_1(Protocol *protocol, String *s1, String *s2,
+                           String *s3);
+  friend int send_header_2(Protocol *protocol, bool for_category);
 };
 
 
@@ -147,7 +150,6 @@ public:
 class Protocol_text :public Protocol
 {
 public:
-  Protocol_text() {}
   Protocol_text(THD *thd_arg) :Protocol(thd_arg) {}
   virtual void prepare_for_resend();
   virtual bool store_null();
@@ -179,7 +181,6 @@ class Protocol_binary :public Protocol
 private:
   uint bit_fields;
 public:
-  Protocol_binary() {}
   Protocol_binary(THD *thd_arg) :Protocol(thd_arg) {}
   virtual bool prepare_for_send(uint num_columns);
   virtual void prepare_for_resend();
@@ -209,6 +210,83 @@ public:
 
   virtual enum enum_protocol_type type() { return PROTOCOL_BINARY; };
 };
+
+
+/*
+  A helper for "ANALYZE $stmt" which looks a real network procotol but doesn't
+  write results to the network.
+
+  At first glance, class select_send looks like a more appropriate place to
+  implement the "write nothing" hook. This is not true, because
+    - we need to evaluate the value of every item, and do it the way
+      select_send does it (i.e. call item->val_int() or val_real() or...)
+    - select_send::send_data() has some other code, like telling the storage
+      engine that the row can be unlocked. We want to keep that also.
+  as a result, "ANALYZE $stmt" uses a select_send_analyze which still uses 
+  select_send::send_data() & co., and also uses  Protocol_discard object.
+*/
+
+class Protocol_discard : public Protocol_text
+{
+public:
+  Protocol_discard(THD *thd_arg) : Protocol_text(thd_arg) {}
+  /* The real writing is done only in write() */
+  virtual bool write() { return 0; }
+  virtual bool send_result_set_metadata(List<Item> *list, uint flags)
+  {
+    // Don't pas Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF flags 
+    return Protocol_text::send_result_set_metadata(list, 0);
+  }
+
+  // send_error is intentionally not overloaded.
+  virtual bool send_eof(uint server_status, uint statement_warn_count)
+  {
+    return 0;
+  }
+
+  void prepare_for_resend()
+  {
+#ifndef DBUG_OFF
+    field_pos= 0;
+#endif
+  }
+  
+  /* 
+    Provide dummy overrides for any storage methods so that we
+    avoid allocating and copying of data
+  */
+  virtual bool store_null() 
+  { return false; }
+  virtual bool store_tiny(longlong from)
+  { return false; }
+  virtual bool store_short(longlong from)
+  { return false; }
+  virtual bool store_long(longlong from)
+  { return false; }
+  virtual bool store_longlong(longlong from, bool unsigned_flag)
+  { return false; }
+  virtual bool store_decimal(const my_decimal *)
+  { return false; }
+  virtual bool store(const char *from, size_t length, CHARSET_INFO *cs)
+  { return false; }
+  virtual bool store(const char *from, size_t length,
+  		     CHARSET_INFO *fromcs, CHARSET_INFO *tocs)
+  { return false; }
+  virtual bool store(MYSQL_TIME *time, int decimals)
+  { return false; }
+  virtual bool store_date(MYSQL_TIME *time)
+  { return false; }
+  virtual bool store_time(MYSQL_TIME *time, int decimals)
+  { return false; }
+  virtual bool store(float nr, uint32 decimals, String *buffer)
+  { return false; }
+  virtual bool store(double from, uint32 decimals, String *buffer)
+  { return false; }
+  virtual bool store(Field *field)
+  { return false; }
+
+};
+
 
 void send_warning(THD *thd, uint sql_errno, const char *err=0);
 bool net_send_error(THD *thd, uint sql_errno, const char *err,

@@ -184,7 +184,7 @@ int pthread_cancel(pthread_t thread);
 #define pthread_key(T,V) pthread_key_t V
 #define my_pthread_getspecific_ptr(T,V) my_pthread_getspecific(T,(V))
 #define my_pthread_setspecific_ptr(T,V) pthread_setspecific(T,(void*) (V))
-#define pthread_detach_this_thread()
+#define pthread_detach_this_thread() { pthread_t tmp=pthread_self() ; pthread_detach(tmp); }
 #define pthread_handler_t EXTERNC void *
 typedef void *(* pthread_handler)(void *);
 
@@ -714,7 +714,7 @@ extern void my_mutex_end(void);
   We need to have at least 256K stack to handle calls to myisamchk_init()
   with the current number of keys and key parts.
 */
-#define DEFAULT_THREAD_STACK	(288*1024L)
+#define DEFAULT_THREAD_STACK	(289*1024L)
 #endif
 
 #define MY_PTHREAD_LOCK_READ 0

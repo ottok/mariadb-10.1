@@ -533,7 +533,7 @@ typedef struct index_read_info {
 
 static int ai_poll_fun(void *extra, float progress) {
     LOADER_CONTEXT context = (LOADER_CONTEXT)extra;
-    if (thd_killed(context->thd)) {
+    if (thd_kill_level(context->thd)) {
         sprintf(context->write_status_msg, "The process has been killed, aborting add index.");
         return ER_ABORTING_CONNECTION;
     }
@@ -548,7 +548,7 @@ static int ai_poll_fun(void *extra, float progress) {
 
 static int loader_poll_fun(void *extra, float progress) {
     LOADER_CONTEXT context = (LOADER_CONTEXT)extra;
-    if (thd_killed(context->thd)) {
+    if (thd_kill_level(context->thd)) {
         sprintf(context->write_status_msg, "The process has been killed, aborting bulk load.");
         return ER_ABORTING_CONNECTION;
     }
@@ -2139,7 +2139,7 @@ int ha_tokudb::write_frm_data(DB* db, DB_TXN* txn, const char* frm_name) {
     size_t frm_len = 0;
     int error = 0;
 
-#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099
+#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100199
     error = table_share->read_frm_image((const uchar**)&frm_data,&frm_len);
     if (error) { goto cleanup; }
 #else    
@@ -2179,7 +2179,7 @@ int ha_tokudb::verify_frm_data(const char* frm_name, DB_TXN* txn) {
     HA_METADATA_KEY curr_key = hatoku_frm_data;
 
     // get the frm data from MySQL
-#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100099
+#if 100000 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 100199
     error = table_share->read_frm_image((const uchar**)&mysql_frm_data,&mysql_frm_len);
     if (error) { 
         goto cleanup;
@@ -3435,7 +3435,7 @@ int ha_tokudb::end_bulk_insert(bool abort) {
     ai_metadata_update_required = false;
     loader_error = 0;
     if (loader) {
-        if (!abort_loader && !thd_killed(thd)) {
+        if (!abort_loader && !thd_kill_level(thd)) {
             DBUG_EXECUTE_IF("tokudb_end_bulk_insert_sleep", {
                 const char *orig_proc_info = tokudb_thd_get_proc_info(thd);
                 thd_proc_info(thd, "DBUG sleep");
@@ -3445,7 +3445,7 @@ int ha_tokudb::end_bulk_insert(bool abort) {
             error = loader->close(loader);
             loader = NULL;
             if (error) { 
-                if (thd_killed(thd)) {
+                if (thd_kill_level(thd)) {
                     my_error(ER_QUERY_INTERRUPTED, MYF(0));
                 }
                 goto cleanup; 
@@ -3580,7 +3580,7 @@ int ha_tokudb::is_index_unique(bool* is_unique, DB_TXN* txn, DB* db, KEY* key_in
                 share->row_count(),
                 key_info->name);
             thd_proc_info(thd, status_msg);
-            if (thd_killed(thd)) {
+            if (thd_kill_level(thd)) {
                 my_error(ER_QUERY_INTERRUPTED, MYF(0));
                 error = ER_QUERY_INTERRUPTED;
                 goto cleanup;
@@ -3696,6 +3696,8 @@ int ha_tokudb::do_uniqueness_checks(uchar* record, DB_TXN* txn, THD* thd) {
     // first do uniqueness checks
     //
     if (share->has_unique_keys && do_unique_checks(thd, in_rpl_write_rows)) {
+        DBUG_EXECUTE_IF("tokudb_crash_if_rpl_does_uniqueness_check",
+                        DBUG_ASSERT(0););
         for (uint keynr = 0; keynr < table_share->keys; keynr++) {
             bool is_unique_key = (table->key_info[keynr].flags & HA_NOSAME) || (keynr == primary_key);
             bool is_unique = false;
@@ -4161,7 +4163,7 @@ bool ha_tokudb::key_changed(uint keynr, const uchar * old_row, const uchar * new
 int ha_tokudb::update_row(const uchar * old_row, uchar * new_row) {
     TOKUDB_HANDLER_DBUG_ENTER("");
     DBT prim_key, old_prim_key, prim_row, old_prim_row;
-    int error;
+    int UNINIT_VAR(error);
     bool has_null;
     THD* thd = ha_thd();
     DB_TXN* sub_trans = NULL;
@@ -4169,7 +4171,6 @@ int ha_tokudb::update_row(const uchar * old_row, uchar * new_row) {
     tokudb_trx_data* trx = (tokudb_trx_data *) thd_get_ha_data(thd, tokudb_hton);
     uint curr_num_DBs;
 
-    LINT_INIT(error);
     memset((void *) &prim_key, 0, sizeof(prim_key));
     memset((void *) &old_prim_key, 0, sizeof(old_prim_key));
     memset((void *) &prim_row, 0, sizeof(prim_row));
@@ -5246,7 +5247,7 @@ int ha_tokudb::fill_range_query_buf(
         // otherwise, if we simply see that the current key is no match,
         // we tell the cursor to continue and don't store
         // the key locally
-        if (result == ICP_OUT_OF_RANGE || thd_killed(thd)) {
+        if (result == ICP_OUT_OF_RANGE || thd_kill_level(thd)) {
             icp_went_out_of_range = true;
             error = 0;
             DEBUG_SYNC(ha_thd(), "tokudb_icp_asc_scan_out_of_range");
@@ -5614,7 +5615,7 @@ int ha_tokudb::get_next(
             static_cast<tokudb_trx_data*>(thd_get_ha_data(thd, tokudb_hton));
         trx->stmt_progress.queried++;
         track_progress(thd);
-        if (thd_killed(thd))
+        if (thd_kill_level(thd))
             error = ER_ABORTING_CONNECTION;
     }
 cleanup:
@@ -5916,6 +5917,7 @@ int ha_tokudb::rnd_pos(uchar * buf, uchar * pos) {
     // test rpl slave by inducing a delay before the point query
     THD *thd = ha_thd();
     if (thd->slave_thread && (in_rpl_delete_rows || in_rpl_update_rows)) {
+        DBUG_EXECUTE_IF("tokudb_crash_if_rpl_looks_up_row", DBUG_ASSERT(0););
         uint64_t delay_ms = tokudb::sysvars::rpl_lookup_rows_delay(thd);
         if (delay_ms)
             usleep(delay_ms * 1000);
@@ -8352,7 +8354,7 @@ int ha_tokudb::tokudb_add_index(
                     (long long unsigned)share->row_count());
 #endif
 
-                if (thd_killed(thd)) {
+                if (thd_kill_level(thd)) {
                     error = ER_ABORTING_CONNECTION;
                     goto cleanup;
                 }

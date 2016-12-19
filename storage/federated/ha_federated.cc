@@ -626,17 +626,17 @@ int get_connection(MEM_ROOT *mem_root, FEDERATED_SHARE *share)
     at the address of the share.
   */
   share->server_name_length= server->server_name_length;
-  share->server_name= server->server_name;
-  share->username= server->username;
-  share->password= server->password;
-  share->database= server->db;
+  share->server_name= const_cast<char*>(server->server_name);
+  share->username= const_cast<char*>(server->username);
+  share->password= const_cast<char*>(server->password);
+  share->database= const_cast<char*>(server->db);
   share->port= server->port > MIN_PORT && server->port < 65536 ? 
                (ushort) server->port : MYSQL_PORT;
-  share->hostname= server->host;
-  if (!(share->socket= server->socket) &&
+  share->hostname= const_cast<char*>(server->host);
+  if (!(share->socket= const_cast<char*>(server->socket)) &&
       !strcmp(share->hostname, my_localhost))
     share->socket= (char *) MYSQL_UNIX_ADDR;
-  share->scheme= server->scheme;
+  share->scheme= const_cast<char*>(server->scheme);
 
   DBUG_PRINT("info", ("share->username %s", share->username));
   DBUG_PRINT("info", ("share->password %s", share->password));
@@ -2400,9 +2400,7 @@ int ha_federated::index_read_idx(uchar *buf, uint index, const uchar *key,
 
   RESULT
     0	ok     In this case *result will contain the result set
-	       table->status == 0 
     #   error  In this case *result will contain 0
-               table->status == STATUS_NOT_FOUND
 */
 
 int ha_federated::index_read_idx_with_result_set(uchar *buf, uint index,
@@ -2456,13 +2454,11 @@ int ha_federated::index_read_idx_with_result_set(uchar *buf, uint index,
     mysql_free_result(*result);
     results.elements--;
     *result= 0;
-    table->status= STATUS_NOT_FOUND;
     DBUG_RETURN(retval);
   }
   DBUG_RETURN(0);
 
 error:
-  table->status= STATUS_NOT_FOUND;
   my_error(retval, MYF(0), error_buffer);
   DBUG_RETURN(retval);
 }
@@ -2535,7 +2531,6 @@ int ha_federated::read_range_first(const key_range *start_key,
   DBUG_RETURN(retval);
 
 error:
-  table->status= STATUS_NOT_FOUND;
   DBUG_RETURN(retval);
 }
 
@@ -2696,8 +2691,6 @@ int ha_federated::read_next(uchar *buf, MYSQL_RES *result)
   MYSQL_ROW row;
   DBUG_ENTER("ha_federated::read_next");
 
-  table->status= STATUS_NOT_FOUND;              // For easier return
-  
   /* Save current data cursor position. */
   current_position= result->data_cursor;
 

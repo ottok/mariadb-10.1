@@ -14,6 +14,27 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
+
+IF(WITH_WSREP AND NOT EMBEDDED_LIBRARY)
+  SET(WSREP_INCLUDES ${CMAKE_SOURCE_DIR}/wsrep)
+  SET(WSREP_SOURCES
+    wsrep_check_opts.cc
+    wsrep_hton.cc
+    wsrep_mysqld.cc 
+    wsrep_notify.cc
+    wsrep_sst.cc
+    wsrep_utils.cc
+    wsrep_var.cc
+    wsrep_binlog.cc
+    wsrep_applier.cc
+    wsrep_thd.cc
+    wsrep_xid.cc
+  )
+  SET(WSREP_LIB wsrep)
+ELSE()
+  SET(WSREP_SOURCES wsrep_dummy.cc)
+ENDIF()
+
 INCLUDE_DIRECTORIES(
 ${CMAKE_SOURCE_DIR}/include 
 ${CMAKE_SOURCE_DIR}/sql 
@@ -21,6 +42,7 @@ ${PCRE_INCLUDES}
 ${ZLIB_INCLUDE_DIR}
 ${SSL_INCLUDE_DIRS}
 ${CMAKE_BINARY_DIR}/sql
+${WSREP_INCLUDES}
 )
 
 SET(GEN_SOURCES
@@ -49,7 +71,7 @@ ADD_CUSTOM_COMMAND(
   DEPENDS gen_lex_token
 )
 
-ADD_DEFINITIONS(-DMYSQL_SERVER -DHAVE_EVENT_SCHEDULER) 
+ADD_DEFINITIONS(-DMYSQL_SERVER -DHAVE_EVENT_SCHEDULER)
 
 IF(SSL_DEFINES)
  ADD_DEFINITIONS(${SSL_DEFINES})
@@ -61,7 +83,7 @@ SET (SQL_SOURCE
                filesort_utils.cc
                filesort.cc gstream.cc sha2.cc
                signal_handler.cc
-               handler.cc hash_filo.h sql_plugin_services.h
+               handler.cc hash_filo.h
                hostname.cc init.cc item.cc item_buff.cc item_cmpfunc.cc 
                item_create.cc item_func.cc item_geofunc.cc item_row.cc 
                item_strfunc.cc item_subselect.cc item_sum.cc item_timefunc.cc 
@@ -86,6 +108,7 @@ SET (SQL_SOURCE
                sql_partition.cc sql_plugin.cc sql_prepare.cc sql_rename.cc 
                debug_sync.cc debug_sync.h
                sql_repl.cc sql_select.cc sql_show.cc sql_state.c
+               group_by_handler.cc
                sql_statistics.cc sql_string.cc 
                sql_table.cc sql_test.cc sql_trigger.cc sql_udf.cc sql_union.cc
                sql_update.cc sql_view.cc strfunc.cc table.cc thr_malloc.cc 
@@ -103,16 +126,19 @@ SET (SQL_SOURCE
 
                # added in MariaDB:
                sql_explain.h sql_explain.cc
+               sql_analyze_stmt.h sql_analyze_stmt.cc
                sql_lifo_buffer.h sql_join_cache.h sql_join_cache.cc
                create_options.cc multi_range_read.cc
                opt_index_cond_pushdown.cc opt_subselect.cc
                opt_table_elimination.cc sql_expression_cache.cc
                gcalc_slicescan.cc gcalc_tools.cc
-			   threadpool_common.cc 
-			   ../sql-common/mysql_async.c
-               my_apc.cc my_apc.h
+               threadpool_common.cc ../sql-common/mysql_async.c
+               my_apc.cc my_apc.h mf_iocache_encr.cc
+               my_json_writer.cc my_json_writer.h
                rpl_gtid.cc rpl_parallel.cc
-               table_cache.cc
+               sql_type.cc sql_type.h
+	       ${WSREP_SOURCES}
+               table_cache.cc encryption.cc
                ${CMAKE_CURRENT_BINARY_DIR}/sql_builtin.cc
                ${GEN_SOURCES}
                ${GEN_DIGEST_SOURCES}
@@ -123,7 +149,7 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Linux" OR
     CMAKE_SYSTEM_NAME MATCHES "Windows" OR
     CMAKE_SYSTEM_NAME MATCHES "SunOS" OR
     HAVE_KQUEUE)
- ADD_DEFINITIONS(-DHAVE_POOL_OF_THREADS) 
+ ADD_DEFINITIONS(-DHAVE_POOL_OF_THREADS)
  IF(WIN32)
    SET(SQL_SOURCE ${SQL_SOURCE} threadpool_win.cc)
  ELSE()
@@ -141,7 +167,9 @@ DTRACE_INSTRUMENT(sql)
 TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATIC_PLUGIN_LIBS} 
   mysys mysys_ssl dbug strings vio pcre ${LIBJEMALLOC}
   ${LIBWRAP} ${LIBCRYPT} ${LIBDL} ${CMAKE_THREAD_LIBS_INIT}
-  ${SSL_LIBRARIES})
+  ${WSREP_LIB}
+  ${SSL_LIBRARIES}
+  ${LIBSYSTEMD})
 
 IF(WIN32)
   SET(MYSQLD_SOURCE main.cc nt_servc.cc nt_servc.h message.rc)
@@ -308,7 +336,7 @@ ADD_CUSTOM_TARGET(dist
 
 ADD_CUSTOM_TARGET(distclean
   COMMAND ${CMAKE_COMMAND} -E echo  WARNING: distclean target is not functional
-  COMMAND ${CMAKE_COMMAND} -E echo  Use 'git clean -fdx' instead
+  COMMAND ${CMAKE_COMMAND} -E echo  Use 'git clean -Xdf' instead
   VERBATIM
   )
 
@@ -399,6 +427,5 @@ ENDIF(WIN32)
 
 INSTALL(DIRECTORY . DESTINATION ${INSTALL_INCLUDEDIR}/private COMPONENT Development
   FILES_MATCHING PATTERN "*.h"
-  PATTERN examples EXCLUDE
   PATTERN share EXCLUDE
   PATTERN CMakeFiles EXCLUDE)

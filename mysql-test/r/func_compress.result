@@ -1,3 +1,4 @@
+set global max_allowed_packet=1048576;
 select @test_compress_string:='string for test compress function aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ';
 @test_compress_string:='string for test compress function aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa '
 string for test compress function aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
@@ -72,6 +73,9 @@ set @@global.max_allowed_packet=1048576*100;
 select compress(repeat('aaaaaaaaaa', IF(XXX, 10, 10000000))) is null;
 compress(repeat('aaaaaaaaaa', IF(XXX, 10, 10000000))) is null
 0
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: XXX
+Warning	1292	Truncated incorrect DOUBLE value: XXX
 set @@global.max_allowed_packet=default;
 create table t1(a blob);
 insert into t1 values(NULL), (compress('a'));
@@ -152,6 +156,31 @@ UNCOMPRESS(CAST(0 AS BINARY(5)))
 NULL
 Warnings:
 Warning	1259	ZLIB: Input data corrupted
+set global max_allowed_packet=default;
 #
 # End of 5.5 tests
+#
+#
+# Start of 10.1 tests
+#
+#
+# MDEV-10864 Wrong result for WHERE .. (f2=COMPRESS('test') OR f2=COMPRESS('TEST'))
+#
+CREATE TABLE t1 (f1 VARCHAR(4), f2 VARCHAR(64), UNIQUE KEY k1 (f1,f2));
+INSERT INTO t1 VALUES ('test',compress('test')), ('TEST', compress('TEST'));
+SELECT f1,HEX(f2) FROM t1 ignore index(k1) WHERE f1='test' AND (f2= compress("test") OR f2= compress("TEST"));
+f1	HEX(f2)
+test	04000000789C2B492D2E0100045D01C1
+TEST	04000000789C0B710D0E0100031D0141
+SELECT f1,HEX(f2) FROM t1                  WHERE f1='test' AND (f2= compress("test") OR f2= compress("TEST"));
+f1	HEX(f2)
+TEST	04000000789C0B710D0E0100031D0141
+test	04000000789C2B492D2E0100045D01C1
+SELECT f1,HEX(f2) FROM t1                  WHERE f1='test' AND (f2= compress("TEST") OR f2= compress("test"));
+f1	HEX(f2)
+TEST	04000000789C0B710D0E0100031D0141
+test	04000000789C2B492D2E0100045D01C1
+DROP TABLE t1;
+#
+# End of 10.1 tests
 #

@@ -21,11 +21,13 @@
 #include "sql_bitmap.h"                         /* Bitmap */
 #include "my_decimal.h"                         /* my_decimal */
 #include "mysql_com.h"                     /* SERVER_VERSION_LENGTH */
-#include "my_atomic.h"                     /* my_atomic_rwlock_t */
+#include "my_atomic.h"
 #include "mysql/psi/mysql_file.h"          /* MYSQL_FILE */
 #include "sql_list.h"                      /* I_List */
 #include "sql_cmd.h"
 #include <my_rnd.h>
+#include "my_pthread.h"
+#include "my_rdtsc.h"
 
 class THD;
 struct handlerton;
@@ -38,6 +40,8 @@ typedef struct st_mysql_show_var SHOW_VAR;
 
 #if MAX_INDEXES <= 64
 typedef Bitmap<64>  key_map;          /* Used for finding keys */
+#elif MAX_INDEXES > 128
+#error "MAX_INDEXES values greater than 128 is not supported."
 #else
 typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
 #endif
@@ -54,6 +58,26 @@ typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
 #define TEST_SIGINT		1024	/**< Allow sigint on threads */
 #define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in
                                            some places */
+
+/* Keep things compatible */
+#define OPT_DEFAULT SHOW_OPT_DEFAULT
+#define OPT_SESSION SHOW_OPT_SESSION
+#define OPT_GLOBAL SHOW_OPT_GLOBAL
+
+extern MY_TIMER_INFO sys_timer_info;
+
+/*
+  Values for --slave-parallel-mode
+  Must match order in slave_parallel_mode_typelib in sys_vars.cc.
+*/
+enum enum_slave_parallel_mode {
+  SLAVE_PARALLEL_NONE,
+  SLAVE_PARALLEL_MINIMAL,
+  SLAVE_PARALLEL_CONSERVATIVE,
+  SLAVE_PARALLEL_OPTIMISTIC,
+  SLAVE_PARALLEL_AGGRESSIVE
+};
+
 /* Function prototypes */
 void kill_mysql(void);
 void close_connection(THD *thd, uint sql_errno= 0);
@@ -82,7 +106,7 @@ extern CHARSET_INFO *character_set_filesystem;
 extern MY_BITMAP temp_pool;
 extern bool opt_large_files, server_id_supplied;
 extern bool opt_update_log, opt_bin_log, opt_error_log;
-extern my_bool opt_log, opt_slow_log, opt_bootstrap;
+extern my_bool opt_log, opt_bootstrap;
 extern my_bool opt_backup_history_log;
 extern my_bool opt_backup_progress_log;
 extern ulonglong log_output_options;
@@ -100,16 +124,13 @@ extern my_bool opt_safe_show_db, opt_local_infile, opt_myisam_use_mmap;
 extern my_bool opt_slave_compressed_protocol, use_temp_pool;
 extern ulong slave_exec_mode_options, slave_ddl_exec_mode_options;
 extern ulong slave_retried_transactions;
-#ifdef RBR_TRIGGERS
 extern ulong slave_run_triggers_for_rbr;
-#else
-#define slave_run_triggers_for_rbr 0
-#endif //RBR_TRIGGERS
 extern ulonglong slave_type_conversions_options;
 extern my_bool read_only, opt_readonly;
 extern my_bool lower_case_file_system;
 extern my_bool opt_enable_named_pipe, opt_sync_frm, opt_allow_suspicious_udfs;
 extern my_bool opt_secure_auth;
+extern const char *current_dbug_option;
 extern char* opt_secure_file_priv;
 extern char* opt_secure_backup_file_priv;
 extern size_t opt_secure_backup_file_priv_len;
@@ -123,7 +144,8 @@ extern my_bool opt_enable_shared_memory;
 extern ulong opt_replicate_events_marked_for_skip;
 extern char *default_tz_name;
 extern Time_zone *default_tz;
-extern char *default_storage_engine;
+extern char *default_storage_engine, *default_tmp_storage_engine;
+extern char *enforced_storage_engine;
 extern bool opt_endinfo, using_udf_functions;
 extern my_bool locked_in_memory;
 extern bool opt_using_transactions;
@@ -169,7 +191,7 @@ extern ulong query_cache_limit;
 extern ulong query_cache_min_res_unit;
 extern ulong slow_launch_threads, slow_launch_time;
 extern MYSQL_PLUGIN_IMPORT ulong max_connections;
-extern ulong max_digest_length;
+extern uint max_digest_length;
 extern ulong max_connect_errors, connect_timeout;
 extern my_bool slave_allow_batching;
 extern my_bool allow_slave_start;
@@ -190,6 +212,7 @@ extern ulong stored_program_cache_size;
 extern ulong opt_slave_parallel_threads;
 extern ulong opt_slave_domain_parallel_threads;
 extern ulong opt_slave_parallel_max_queued;
+extern ulong opt_slave_parallel_mode;
 extern ulong opt_binlog_commit_wait_count;
 extern ulong opt_binlog_commit_wait_usec;
 extern my_bool opt_gtid_ignore_duplicates;
@@ -235,6 +258,10 @@ extern ulong connection_errors_internal;
 extern ulong connection_errors_max_connection;
 extern ulong connection_errors_peer_addr;
 extern ulong log_warnings;
+extern my_bool encrypt_binlog;
+extern my_bool encrypt_tmp_disk_tables, encrypt_tmp_files;
+extern ulong encryption_algorithm;
+extern const char *encryption_algorithm_names[];
 
 /*
   THR_MALLOC is a key which will be used to set/get MEM_ROOT** for a thread,
@@ -254,6 +281,7 @@ extern PSI_mutex_key key_LOCK_des_key_file;
 
 extern PSI_mutex_key key_BINLOG_LOCK_index, key_BINLOG_LOCK_xid_list,
   key_BINLOG_LOCK_binlog_background_thread,
+  m_key_LOCK_binlog_end_pos,
   key_delayed_insert_mutex, key_hash_filo_lock, key_LOCK_active_mi,
   key_LOCK_connection_count, key_LOCK_crypt, key_LOCK_delayed_create,
   key_LOCK_delayed_insert, key_LOCK_delayed_status, key_LOCK_error_log,
@@ -313,8 +341,8 @@ extern PSI_cond_key key_COND_wait_gtid, key_COND_gtid_ignore_duplicates;
 
 extern PSI_thread_key key_thread_bootstrap, key_thread_delayed_insert,
   key_thread_handle_manager, key_thread_kill_server, key_thread_main,
-  key_thread_one_connection, key_thread_signal_hand, key_thread_slave_init,
-  key_rpl_parallel_thread;
+  key_thread_one_connection, key_thread_signal_hand,
+  key_thread_slave_background, key_rpl_parallel_thread;
 
 extern PSI_file_key key_file_binlog, key_file_binlog_index, key_file_casetest,
   key_file_dbopt, key_file_des_key_file, key_file_ERRMSG, key_select_to_file,
@@ -336,6 +364,7 @@ void init_server_psi_keys();
   MAINTAINER: Please keep this list in order, to limit merge collisions.
   Hint: grep PSI_stage_info | sort -u
 */
+extern PSI_stage_info stage_apply_event;
 extern PSI_stage_info stage_after_create;
 extern PSI_stage_info stage_after_opening_tables;
 extern PSI_stage_info stage_after_table_lock;
@@ -343,6 +372,7 @@ extern PSI_stage_info stage_allocating_local_table;
 extern PSI_stage_info stage_alter_inplace_prepare;
 extern PSI_stage_info stage_alter_inplace;
 extern PSI_stage_info stage_alter_inplace_commit;
+extern PSI_stage_info stage_after_apply_event;
 extern PSI_stage_info stage_changing_master;
 extern PSI_stage_info stage_checking_master_version;
 extern PSI_stage_info stage_checking_permissions;
@@ -416,6 +446,7 @@ extern PSI_stage_info stage_statistics;
 extern PSI_stage_info stage_storing_result_in_query_cache;
 extern PSI_stage_info stage_storing_row_into_queue;
 extern PSI_stage_info stage_system_lock;
+extern PSI_stage_info stage_unlocking_tables;
 extern PSI_stage_info stage_table_lock;
 extern PSI_stage_info stage_filling_schema_table;
 extern PSI_stage_info stage_update;
@@ -457,6 +488,9 @@ extern PSI_stage_info stage_waiting_for_rpl_thread_pool;
 extern PSI_stage_info stage_master_gtid_wait_primary;
 extern PSI_stage_info stage_master_gtid_wait;
 extern PSI_stage_info stage_gtid_wait_other_connection;
+extern PSI_stage_info stage_slave_background_process_request;
+extern PSI_stage_info stage_slave_background_wait_request;
+extern PSI_stage_info stage_waiting_for_deadlock_kill;
 
 #ifdef HAVE_PSI_STATEMENT_INTERFACE
 /**
@@ -525,7 +559,7 @@ extern mysql_mutex_t
        LOCK_slave_list, LOCK_active_mi, LOCK_manager,
        LOCK_global_system_variables, LOCK_user_conn,
        LOCK_prepared_stmt_count, LOCK_error_messages, LOCK_connection_count,
-       LOCK_slave_init;
+       LOCK_slave_background;
 extern MYSQL_PLUGIN_IMPORT mysql_mutex_t LOCK_thread_count;
 #ifdef HAVE_OPENSSL
 extern char* des_key_file;
@@ -537,11 +571,9 @@ extern mysql_rwlock_t LOCK_grant, LOCK_sys_init_connect, LOCK_sys_init_slave;
 extern mysql_rwlock_t LOCK_system_variables_hash;
 extern mysql_cond_t COND_thread_count;
 extern mysql_cond_t COND_manager;
-extern mysql_cond_t COND_slave_init;
+extern mysql_cond_t COND_slave_background;
 extern int32 thread_running;
 extern int32 thread_count, service_thread_count;
-extern my_atomic_rwlock_t thread_running_lock, thread_count_lock;
-extern my_atomic_rwlock_t slave_executed_entries_lock;
 
 extern char *opt_ssl_ca, *opt_ssl_capath, *opt_ssl_cert, *opt_ssl_cipher,
   *opt_ssl_key, *opt_ssl_crl, *opt_ssl_crlpath;
@@ -589,8 +621,10 @@ enum options_mysqld
   OPT_REPLICATE_WILD_IGNORE_TABLE,
   OPT_SAFE,
   OPT_SERVER_ID,
+  OPT_SILENT,
   OPT_SKIP_HOST_CACHE,
   OPT_SKIP_RESOLVE,
+  OPT_SLAVE_PARALLEL_MODE,
   OPT_SSL_CA,
   OPT_SSL_CAPATH,
   OPT_SSL_CERT,
@@ -600,6 +634,10 @@ enum options_mysqld
   OPT_SSL_KEY,
   OPT_THREAD_CONCURRENCY,
   OPT_WANT_CORE,
+#ifdef WITH_WSREP
+  OPT_WSREP_CAUSAL_READS,
+  OPT_WSREP_SYNC_WAIT,
+#endif /* WITH_WSREP */
   OPT_MYSQL_COMPATIBILITY,
   OPT_MYSQL_TO_BE_IMPLEMENTED,
   OPT_which_is_always_the_last
@@ -619,39 +657,58 @@ enum enum_query_type
   QT_WITHOUT_INTRODUCERS= (1 << 1),
   /// view internal representation (like QT_ORDINARY except ORDER BY clause)
   QT_VIEW_INTERNAL= (1 << 2),
-  /**
-    If an expression is constant, print the expression, not the value
-    it evaluates to. Should be used for error messages, so that they
-    don't reveal values.
-  */
+  /// If identifiers should not include database names for the current database
+  QT_ITEM_IDENT_SKIP_CURRENT_DATABASE= (1 << 3),
+  /// If Item_cache_wrapper should not print <expr_cache>
+  QT_ITEM_CACHE_WRAPPER_SKIP_DETAILS= (1 << 4),
+  /// If Item_subselect should print as just "(subquery#1)"
+  /// rather than display the subquery body
+  QT_ITEM_SUBSELECT_ID_ONLY= (1 << 5),
+  /// If NULLIF(a,b) should print itself as
+  /// CASE WHEN a_for_comparison=b THEN NULL ELSE a_for_return_value END
+  /// when "a" was replaced to two different items
+  /// (e.g. by equal fields propagation in optimize_cond())
+  /// or always as NULLIF(a, b).
+  /// The default behaviour is to use CASE syntax when
+  /// a_for_return_value is not the same as a_for_comparison.
+  /// SHOW CREATE {VIEW|PROCEDURE|FUNCTION} and other cases where the
+  /// original representation is required, should set this flag.
+  QT_ITEM_ORIGINAL_FUNC_NULLIF= (1 <<6),
+
+  /// This value means focus on readability, not on ability to parse back, etc.
+  QT_EXPLAIN=           QT_TO_SYSTEM_CHARSET |
+                        QT_ITEM_IDENT_SKIP_CURRENT_DATABASE |
+                        QT_ITEM_CACHE_WRAPPER_SKIP_DETAILS |
+                        QT_ITEM_SUBSELECT_ID_ONLY,
+
+  /// This is used for EXPLAIN EXTENDED extra warnings
+  /// Be more detailed than QT_EXPLAIN.
+  /// Perhaps we should eventually include QT_ITEM_IDENT_SKIP_CURRENT_DATABASE
+  /// here, as it would give better readable results
+  QT_EXPLAIN_EXTENDED=  QT_TO_SYSTEM_CHARSET,
+
+  // If an expression is constant, print the expression, not the value
+  // it evaluates to. Should be used for error messages, so that they
+  // don't reveal values.
   QT_NO_DATA_EXPANSION= (1 << 9),
 };
+
 
 /* query_id */
 typedef int64 query_id_t;
 extern query_id_t global_query_id;
-extern my_atomic_rwlock_t global_query_id_lock;
-extern my_atomic_rwlock_t statistics_lock;
 
 void unireg_end(void) __attribute__((noreturn));
 
 /* increment query_id and return it.  */
 inline __attribute__((warn_unused_result)) query_id_t next_query_id()
 {
-  query_id_t id;
-  my_atomic_rwlock_wrlock(&global_query_id_lock);
-  id= my_atomic_add64(&global_query_id, 1);
-  my_atomic_rwlock_wrunlock(&global_query_id_lock);
-  return (id);
+  return my_atomic_add64_explicit(&global_query_id, 1, MY_MEMORY_ORDER_RELAXED);
 }
 
 inline query_id_t get_query_id()
 {
-  query_id_t id;
-  my_atomic_rwlock_wrlock(&global_query_id_lock);
-  id= my_atomic_load64(&global_query_id);
-  my_atomic_rwlock_wrunlock(&global_query_id_lock);
-  return id;
+  return my_atomic_load64_explicit(&global_query_id, MY_MEMORY_ORDER_RELAXED);
 }
 
 
@@ -672,44 +729,34 @@ inline void table_case_convert(char * name, uint length)
                                      name, length, name, length);
 }
 
-inline void thread_safe_increment32(int32 *value, my_atomic_rwlock_t *lock)
+inline void thread_safe_increment32(int32 *value)
 {
-  my_atomic_rwlock_wrlock(lock);
-  (void) my_atomic_add32(value, 1);
-  my_atomic_rwlock_wrunlock(lock);
+  (void) my_atomic_add32_explicit(value, 1, MY_MEMORY_ORDER_RELAXED);
 }
 
-inline void thread_safe_decrement32(int32 *value, my_atomic_rwlock_t *lock)
+inline void thread_safe_decrement32(int32 *value)
 {
-  my_atomic_rwlock_wrlock(lock);
-  (void) my_atomic_add32(value, -1);
-  my_atomic_rwlock_wrunlock(lock);
+  (void) my_atomic_add32_explicit(value, -1, MY_MEMORY_ORDER_RELAXED);
 }
 
-inline void thread_safe_increment64(int64 *value, my_atomic_rwlock_t *lock)
+inline void thread_safe_increment64(int64 *value)
 {
-  my_atomic_rwlock_wrlock(lock);
-  (void) my_atomic_add64(value, 1);
-  my_atomic_rwlock_wrunlock(lock);
+  (void) my_atomic_add64_explicit(value, 1, MY_MEMORY_ORDER_RELAXED);
 }
 
-inline void thread_safe_decrement64(int64 *value, my_atomic_rwlock_t *lock)
+inline void thread_safe_decrement64(int64 *value)
 {
-  my_atomic_rwlock_wrlock(lock);
-  (void) my_atomic_add64(value, -1);
-  my_atomic_rwlock_wrunlock(lock);
+  (void) my_atomic_add64_explicit(value, -1, MY_MEMORY_ORDER_RELAXED);
 }
 
-inline void
-inc_thread_running()
+inline void inc_thread_running()
 {
-  thread_safe_increment32(&thread_running, &thread_running_lock);
+  thread_safe_increment32(&thread_running);
 }
 
-inline void
-dec_thread_running()
+inline void dec_thread_running()
 {
-  thread_safe_decrement32(&thread_running, &thread_running_lock);
+  thread_safe_decrement32(&thread_running);
 }
 
 void set_server_version(void);
@@ -752,15 +799,14 @@ extern ulong thread_created;
 extern scheduler_functions *thread_scheduler, *extra_thread_scheduler;
 extern char *opt_log_basename;
 extern my_bool opt_master_verify_checksum;
-extern my_bool opt_stack_trace;
+extern my_bool opt_stack_trace, disable_log_notes;
 extern my_bool opt_expect_abort;
 extern my_bool opt_slave_sql_verify_checksum;
+extern my_bool opt_mysql56_temporal_format, strict_password_validation;
+extern my_bool opt_explicit_defaults_for_timestamp;
 extern ulong binlog_checksum_options;
 extern bool max_user_connections_checking;
 extern ulong opt_binlog_dbug_fsync_sleep;
-
-extern uint internal_tmp_table_max_key_length;
-extern uint internal_tmp_table_max_key_segments;
 
 extern uint volatile global_disable_checkpoint;
 extern my_bool opt_help;

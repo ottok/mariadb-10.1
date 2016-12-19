@@ -74,7 +74,7 @@ ENDIF()
 
 IF(WITH_EMBEDDED_SERVER)
  SET(TEST_EMBEDDED  ${MTR_FORCE} --comment=embedded  --timer  --embedded-server 
-   --skip-rpl --skip-ndbcluster ${EXP})
+   --skip-rpl ${EXP})
 ELSE()
  SET(TEST_EMBEDDED echo "Can not test embedded, not compiled in")
 ENDIF()
@@ -92,8 +92,8 @@ ADD_CUSTOM_TARGET(test-force
 
 ADD_CUSTOM_TARGET(test-bt
   ${TEST_BT_START}
-  COMMAND ${MTR_FORCE} --comment=normal --timer  --skip-ndbcluster --report-features ${EXP}
-  COMMAND ${MTR_FORCE} --comment=ps --timer	 --skip-ndbcluster --ps-protocol ${EXP}
+  COMMAND ${MTR_FORCE} --comment=normal --timer  --report-features ${EXP}
+  COMMAND ${MTR_FORCE} --comment=ps --timer	 --ps-protocol ${EXP}
   COMMAND ${MTR_FORCE} --comment=funcs1+ps --ps-protocol --reorder --suite=funcs_1 ${EXP}
   COMMAND ${MTR_FORCE} --comment=funcs2 --suite=funcs_2 ${EXP}
   COMMAND ${MTR_FORCE} --comment=partitions --suite=parts ${EXP}
@@ -105,13 +105,13 @@ ADD_CUSTOM_TARGET(test-bt
 
 ADD_CUSTOM_TARGET(test-bt-fast
   ${TEST_BT_START}
-  COMMAND ${MTR_FORCE}  --comment=ps  --timer  --skip-ndbcluster --ps-protocol --report-features ${EXP}
+  COMMAND ${MTR_FORCE}  --comment=ps  --timer  --ps-protocol --report-features ${EXP}
   COMMAND ${MTR_FORCE} --comment=stress --suite=stress ${EXP}
 )
 
 ADD_CUSTOM_TARGET(test-bt-debug
   ${TEST_BT_START}
-  COMMAND ${MTR_FORCE} --comment=debug --timer  --skip-ndbcluster --skip-rpl --report-features ${EXP}
+  COMMAND ${MTR_FORCE} --comment=debug --timer  --skip-rpl --report-features ${EXP}
 )
 
 # Process .in files with includes in collections/
@@ -139,3 +139,19 @@ ENDMACRO()
 #    FILE(APPEND ${colldone} "${collin}\n")
 #  ENDIF()
 #ENDFOREACH()
+
+# With different MAX_INDEXES values, server might behave differently in
+# certain cases. 'max_indexes.inc' file should be updated accordingly to
+# reflect the current MAX_INDEXES value. This file helps MTR to decide on
+# which tests should be skipped.
+# NOTE: While committing a patch please make sure that the file is unmodified
+# and should show the default MAX_INDEXES (i.e. 64U).
+IF (MAX_INDEXES)
+  IF(NOT (${MAX_INDEXES} EQUAL 64U))
+    FILE(WRITE include/max_indexes.inc
+         "# Warning: This is an auto-generated file. Please do not modify it.
+--let $max_indexes = ${MAX_INDEXES}\n")
+    MESSAGE(STATUS "mysql-test/include/max_indexes.inc adjusted")
+  ENDIF()
+ENDIF()
+

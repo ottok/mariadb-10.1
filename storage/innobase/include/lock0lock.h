@@ -43,6 +43,15 @@ Created 5/7/1996 Heikki Tuuri
 extern ibool	lock_print_waits;
 #endif /* UNIV_DEBUG */
 
+/** Alternatives for innodb_lock_schedule_algorithm, which can be changed by
+	setting innodb_lock_schedule_algorithm. */
+enum innodb_lock_schedule_algorithm_t {
+	INNODB_LOCK_SCHEDULE_ALGORITHM_FCFS,		/*!< First Come First Served */
+	INNODB_LOCK_SCHEDULE_ALGORITHM_VATS			/*!< Variance-Aware-Transaction-Scheduling */
+};
+
+extern ulong innodb_lock_schedule_algorithm;
+
 /*********************************************************************//**
 Gets the size of a lock struct.
 @return	size in bytes */
@@ -180,6 +189,16 @@ lock_update_merge_left(
 						before merge */
 	const buf_block_t*	right_block);	/*!< in: merged index page
 						which will be discarded */
+/*************************************************************//**
+Updates the lock table when a page is splited and merged to
+two pages. */
+UNIV_INTERN
+void
+lock_update_split_and_merge(
+	const buf_block_t* left_block,	/*!< in: left page to which merged */
+	const rec_t* orig_pred,		/*!< in: original predecessor of
+					supremum on the left page before merge*/
+	const buf_block_t* right_block);/*!< in: right page from which merged */
 /*************************************************************//**
 Resets the original locks on heir and replaces them with gap type locks
 inherited from rec. */
@@ -654,6 +673,16 @@ lock_get_type(
 	const lock_t*	lock);	/*!< in: lock */
 
 /*******************************************************************//**
+Gets the trx of the lock. Non-inline version for using outside of the
+lock module.
+@return	trx_t* */
+UNIV_INTERN
+trx_t*
+lock_get_trx(
+/*=========*/
+	const lock_t*	lock);	/*!< in: lock */
+
+/*******************************************************************//**
 Gets the id of the transaction owning a lock.
 @return	transaction id */
 UNIV_INTERN
@@ -972,6 +1001,24 @@ extern lock_sys_t*	lock_sys;
 	mutex_exit(&lock_sys->wait_mutex);	\
 } while (0)
 
+#ifdef WITH_WSREP
+/*********************************************************************//**
+Cancels a waiting lock request and releases possible other transactions
+waiting behind it. */
+UNIV_INTERN
+void
+lock_cancel_waiting_and_release(
+/*============================*/
+	lock_t*	lock);	/*!< in/out: waiting lock request */
+
+/*******************************************************************//**
+Get lock mode and table/index name
+@return	string containing lock info */
+std::string
+lock_get_info(
+	const lock_t*);
+
+#endif /* WITH_WSREP */
 #ifndef UNIV_NONINL
 #include "lock0lock.ic"
 #endif

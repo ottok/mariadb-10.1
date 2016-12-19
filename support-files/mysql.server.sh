@@ -24,7 +24,7 @@
 # Short-Description: start and stop MySQL
 # Description: MySQL is a very fast and reliable SQL database engine.
 ### END INIT INFO
- 
+
 # If you install MySQL on some other places than @prefix@, then you
 # have to do one of the following things for this script to work:
 #
@@ -97,6 +97,11 @@ lsb_functions="/lib/lsb/init-functions"
 if test -f $lsb_functions ; then
   . $lsb_functions
 else
+  # Include non-LSB RedHat init functions to make systemctl redirect work
+  init_functions="/etc/init.d/functions"
+  if test -f $init_functions; then
+    . $init_functions
+  fi
   log_success_msg()
   {
     echo " SUCCESS! $@"
@@ -352,7 +357,10 @@ case "$mode" in
     # Stop the service and regardless of whether it was
     # running or not, start it again.
     if $0 stop  "$@"; then
-      $0 start "$@"
+      if ! $0 start "$@"; then
+        log_failure_msg "Failed to restart server."
+        exit 1
+      fi
     else
       log_failure_msg "Failed to stop running server, so refusing to try to start."
       exit 1
@@ -429,10 +437,21 @@ case "$mode" in
     fi
     exit $r
     ;;
+  'bootstrap')
+      if test "$_use_systemctl" == 1 ; then
+        log_failure_msg "Please use galera_new_cluster to start the mariadb service with --wsrep-new-cluster"
+        exit 1
+      fi
+      # Bootstrap the cluster, start the first node
+      # that initiate the cluster
+      echo $echo_n "Bootstrapping the cluster.. "
+      $0 start $other_args --wsrep-new-cluster
+      exit $?
+      ;;
   *)
       # usage
       basename=`basename "$0"`
-      echo "Usage: $basename  {start|stop|restart|reload|force-reload|status|configtest}  [ MySQL server options ]"
+      echo "Usage: $basename  {start|stop|restart|reload|force-reload|status|configtest|bootstrap}  [ MySQL server options ]"
       exit 1
     ;;
 esac

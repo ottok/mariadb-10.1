@@ -422,6 +422,55 @@ static void test_prepare_simple()
 
   mysql_stmt_close(stmt);
 
+  /* show create */
+  strmov(query, "SHOW CREATE TABLE test_prepare_simple");
+  stmt= mysql_simple_prepare(mysql, query);
+  check_stmt(stmt);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 2);
+  mysql_stmt_close(stmt);
+
+  /* show create database */
+  strmov(query, "SHOW CREATE DATABASE test");
+  stmt= mysql_simple_prepare(mysql, query);
+  check_stmt(stmt);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 2);
+  mysql_stmt_close(stmt);
+
+  /* show grants */
+  strmov(query, "SHOW GRANTS");
+  stmt= mysql_simple_prepare(mysql, query);
+  check_stmt(stmt);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 1);
+  mysql_stmt_close(stmt);
+
+  /* show slave status */
+  strmov(query, "SHOW SLAVE STATUS");
+  stmt= mysql_simple_prepare(mysql, query);
+  check_stmt(stmt);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 47);
+  mysql_stmt_close(stmt);
+
+  /* show master status */
+  strmov(query, "SHOW MASTER STATUS");
+  stmt= mysql_simple_prepare(mysql, query);
+  check_stmt(stmt);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 4);
+  mysql_stmt_close(stmt);
+
+  /* show create procedure */
+  strmov(query, "SHOW CREATE PROCEDURE e1;");
+  stmt= mysql_simple_prepare(mysql, query);
+  check_stmt(stmt);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 6);
+  mysql_stmt_close(stmt);
+
+  /* show create function */
+  strmov(query, "SHOW CREATE FUNCTION e1;");
+  stmt= mysql_simple_prepare(mysql, query);
+  check_stmt(stmt);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 6);
+  mysql_stmt_close(stmt);
+
   /* now fetch the results ..*/
   rc= mysql_commit(mysql);
   myquery(rc);
@@ -2093,7 +2142,7 @@ static void test_ps_conj_select()
                           "(2, 'hh', 'hh'), (1, 'ii', 'ii'), (2, 'ii', 'ii')");
   myquery(rc);
 
-  strmov(query, "select id1, value1 from t1 where id1= ? or "
+  strmov(query, "SELECT id1, value1 from t1 where id1= ? or "
                 "CONVERT(value1 USING utf8)= ?");
   stmt= mysql_simple_prepare(mysql, query);
   check_stmt(stmt);
@@ -2277,6 +2326,11 @@ static void test_ps_query_cache()
                           "(2, 'hh', 'hh'), (1, 'ii', 'ii'), (2, 'ii', 'ii')");
   myquery(rc);
 
+  rc= mysql_query(lmysql, "set global query_cache_type=ON");
+  myquery(rc);
+  rc= mysql_query(lmysql, "set local query_cache_type=ON");
+  myquery(rc);
+
   for (iteration= TEST_QCACHE_ON; iteration <= TEST_QCACHE_ON_OFF; iteration++)
   {
 
@@ -2306,6 +2360,8 @@ static void test_ps_query_cache()
         mysql_close(lmysql);
         DIE_UNLESS(0);
       }
+      rc= mysql_query(lmysql, "SET SQL_MODE=''");
+      myquery(rc);
       rc= mysql_set_character_set(lmysql, "utf8");
       myquery(rc);
 
@@ -2426,7 +2482,9 @@ static void test_ps_query_cache()
   if (lmysql != mysql)
     mysql_close(lmysql);
 
-  rc= mysql_query(mysql, "set global query_cache_size=0");
+  rc= mysql_query(mysql, "set global query_cache_size=default");
+  myquery(rc);
+  rc= mysql_query(mysql, "set global query_cache_type=default");
   myquery(rc);
 }
 
@@ -13167,6 +13225,10 @@ static void test_open_cursor_prepared_statement_query_cache()
     return;
   }
 
+  rc= mysql_query(mysql, "set global query_cache_type=ON");
+  myquery(rc);
+  rc= mysql_query(mysql, "set local query_cache_type=ON");
+  myquery(rc);
   rc= mysql_query(mysql, "set global query_cache_size=1000000");
   myquery(rc);
 
@@ -13189,7 +13251,9 @@ static void test_open_cursor_prepared_statement_query_cache()
   check_execute(stmt, rc);
   mysql_stmt_close(stmt);
 
-  rc= mysql_query(mysql, "set global query_cache_size=1000000");
+  rc= mysql_query(mysql, "set global query_cache_type=default");
+  myquery(rc);
+  rc= mysql_query(mysql, "set global query_cache_size=default");
   myquery(rc);
 }
 
@@ -15311,6 +15375,9 @@ static void test_bug14169()
 
   rc= mysql_query(mysql, "drop table t1");
   myquery(rc);
+
+  rc= mysql_query(mysql, "set session group_concat_max_len=@@global.group_concat_max_len");
+  myquery(rc);
 }
 
 /*
@@ -17162,7 +17229,7 @@ static void test_bug28386()
     if (! opt_silent)
       printf("Skipping the test since logging to tables is not enabled\n");
     /* Log output is not to tables */
-    return;
+    DBUG_VOID_RETURN;
   }
   mysql_free_result(result);
 
@@ -17959,6 +18026,8 @@ static void test_bug36326()
   myquery(rc);
   rc= mysql_query(mysql, "SET GLOBAL query_cache_type = 1");
   myquery(rc);
+  rc= mysql_query(mysql, "SET LOCAL query_cache_type = 1");
+  myquery(rc);
   rc= mysql_query(mysql, "SET GLOBAL query_cache_size = 1048576");
   myquery(rc);
   DIE_UNLESS(!(mysql->server_status & SERVER_STATUS_IN_TRANS));
@@ -17982,7 +18051,8 @@ static void test_bug36326()
   DIE_UNLESS(rc == 1);
   rc= mysql_query(mysql, "DROP TABLE t1");
   myquery(rc);
-  rc= mysql_query(mysql, "SET GLOBAL query_cache_size = 0");
+  rc= mysql_query(mysql, "SET GLOBAL query_cache_size = default");
+  rc= mysql_query(mysql, "SET GLOBAL query_cache_type = default");
   myquery(rc);
 
   DBUG_VOID_RETURN;

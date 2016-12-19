@@ -268,6 +268,7 @@ test.kv                                            OK
 test.t1                                            OK
 Phase 6/6: Running 'FLUSH PRIVILEGES'
 OK
+flush tables;
 show create view v1;
 View	Create View	character_set_client	collation_connection
 v1	CREATE ALGORITHM=TEMPTABLE DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v1` AS select `t1`.`a` AS `a` from `t1`	utf8	utf8_general_ci

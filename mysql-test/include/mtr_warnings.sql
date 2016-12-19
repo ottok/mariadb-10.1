@@ -115,9 +115,6 @@ INSERT INTO global_suppressions VALUES
  ("unknown variable 'loose-"),
  ("You have forced lower_case_table_names to 0 through a command-line option"),
  ("Setting lower_case_table_names=2"),
- ("NDB Binlog:"),
- ("NDB: failed to setup table"),
- ("NDB: only row based binary logging"),
  ("Neither --relay-log nor --relay-log-index were used"),
  ("Query partially completed"),
  ("Slave I.O thread aborted while waiting for relay log"),
@@ -139,7 +136,6 @@ INSERT INTO global_suppressions VALUES
  ("Slave: The incident LOST_EVENTS occurred on the master"),
  ("Slave: Unknown error.* 1105"),
  ("Slave: Can't drop database.* database doesn't exist"),
- ("Time-out in NDB"),
  ("Warning:\s+One can only use the --user.*root"),
  ("Warning:\s+Table:.* on (delete|rename)"),
  ("You have an error in your SQL syntax"),
@@ -168,6 +164,9 @@ INSERT INTO global_suppressions VALUES
  ("setrlimit could not change the size of core files to 'infinity'"),
 
  ("The slave I.O thread stops because a fatal error is encountered when it try to get the value of SERVER_ID variable from master."),
+
+ /*It will print a warning if server is run without --explicit_defaults_for_timestamp.*/
+ ("TIMESTAMP with implicit DEFAULT value is deprecated. Please use --explicit_defaults_for_timestamp server option (see documentation for more details)*"),
 
  /* Added 2009-08-XX after fixing Bug #42408 */
 

@@ -40,6 +40,11 @@ BEGIN
   -- except those that was created during bootstrap
   SELECT * FROM INFORMATION_SCHEMA.SCHEMATA;
 
+  -- and the mtr_wsrep_notify schema which is populated by the std_data/wsrep_notify.sh script
+  -- and the suite/galera/t/galera_var_notify_cmd.test
+  -- and the wsrep_schema schema that may be created by Galera
+  SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME NOT IN ('mtr_wsrep_notify', 'wsrep_schema');
+
   -- The test database should not contain any tables
   SELECT table_name AS tables_in_test FROM INFORMATION_SCHEMA.TABLES
     WHERE table_schema='test';
@@ -47,7 +52,7 @@ BEGIN
   -- Show "mysql" database, tables and columns
   SELECT CONCAT(table_schema, '.', table_name) AS tables_in_mysql
     FROM INFORMATION_SCHEMA.TABLES
-      WHERE table_schema='mysql' AND table_name != 'ndb_apply_status'
+      WHERE table_schema='mysql'
         ORDER BY tables_in_mysql;
   SELECT CONCAT(table_schema, '.', table_name) AS columns_in_mysql,
   	 column_name, ordinal_position, column_default, is_nullable,
@@ -55,7 +60,7 @@ BEGIN
          numeric_precision, numeric_scale, character_set_name,
          collation_name, column_type, column_key, extra, column_comment
     FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE table_schema='mysql' AND table_name != 'ndb_apply_status'
+      WHERE table_schema='mysql'
         ORDER BY columns_in_mysql;
 
   -- Dump all events, there should be none

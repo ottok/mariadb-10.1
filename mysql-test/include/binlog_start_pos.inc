@@ -10,19 +10,19 @@
 #
 #   Format_description_log_event length = 
 #                      19 /* event common header */ +
-#                      57 /* misc stuff in the Format description header */ +
+#                      58 /* misc stuff in the Format description header */ +
 #                      number of events +
 #                      1 /* Checksum algorithm */ +
 #                      4 /* CRC32 length */
 # 
-# With current number of events = 163,
+# With current number of events = 164,
 #
-#   binlog_start_pos = 4 + 19 + 57 + 163 + 1 + 4 = 248.
+#   binlog_start_pos = 4 + 19 + 57 + 163 + 1 + 4 = 249.
 #
 ##############################################################################
 
-let $binlog_start_pos=248;
 --disable_query_log
-SET @binlog_start_pos=248;
+set @binlog_start_pos=249 + @@encrypt_binlog * 36;
 --enable_query_log
+let $binlog_start_pos=`select @binlog_start_pos`;
 

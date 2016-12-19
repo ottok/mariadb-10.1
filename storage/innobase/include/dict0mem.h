@@ -2,7 +2,7 @@
 
 Copyright (c) 1996, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2012, Facebook Inc.
-Copyright (c) 2015, 2016, MariaDB Corporation.
+Copyright (c) 2013, 2016, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -48,6 +48,9 @@ Created 1/8/1996 Heikki Tuuri
 #include "trx0types.h"
 #include "fts0fts.h"
 #include "os0once.h"
+#include "fil0fil.h"
+#include <my_crypt.h>
+#include "fil0crypt.h"
 #include <set>
 #include <algorithm>
 #include <iterator>
@@ -126,14 +129,37 @@ This flag prevents older engines from attempting to open the table and
 allows InnoDB to update_create_info() accordingly. */
 #define DICT_TF_WIDTH_DATA_DIR		1
 
+/**
+Width of the page compression flag
+*/
+#define DICT_TF_WIDTH_PAGE_COMPRESSION  1
+#define DICT_TF_WIDTH_PAGE_COMPRESSION_LEVEL 4
+
+/**
+Width of the page encryption flag
+*/
+#define DICT_TF_WIDTH_PAGE_ENCRYPTION  1
+#define DICT_TF_WIDTH_PAGE_ENCRYPTION_KEY 8
+
+/**
+Width of atomic writes flag
+DEFAULT=0, ON = 1, OFF = 2
+*/
+#define DICT_TF_WIDTH_ATOMIC_WRITES 2
+
 /** Width of all the currently known table flags */
 #define DICT_TF_BITS	(DICT_TF_WIDTH_COMPACT		\
 			+ DICT_TF_WIDTH_ZIP_SSIZE	\
 			+ DICT_TF_WIDTH_ATOMIC_BLOBS	\
-			+ DICT_TF_WIDTH_DATA_DIR)
+			+ DICT_TF_WIDTH_DATA_DIR        \
+			+ DICT_TF_WIDTH_PAGE_COMPRESSION \
+			+ DICT_TF_WIDTH_PAGE_COMPRESSION_LEVEL \
+		        + DICT_TF_WIDTH_ATOMIC_WRITES \
+		        + DICT_TF_WIDTH_PAGE_ENCRYPTION \
+		        + DICT_TF_WIDTH_PAGE_ENCRYPTION_KEY)
 
 /** A mask of all the known/used bits in table flags */
-#define DICT_TF_BIT_MASK	(~(~0 << DICT_TF_BITS))
+#define DICT_TF_BIT_MASK	(~(~0U << DICT_TF_BITS))
 
 /** Zero relative shift position of the COMPACT field */
 #define DICT_TF_POS_COMPACT		0
@@ -146,9 +172,23 @@ allows InnoDB to update_create_info() accordingly. */
 /** Zero relative shift position of the DATA_DIR field */
 #define DICT_TF_POS_DATA_DIR		(DICT_TF_POS_ATOMIC_BLOBS	\
 					+ DICT_TF_WIDTH_ATOMIC_BLOBS)
-/** Zero relative shift position of the start of the UNUSED bits */
-#define DICT_TF_POS_UNUSED		(DICT_TF_POS_DATA_DIR		\
-					+ DICT_TF_WIDTH_DATA_DIR)
+/** Zero relative shift position of the PAGE_COMPRESSION field */
+#define DICT_TF_POS_PAGE_COMPRESSION	(DICT_TF_POS_DATA_DIR	\
+		                        + DICT_TF_WIDTH_DATA_DIR)
+/** Zero relative shift position of the PAGE_COMPRESSION_LEVEL field */
+#define DICT_TF_POS_PAGE_COMPRESSION_LEVEL	(DICT_TF_POS_PAGE_COMPRESSION	\
+					+ DICT_TF_WIDTH_PAGE_COMPRESSION)
+/** Zero relative shift position of the ATOMIC_WRITES field */
+#define DICT_TF_POS_ATOMIC_WRITES	(DICT_TF_POS_PAGE_COMPRESSION_LEVEL \
+					+ DICT_TF_WIDTH_PAGE_COMPRESSION_LEVEL)
+/** Zero relative shift position of the PAGE_ENCRYPTION field */
+#define DICT_TF_POS_PAGE_ENCRYPTION	(DICT_TF_POS_ATOMIC_WRITES	\
+		                        + DICT_TF_WIDTH_ATOMIC_WRITES)
+/** Zero relative shift position of the PAGE_ENCRYPTION_KEY field */
+#define DICT_TF_POS_PAGE_ENCRYPTION_KEY	(DICT_TF_POS_PAGE_ENCRYPTION	\
+		                        + DICT_TF_WIDTH_PAGE_ENCRYPTION)
+#define DICT_TF_POS_UNUSED		(DICT_TF_POS_PAGE_ENCRYPTION_KEY     \
+		                        + DICT_TF_WIDTH_PAGE_ENCRYPTION_KEY)
 
 /** Bit mask of the COMPACT field */
 #define DICT_TF_MASK_COMPACT				\
@@ -166,6 +206,26 @@ allows InnoDB to update_create_info() accordingly. */
 #define DICT_TF_MASK_DATA_DIR				\
 		((~(~0U << DICT_TF_WIDTH_DATA_DIR))	\
 		<< DICT_TF_POS_DATA_DIR)
+/** Bit mask of the PAGE_COMPRESSION field */
+#define DICT_TF_MASK_PAGE_COMPRESSION			\
+		((~(~0U << DICT_TF_WIDTH_PAGE_COMPRESSION)) \
+		<< DICT_TF_POS_PAGE_COMPRESSION)
+/** Bit mask of the PAGE_COMPRESSION_LEVEL field */
+#define DICT_TF_MASK_PAGE_COMPRESSION_LEVEL		\
+		((~(~0U << DICT_TF_WIDTH_PAGE_COMPRESSION_LEVEL)) \
+		<< DICT_TF_POS_PAGE_COMPRESSION_LEVEL)
+/** Bit mask of the ATOMIC_WRITES field */
+#define DICT_TF_MASK_ATOMIC_WRITES		\
+		((~(~0U << DICT_TF_WIDTH_ATOMIC_WRITES)) \
+		<< DICT_TF_POS_ATOMIC_WRITES)
+/** Bit mask of the PAGE_ENCRYPTION field */
+#define DICT_TF_MASK_PAGE_ENCRYPTION			\
+		((~(~0U << DICT_TF_WIDTH_PAGE_ENCRYPTION))	\
+		<< DICT_TF_POS_PAGE_ENCRYPTION)
+/** Bit mask of the PAGE_ENCRYPTION_KEY field */
+#define DICT_TF_MASK_PAGE_ENCRYPTION_KEY		\
+		((~(~0U << DICT_TF_WIDTH_PAGE_ENCRYPTION_KEY)) \
+		<< DICT_TF_POS_PAGE_ENCRYPTION_KEY)
 
 /** Return the value of the COMPACT field */
 #define DICT_TF_GET_COMPACT(flags)			\
@@ -183,6 +243,27 @@ allows InnoDB to update_create_info() accordingly. */
 #define DICT_TF_HAS_DATA_DIR(flags)			\
 		((flags & DICT_TF_MASK_DATA_DIR)	\
 		>> DICT_TF_POS_DATA_DIR)
+/** Return the value of the PAGE_COMPRESSION field */
+#define DICT_TF_GET_PAGE_COMPRESSION(flags)	       \
+		((flags & DICT_TF_MASK_PAGE_COMPRESSION) \
+		>> DICT_TF_POS_PAGE_COMPRESSION)
+/** Return the value of the PAGE_COMPRESSION_LEVEL field */
+#define DICT_TF_GET_PAGE_COMPRESSION_LEVEL(flags)       \
+		((flags & DICT_TF_MASK_PAGE_COMPRESSION_LEVEL)	\
+		>> DICT_TF_POS_PAGE_COMPRESSION_LEVEL)
+/** Return the value of the ATOMIC_WRITES field */
+#define DICT_TF_GET_ATOMIC_WRITES(flags)       \
+		((flags & DICT_TF_MASK_ATOMIC_WRITES)	\
+		>> DICT_TF_POS_ATOMIC_WRITES)
+/** Return the contents of the PAGE_ENCRYPTION field */
+#define DICT_TF_GET_PAGE_ENCRYPTION(flags)			\
+		((flags & DICT_TF_MASK_PAGE_ENCRYPTION) \
+		>> DICT_TF_POS_PAGE_ENCRYPTION)
+/** Return the contents of the PAGE_ENCRYPTION KEY field */
+#define DICT_TF_GET_PAGE_ENCRYPTION_KEY(flags)			\
+		((flags & DICT_TF_MASK_PAGE_ENCRYPTION_KEY) \
+		>> DICT_TF_POS_PAGE_ENCRYPTION_KEY)
+
 /** Return the contents of the UNUSED bits */
 #define DICT_TF_GET_UNUSED(flags)			\
 		(flags >> DICT_TF_POS_UNUSED)
@@ -494,6 +575,9 @@ be REC_VERSION_56_MAX_INDEX_COL_LEN (3072) bytes */
 
 /** Defines the maximum fixed length column size */
 #define DICT_MAX_FIXED_COL_LEN		DICT_ANTELOPE_MAX_INDEX_COL_LEN
+#ifdef WITH_WSREP
+#define WSREP_MAX_SUPPORTED_KEY_LENGTH 3500
+#endif /* WITH_WSREP */
 
 /** Data structure for a field in an index */
 struct dict_field_t{
@@ -567,6 +651,10 @@ struct zip_pad_info_t {
 			mutex_created;
 				/*!< Creation state of mutex member */
 };
+
+/** Number of samples of data size kept when page compression fails for
+a certain index.*/
+#define STAT_DEFRAG_DATA_SIZE_N_SAMPLE	10
 
 /** Data structure for an index.  Most fields will be
 initialized to 0, NULL or FALSE in dict_mem_index_create(). */
@@ -658,6 +746,23 @@ struct dict_index_t{
 	bool		stats_error_printed;
 				/*!< has persistent statistics error printed
 				for this index ? */
+	/* @} */
+	/** Statistics for defragmentation, these numbers are estimations and
+	could be very inaccurate at certain times, e.g. right after restart,
+	during defragmentation, etc. */
+	/* @{ */
+	ulint		stat_defrag_modified_counter;
+	ulint		stat_defrag_n_pages_freed;
+				/* number of pages freed by defragmentation. */
+	ulint		stat_defrag_n_page_split;
+				/* number of page splits since last full index
+				defragmentation. */
+	ulint		stat_defrag_data_size_sample[STAT_DEFRAG_DATA_SIZE_N_SAMPLE];
+				/* data size when compression failure happened
+				the most recent 10 times. */
+	ulint		stat_defrag_sample_next_slot;
+				/* in which slot the next sample should be
+				saved. */
 	/* @} */
 	rw_lock_t	lock;	/*!< read-write lock protecting the
 				upper levels of the index tree */
@@ -924,6 +1029,10 @@ struct dict_table_t{
 	table_id_t	id;	/*!< id of the table */
 	mem_heap_t*	heap;	/*!< memory heap */
 	char*		name;	/*!< table name */
+	void*		thd;		/*!< thd */
+	bool		page_0_read; /*!< true if page 0 has
+				     been already read */
+	fil_space_crypt_t *crypt_data; /*!< crypt data if present */
 	const char*	dir_path_of_temp_table;/*!< NULL or the directory path
 				where a TEMPORARY table that was explicitly
 				created by a user should be placed if
@@ -1137,20 +1246,29 @@ struct dict_table_t{
 				calculation; this counter is not protected by
 				any latch, because this is only used for
 				heuristics */
-#define BG_STAT_NONE		0
-#define BG_STAT_IN_PROGRESS	(1 << 0)
+
+#define BG_STAT_IN_PROGRESS	((byte)(1 << 0))
 				/*!< BG_STAT_IN_PROGRESS is set in
 				stats_bg_flag when the background
 				stats code is working on this table. The DROP
 				TABLE code waits for this to be cleared
 				before proceeding. */
-#define BG_STAT_SHOULD_QUIT	(1 << 1)
+#define BG_STAT_SHOULD_QUIT	((byte)(1 << 1))
 				/*!< BG_STAT_SHOULD_QUIT is set in
 				stats_bg_flag when DROP TABLE starts
 				waiting on BG_STAT_IN_PROGRESS to be cleared,
 				the background stats thread will detect this
 				and will eventually quit sooner */
-	byte		stats_bg_flag;
+#define BG_SCRUB_IN_PROGRESS	((byte)(1 << 2))
+				/*!< BG_SCRUB_IN_PROGRESS is set in
+				stats_bg_flag when the background
+				scrub code is working on this table. The DROP
+				TABLE code waits for this to be cleared
+				before proceeding. */
+
+#define BG_IN_PROGRESS (BG_STAT_IN_PROGRESS | BG_SCRUB_IN_PROGRESS)
+
+	byte 		stats_bg_flag;
 				/*!< see BG_STAT_* above.
 				Writes are covered by dict_sys->mutex.
 				Dirty reads are possible. */
@@ -1231,6 +1349,7 @@ struct dict_table_t{
 			locks;	/*!< list of locks on the table; protected
 				by lock_sys->mutex */
 #endif /* !UNIV_HOTBACKUP */
+	ibool		is_encrypted;
 
 #ifdef UNIV_DEBUG
 	ulint		magic_n;/*!< magic number */

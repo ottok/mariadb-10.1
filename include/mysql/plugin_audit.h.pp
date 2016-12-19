@@ -101,9 +101,31 @@ void thd_gmt_sec_to_TIME(void* thd, MYSQL_TIME *ltime, my_time_t t);
 extern struct my_sha1_service_st {
   void (*my_sha1_type)(unsigned char*, const char*, size_t);
   void (*my_sha1_multi_type)(unsigned char*, ...);
+  size_t (*my_sha1_context_size_type)();
+  void (*my_sha1_init_type)(void *);
+  void (*my_sha1_input_type)(void *, const unsigned char *, size_t);
+  void (*my_sha1_result_type)(void *, unsigned char *);
 } *my_sha1_service;
 void my_sha1(unsigned char*, const char*, size_t);
 void my_sha1_multi(unsigned char*, ...);
+size_t my_sha1_context_size();
+void my_sha1_init(void *context);
+void my_sha1_input(void *context, const unsigned char *buf, size_t len);
+void my_sha1_result(void *context, unsigned char *digest);
+extern struct my_md5_service_st {
+  void (*my_md5_type)(unsigned char*, const char*, size_t);
+  void (*my_md5_multi_type)(unsigned char*, ...);
+  size_t (*my_md5_context_size_type)();
+  void (*my_md5_init_type)(void *);
+  void (*my_md5_input_type)(void *, const unsigned char *, size_t);
+  void (*my_md5_result_type)(void *, unsigned char *);
+} *my_md5_service;
+void my_md5(unsigned char*, const char*, size_t);
+void my_md5_multi(unsigned char*, ...);
+size_t my_md5_context_size();
+void my_md5_init(void *context);
+void my_md5_input(void *context, const unsigned char *buf, size_t len);
+void my_md5_result(void *context, unsigned char *digest);
 typedef struct logger_handle_st LOGGER_HANDLE;
 extern struct logger_service_st {
   void (*logger_init_mutexes)();
@@ -148,6 +170,93 @@ void thd_inc_error_row(void* thd);
 char *thd_get_error_context_description(void* thd,
                                         char *buffer, unsigned int length,
                                         unsigned int max_query_length);
+typedef int MYSQL_THD_KEY_T;
+extern struct thd_specifics_service_st {
+  int (*thd_key_create_func)(MYSQL_THD_KEY_T *key);
+  void (*thd_key_delete_func)(MYSQL_THD_KEY_T *key);
+  void *(*thd_getspecific_func)(void* thd, MYSQL_THD_KEY_T key);
+  int (*thd_setspecific_func)(void* thd, MYSQL_THD_KEY_T key, void *value);
+} *thd_specifics_service;
+int thd_key_create(MYSQL_THD_KEY_T *key);
+void thd_key_delete(MYSQL_THD_KEY_T *key);
+void* thd_getspecific(void* thd, MYSQL_THD_KEY_T key);
+int thd_setspecific(void* thd, MYSQL_THD_KEY_T key, void *value);
+struct encryption_service_st {
+  unsigned int (*encryption_key_get_latest_version_func)(unsigned int key_id);
+  unsigned int (*encryption_key_get_func)(unsigned int key_id, unsigned int key_version,
+                                          unsigned char* buffer, unsigned int* length);
+  unsigned int (*encryption_ctx_size_func)(unsigned int key_id, unsigned int key_version);
+  int (*encryption_ctx_init_func)(void *ctx, const unsigned char* key, unsigned int klen,
+                                  const unsigned char* iv, unsigned int ivlen,
+                                  int flags, unsigned int key_id,
+                                  unsigned int key_version);
+  int (*encryption_ctx_update_func)(void *ctx, const unsigned char* src, unsigned int slen,
+                                    unsigned char* dst, unsigned int* dlen);
+  int (*encryption_ctx_finish_func)(void *ctx, unsigned char* dst, unsigned int* dlen);
+  unsigned int (*encryption_encrypted_length_func)(unsigned int slen, unsigned int key_id, unsigned int key_version);
+};
+extern struct encryption_service_st encryption_handler;
+static inline unsigned int encryption_key_id_exists(unsigned int id)
+{
+  return encryption_handler.encryption_key_get_latest_version_func(id) != (~(unsigned int)0);
+}
+static inline unsigned int encryption_key_version_exists(unsigned int id, unsigned int version)
+{
+  unsigned int unused;
+  return encryption_handler.encryption_key_get_func((id),(version),(NULL),(&unused)) != (~(unsigned int)0);
+}
+static inline int encryption_crypt(const unsigned char* src, unsigned int slen,
+                                   unsigned char* dst, unsigned int* dlen,
+                                   const unsigned char* key, unsigned int klen,
+                                   const unsigned char* iv, unsigned int ivlen,
+                                   int flags, unsigned int key_id, unsigned int key_version)
+{
+  void *ctx= alloca(encryption_handler.encryption_ctx_size_func((key_id),(key_version)));
+  int res1, res2;
+  unsigned int d1, d2;
+  if ((res1= encryption_handler.encryption_ctx_init_func((ctx),(key),(klen),(iv),(ivlen),(flags),(key_id),(key_version))))
+    return res1;
+  res1= encryption_handler.encryption_ctx_update_func((ctx),(src),(slen),(dst),(&d1));
+  res2= encryption_handler.encryption_ctx_finish_func((ctx),(dst + d1),(&d2));
+  *dlen= d1 + d2;
+  return res1 ? res1 : res2;
+}
+struct st_encryption_scheme_key {
+  unsigned int version;
+  unsigned char key[16];
+};
+struct st_encryption_scheme {
+  unsigned char iv[16];
+  struct st_encryption_scheme_key key[3];
+  unsigned int keyserver_requests;
+  unsigned int key_id;
+  unsigned int type;
+  void (*locker)(struct st_encryption_scheme *self, int release);
+};
+extern struct encryption_scheme_service_st {
+  int (*encryption_scheme_encrypt_func)
+                               (const unsigned char* src, unsigned int slen,
+                                unsigned char* dst, unsigned int* dlen,
+                                struct st_encryption_scheme *scheme,
+                                unsigned int key_version, unsigned int i32_1,
+                                unsigned int i32_2, unsigned long long i64);
+  int (*encryption_scheme_decrypt_func)
+                               (const unsigned char* src, unsigned int slen,
+                                unsigned char* dst, unsigned int* dlen,
+                                struct st_encryption_scheme *scheme,
+                                unsigned int key_version, unsigned int i32_1,
+                                unsigned int i32_2, unsigned long long i64);
+} *encryption_scheme_service;
+int encryption_scheme_encrypt(const unsigned char* src, unsigned int slen,
+                              unsigned char* dst, unsigned int* dlen,
+                              struct st_encryption_scheme *scheme,
+                              unsigned int key_version, unsigned int i32_1,
+                              unsigned int i32_2, unsigned long long i64);
+int encryption_scheme_decrypt(const unsigned char* src, unsigned int slen,
+                              unsigned char* dst, unsigned int* dlen,
+                              struct st_encryption_scheme *scheme,
+                              unsigned int key_version, unsigned int i32_1,
+                              unsigned int i32_2, unsigned long long i64);
 struct st_mysql_xid {
   long formatID;
   long gtrid_length;
@@ -163,12 +272,17 @@ enum enum_mysql_show_type
   SHOW_SINT, SHOW_SLONG, SHOW_SLONGLONG, SHOW_SIMPLE_FUNC,
   SHOW_always_last
 };
+enum enum_var_type
+{
+  SHOW_OPT_DEFAULT= 0, SHOW_OPT_SESSION, SHOW_OPT_GLOBAL
+};
 struct st_mysql_show_var {
   const char *name;
-  char *value;
+  void *value;
   enum enum_mysql_show_type type;
 };
-typedef int (*mysql_show_var_func)(void*, struct st_mysql_show_var*, char *);
+struct system_status_var;
+typedef int (*mysql_show_var_func)(void*, struct st_mysql_show_var*, void *, struct system_status_var *status_var, enum enum_var_type);
 struct st_mysql_sys_var;
 struct st_mysql_value;
 typedef int (*mysql_var_check_func)(void* thd,

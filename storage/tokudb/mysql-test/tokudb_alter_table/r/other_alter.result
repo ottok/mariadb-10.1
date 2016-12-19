@@ -58,12 +58,12 @@ foo	CREATE TABLE `foo` (
   `b` varchar(20) DEFAULT NULL,
   `c` int(11) DEFAULT NULL,
   `d` int(11) DEFAULT NULL,
-  `e` int(11) NOT NULL DEFAULT '0',
+  `e` int(11) NOT NULL,
   PRIMARY KEY (`e`),
   UNIQUE KEY `c` (`c`),
   KEY `d` (`d`),
   KEY `b` (`b`) `clustering`=yes
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 alter table foo change column aa aa int NOT NULL;
 ERROR 42000: Table 'foo' uses an extension that doesn't exist in this XYZ version
 alter table foo change column aa aa varchar(20);

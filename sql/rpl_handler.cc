@@ -243,7 +243,9 @@ int Trans_delegate::after_rollback(THD *thd, bool all)
 int Binlog_storage_delegate::after_flush(THD *thd,
                                          const char *log_file,
                                          my_off_t log_pos,
-                                         bool synced)
+                                         bool synced,
+                                         bool first_in_group,
+                                         bool last_in_group)
 {
   Binlog_storage_param param;
   Trans_binlog_info *log_info;
@@ -252,6 +254,10 @@ int Binlog_storage_delegate::after_flush(THD *thd,
 
   if (synced)
     flags |= BINLOG_STORAGE_IS_SYNCED;
+  if (first_in_group)
+    flags|= BINLOG_GROUP_COMMIT_LEADER;
+  if (last_in_group)
+    flags|= BINLOG_GROUP_COMMIT_TRAILER;
 
   if (!(log_info= thd->semisync_info))
   {
@@ -266,6 +272,27 @@ int Binlog_storage_delegate::after_flush(THD *thd,
   
   FOREACH_OBSERVER(ret, after_flush, false,
                    (&param, log_info->log_file, log_info->log_pos, flags));
+  return ret;
+}
+
+int Binlog_storage_delegate::after_sync(THD *thd,
+                                        const char *log_file,
+                                        my_off_t log_pos,
+                                        bool first_in_group,
+                                        bool last_in_group)
+{
+  Binlog_storage_param param;
+  uint32 flags=0;
+
+  if (first_in_group)
+    flags|= BINLOG_GROUP_COMMIT_LEADER;
+  if (last_in_group)
+    flags|= BINLOG_GROUP_COMMIT_TRAILER;
+
+  int ret= 0;
+  FOREACH_OBSERVER(ret, after_sync, false,
+                   (&param, log_file+dirname_length(log_file), log_pos, flags));
+
   return ret;
 }
 

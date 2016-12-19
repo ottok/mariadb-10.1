@@ -3,7 +3,6 @@
 
 # should work with embedded server after mysqltest is fixed
 --source include/not_embedded.inc
-
 set @start_read_only= @@global.read_only;
 
 # Save the initial number of concurrent sessions
@@ -16,6 +15,7 @@ DROP TABLE IF EXISTS t1,t2,t3;
 # READ_ONLY does nothing to SUPER users
 # so we use a non-SUPER one:
 
+create user test@localhost;
 grant CREATE, SELECT, DROP on *.* to test@localhost;
 
 --echo connect (con1,localhost,test,,test);
@@ -30,6 +30,7 @@ set global read_only=0;
 connection con1;
 
 create table t1 (a int);
+create trigger trg1 before insert on t1 for each row set @a:=1;
 
 insert into t1 values(1);
 
@@ -55,6 +56,9 @@ create table t3 (a int);
 
 --error ER_OPTION_PREVENTS_STATEMENT
 insert into t1 values(1);
+
+--error ER_OPTION_PREVENTS_STATEMENT
+drop trigger trg1;
 
 # if a statement, after parse stage, looks like it will update a
 # non-temp table, it will be rejected, even if at execution it would
@@ -274,6 +278,7 @@ delete from mysql.tables_priv where User like 'mysqltest_%';
 delete from mysql.columns_priv where User like 'mysqltest_%';
 flush privileges;
 
+create user `mysqltest_u1`@`%`;
 grant all on mysqltest_db2.* to `mysqltest_u1`@`%`;
 create database mysqltest_db1;
 grant all on mysqltest_db1.* to `mysqltest_u1`@`%`;
@@ -360,4 +365,3 @@ DROP TABLE t1;
 
 # Wait till all disconnects are completed
 --source include/wait_until_count_sessions.inc
-

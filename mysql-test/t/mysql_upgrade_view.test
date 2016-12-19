@@ -127,6 +127,7 @@ show create view v4;
 --replace_result $MYSQLTEST_VARDIR var
 --exec $MYSQL_UPGRADE --force 2>&1
 
+flush tables;
 show create view v1;
 show create view v2;
 show create view v3;

@@ -5,6 +5,8 @@
 -- source include/have_case_sensitive_file_system.inc
 -- source include/not_embedded.inc
 
+set GLOBAL sql_mode="";
+set LOCAL sql_mode="";
 connect (master,localhost,root,,);
 connection master;
 create database d1;
@@ -110,3 +112,5 @@ create table t1 (a int);
 create trigger t1_bi before insert on t1 for each row set new.a= 1;
 show triggers like '%T1%';
 drop table t1;
+
+set GLOBAL sql_mode=default;

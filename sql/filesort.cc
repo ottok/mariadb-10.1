@@ -49,7 +49,7 @@ if (my_b_write((file),(uchar*) (from),param->ref_length)) \
 
 static uchar *read_buffpek_from_file(IO_CACHE *buffer_file, uint count,
                                      uchar *buf);
-static ha_rows find_all_keys(Sort_param *param,SQL_SELECT *select,
+static ha_rows find_all_keys(THD *thd, Sort_param *param, SQL_SELECT *select,
                              Filesort_info *fs_info,
                              IO_CACHE *buffer_file,
                              IO_CACHE *tempfile,
@@ -144,7 +144,8 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
 		 SQL_SELECT *select, ha_rows max_rows,
                  bool sort_positions,
                  ha_rows *examined_rows,
-                 ha_rows *found_rows)
+                 ha_rows *found_rows,
+                 Filesort_tracker* tracker)
 {
   int error;
   size_t memory_available= thd->variables.sortbuff_size;
@@ -210,6 +211,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   else
     thd->inc_status_sort_scan();
   thd->query_plan_flags|= QPLAN_FILESORT;
+  tracker->report_use(max_rows);
 
   // If number of rows is not known, use as much of sort buffer as possible. 
   num_rows= table->file->estimate_rows_upper_bound();
@@ -225,6 +227,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
     DBUG_PRINT("info", ("filesort PQ is applicable"));
     thd->query_plan_flags|= QPLAN_FILESORT_PRIORITY_QUEUE;
     status_var_increment(thd->status_var.filesort_pq_sorts_);
+    tracker->incr_pq_used();
     const size_t compare_length= param.sort_length;
     if (pq.init(param.max_rows,
                 true,                           // max_at_top
@@ -281,6 +284,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
       my_error(ER_OUT_OF_SORTMEMORY,MYF(ME_ERROR + ME_FATALERROR));
       goto err;
     }
+    tracker->report_sort_buffer_size(table_sort.sort_buffer_size());
   }
 
   if (open_cached_file(&buffpek_pointers,mysql_tmpdir,TEMP_PREFIX,
@@ -289,7 +293,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
 
   param.sort_form= table;
   param.end=(param.local_sortorder=sortorder)+s_length;
-  num_rows= find_all_keys(&param, select,
+  num_rows= find_all_keys(thd, &param, select,
                           &table_sort,
                           &buffpek_pointers,
                           &tempfile, 
@@ -299,6 +303,8 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
     goto err;
 
   maxbuffer= (uint) (my_b_tell(&buffpek_pointers)/sizeof(*buffpek));
+  tracker->report_merge_passes_at_start(thd->query_plan_fsort_passes);
+  tracker->report_row_numbers(param.examined_rows, *found_rows, num_rows);
 
   if (maxbuffer == 0)			// The whole set is in memory
   {
@@ -385,6 +391,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
       outfile->end_of_file=save_pos;
     }
   }
+  tracker->report_merge_passes_at_end(thd->query_plan_fsort_passes);
   if (error)
   {
     int kill_errno= thd->killed_errno();
@@ -401,7 +408,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
                     "%s: %s",
                     MYF(0),
                     ER_THD(thd, ER_FILSORT_ABORT),
-                    kill_errno ? ER(kill_errno) :
+                    kill_errno ? ER_THD(thd, kill_errno) :
                     thd->killed == ABORT_QUERY ? "" :
                     thd->get_stmt_da()->message());
 
@@ -439,10 +446,11 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
 void filesort_free_buffers(TABLE *table, bool full)
 {
   DBUG_ENTER("filesort_free_buffers");
+
   my_free(table->sort.record_pointers);
   table->sort.record_pointers= NULL;
 
-  if (full)
+  if (unlikely(full))
   {
     table->sort.free_sort_buffer();
     my_free(table->sort.buffpek);
@@ -450,10 +458,14 @@ void filesort_free_buffers(TABLE *table, bool full)
     table->sort.buffpek_len= 0;
   }
 
-  my_free(table->sort.addon_buf);
-  my_free(table->sort.addon_field);
-  table->sort.addon_buf= NULL;
-  table->sort.addon_field= NULL;
+  /* addon_buf is only allocated if addon_field is set */
+  if (unlikely(table->sort.addon_field))
+  {
+    my_free(table->sort.addon_field);
+    my_free(table->sort.addon_buf);
+    table->sort.addon_buf= NULL;
+    table->sort.addon_field= NULL;
+  }
   DBUG_VOID_RETURN;
 }
 
@@ -659,7 +671,7 @@ static void dbug_print_record(TABLE *table, bool print_rowid)
     HA_POS_ERROR on error.
 */
 
-static ha_rows find_all_keys(Sort_param *param, SQL_SELECT *select,
+static ha_rows find_all_keys(THD *thd, Sort_param *param, SQL_SELECT *select,
                              Filesort_info *fs_info,
 			     IO_CACHE *buffpek_pointers,
                              IO_CACHE *tempfile,
@@ -671,7 +683,6 @@ static ha_rows find_all_keys(Sort_param *param, SQL_SELECT *select,
   uchar *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   my_off_t record;
   TABLE *sort_form;
-  THD *thd= current_thd;
   handler *file;
   MY_BITMAP *save_read_set, *save_write_set, *save_vcol_set;
   
@@ -980,7 +991,7 @@ static void make_sortkey(register Sort_param *param,
       switch (sort_field->result_type) {
       case STRING_RESULT:
       {
-        const CHARSET_INFO *cs=item->collation.collation;
+        CHARSET_INFO *cs=item->collation.collation;
         char fill_char= ((cs->state & MY_CS_BINSORT) ? (char) 0 : ' ');
 
         if (maybe_null)
@@ -1475,10 +1486,9 @@ uint read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
 
   if ((count=(uint) MY_MIN((ha_rows) buffpek->max_keys,buffpek->count)))
   {
-    if (mysql_file_pread(fromfile->file, (uchar*) buffpek->base,
-                         (length= rec_length*count),
-                         buffpek->file_pos, MYF_RW))
-      return((uint) -1);			/* purecov: inspected */
+    if (my_b_pread(fromfile, (uchar*) buffpek->base,
+                   (length= rec_length*count), buffpek->file_pos))
+      return ((uint) -1);
     buffpek->key=buffpek->base;
     buffpek->file_pos+= length;			/* New filepos */
     buffpek->count-=	count;
@@ -1855,8 +1865,8 @@ static uint
 sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
            bool *multi_byte_charset)
 {
-  reg2 uint length;
-  const CHARSET_INFO *cs;
+  uint length;
+  CHARSET_INFO *cs;
   *multi_byte_charset= 0;
 
   length=0;

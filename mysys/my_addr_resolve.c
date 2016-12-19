@@ -126,41 +126,94 @@ err:
 */
 #elif defined(MY_ADDR_RESOLVE_FORK)
 /*
-  yet another - just execute addr2line or eu-addr2line, whatever available,
-  pipe the addresses to it, and parse the output
+  yet another - just execute addr2line pipe the addresses to it, and parse the
+  output
 */
 
 #include <m_string.h>
 #include <ctype.h>
+
+#if defined(HAVE_LINK_H) && defined(HAVE_DLOPEN)
+#include <link.h>
+static ptrdiff_t offset= 0;
+#else
+#define offset 0
+#endif
+
 static int in[2], out[2];
 static int initialized= 0;
 static char output[1024];
 int my_addr_resolve(void *ptr, my_addr_loc *loc)
 {
-  char input[32], *s;
+  char input[32];
   size_t len;
 
-  len= my_snprintf(input, sizeof(input), "%p\n", ptr);
+  ssize_t total_bytes_read = 0;
+  ssize_t extra_bytes_read = 0;
+
+  fd_set set;
+  struct timeval timeout;
+
+  int filename_start = -1;
+  int line_number_start = -1;
+  ssize_t i;
+
+  FD_ZERO(&set);
+  FD_SET(out[0], &set);
+
+  len= my_snprintf(input, sizeof(input), "%p\n", ptr - offset);
   if (write(in[1], input, len) <= 0)
     return 1;
-  if (read(out[0], output, sizeof(output)) <= 0)
-    return 1;
-  loc->func= s= output;
-  while (*s != '\n')
-    s++;
-  *s++= 0;
-  loc->file= s;
-  while (*s != ':')
-    s++;
-  *s++= 0;
 
+  /* 10 ms should be plenty of time for addr2line to issue a response. */
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 10000;
+  /* Read in a loop till all the output from addr2line is complete. */
+  while (select(out[0] + 1, &set, NULL, NULL, &timeout) > 0)
+  {
+    extra_bytes_read= read(out[0], output + total_bytes_read,
+                           sizeof(output) - total_bytes_read);
+    if (extra_bytes_read < 0)
+      return 1;
+    /* Timeout or max bytes read. */
+    if (extra_bytes_read == 0)
+      break;
+
+    total_bytes_read += extra_bytes_read;
+  }
+
+  /* Failed starting addr2line. */
+  if (total_bytes_read == 0)
+    return 1;
+
+  /* Go through the addr2line response and get the required data.
+     The response is structured in 2 lines. The first line contains the function
+     name, while the second one contains <filename>:<line number> */
+  for (i = 0; i < total_bytes_read; i++) {
+    if (output[i] == '\n') {
+      filename_start = i + 1;
+      output[i] = '\0';
+    }
+    if (filename_start != -1 && output[i] == ':') {
+      line_number_start = i + 1;
+      output[i] = '\0';
+    }
+    if (line_number_start != -1) {
+      loc->line= atoi(output + line_number_start);
+      break;
+    }
+  }
+  /* Response is malformed. */
+  if (filename_start == -1 || line_number_start == -1)
+   return 1;
+
+  loc->func= output;
+  loc->file= output + filename_start;
+
+  /* Addr2line was unable to extract any meaningful information. */
   if (strcmp(loc->file, "??") == 0)
     return 1;
 
-  loc->line= 0;
-  while (isdigit(*s))
-    loc->line = loc->line * 10 + (*s++ - '0');
-  *s = 0;
   loc->file= strip_path(loc->file);
 
   return 0;
@@ -171,6 +224,12 @@ const char *my_addr_resolve_init()
   if (!initialized)
   {
     pid_t pid;
+
+#if defined(HAVE_LINK_H) && defined(HAVE_DLOPEN)
+    struct link_map *lm = (struct link_map*) dlopen(0, RTLD_NOW);
+    if (lm)
+      offset= lm->l_addr;
+#endif
 
     if (pipe(in) < 0)
       return "pipe(in)";

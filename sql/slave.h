@@ -130,6 +130,9 @@ extern my_bool opt_log_slave_updates;
 extern char *opt_slave_skip_errors;
 extern my_bool opt_replicate_annotate_row_events;
 extern ulonglong relay_log_space_limit;
+extern ulonglong slave_skipped_errors;
+extern const char *relay_log_index;
+extern const char *relay_log_basename;
 
 /*
   4 possible values for Master_info::slave_running and
@@ -174,7 +177,8 @@ bool flush_relay_log_info(Relay_log_info* rli);
 int register_slave_on_master(MYSQL* mysql);
 int terminate_slave_threads(Master_info* mi, int thread_mask,
 			     bool skip_lock = 0);
-int start_slave_threads(bool need_slave_mutex, bool wait_for_start,
+int start_slave_threads(THD *thd,
+                        bool need_slave_mutex, bool wait_for_start,
 			Master_info* mi, const char* master_info_fname,
 			const char* slave_info_fname, int thread_mask);
 /*
@@ -203,8 +207,11 @@ int mysql_table_dump(THD* thd, const char* db,
 int fetch_master_table(THD* thd, const char* db_name, const char* table_name,
 		       Master_info* mi, MYSQL* mysql, bool overwrite);
 
+void show_master_info_get_fields(THD *thd, List<Item> *field_list,
+                                     bool full, size_t gtid_pos_length);
 bool show_master_info(THD* thd, Master_info* mi, bool full);
 bool show_all_master_info(THD* thd);
+void show_binlog_info_get_fields(THD *thd, List<Item> *field_list);
 bool show_binlog_info(THD* thd);
 bool rpl_master_has_bug(const Relay_log_info *rli, uint bug_id, bool report,
                         bool (*pred)(const void *), const void *param);
@@ -236,13 +243,15 @@ void set_slave_thread_default_charset(THD *thd, rpl_group_info *rgi);
 int rotate_relay_log(Master_info* mi);
 int has_temporary_error(THD *thd);
 int apply_event_and_update_pos(Log_event* ev, THD* thd,
-                               struct rpl_group_info *rgi,
-                               rpl_parallel_thread *rpt);
+                               struct rpl_group_info *rgi);
+int apply_event_and_update_pos_for_parallel(Log_event* ev, THD* thd,
+                                            struct rpl_group_info *rgi);
 
 pthread_handler_t handle_slave_io(void *arg);
 void slave_output_error_info(rpl_group_info *rgi, THD *thd);
 pthread_handler_t handle_slave_sql(void *arg);
 bool net_request_file(NET* net, const char* fname);
+void slave_background_kill_request(THD *to_kill);
 
 extern bool volatile abort_loop;
 extern Master_info *active_mi; /* active_mi for multi-master */

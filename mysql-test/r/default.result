@@ -1,5 +1,6 @@
 drop table if exists t1,t2,t3,t4,t5,t6;
 drop database if exists mysqltest;
+set sql_mode="";
 CREATE TABLE t1 (a varchar(30) binary NOT NULL DEFAULT ' ',
 b varchar(1) binary NOT NULL DEFAULT ' ',
 c varchar(4) binary NOT NULL DEFAULT '0000',
@@ -29,6 +30,7 @@ z varchar(20) binary NOT NULL DEFAULT ' ',
 a1 varchar(30) binary NOT NULL DEFAULT ' ',
 b1 tinyblob NULL)
 ENGINE=InnoDB DEFAULT CHARACTER SET = latin1 COLLATE latin1_bin;
+set sql_mode=default;
 INSERT into t1 (b) values ('1');
 SHOW WARNINGS;
 Level	Code	Message
@@ -220,3 +222,58 @@ NULL
 10
 drop table t1, t2;
 End of 5.0 tests.
+#
+# Start of 10.0 tests
+#
+#
+# MDEV-11265 Access defied when CREATE VIIEW v1 AS SELECT DEFAULT(column) FROM t1
+#
+CREATE TABLE t1 (a INT DEFAULT 10);
+INSERT INTO t1 VALUES (11);
+CREATE VIEW v1 AS SELECT a AS a FROM t1;
+CREATE VIEW v2 AS SELECT DEFAULT(a) AS a FROM t1;
+CREATE VIEW v3 AS SELECT VALUES(a) AS a FROM t1;
+SELECT * FROM v1;
+a
+11
+SELECT * FROM v2;
+a
+10
+SELECT * FROM v3;
+a
+NULL
+UPDATE v2 SET a=123;
+ERROR HY000: Column 'a' is not updatable
+UPDATE v3 SET a=123;
+ERROR HY000: Column 'a' is not updatable
+DROP VIEW v3;
+DROP VIEW v2;
+DROP VIEW v1;
+DROP TABLE t1;
+#
+# MDEV-10780 Server crashes in in create_tmp_table
+#
+CREATE TABLE t1 (pk INT AUTO_INCREMENT PRIMARY KEY) ENGINE=MyISAM;
+INSERT INTO t1 VALUES ();
+INSERT INTO t1 VALUES ();
+SELECT DISTINCT DEFAULT (pk) FROM t1 GROUP BY RAND() WITH ROLLUP;
+DEFAULT (pk)
+0
+DROP TABLE t1;
+#
+# End of 10.0 tests
+#
+#
+# Start of 10.1 tests
+#
+CREATE TABLE t1 (a INT DEFAULT 100, b INT DEFAULT NULL);
+INSERT INTO t1 VALUES ();
+SELECT * FROM t1 WHERE DEFAULT(a);
+a	b
+100	NULL
+SELECT * FROM t1 WHERE DEFAULT(b);
+a	b
+DROP TABLE IF EXISTS t1;
+#
+# End of 10.1 tests
+#

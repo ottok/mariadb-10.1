@@ -38,7 +38,7 @@ use Getopt::Long;
 use POSIX qw(strftime getcwd);
 
 $|=1;
-$VER="2.16";
+$VER="2.20";
 
 my @defaults_options;   #  Leading --no-defaults, --defaults-file, etc.
 
@@ -54,6 +54,7 @@ $opt_user          = "root";
 $opt_version       = 0;
 $opt_silent        = 0;
 $opt_verbose       = 0;
+$opt_wsrep_new_cluster = 0;
 
 my $my_print_defaults_exists= 1;
 my $logdir= undef();
@@ -103,7 +104,7 @@ sub main
     print "WARNING: my_print_defaults command not found.\n";
     print "Please make sure you have this command available and\n";
     print "in your path. The command is available from the latest\n";
-    print "MySQL distribution.\n";
+    print "MariaDB distribution.\n";
     $my_print_defaults_exists= 0;
   }
 
@@ -126,7 +127,7 @@ sub main
   # We've already handled --no-defaults, --defaults-file, etc.
   if (!GetOptions("help", "example", "version", "mysqld=s", "mysqladmin=s",
                   "user=s", "password=s", "log=s", "no-log",
-                  "tcp-ip",  "silent", "verbose"))
+                  "tcp-ip",  "silent", "verbose", "wsrep-new-cluster"))
   {
     $flag_exit= 1;
   }
@@ -138,6 +139,7 @@ sub main
     print "will be disabled\nand some will be enabled.\n\n";
   }
 
+  init_log() if (!defined($opt_log));
   $groupids = $ARGV[1];
   if ($opt_version)
   {
@@ -153,7 +155,7 @@ sub main
   if (!defined(my_which(my_print_defaults)))
   {
     print "ABORT: Can't find command 'my_print_defaults'.\n";
-    print "This command is available from the latest MySQL\n";
+    print "This command is available from the latest MariaDB\n";
     print "distribution. Please make sure you have the command\n";
     print "in your PATH.\n";
     exit(1);
@@ -163,7 +165,6 @@ sub main
 	       !($ARGV[0] =~ m/^stop$/i) &&
 	       !($ARGV[0] =~ m/^report$/i)));
 
-  init_log() if (!defined($opt_log));
   if (!$opt_no_log)
   {
     w2log("$my_progname log file version $VER; run: ",
@@ -218,6 +219,10 @@ sub quote_shell_word
   return $option;
 }
 
+####
+#### get options for a group
+####
+
 sub defaults_for_group
 {
   my ($group) = @_;
@@ -265,17 +270,17 @@ sub init_log
 }
 
 ####
-#### Report living and not running MySQL servers
+#### Report living and not running MariaDB servers
 ####
 
 sub report_mysqlds
 {
   my (@groups, $com, $i, @options, $pec);
 
-  print "Reporting MySQL servers\n";
+  print "Reporting MariaDB servers\n";
   if (!$opt_no_log)
   {
-    w2log("\nReporting MySQL servers","$opt_log",0,0);
+    w2log("\nReporting MariaDB servers","$opt_log",0,0);
   }
   @groups = &find_groups($groupids);
   for ($i = 0; defined($groups[$i]); $i++)
@@ -286,19 +291,19 @@ sub report_mysqlds
     $pec = $? >> 8;
     if ($pec)
     {
-      print "MySQL server from group: $groups[$i] is not running\n";
+      print "MariaDB server from group: $groups[$i] is not running\n";
       if (!$opt_no_log)
       {
-	w2log("MySQL server from group: $groups[$i] is not running",
+	w2log("MariaDB server from group: $groups[$i] is not running",
 	      "$opt_log", 0, 0);
       }
     }
     else
     {
-      print "MySQL server from group: $groups[$i] is running\n";
+      print "MariaDB server from group: $groups[$i] is running\n";
       if (!$opt_no_log)
       {
-	w2log("MySQL server from group: $groups[$i] is running",
+	w2log("MariaDB server from group: $groups[$i] is running",
 	      "$opt_log", 0, 0);
       }
     }
@@ -323,11 +328,11 @@ sub start_mysqlds()
 
   if (!$opt_no_log)
   {
-    w2log("\nStarting MySQL servers\n","$opt_log",0,0);
+    w2log("\nStarting MariaDB servers\n","$opt_log",0,0);
   }
   else
   {
-    print "\nStarting MySQL servers\n";
+    print "\nStarting MariaDB servers\n";
   }
   @groups = &find_groups($groupids);
   for ($i = 0; defined($groups[$i]); $i++)
@@ -374,6 +379,11 @@ sub start_mysqlds()
       $info_sent= 1;
     }
     $com.= $tmp;
+
+    if ($opt_wsrep_new_cluster) {
+      $com.= " --wsrep-new-cluster";
+    }
+
     $com.= " >> $opt_log 2>&1" if (!$opt_no_log);
     $com.= " &";
     if (!$mysqld_found)
@@ -398,7 +408,7 @@ sub start_mysqlds()
   }
   if (!$i && !$opt_no_log)
   {
-    w2log("No MySQL servers to be started (check your GNRs)",
+    w2log("No MariaDB servers to be started (check your GNRs)",
 	  "$opt_log", 0, 0);
   }
 }
@@ -413,11 +423,11 @@ sub stop_mysqlds()
 
   if (!$opt_no_log)
   {
-    w2log("\nStopping MySQL servers\n","$opt_log",0,0);
+    w2log("\nStopping MariaDB servers\n","$opt_log",0,0);
   }
   else
   {
-    print "\nStopping MySQL servers\n";
+    print "\nStopping MariaDB servers\n";
   }
   @groups = &find_groups($groupids);
   for ($i = 0; defined($groups[$i]); $i++)
@@ -430,7 +440,7 @@ sub stop_mysqlds()
   }
   if (!$i && !$opt_no_log)
   {
-    w2log("No MySQL servers to be stopped (check your GNRs)",
+    w2log("No MariaDB servers to be stopped (check your GNRs)",
 	  "$opt_log", 0, 0);
   }
 }
@@ -650,23 +660,23 @@ sub example
 #
 # 1.COMMON USER
 #
-#   Make sure that the MySQL user, who is stopping the mysqld services, has
-#   the same password to all MySQL servers being accessed by $my_progname.
+#   Make sure that the MariaDB user, who is stopping the mysqld services, has
+#   the same password to all MariaDB servers being accessed by $my_progname.
 #   This user needs to have the 'Shutdown_priv' -privilege, but for security
 #   reasons should have no other privileges. It is advised that you create a
-#   common 'multi_admin' user for all MySQL servers being controlled by
+#   common 'multi_admin' user for all MariaDB servers being controlled by
 #   $my_progname. Here is an example how to do it:
 #
 #   GRANT SHUTDOWN ON *.* TO multi_admin\@localhost IDENTIFIED BY 'password'
 #
-#   You will need to apply the above to all MySQL servers that are being
+#   You will need to apply the above to all MariaDB servers that are being
 #   controlled by $my_progname. 'multi_admin' will shutdown the servers
 #   using 'mysqladmin' -binary, when '$my_progname stop' is being called.
 #
 # 2.PID-FILE
 #
 #   If you are using mysqld_safe to start mysqld, make sure that every
-#   MySQL server has a separate pid-file. In order to use mysqld_safe
+#   MariaDB server has a separate pid-file. In order to use mysqld_safe
 #   via $my_progname, you need to use two options:
 #
 #   mysqld=/path/to/mysqld_safe
@@ -679,7 +689,7 @@ sub example
 #
 # 3.DATA DIRECTORY
 #
-#   It is NOT advised to run many MySQL servers within the same data directory.
+#   It is NOT advised to run many MariaDB servers within the same data directory.
 #   You can do so, but please make sure to understand and deal with the
 #   underlying caveats. In short they are:
 #   - Speed penalty
@@ -700,7 +710,7 @@ sub example
 #   intentionally left out. You may have 'gaps' in the config file. This
 #   gives you more flexibility.
 #
-# 6.MySQL Server User
+# 6.MariaDB Server User
 #
 #   You can pass the user=... option inside [mysqld#] groups. This
 #   can be very handy in some cases, but then you need to run $my_progname
@@ -708,7 +718,7 @@ sub example
 #
 # 7.A Start-up Manage Script for $my_progname
 #
-#   In the recent MySQL distributions you can find a file called
+#   In the recent MariaDB distributions you can find a file called
 #   mysqld_multi.server.sh. It is a wrapper for $my_progname. This can
 #   be used to start and stop multiple servers during boot and shutdown.
 #
@@ -721,7 +731,7 @@ sub example
 #   or /root/.my.cnf and add the [mysqld_multi] and [mysqld#] groups.
 #
 #   The script can be found from support-files/mysqld_multi.server.sh
-#   in MySQL distribution. (Verify the script before using)
+#   in MariaDB distribution. (Verify the script before using)
 #
 
 [mysqld_multi]
@@ -840,7 +850,7 @@ Using:  @{[join ' ', @defaults_options]}
                    file is turned on.
 --password=...     Password for mysqladmin user.
 --silent           Disable warnings.
---tcp-ip           Connect to the MySQL server(s) via the TCP/IP port instead
+--tcp-ip           Connect to the MariaDB server(s) via the TCP/IP port instead
                    of the UNIX socket. This affects stopping and reporting.
                    If a socket file is missing, the server may still be
                    running, but can be accessed only via the TCP/IP port.
@@ -848,6 +858,7 @@ Using:  @{[join ' ', @defaults_options]}
 --user=...         mysqladmin user. Using: $opt_user
 --verbose          Be more verbose.
 --version          Print the version number and exit.
+--wsrep-new-cluster  Bootstrap a cluster.
 EOF
   exit(0);
 }

@@ -2706,6 +2706,261 @@ Z,z,Ź,ź,Ż,ż,Ž,ž
 ǁ
 ǂ
 ǃ
+select group_concat(c1 order by c1) from t1 group by c1 collate utf8_thai_520_w2;
+group_concat(c1 order by c1)
+÷
+×
+A,a
+Á,á
+À,à
+Ă,ă
+Ắ,ắ
+Ằ,ằ
+Ẵ,ẵ
+Ẳ,ẳ
+Â,â
+Ấ,ấ
+Ầ,ầ
+Ẫ,ẫ
+Ẩ,ẩ
+Ǎ,ǎ
+Å,å
+Ǻ,ǻ
+Ä,ä
+Ǟ,ǟ
+Ã,ã
+Ǡ,ǡ
+Ą,ą
+Ā,ā
+Ả,ả
+Ạ,ạ
+Ặ,ặ
+Ậ,ậ
+AA,Aa,aA,aa
+AE,Ae,aE,ae
+Æ,æ
+Ǽ,ǽ
+Ǣ,ǣ
+B,b
+ƀ
+Ɓ
+Ƃ,ƃ
+C,c
+Ć,ć
+Ĉ,ĉ
+Č,č
+Ċ,ċ
+Ç,ç
+CH,Ch,cH,ch
+Ƈ,ƈ
+D,d
+Ď,ď
+Đ,đ
+Ð,ð
+DZ,Dz,dZ,dz,Ǳ,ǲ,ǳ
+DŽ,Dž,dŽ,dž,Ǆ,ǅ,ǆ
+Ɖ
+Ɗ
+Ƌ,ƌ
+E,e
+É,é
+È,è
+Ĕ,ĕ
+Ê,ê
+Ế,ế
+Ề,ề
+Ễ,ễ
+Ể,ể
+Ě,ě
+Ë,ë
+Ẽ,ẽ
+Ė,ė
+Ę,ę
+Ē,ē
+Ẻ,ẻ
+Ẹ,ẹ
+Ệ,ệ
+Ǝ,ǝ
+Ə
+Ɛ
+F,f
+Ƒ,ƒ
+G,g
+Ǵ,ǵ
+Ğ,ğ
+Ĝ,ĝ
+Ǧ,ǧ
+Ġ,ġ
+Ģ,ģ
+Ǥ,ǥ
+Ɠ
+Ɣ
+Ƣ,ƣ
+H,h
+Ĥ,ĥ
+Ħ,ħ
+ƕ,Ƕ
+I,i
+Í,í
+Ì,ì
+Ĭ,ĭ
+Î,î
+Ǐ,ǐ
+Ï,ï
+Ĩ,ĩ
+İ
+Į,į
+Ī,ī
+Ỉ,ỉ
+Ị,ị
+IJ,Ij,iJ,ij,Ĳ,ĳ
+ı
+Ɨ
+Ɩ
+J,j
+Ĵ,ĵ
+ǰ
+K,k
+Ǩ,ǩ
+Ķ,ķ
+Ƙ,ƙ
+L,l
+Ĺ,ĺ
+Ľ,ľ
+Ļ,ļ
+Ł,ł
+Ŀ,ŀ
+LJ,Lj,lJ,lj,Ǉ,ǈ,ǉ
+LL,Ll,lL,ll
+ƚ
+ƛ
+M,m
+N,n
+Ń,ń
+Ǹ,ǹ
+Ň,ň
+Ñ,ñ
+Ņ,ņ
+NJ,Nj,nJ,nj,Ǌ,ǋ,ǌ
+Ɲ
+ƞ
+Ŋ,ŋ
+O,o
+Ó,ó
+Ò,ò
+Ŏ,ŏ
+Ô,ô
+Ố,ố
+Ồ,ồ
+Ỗ,ỗ
+Ổ,ổ
+Ǒ,ǒ
+Ö,ö
+Ő,ő
+Õ,õ
+Ø,ø
+Ǿ,ǿ
+Ǫ,ǫ
+Ǭ,ǭ
+Ō,ō
+Ỏ,ỏ
+Ơ,ơ
+Ớ,ớ
+Ờ,ờ
+Ỡ,ỡ
+Ở,ở
+Ợ,ợ
+Ọ,ọ
+Ộ,ộ
+OE,Oe,oE,oe
+Œ,œ
+Ɔ
+Ɵ
+P,p
+Ƥ,ƥ
+Q,q
+ĸ
+R,r
+Ŕ,ŕ
+Ř,ř
+Ŗ,ŗ
+RR,Rr,rR,rr
+Ʀ
+S,s
+Ś,ś
+Ŝ,ŝ
+Š,š
+Ş,ş
+ſ
+SS,Ss,sS,ss
+ß
+Ʃ
+ƪ
+T,t
+Ť,ť
+Ţ,ţ
+ƾ
+Ŧ,ŧ
+ƫ
+Ƭ,ƭ
+Ʈ
+U,u
+Ú,ú
+Ù,ù
+Ŭ,ŭ
+Û,û
+Ǔ,ǔ
+Ů,ů
+Ü,ü
+Ǘ,ǘ
+Ǜ,ǜ
+Ǚ,ǚ
+Ǖ,ǖ
+Ű,ű
+Ũ,ũ
+Ų,ų
+Ū,ū
+Ủ,ủ
+Ư,ư
+Ứ,ứ
+Ừ,ừ
+Ữ,ữ
+Ử,ử
+Ự,ự
+Ụ,ụ
+Ɯ
+Ʊ
+V,v
+Ʋ
+W,w
+Ŵ,ŵ
+X,x
+Y,y
+Ý,ý
+Ŷ,ŷ
+ÿ,Ÿ
+Ƴ,ƴ
+Z,z
+Ź,ź
+Ž,ž
+Ż,ż
+ƍ
+Ƶ,ƶ
+Ʒ
+Ǯ,ǯ
+Ƹ,ƹ
+ƺ
+Þ,þ
+ƿ,Ƿ
+ƻ
+Ƨ,ƨ
+Ƽ,ƽ
+Ƅ,ƅ
+ŉ
+ǀ
+ǁ
+ǂ
+ǃ
 ALTER TABLE t1 CONVERT TO CHARACTER SET ucs2 COLLATE ucs2_bin;
 SELECT GROUP_CONCAT(c1 ORDER BY c1) FROM t1 GROUP BY c1 COLLATE ucs2_unicode_ci;
 GROUP_CONCAT(c1 ORDER BY c1)
@@ -6071,8 +6326,8 @@ CREATE TABLE t1 AS SELECT REPEAT('a',1) AS a, 1 AS b LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-  `b` int(1) NOT NULL DEFAULT '0'
+  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `b` int(1) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('s',0),(_latin1 0xDF,1);
 SELECT * FROM t1 ORDER BY a, b;
@@ -6265,9 +6520,21 @@ CREATE TABLE t1 AS
 SELECT 10 AS a, REPEAT('a',20) AS b, REPEAT('a',8) AS c, REPEAT('a',8) AS d;
 ALTER TABLE t1 ADD PRIMARY KEY(a), ADD KEY(b);
 INSERT INTO t1 (a, b) VALUES (1, repeat(0xF1F2,5));
+Warnings:
+Warning	1364	Field 'c' doesn't have a default value
+Warning	1364	Field 'd' doesn't have a default value
 INSERT INTO t1 (a, b) VALUES (2, repeat(0xF1F2,10));
+Warnings:
+Warning	1364	Field 'c' doesn't have a default value
+Warning	1364	Field 'd' doesn't have a default value
 INSERT INTO t1 (a, b) VALUES (3, repeat(0xF1F2,11));
+Warnings:
+Warning	1364	Field 'c' doesn't have a default value
+Warning	1364	Field 'd' doesn't have a default value
 INSERT INTO t1 (a, b) VALUES (4, repeat(0xF1F2,12));
+Warnings:
+Warning	1364	Field 'c' doesn't have a default value
+Warning	1364	Field 'd' doesn't have a default value
 SELECT hex(concat(repeat(0xF1F2, 10), '%'));
 hex(concat(repeat(0xF1F2, 10), '%'))
 F1F2F1F2F1F2F1F2F1F2F1F2F1F2F1F2F1F2F1F20025
@@ -6479,7 +6746,7 @@ ADD KEY(ch);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ch` varchar(60) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `ch` varchar(60) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`),
   KEY `ch` (`ch`)
@@ -6506,10 +6773,22 @@ SELECT ch FROM t1 IGNORE KEY (ch) WHERE ch='a𝌆' ORDER BY ch;
 ch
 SELECT ch FROM t1 IGNORE KEY (ch) WHERE ch='a𝌆b' ORDER BY ch;
 ch
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	#	Impossible WHERE noticed after reading const tables
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆' ORDER BY ch;
 ch
 Warnings:
 Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆b' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	#	Impossible WHERE noticed after reading const tables
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86b' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆b' ORDER BY ch;
 ch
 Warnings:
@@ -6552,6 +6831,12 @@ ab
 az
 aЀ
 aր
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	ch	ch	182	NULL	#	Using where; Using index
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆' ORDER BY ch;
 ch
 a
@@ -6573,6 +6858,12 @@ aЀ
 aր
 Warnings:
 Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆b' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	ch	ch	182	NULL	#	Using where; Using index
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86b' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆b' ORDER BY ch;
 ch
 a
@@ -6600,11 +6891,23 @@ z
 SELECT ch FROM t1 IGNORE KEY (ch) WHERE ch>'a𝌆b' ORDER BY ch;
 ch
 z
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	ch	ch	182	NULL	#	Using where; Using index
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆' ORDER BY ch;
 ch
 z
 Warnings:
 Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆b' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	ch	ch	182	NULL	#	Using where; Using index
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86b' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆b' ORDER BY ch;
 ch
 z
@@ -6687,7 +6990,7 @@ ADD KEY(ch);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ch` varchar(60) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `ch` varchar(60) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`),
   KEY `ch` (`ch`)
@@ -6714,10 +7017,22 @@ SELECT ch FROM t1 IGNORE KEY (ch) WHERE ch='a𝌆' ORDER BY ch;
 ch
 SELECT ch FROM t1 IGNORE KEY (ch) WHERE ch='a𝌆b' ORDER BY ch;
 ch
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	#	Impossible WHERE noticed after reading const tables
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆' ORDER BY ch;
 ch
 Warnings:
 Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86' for column 'ch' at row 1
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆b' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	#	Impossible WHERE noticed after reading const tables
+Warnings:
+Warning	1366	Incorrect string value: '\xF0\x9D\x8C\x86b' for column 'ch' at row 1
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch='a𝌆b' ORDER BY ch;
 ch
 Warnings:
@@ -6760,6 +7075,10 @@ ab
 az
 aЀ
 aր
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ALL	ch	NULL	NULL	NULL	#	Using where; Using filesort
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆' ORDER BY ch;
 ch
 a
@@ -6779,6 +7098,10 @@ ab
 az
 aЀ
 aր
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆b' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ALL	ch	NULL	NULL	NULL	#	Using where; Using filesort
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch<'a𝌆b' ORDER BY ch;
 ch
 a
@@ -6804,9 +7127,17 @@ z
 SELECT ch FROM t1 IGNORE KEY (ch) WHERE ch>'a𝌆b' ORDER BY ch;
 ch
 z
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ALL	ch	NULL	NULL	NULL	#	Using where; Using filesort
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆' ORDER BY ch;
 ch
 z
+EXPLAIN
+SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆b' ORDER BY ch;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ALL	ch	NULL	NULL	NULL	#	Using where; Using filesort
 SELECT ch FROM t1 FORCE KEY (ch) WHERE ch>'a𝌆b' ORDER BY ch;
 ch
 z
@@ -6894,7 +7225,7 @@ CREATE TABLE t1 AS SELECT 'a' AS a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET ucs2 COLLATE ucs2_unicode_ci NOT NULL DEFAULT ''
+  `a` varchar(1) CHARACTER SET ucs2 COLLATE ucs2_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 CREATE TABLE t2 AS SELECT WEIGHT_STRING(a) AS ws FROM t1;
 SHOW CREATE TABLE t2;
@@ -6914,7 +7245,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a',5) AS a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(5) CHARACTER SET ucs2 COLLATE ucs2_unicode_ci NOT NULL DEFAULT ''
+  `a` varchar(5) CHARACTER SET ucs2 COLLATE ucs2_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 CREATE TABLE t2 AS SELECT WEIGHT_STRING(a) AS ws FROM t1;
 SHOW CREATE TABLE t2;
@@ -7138,7 +7469,7 @@ CREATE TABLE t1 AS SELECT 'a' AS a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''
+  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 CREATE TABLE t2 AS SELECT WEIGHT_STRING(a) AS ws FROM t1;
 SHOW CREATE TABLE t2;
@@ -7158,7 +7489,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a',5) AS a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(5) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''
+  `a` varchar(5) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 CREATE TABLE t2 AS SELECT WEIGHT_STRING(a) AS ws FROM t1;
 SHOW CREATE TABLE t2;
@@ -7786,8 +8117,8 @@ CREATE TABLE t1 AS SELECT REPEAT('a',1) AS a, 1 AS b LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL DEFAULT '',
-  `b` int(1) NOT NULL DEFAULT '0'
+  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL,
+  `b` int(1) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('s',0),(_latin1 0xDF,1);
 SELECT * FROM t1 ORDER BY a, b;
@@ -7816,7 +8147,7 @@ CREATE TABLE t1 AS SELECT repeat('a', 10) as c LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT ''
+  `c` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES (_utf32 0x0180),(_utf32 0x023A);
 INSERT INTO t1 VALUES (_utf32 0x023B),(_utf32 0x023C);
@@ -8120,7 +8451,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('a'),('a ');
 SELECT * FROM t1 WHERE CONCAT(c1)='a';
@@ -8143,7 +8474,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('a'),('a ');
 SELECT * FROM t1 WHERE 'a'=CONCAT(c1);
@@ -8166,7 +8497,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('%'),('% ');
 SELECT * FROM t1 WHERE '% '=CONCAT(c1);
@@ -8189,7 +8520,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('%'),('% ');
 SELECT * FROM t1 WHERE '%'=CONCAT(c1);
@@ -8209,13 +8540,38 @@ Warnings:
 Note	1003	select `test`.`t1`.`c1` AS `c1` from `test`.`t1` where (('%' = concat(`test`.`t1`.`c1`)) and ('a' like concat(`test`.`t1`.`c1`)))
 DROP TABLE t1;
 #
+# MDEV-8694 Wrong result for SELECT..WHERE a NOT LIKE 'a ' AND a='a'
+#
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES ('a'),('a ');
+SELECT a, LENGTH(a) FROM t1 WHERE a NOT LIKE 'a ';
+a	LENGTH(a)
+a	1
+SELECT a, LENGTH(a) FROM t1 WHERE a NOT LIKE 'a ' AND a='a';
+a	LENGTH(a)
+a	1
+EXPLAIN EXTENDED SELECT a, LENGTH(a) FROM t1 WHERE a NOT LIKE 'a ' AND a='a';
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a`,length(`test`.`t1`.`a`) AS `LENGTH(a)` from `test`.`t1` where ((not((`test`.`t1`.`a` like 'a '))) and (`test`.`t1`.`a` = 'a'))
+DROP TABLE t1;
+#
+# End of MDEV-8694
+#
+#
 # MDEV-7149 Constant condition propagation erroneously applied for LIKE
 #
 CREATE TABLE t1 AS SELECT REPEAT('a',10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('ae'),('ä');
 SELECT * FROM t1 WHERE c1='ä';
@@ -8253,7 +8609,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('a'),('a ');
 SELECT * FROM t1 WHERE CONCAT(c1)='a';
@@ -8276,7 +8632,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('a'),('a ');
 SELECT * FROM t1 WHERE 'a'=CONCAT(c1);
@@ -8299,7 +8655,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('%'),('% ');
 SELECT * FROM t1 WHERE '% '=CONCAT(c1);
@@ -8322,7 +8678,7 @@ CREATE TABLE t1 AS SELECT REPEAT('a', 10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('%'),('% ');
 SELECT * FROM t1 WHERE '%'=CONCAT(c1);
@@ -8342,13 +8698,38 @@ Warnings:
 Note	1003	select `test`.`t1`.`c1` AS `c1` from `test`.`t1` where (('%' = concat(`test`.`t1`.`c1`)) and ('a' like concat(`test`.`t1`.`c1`)))
 DROP TABLE t1;
 #
+# MDEV-8694 Wrong result for SELECT..WHERE a NOT LIKE 'a ' AND a='a'
+#
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES ('a'),('a ');
+SELECT a, LENGTH(a) FROM t1 WHERE a NOT LIKE 'a ';
+a	LENGTH(a)
+a	1
+SELECT a, LENGTH(a) FROM t1 WHERE a NOT LIKE 'a ' AND a='a';
+a	LENGTH(a)
+a	1
+EXPLAIN EXTENDED SELECT a, LENGTH(a) FROM t1 WHERE a NOT LIKE 'a ' AND a='a';
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a`,length(`test`.`t1`.`a`) AS `LENGTH(a)` from `test`.`t1` where ((not((`test`.`t1`.`a` like 'a '))) and (`test`.`t1`.`a` = 'a'))
+DROP TABLE t1;
+#
+# End of MDEV-8694
+#
+#
 # MDEV-7149 Constant condition propagation erroneously applied for LIKE
 #
 CREATE TABLE t1 AS SELECT REPEAT('a',10) AS c1 LIMIT 0;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL DEFAULT ''
+  `c1` varchar(10) CHARACTER SET utf8 COLLATE utf8_german2_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 VALUES ('ae'),('ä');
 SELECT * FROM t1 WHERE c1='ä';
@@ -8401,7 +8782,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `s1` varchar(64) CHARACTER SET utf8 COLLATE utf8_myanmar_ci NOT NULL DEFAULT '',
+  `s1` varchar(64) CHARACTER SET utf8 COLLATE utf8_myanmar_ci NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 (s1) VALUES
@@ -10977,7 +11358,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `s1` varchar(64) CHARACTER SET ucs2 COLLATE ucs2_myanmar_ci NOT NULL DEFAULT '',
+  `s1` varchar(64) CHARACTER SET ucs2 COLLATE ucs2_myanmar_ci NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 INSERT INTO t1 (s1) VALUES
@@ -13572,4 +13953,1419 @@ Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` where ((`test`.`t1`.`a`
 DROP TABLE t1;
 #
 # End of MariaDB-10.0 tests
+#
+#
+# Start of MariaDB-10.1 tests
+#
+#
+# MDEV-6973 XOR aggregates argument collations
+#
+SELECT '10' COLLATE utf8_general_ci XOR '20' COLLATE utf8_unicode_ci;
+'10' COLLATE utf8_general_ci XOR '20' COLLATE utf8_unicode_ci
+0
+#
+# MDEV-8705 Wrong result for SELECT..WHERE latin1_bin_column='a' AND latin1_bin_column='A'
+#
+SET NAMES utf8 COLLATE utf8_german2_ci;
+CREATE TABLE t1 (a VARCHAR(10) CHARACTER SET utf8 COLLATE utf8_bin);
+INSERT INTO t1 VALUES ('a'),('A');
+SELECT * FROM t1 WHERE a='a';
+a
+a
+SELECT * FROM t1 WHERE a=_utf8'a';
+a
+a
+SELECT * FROM t1 WHERE a='a' AND a=_utf8'a';
+a
+a
+DROP TABLE t1;
+SET NAMES utf8 COLLATE utf8_thai_520_w2;
+#
+# Start of ctype_uca_w2.inc
+#
+SELECT @@collation_connection;
+@@collation_connection
+utf8_thai_520_w2
+SELECT ID, SORTLEN, COLLATION_NAME, CHARACTER_SET_NAME
+FROM INFORMATION_SCHEMA.COLLATIONS
+WHERE COLLATION_NAME LIKE @@collation_connection;
+ID	SORTLEN	COLLATION_NAME	CHARACTER_SET_NAME
+578	4	utf8_thai_520_w2	utf8
+#
+# Testing strnxfrm
+#
+CREATE TABLE t1 AS SELECT SPACE(3) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(3) CHARACTER SET utf8 COLLATE utf8_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES (SPACE(0)),(SPACE(1)),(SPACE(2));
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(8))) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(8)))
+	020A020A020A020A020A020A020A020A00200020002000200020002000200020
+20	020A020A020A020A020A020A020A020A00200020002000200020002000200020
+2020	020A020A020A020A020A020A020A020A00200020002000200020002000200020
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4))) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4)))
+	020A020A020A020A0020002000200020
+20	020A020A020A020A0020002000200020
+2020	020A020A020A020A0020002000200020
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 1)) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 1))
+	020A020A020A020A
+20	020A020A020A020A
+2020	020A020A020A020A
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 2)) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 2))
+	0020002000200020
+20	0020002000200020
+2020	0020002000200020
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 3)) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 3))
+	0020002000200020
+20	0020002000200020
+2020	0020002000200020
+DROP TABLE t1;
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET utf8 COLLATE utf8_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES (_ucs2 0x3400);
+INSERT INTO t1 VALUES (_ucs2 0xF001);
+SELECT HEX(CONVERT(a USING ucs2)) AS ucs2, HEX(a), HEX(WEIGHT_STRING(a)) FROM t1;
+ucs2	HEX(a)	HEX(WEIGHT_STRING(a))
+3400	E39080	FB80B4000020
+F001	EF8081	FBC1F0010020
+DROP TABLE t1;
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET utf8 COLLATE utf8_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES ('A'),('À'),('Á'),('Â'),('Ã'),('Ä'),('Å');
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+A	0020
+Á	00200032
+À	00200035
+Â	0020003C
+Å	00200043
+Ä	00200047
+Ã	0020004E
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a DESC;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+Ã	0020004E
+Ä	00200047
+Å	00200043
+Â	0020003C
+À	00200035
+Á	00200032
+A	0020
+SET @backup_character_set_connection=@@character_set_connection;
+SET @backup_collation_connection=@@collation_connection;
+SET NAMES utf8;
+SET @stmt= CONCAT('ALTER TABLE t1 MODIFY a CHAR(10)' COLLATE utf8_bin,
+' CHARACTER SET ',  @backup_character_set_connection,
+' COLLATE ',  @backup_collation_connection);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+SET collation_connection=@backup_collation_connection;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` char(10) CHARACTER SET utf8 COLLATE utf8_thai_520_w2 DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+A	0020
+Á	00200032
+À	00200035
+Â	0020003C
+Å	00200043
+Ä	00200047
+Ã	0020004E
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a DESC;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+Ã	0020004E
+Ä	00200047
+Å	00200043
+Â	0020003C
+À	00200035
+Á	00200032
+A	0020
+DROP TABLE t1;
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET utf8 COLLATE utf8_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES ('cota'),('cote'),('cotz');
+INSERT INTO t1 VALUES ('coté'),('côte'),('côté'),('cotë'),('côtë');
+SELECT * FROM t1 ORDER BY a;
+a
+cota
+cote
+coté
+cotë
+côte
+côté
+côtë
+cotz
+SELECT * FROM t1 ORDER BY a DESC;
+a
+cotz
+côtë
+côté
+côte
+cotë
+coté
+cote
+cota
+DROP TABLE t1;
+#
+# End of ctype_uca_w2.inc
+#
+#
+# Start of ctype_thai.inc
+#
+CREATE TABLE t1 (a VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_bin);
+INSERT INTO t1 VALUES ('-กระแย่ง');
+INSERT INTO t1 VALUES ('กก');
+INSERT INTO t1 VALUES ('กราบ');
+INSERT INTO t1 VALUES ('ข่าง');
+INSERT INTO t1 VALUES ('ข้าง');
+INSERT INTO t1 VALUES ('ข้างกระดาน');
+INSERT INTO t1 VALUES ('ข้างขึ้น');
+INSERT INTO t1 VALUES ('ข้างควาย');
+INSERT INTO t1 VALUES ('ข้างเงิน');
+INSERT INTO t1 VALUES ('ข้างแรม');
+INSERT INTO t1 VALUES ('ข้างออก');
+INSERT INTO t1 VALUES ('ข้างๆ');
+INSERT INTO t1 VALUES ('ข้างๆ คูๆ');
+INSERT INTO t1 VALUES ('ขาง');
+INSERT INTO t1 VALUES ('แข็ง');
+INSERT INTO t1 VALUES ('แข่ง');
+INSERT INTO t1 VALUES ('แข่งขัน');
+INSERT INTO t1 VALUES ('แข้ง');
+INSERT INTO t1 VALUES ('แข้งขวา');
+INSERT INTO t1 VALUES ('แข็งขัน');
+INSERT INTO t1 VALUES ('ทูลเกล้า');
+INSERT INTO t1 VALUES ('ทูลเกล้าทูลกระหม่อม');
+INSERT INTO t1 VALUES ('ทูลเกล้าฯ');
+INSERT INTO t1 VALUES ('บุญญา');
+INSERT INTO t1 VALUES ('บุญ-หลง');
+INSERT INTO t1 VALUES ('บุญหลง');
+INSERT INTO t1 VALUES ('ป่า');
+INSERT INTO t1 VALUES ('ป่าน');
+INSERT INTO t1 VALUES ('ป้า');
+INSERT INTO t1 VALUES ('ป้าน');
+INSERT INTO t1 VALUES ('ป๊า');
+INSERT INTO t1 VALUES ('ป๊าน');
+INSERT INTO t1 VALUES ('ป๋า');
+INSERT INTO t1 VALUES ('ป๋าน');
+INSERT INTO t1 VALUES ('ปา');
+INSERT INTO t1 VALUES ('ปาน');
+INSERT INTO t1 VALUES ('แป้ง');
+INSERT INTO t1 VALUES ('พณิชย์');
+INSERT INTO t1 VALUES ('ม้า');
+INSERT INTO t1 VALUES ('ฯพณฯ');
+INSERT INTO t1 VALUES ('A');
+INSERT INTO t1 VALUES ('a');
+INSERT INTO t1 VALUES ('a\'');
+INSERT INTO t1 VALUES ('A-');
+INSERT INTO t1 VALUES ('a-');
+INSERT INTO t1 VALUES ('-a');
+INSERT INTO t1 VALUES ('A.');
+INSERT INTO t1 VALUES ('a.');
+INSERT INTO t1 VALUES ('A-1');
+INSERT INTO t1 VALUES ('aa');
+INSERT INTO t1 VALUES ('AA');
+INSERT INTO t1 VALUES ('A.A.');
+INSERT INTO t1 VALUES ('a.a.');
+INSERT INTO t1 VALUES ('AAA');
+INSERT INTO t1 VALUES ('A.A.A.');
+INSERT INTO t1 VALUES ('AAAA');
+INSERT INTO t1 VALUES ('A.A.A.L.');
+INSERT INTO t1 VALUES ('A.A.A.S.');
+INSERT INTO t1 VALUES ('Aachen');
+INSERT INTO t1 VALUES ('A.A.E.');
+INSERT INTO t1 VALUES ('A.Ae.E.');
+INSERT INTO t1 VALUES ('A.A.E.E.');
+INSERT INTO t1 VALUES ('AAES');
+INSERT INTO t1 VALUES ('AAF');
+INSERT INTO t1 VALUES ('A.Agr');
+INSERT INTO t1 VALUES ('aah');
+INSERT INTO t1 VALUES ('@@@@@');
+INSERT INTO t1 VALUES ('0000');
+INSERT INTO t1 VALUES ('9999');
+INSERT INTO t1 VALUES ('Aalborg');
+INSERT INTO t1 VALUES ('aide');
+INSERT INTO t1 VALUES ('air');
+INSERT INTO t1 VALUES ('@@@air');
+INSERT INTO t1 VALUES ('air@@@');
+INSERT INTO t1 VALUES ('C.A.F');
+INSERT INTO t1 VALUES ('Canon');
+INSERT INTO t1 VALUES ('coop');
+INSERT INTO t1 VALUES ('co-op');
+INSERT INTO t1 VALUES ('COOP');
+INSERT INTO t1 VALUES ('CO-OP');
+INSERT INTO t1 VALUES ('Copenhegen');
+INSERT INTO t1 VALUES ('McArthur');
+INSERT INTO t1 VALUES ('Mc Arthur');
+INSERT INTO t1 VALUES ('Mc Mahon');
+INSERT INTO t1 VALUES ('vice-president');
+INSERT INTO t1 VALUES ('vice versa');
+INSERT INTO t1 VALUES ('vice-versa');
+INSERT INTO t1 VALUES ('10 ลิตร');
+INSERT INTO t1 VALUES ('๑๐ ลิตร');
+INSERT INTO t1 VALUES ('10 litre');
+INSERT INTO t1 VALUES ('10 litre (10 ลิตร)');
+INSERT INTO t1 VALUES ('10 ลิตร (10 litre)');
+INSERT INTO t1 VALUES ('10 litre (๑๐ ลิตร)');
+INSERT INTO t1 VALUES ('๑๐ ลิตร (10 litre)');
+INSERT INTO t1 VALUES ('๑๐ ลิตร [10 litre]');
+INSERT INTO t1 VALUES ('๑๐ ลิตร {10 litre}');
+ALTER TABLE t1 ORDER BY a;
+SET @backup_character_set_connection=@@character_set_connection;
+SET @backup_collation_connection=@@collation_connection;
+SET NAMES utf8;
+SET @stmt= CONCAT('ALTER TABLE t1 MODIFY a VARCHAR(30)',
+' CHARACTER SET ', @backup_character_set_connection,
+' COLLATE ', @backup_collation_connection,
+' , ADD id INT NOT NULL AUTO_INCREMENT PRIMARY KEY'
+                  ' , ADD KEY a_id (a, id)');
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+SET collation_connection=@backup_collation_connection;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(30) CHARACTER SET utf8 COLLATE utf8_thai_520_w2 DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
+  KEY `a_id` (`a`,`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=97 DEFAULT CHARSET=latin1
+#
+# Ascending sort, using filesort
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a, BINARY a;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	97	NULL	96	Using index; Using filesort
+SELECT a FROM t1 ORDER BY a, BINARY a;
+a
+-a
+-กระแย่ง
+@@@@@
+@@@air
+0000
+10 litre
+10 litre (10 ลิตร)
+10 litre (๑๐ ลิตร)
+10 ลิตร
+๑๐ ลิตร
+10 ลิตร (10 litre)
+๑๐ ลิตร (10 litre)
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร {10 litre}
+9999
+A
+a
+A-
+a-
+A-1
+A.
+a.
+A.A.
+a.a.
+A.A.A.
+A.A.A.L.
+A.A.A.S.
+A.A.E.
+A.A.E.E.
+A.Ae.E.
+A.Agr
+a'
+AA
+aa
+AAA
+AAAA
+Aachen
+AAES
+AAF
+aah
+Aalborg
+aide
+air
+air@@@
+C.A.F
+Canon
+CO-OP
+co-op
+COOP
+coop
+Copenhegen
+Mc Arthur
+Mc Mahon
+McArthur
+vice versa
+vice-president
+vice-versa
+กก
+กราบ
+ขาง
+ข่าง
+ข้าง
+ข้างๆ
+ข้างๆ คูๆ
+ข้างกระดาน
+ข้างขึ้น
+ข้างควาย
+ข้างเงิน
+ข้างแรม
+ข้างออก
+แข็ง
+แข่ง
+แข้ง
+แข้งขวา
+แข็งขัน
+แข่งขัน
+ทูลเกล้า
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้าฯ
+บุญ-หลง
+บุญญา
+บุญหลง
+ปา
+ป่า
+ป้า
+ป๊า
+ป๋า
+ปาน
+ป่าน
+ป้าน
+ป๊าน
+ป๋าน
+แป้ง
+พณิชย์
+ม้า
+ฯพณฯ
+#
+# Descending sort, using filesort
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a DESC, BINARY a DESC;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	97	NULL	96	Using index; Using filesort
+SELECT a FROM t1 ORDER BY a DESC, BINARY a DESC;
+a
+ฯพณฯ
+ม้า
+พณิชย์
+แป้ง
+ป๋าน
+ป๊าน
+ป้าน
+ป่าน
+ปาน
+ป๋า
+ป๊า
+ป้า
+ป่า
+ปา
+บุญหลง
+บุญญา
+บุญ-หลง
+ทูลเกล้าฯ
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้า
+แข่งขัน
+แข็งขัน
+แข้งขวา
+แข้ง
+แข่ง
+แข็ง
+ข้างออก
+ข้างแรม
+ข้างเงิน
+ข้างควาย
+ข้างขึ้น
+ข้างกระดาน
+ข้างๆ คูๆ
+ข้างๆ
+ข้าง
+ข่าง
+ขาง
+กราบ
+กก
+vice-versa
+vice-president
+vice versa
+McArthur
+Mc Mahon
+Mc Arthur
+Copenhegen
+coop
+COOP
+co-op
+CO-OP
+Canon
+C.A.F
+air@@@
+air
+aide
+Aalborg
+aah
+AAF
+AAES
+Aachen
+AAAA
+AAA
+aa
+AA
+a'
+A.Agr
+A.Ae.E.
+A.A.E.E.
+A.A.E.
+A.A.A.S.
+A.A.A.L.
+A.A.A.
+a.a.
+A.A.
+a.
+A.
+A-1
+a-
+A-
+a
+A
+9999
+๑๐ ลิตร {10 litre}
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร (10 litre)
+10 ลิตร (10 litre)
+๑๐ ลิตร
+10 ลิตร
+10 litre (๑๐ ลิตร)
+10 litre (10 ลิตร)
+10 litre
+0000
+@@@air
+@@@@@
+-กระแย่ง
+-a
+#
+# Ascending sort, using index
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a, id;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	97	NULL	96	Using index
+SELECT a FROM t1 ORDER BY a, id;
+a
+-a
+-กระแย่ง
+@@@@@
+@@@air
+0000
+10 litre
+10 litre (10 ลิตร)
+10 litre (๑๐ ลิตร)
+10 ลิตร
+๑๐ ลิตร
+10 ลิตร (10 litre)
+๑๐ ลิตร (10 litre)
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร {10 litre}
+9999
+A
+a
+A-
+a-
+A-1
+A.
+a.
+A.A.
+a.a.
+A.A.A.
+A.A.A.L.
+A.A.A.S.
+A.A.E.
+A.A.E.E.
+A.Ae.E.
+A.Agr
+a'
+AA
+aa
+AAA
+AAAA
+Aachen
+AAES
+AAF
+aah
+Aalborg
+aide
+air
+air@@@
+C.A.F
+Canon
+CO-OP
+co-op
+COOP
+coop
+Copenhegen
+Mc Arthur
+Mc Mahon
+McArthur
+vice versa
+vice-president
+vice-versa
+กก
+กราบ
+ขาง
+ข่าง
+ข้าง
+ข้างๆ
+ข้างๆ คูๆ
+ข้างกระดาน
+ข้างขึ้น
+ข้างควาย
+ข้างเงิน
+ข้างแรม
+ข้างออก
+แข็ง
+แข่ง
+แข้ง
+แข้งขวา
+แข็งขัน
+แข่งขัน
+ทูลเกล้า
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้าฯ
+บุญ-หลง
+บุญญา
+บุญหลง
+ปา
+ป่า
+ป้า
+ป๊า
+ป๋า
+ปาน
+ป่าน
+ป้าน
+ป๊าน
+ป๋าน
+แป้ง
+พณิชย์
+ม้า
+ฯพณฯ
+#
+# Descending sort, using index
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a DESC, id DESC;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	97	NULL	96	Using index
+SELECT a FROM t1 ORDER BY a DESC, id DESC;
+a
+ฯพณฯ
+ม้า
+พณิชย์
+แป้ง
+ป๋าน
+ป๊าน
+ป้าน
+ป่าน
+ปาน
+ป๋า
+ป๊า
+ป้า
+ป่า
+ปา
+บุญหลง
+บุญญา
+บุญ-หลง
+ทูลเกล้าฯ
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้า
+แข่งขัน
+แข็งขัน
+แข้งขวา
+แข้ง
+แข่ง
+แข็ง
+ข้างออก
+ข้างแรม
+ข้างเงิน
+ข้างควาย
+ข้างขึ้น
+ข้างกระดาน
+ข้างๆ คูๆ
+ข้างๆ
+ข้าง
+ข่าง
+ขาง
+กราบ
+กก
+vice-versa
+vice-president
+vice versa
+McArthur
+Mc Mahon
+Mc Arthur
+Copenhegen
+coop
+COOP
+co-op
+CO-OP
+Canon
+C.A.F
+air@@@
+air
+aide
+Aalborg
+aah
+AAF
+AAES
+Aachen
+AAAA
+AAA
+aa
+AA
+a'
+A.Agr
+A.Ae.E.
+A.A.E.E.
+A.A.E.
+A.A.A.S.
+A.A.A.L.
+A.A.A.
+a.a.
+A.A.
+a.
+A.
+A-1
+a-
+A-
+a
+A
+9999
+๑๐ ลิตร {10 litre}
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร (10 litre)
+10 ลิตร (10 litre)
+๑๐ ลิตร
+10 ลิตร
+10 litre (๑๐ ลิตร)
+10 litre (10 ลิตร)
+10 litre
+0000
+@@@air
+@@@@@
+-กระแย่ง
+-a
+DROP TABLE t1;
+#
+# End of ctype_thai.inc
+#
+SET NAMES utf8;
+SET collation_connection=ucs2_thai_520_w2;
+#
+# Start of ctype_uca_w2.inc
+#
+SELECT @@collation_connection;
+@@collation_connection
+ucs2_thai_520_w2
+SELECT ID, SORTLEN, COLLATION_NAME, CHARACTER_SET_NAME
+FROM INFORMATION_SCHEMA.COLLATIONS
+WHERE COLLATION_NAME LIKE @@collation_connection;
+ID	SORTLEN	COLLATION_NAME	CHARACTER_SET_NAME
+642	4	ucs2_thai_520_w2	ucs2
+#
+# Testing strnxfrm
+#
+CREATE TABLE t1 AS SELECT SPACE(3) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(3) CHARACTER SET ucs2 COLLATE ucs2_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES (SPACE(0)),(SPACE(1)),(SPACE(2));
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(8))) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(8)))
+	020A020A020A020A020A020A020A020A00200020002000200020002000200020
+0020	020A020A020A020A020A020A020A020A00200020002000200020002000200020
+00200020	020A020A020A020A020A020A020A020A00200020002000200020002000200020
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4))) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4)))
+	020A020A020A020A0020002000200020
+0020	020A020A020A020A0020002000200020
+00200020	020A020A020A020A0020002000200020
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 1)) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 1))
+	020A020A020A020A
+0020	020A020A020A020A
+00200020	020A020A020A020A
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 2)) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 2))
+	0020002000200020
+0020	0020002000200020
+00200020	0020002000200020
+SELECT HEX(a), HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 3)) FROM t1;
+HEX(a)	HEX(WEIGHT_STRING(a AS CHAR(4) LEVEL 3))
+	0020002000200020
+0020	0020002000200020
+00200020	0020002000200020
+DROP TABLE t1;
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET ucs2 COLLATE ucs2_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES (_ucs2 0x3400);
+INSERT INTO t1 VALUES (_ucs2 0xF001);
+SELECT HEX(CONVERT(a USING ucs2)) AS ucs2, HEX(a), HEX(WEIGHT_STRING(a)) FROM t1;
+ucs2	HEX(a)	HEX(WEIGHT_STRING(a))
+3400	3400	FB80B4000020
+F001	F001	FBC1F0010020
+DROP TABLE t1;
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET ucs2 COLLATE ucs2_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES ('A'),('À'),('Á'),('Â'),('Ã'),('Ä'),('Å');
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+A	0020
+Á	00200032
+À	00200035
+Â	0020003C
+Å	00200043
+Ä	00200047
+Ã	0020004E
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a DESC;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+Ã	0020004E
+Ä	00200047
+Å	00200043
+Â	0020003C
+À	00200035
+Á	00200032
+A	0020
+SET @backup_character_set_connection=@@character_set_connection;
+SET @backup_collation_connection=@@collation_connection;
+SET NAMES utf8;
+SET @stmt= CONCAT('ALTER TABLE t1 MODIFY a CHAR(10)' COLLATE utf8_bin,
+' CHARACTER SET ',  @backup_character_set_connection,
+' COLLATE ',  @backup_collation_connection);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+SET collation_connection=@backup_collation_connection;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` char(10) CHARACTER SET ucs2 COLLATE ucs2_thai_520_w2 DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+A	0020
+Á	00200032
+À	00200035
+Â	0020003C
+Å	00200043
+Ä	00200047
+Ã	0020004E
+SELECT a, HEX(WEIGHT_STRING(a LEVEL 2)) FROM t1 ORDER BY a DESC;
+a	HEX(WEIGHT_STRING(a LEVEL 2))
+Ã	0020004E
+Ä	00200047
+Å	00200043
+Â	0020003C
+À	00200035
+Á	00200032
+A	0020
+DROP TABLE t1;
+CREATE TABLE t1 AS SELECT SPACE(10) AS a LIMIT 0;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET ucs2 COLLATE ucs2_thai_520_w2 NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+INSERT INTO t1 VALUES ('cota'),('cote'),('cotz');
+INSERT INTO t1 VALUES ('coté'),('côte'),('côté'),('cotë'),('côtë');
+SELECT * FROM t1 ORDER BY a;
+a
+cota
+cote
+coté
+cotë
+côte
+côté
+côtë
+cotz
+SELECT * FROM t1 ORDER BY a DESC;
+a
+cotz
+côtë
+côté
+côte
+cotë
+coté
+cote
+cota
+DROP TABLE t1;
+#
+# End of ctype_uca_w2.inc
+#
+#
+# Start of ctype_thai.inc
+#
+CREATE TABLE t1 (a VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_bin);
+INSERT INTO t1 VALUES ('-กระแย่ง');
+INSERT INTO t1 VALUES ('กก');
+INSERT INTO t1 VALUES ('กราบ');
+INSERT INTO t1 VALUES ('ข่าง');
+INSERT INTO t1 VALUES ('ข้าง');
+INSERT INTO t1 VALUES ('ข้างกระดาน');
+INSERT INTO t1 VALUES ('ข้างขึ้น');
+INSERT INTO t1 VALUES ('ข้างควาย');
+INSERT INTO t1 VALUES ('ข้างเงิน');
+INSERT INTO t1 VALUES ('ข้างแรม');
+INSERT INTO t1 VALUES ('ข้างออก');
+INSERT INTO t1 VALUES ('ข้างๆ');
+INSERT INTO t1 VALUES ('ข้างๆ คูๆ');
+INSERT INTO t1 VALUES ('ขาง');
+INSERT INTO t1 VALUES ('แข็ง');
+INSERT INTO t1 VALUES ('แข่ง');
+INSERT INTO t1 VALUES ('แข่งขัน');
+INSERT INTO t1 VALUES ('แข้ง');
+INSERT INTO t1 VALUES ('แข้งขวา');
+INSERT INTO t1 VALUES ('แข็งขัน');
+INSERT INTO t1 VALUES ('ทูลเกล้า');
+INSERT INTO t1 VALUES ('ทูลเกล้าทูลกระหม่อม');
+INSERT INTO t1 VALUES ('ทูลเกล้าฯ');
+INSERT INTO t1 VALUES ('บุญญา');
+INSERT INTO t1 VALUES ('บุญ-หลง');
+INSERT INTO t1 VALUES ('บุญหลง');
+INSERT INTO t1 VALUES ('ป่า');
+INSERT INTO t1 VALUES ('ป่าน');
+INSERT INTO t1 VALUES ('ป้า');
+INSERT INTO t1 VALUES ('ป้าน');
+INSERT INTO t1 VALUES ('ป๊า');
+INSERT INTO t1 VALUES ('ป๊าน');
+INSERT INTO t1 VALUES ('ป๋า');
+INSERT INTO t1 VALUES ('ป๋าน');
+INSERT INTO t1 VALUES ('ปา');
+INSERT INTO t1 VALUES ('ปาน');
+INSERT INTO t1 VALUES ('แป้ง');
+INSERT INTO t1 VALUES ('พณิชย์');
+INSERT INTO t1 VALUES ('ม้า');
+INSERT INTO t1 VALUES ('ฯพณฯ');
+INSERT INTO t1 VALUES ('A');
+INSERT INTO t1 VALUES ('a');
+INSERT INTO t1 VALUES ('a\'');
+INSERT INTO t1 VALUES ('A-');
+INSERT INTO t1 VALUES ('a-');
+INSERT INTO t1 VALUES ('-a');
+INSERT INTO t1 VALUES ('A.');
+INSERT INTO t1 VALUES ('a.');
+INSERT INTO t1 VALUES ('A-1');
+INSERT INTO t1 VALUES ('aa');
+INSERT INTO t1 VALUES ('AA');
+INSERT INTO t1 VALUES ('A.A.');
+INSERT INTO t1 VALUES ('a.a.');
+INSERT INTO t1 VALUES ('AAA');
+INSERT INTO t1 VALUES ('A.A.A.');
+INSERT INTO t1 VALUES ('AAAA');
+INSERT INTO t1 VALUES ('A.A.A.L.');
+INSERT INTO t1 VALUES ('A.A.A.S.');
+INSERT INTO t1 VALUES ('Aachen');
+INSERT INTO t1 VALUES ('A.A.E.');
+INSERT INTO t1 VALUES ('A.Ae.E.');
+INSERT INTO t1 VALUES ('A.A.E.E.');
+INSERT INTO t1 VALUES ('AAES');
+INSERT INTO t1 VALUES ('AAF');
+INSERT INTO t1 VALUES ('A.Agr');
+INSERT INTO t1 VALUES ('aah');
+INSERT INTO t1 VALUES ('@@@@@');
+INSERT INTO t1 VALUES ('0000');
+INSERT INTO t1 VALUES ('9999');
+INSERT INTO t1 VALUES ('Aalborg');
+INSERT INTO t1 VALUES ('aide');
+INSERT INTO t1 VALUES ('air');
+INSERT INTO t1 VALUES ('@@@air');
+INSERT INTO t1 VALUES ('air@@@');
+INSERT INTO t1 VALUES ('C.A.F');
+INSERT INTO t1 VALUES ('Canon');
+INSERT INTO t1 VALUES ('coop');
+INSERT INTO t1 VALUES ('co-op');
+INSERT INTO t1 VALUES ('COOP');
+INSERT INTO t1 VALUES ('CO-OP');
+INSERT INTO t1 VALUES ('Copenhegen');
+INSERT INTO t1 VALUES ('McArthur');
+INSERT INTO t1 VALUES ('Mc Arthur');
+INSERT INTO t1 VALUES ('Mc Mahon');
+INSERT INTO t1 VALUES ('vice-president');
+INSERT INTO t1 VALUES ('vice versa');
+INSERT INTO t1 VALUES ('vice-versa');
+INSERT INTO t1 VALUES ('10 ลิตร');
+INSERT INTO t1 VALUES ('๑๐ ลิตร');
+INSERT INTO t1 VALUES ('10 litre');
+INSERT INTO t1 VALUES ('10 litre (10 ลิตร)');
+INSERT INTO t1 VALUES ('10 ลิตร (10 litre)');
+INSERT INTO t1 VALUES ('10 litre (๑๐ ลิตร)');
+INSERT INTO t1 VALUES ('๑๐ ลิตร (10 litre)');
+INSERT INTO t1 VALUES ('๑๐ ลิตร [10 litre]');
+INSERT INTO t1 VALUES ('๑๐ ลิตร {10 litre}');
+ALTER TABLE t1 ORDER BY a;
+SET @backup_character_set_connection=@@character_set_connection;
+SET @backup_collation_connection=@@collation_connection;
+SET NAMES utf8;
+SET @stmt= CONCAT('ALTER TABLE t1 MODIFY a VARCHAR(30)',
+' CHARACTER SET ', @backup_character_set_connection,
+' COLLATE ', @backup_collation_connection,
+' , ADD id INT NOT NULL AUTO_INCREMENT PRIMARY KEY'
+                  ' , ADD KEY a_id (a, id)');
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+SET collation_connection=@backup_collation_connection;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(30) CHARACTER SET ucs2 COLLATE ucs2_thai_520_w2 DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
+  KEY `a_id` (`a`,`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=97 DEFAULT CHARSET=latin1
+#
+# Ascending sort, using filesort
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a, BINARY a;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	67	NULL	96	Using index; Using filesort
+SELECT a FROM t1 ORDER BY a, BINARY a;
+a
+-a
+-กระแย่ง
+@@@@@
+@@@air
+0000
+10 litre
+10 litre (10 ลิตร)
+10 litre (๑๐ ลิตร)
+10 ลิตร
+๑๐ ลิตร
+10 ลิตร (10 litre)
+๑๐ ลิตร (10 litre)
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร {10 litre}
+9999
+A
+a
+A-
+a-
+A-1
+A.
+a.
+A.A.
+a.a.
+A.A.A.
+A.A.A.L.
+A.A.A.S.
+A.A.E.
+A.A.E.E.
+A.Ae.E.
+A.Agr
+a'
+AA
+aa
+AAA
+AAAA
+Aachen
+AAES
+AAF
+aah
+Aalborg
+aide
+air
+air@@@
+C.A.F
+Canon
+CO-OP
+co-op
+COOP
+coop
+Copenhegen
+Mc Arthur
+Mc Mahon
+McArthur
+vice versa
+vice-president
+vice-versa
+กก
+กราบ
+ขาง
+ข่าง
+ข้าง
+ข้างๆ
+ข้างๆ คูๆ
+ข้างกระดาน
+ข้างขึ้น
+ข้างควาย
+ข้างเงิน
+ข้างแรม
+ข้างออก
+แข็ง
+แข่ง
+แข้ง
+แข้งขวา
+แข็งขัน
+แข่งขัน
+ทูลเกล้า
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้าฯ
+บุญ-หลง
+บุญญา
+บุญหลง
+ปา
+ป่า
+ป้า
+ป๊า
+ป๋า
+ปาน
+ป่าน
+ป้าน
+ป๊าน
+ป๋าน
+แป้ง
+พณิชย์
+ม้า
+ฯพณฯ
+#
+# Descending sort, using filesort
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a DESC, BINARY a DESC;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	67	NULL	96	Using index; Using filesort
+SELECT a FROM t1 ORDER BY a DESC, BINARY a DESC;
+a
+ฯพณฯ
+ม้า
+พณิชย์
+แป้ง
+ป๋าน
+ป๊าน
+ป้าน
+ป่าน
+ปาน
+ป๋า
+ป๊า
+ป้า
+ป่า
+ปา
+บุญหลง
+บุญญา
+บุญ-หลง
+ทูลเกล้าฯ
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้า
+แข่งขัน
+แข็งขัน
+แข้งขวา
+แข้ง
+แข่ง
+แข็ง
+ข้างออก
+ข้างแรม
+ข้างเงิน
+ข้างควาย
+ข้างขึ้น
+ข้างกระดาน
+ข้างๆ คูๆ
+ข้างๆ
+ข้าง
+ข่าง
+ขาง
+กราบ
+กก
+vice-versa
+vice-president
+vice versa
+McArthur
+Mc Mahon
+Mc Arthur
+Copenhegen
+coop
+COOP
+co-op
+CO-OP
+Canon
+C.A.F
+air@@@
+air
+aide
+Aalborg
+aah
+AAF
+AAES
+Aachen
+AAAA
+AAA
+aa
+AA
+a'
+A.Agr
+A.Ae.E.
+A.A.E.E.
+A.A.E.
+A.A.A.S.
+A.A.A.L.
+A.A.A.
+a.a.
+A.A.
+a.
+A.
+A-1
+a-
+A-
+a
+A
+9999
+๑๐ ลิตร {10 litre}
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร (10 litre)
+10 ลิตร (10 litre)
+๑๐ ลิตร
+10 ลิตร
+10 litre (๑๐ ลิตร)
+10 litre (10 ลิตร)
+10 litre
+0000
+@@@air
+@@@@@
+-กระแย่ง
+-a
+#
+# Ascending sort, using index
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a, id;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	67	NULL	96	Using index
+SELECT a FROM t1 ORDER BY a, id;
+a
+-a
+-กระแย่ง
+@@@@@
+@@@air
+0000
+10 litre
+10 litre (10 ลิตร)
+10 litre (๑๐ ลิตร)
+10 ลิตร
+๑๐ ลิตร
+10 ลิตร (10 litre)
+๑๐ ลิตร (10 litre)
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร {10 litre}
+9999
+A
+a
+A-
+a-
+A-1
+A.
+a.
+A.A.
+a.a.
+A.A.A.
+A.A.A.L.
+A.A.A.S.
+A.A.E.
+A.A.E.E.
+A.Ae.E.
+A.Agr
+a'
+AA
+aa
+AAA
+AAAA
+Aachen
+AAES
+AAF
+aah
+Aalborg
+aide
+air
+air@@@
+C.A.F
+Canon
+CO-OP
+co-op
+COOP
+coop
+Copenhegen
+Mc Arthur
+Mc Mahon
+McArthur
+vice versa
+vice-president
+vice-versa
+กก
+กราบ
+ขาง
+ข่าง
+ข้าง
+ข้างๆ
+ข้างๆ คูๆ
+ข้างกระดาน
+ข้างขึ้น
+ข้างควาย
+ข้างเงิน
+ข้างแรม
+ข้างออก
+แข็ง
+แข่ง
+แข้ง
+แข้งขวา
+แข็งขัน
+แข่งขัน
+ทูลเกล้า
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้าฯ
+บุญ-หลง
+บุญญา
+บุญหลง
+ปา
+ป่า
+ป้า
+ป๊า
+ป๋า
+ปาน
+ป่าน
+ป้าน
+ป๊าน
+ป๋าน
+แป้ง
+พณิชย์
+ม้า
+ฯพณฯ
+#
+# Descending sort, using index
+#
+EXPLAIN SELECT a FROM t1 ORDER BY a DESC, id DESC;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	index	NULL	a_id	67	NULL	96	Using index
+SELECT a FROM t1 ORDER BY a DESC, id DESC;
+a
+ฯพณฯ
+ม้า
+พณิชย์
+แป้ง
+ป๋าน
+ป๊าน
+ป้าน
+ป่าน
+ปาน
+ป๋า
+ป๊า
+ป้า
+ป่า
+ปา
+บุญหลง
+บุญญา
+บุญ-หลง
+ทูลเกล้าฯ
+ทูลเกล้าทูลกระหม่อม
+ทูลเกล้า
+แข่งขัน
+แข็งขัน
+แข้งขวา
+แข้ง
+แข่ง
+แข็ง
+ข้างออก
+ข้างแรม
+ข้างเงิน
+ข้างควาย
+ข้างขึ้น
+ข้างกระดาน
+ข้างๆ คูๆ
+ข้างๆ
+ข้าง
+ข่าง
+ขาง
+กราบ
+กก
+vice-versa
+vice-president
+vice versa
+McArthur
+Mc Mahon
+Mc Arthur
+Copenhegen
+coop
+COOP
+co-op
+CO-OP
+Canon
+C.A.F
+air@@@
+air
+aide
+Aalborg
+aah
+AAF
+AAES
+Aachen
+AAAA
+AAA
+aa
+AA
+a'
+A.Agr
+A.Ae.E.
+A.A.E.E.
+A.A.E.
+A.A.A.S.
+A.A.A.L.
+A.A.A.
+a.a.
+A.A.
+a.
+A.
+A-1
+a-
+A-
+a
+A
+9999
+๑๐ ลิตร {10 litre}
+๑๐ ลิตร [10 litre]
+๑๐ ลิตร (10 litre)
+10 ลิตร (10 litre)
+๑๐ ลิตร
+10 ลิตร
+10 litre (๑๐ ลิตร)
+10 litre (10 ลิตร)
+10 litre
+0000
+@@@air
+@@@@@
+-กระแย่ง
+-a
+DROP TABLE t1;
+#
+# End of ctype_thai.inc
+#
+#
+# End of MariaDB-10.1 tests
 #

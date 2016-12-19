@@ -494,6 +494,17 @@ DELETE FROM mysql.table_stats;
 DELETE FROM mysql.column_stats;
 DELETE FROM mysql.index_stats;
 
+
+ANALYZE TABLE t1 PERSISTENT FOR COLUMNS(b) INDEXES();
+ANALYZE TABLE t1 PERSISTENT FOR columns(a,b) INDEXES();
+ANALYZE TABLE t1 PERSISTENT FOR columns(b) indexes(idx2);
+ANALYZE TABLE t1 PERSISTENT FOR columns() indexes(idx2);
+
+DELETE FROM mysql.table_stats;
+DELETE FROM mysql.column_stats;
+DELETE FROM mysql.index_stats;
+
+
 DROP TABLE t1,t2;
 
 set names utf8;
@@ -717,3 +728,40 @@ select db_name, table_name, column_name,
   FROM mysql.column_stats;
 
 drop table t1;
+
+--echo #
+--echo # MDEV-9590: Always print "Engine-independent statistic" warnings and
+--echo # might be filtering columns unintentionally from engines
+--echo #
+
+set use_stat_tables='NEVER';
+create table t1 (test blob);
+show variables like 'use_stat_tables';
+analyze table t1;
+drop table t1;
+
+--echo #
+--echo # MDEV-10435 crash with bad stat tables
+--echo #
+
+set use_stat_tables='preferably';
+call mtr.add_suppression("Column count of mysql.table_stats is wrong. Expected 3, found 1. The table is probably corrupted");
+
+rename table mysql.table_stats to test.table_stats;
+flush tables;
+create table t1 (a int);
+--error ER_NO_SUCH_TABLE
+rename table t1 to t2, t3 to t4;
+drop table t1;
+rename table test.table_stats to mysql.table_stats;
+
+rename table mysql.table_stats to test.table_stats;
+create table mysql.table_stats (a int);
+flush tables;
+create table t1 (a int);
+--error ER_NO_SUCH_TABLE
+rename table t1 to t2, t3 to t4;
+drop table t1, mysql.table_stats;
+rename table test.table_stats to mysql.table_stats;
+
+set use_stat_tables=@save_use_stat_tables;

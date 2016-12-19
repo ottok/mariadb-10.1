@@ -12,7 +12,7 @@ tp	CREATE TABLE `tp` (
   `a` int(11) NOT NULL AUTO_INCREMENT,
   `b` varchar(24) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (a)
 PARTITIONS 4 */
 SHOW CREATE TABLE t;
@@ -21,7 +21,7 @@ t	CREATE TABLE `t` (
   `a` int(11) NOT NULL AUTO_INCREMENT,
   `b` varchar(24) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 INSERT INTO tp (b) VALUES ("One"), ("Two"), ("Three"), ("Four"), ("Five"),
 ("Six"), ("Seven"), ("Eight"), ("Nine"), ("Ten"), ("Eleven"), ("Twelwe");
 INSERT INTO tp VALUES (97, "Ninety seven");
@@ -85,7 +85,7 @@ tp	CREATE TABLE `tp` (
   `a` int(11) NOT NULL AUTO_INCREMENT,
   `b` varchar(24) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB AUTO_INCREMENT=112 DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB AUTO_INCREMENT=112 DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (a)
 PARTITIONS 4 */
 SHOW CREATE TABLE t;
@@ -94,7 +94,7 @@ t	CREATE TABLE `t` (
   `a` int(11) NOT NULL AUTO_INCREMENT,
   `b` varchar(24) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB AUTO_INCREMENT=102 DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB AUTO_INCREMENT=102 DEFAULT CHARSET=latin1
 DROP TABLE tp, t;
 CREATE TABLE t
 (a INT,
@@ -183,17 +183,17 @@ ERROR HY000: Lock wait timeout exceeded; try restarting transaction
 SHOW CREATE TABLE t;
 Table	Create Table
 t	CREATE TABLE `t` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 SHOW CREATE TABLE tp;
 Table	Create Table
 tp	CREATE TABLE `tp` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY RANGE (a)
 (PARTITION p0 VALUES LESS THAN (100) ENGINE = TokuDB,
  PARTITION p1 VALUES LESS THAN MAXVALUE ENGINE = TokuDB) */
@@ -226,17 +226,17 @@ ERROR HY000: Lock wait timeout exceeded; try restarting transaction
 SHOW CREATE TABLE t;
 Table	Create Table
 t	CREATE TABLE `t` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 SHOW CREATE TABLE tp;
 Table	Create Table
 tp	CREATE TABLE `tp` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY RANGE (a)
 (PARTITION p0 VALUES LESS THAN (100) ENGINE = TokuDB,
  PARTITION p1 VALUES LESS THAN MAXVALUE ENGINE = TokuDB) */
@@ -301,17 +301,17 @@ SET DEBUG_SYNC= 'now SIGNAL test_done';
 SHOW CREATE TABLE t;
 Table	Create Table
 t	CREATE TABLE `t` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 SHOW CREATE TABLE tp;
 Table	Create Table
 tp	CREATE TABLE `tp` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY RANGE (a)
 (PARTITION p0 VALUES LESS THAN (100) ENGINE = TokuDB,
  PARTITION p1 VALUES LESS THAN MAXVALUE ENGINE = TokuDB) */
@@ -334,17 +334,17 @@ SET DEBUG_SYNC= 'RESET';
 SHOW CREATE TABLE t;
 Table	Create Table
 t	CREATE TABLE `t` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 SHOW CREATE TABLE tp;
 Table	Create Table
 tp	CREATE TABLE `tp` (
-  `a` int(11) NOT NULL DEFAULT '0',
+  `a` int(11) NOT NULL,
   `b` varchar(55) DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY RANGE (a)
 (PARTITION p0 VALUES LESS THAN (100) ENGINE = TokuDB,
  PARTITION p1 VALUES LESS THAN MAXVALUE ENGINE = TokuDB) */

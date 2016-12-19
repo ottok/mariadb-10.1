@@ -249,6 +249,13 @@ ulonglong my_timer_cycles(void)
     clock_gettime(CLOCK_SGI_CYCLE, &tp);
     return (ulonglong) tp.tv_sec * 1000000000 + (ulonglong) tp.tv_nsec;
   }
+#elif defined(__GNUC__) && defined(__s390__)
+  /* covers both s390 and s390x */
+  {
+    ulonglong result;
+    __asm__ __volatile__ ("stck %0" : "=Q" (result) : : "cc");
+    return result;
+  }
 #elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_GETHRTIME)
   /* gethrtime may appear as either cycle or nanosecond counter */
   return (ulonglong) gethrtime();
@@ -558,6 +565,8 @@ void my_timer_init(MY_TIMER_INFO *mti)
   mti->cycles.routine= MY_TIMER_ROUTINE_ASM_GCC_SPARC32;
 #elif defined(__sgi) && defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_SGI_CYCLE)
   mti->cycles.routine= MY_TIMER_ROUTINE_SGI_CYCLE;
+#elif defined(__GNUC__) && defined(__s390__)
+  mti->cycles.routine= MY_TIMER_ROUTINE_ASM_S390;
 #elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_GETHRTIME)
   mti->cycles.routine= MY_TIMER_ROUTINE_GETHRTIME;
 #else
@@ -753,7 +762,6 @@ void my_timer_init(MY_TIMER_INFO *mti)
       mti->cycles.frequency= mti->microseconds.frequency;
     else
     {
-      ulonglong time1, time2;
       time1= my_timer_init_frequency(mti);
       /* Repeat once in case there was an interruption. */
       time2= my_timer_init_frequency(mti);
@@ -775,8 +783,7 @@ void my_timer_init(MY_TIMER_INFO *mti)
   &&  mti->microseconds.routine
   &&  mti->cycles.routine)
   {
-    int i;
-    ulonglong time1, time2, time3, time4;
+    ulonglong time3, time4;
     time1= my_timer_cycles();
     time2= my_timer_milliseconds();
     time3= time2; /* Avoids a Microsoft/IBM compiler warning */
@@ -801,8 +808,7 @@ void my_timer_init(MY_TIMER_INFO *mti)
   &&  mti->microseconds.routine
   &&  mti->cycles.routine)
   {
-    int i;
-    ulonglong time1, time2, time3, time4;
+    ulonglong time3, time4;
     time1= my_timer_cycles();
     time2= my_timer_ticks();
     time3= time2; /* Avoids a Microsoft/IBM compiler warning */
