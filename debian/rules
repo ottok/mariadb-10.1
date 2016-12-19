@@ -90,10 +90,9 @@ endif
 	    -DINSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH) \
 	    -DINSTALL_PLUGINDIR=lib/$(DEB_HOST_MULTIARCH)/mariadb18/plugin \
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
-	    -DWITH_AUTH_SOCKET=ON \
+	    -DPLUGIN_AUTH_SOCKET=STATIC \
 	    -DDEB=$(DISTRIBUTION) ..'
 	touch $@
-	# from 10.1 onwards use syntax: -DPLUGIN_AUTH_SOCKET=STATIC
 
 # This is needed, otherwise 'make test' will run before binaries have been built
 override_dh_auto_build:
