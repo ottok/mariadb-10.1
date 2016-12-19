@@ -3,7 +3,7 @@ debian/additions/debian-start.inc.sh usr/share/mysql
 debian/additions/echo_stderr usr/share/mysql
 debian/additions/mariadb.conf.d/50-mysqld_safe.cnf etc/mysql/mariadb.conf.d
 debian/additions/mariadb.conf.d/50-server.cnf etc/mysql/mariadb.conf.d
-debian/additions/source_mariadb-10.0.py usr/share/apport/package-hooks
+debian/additions/source_mariadb-10.1.py usr/share/apport/package-hooks
 etc/apparmor.d/usr.sbin.mysqld
 usr/bin/aria_chk
 usr/bin/aria_dump_log
@@ -44,7 +44,7 @@ usr/lib/*/mariadb18/plugin/semisync_master.so
 usr/lib/*/mariadb18/plugin/semisync_slave.so
 usr/lib/*/mariadb18/plugin/server_audit.so
 usr/lib/*/mariadb18/plugin/sql_errlog.so
-usr/share/doc/mariadb-server-10.0/mysqld.sym.gz
+usr/share/doc/mariadb-server-10.1/mysqld.sym.gz
 usr/share/mysql/errmsg-utf8.txt
 usr/share/mysql/fill_help_tables.sql
 usr/share/mysql/mysql_performance_tables.sql
