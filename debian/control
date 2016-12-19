@@ -235,11 +235,8 @@ Architecture: any
 Suggests: mailx, mariadb-test, netcat-openbsd, tinyca
 Recommends: libhtml-template-perl
 Pre-Depends: adduser (>= 3.40), debconf, mariadb-common (>= ${source:Version})
-Depends: coreutils,
-         findutils,
-         galera-3 (>=25.3),
+Depends: galera-3 (>=25.3),
          gawk,
-         grep,
          iproute2,
          libdbi-perl,
          lsb-base (>= 3.0-10),
@@ -251,7 +248,6 @@ Depends: coreutils,
          psmisc,
          rsync,
          socat,
-         tar,
          ${misc:Depends},
          ${shlibs:Depends}
 Conflicts: mariadb-tokudb-engine-10.0,
