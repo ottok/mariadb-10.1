@@ -232,16 +232,26 @@ Description: MariaDB database core server files
 
 Package: mariadb-server-10.1
 Architecture: any
-Suggests: mailx, mariadb-test, tinyca
+Suggests: mailx, mariadb-test, netcat-openbsd, tinyca
 Recommends: libhtml-template-perl
 Pre-Depends: adduser (>= 3.40), debconf, mariadb-common (>= ${source:Version})
-Depends: libdbi-perl,
+Depends: coreutils,
+         findutils,
+         galera-3 (>=25.3),
+         gawk,
+         grep,
+         iproute,
+         libdbi-perl,
          lsb-base (>= 3.0-10),
+         lsof,
          mariadb-client-10.1 (>= ${source:Version}),
          mariadb-server-core-10.1 (>= ${binary:Version}),
          passwd,
          perl (>= 5.6),
          psmisc,
+         rsync,
+         socat,
+         tar,
          ${misc:Depends},
          ${shlibs:Depends}
 Conflicts: mariadb-tokudb-engine-10.0,
@@ -388,7 +398,7 @@ Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Description: Spider storage engine for MariaDB
  The Spider storage engine with built-in sharding features. It supports
  partitioning and xa transactions, and allows tables of different MariaDB
- instances to be handled as if they were on the same insctance. It refers to one
+ instances to be handled as if they were on the same instance. It refers to one
  possible implementation of ISO/IEC 9075-9:2008 SQL/MED.
 
 Package: mariadb-test

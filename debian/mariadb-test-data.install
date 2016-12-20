@@ -6,3 +6,4 @@ usr/share/mysql/mysql-test/r
 usr/share/mysql/mysql-test/std_data
 usr/share/mysql/mysql-test/suite
 usr/share/mysql/mysql-test/t
+usr/share/mysql/mysql-test/unstable-tests

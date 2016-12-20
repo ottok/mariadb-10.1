@@ -6,7 +6,6 @@ source-contains-prebuilt-windows-binary mysql-test/std_data/ctype_upgrade/mysql0
 outdated-autotools-helper-file storage/tokudb/PerconaFT/third_party/snappy-1.1.2/config.guess 2012-02-10
 outdated-autotools-helper-file storage/tokudb/PerconaFT/third_party/snappy-1.1.2/config.sub 2012-02-10
 # TokuDB requires specifically xz-4.999.9beta, and bundled xz does in fact use these autotools files
-outdated-autotools-helper-file storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/config.guess 2009-04-27
 outdated-autotools-helper-file storage/tokudb/PerconaFT/third_party/xz-4.999.9beta/build-aux/config.sub 2009-04-17
 # libmariadbclient-dev contains usr/bin/mysql_config which will never be multi-arch
 # (and is not multi-arch in Oracle MySQL packages either)
