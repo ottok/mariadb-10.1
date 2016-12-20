@@ -64,4 +64,10 @@ usr/share/mysql/mysql_performance_tables.sql
 usr/share/mysql/mysql_system_tables.sql
 usr/share/mysql/mysql_system_tables_data.sql
 usr/share/mysql/mysql_test_data_timezone.sql
+usr/share/mysql/policy/selinux/mariadb-server.fc
+usr/share/mysql/policy/selinux/README
+usr/share/mysql/policy/selinux/mariadb-server.te
+usr/share/mysql/policy/apparmor/usr.sbin.mysqld
+usr/share/mysql/policy/apparmor/usr.sbin.mysqld.local
+usr/share/mysql/policy/apparmor/README
 usr/share/mysql/wsrep_notify
