@@ -44,7 +44,7 @@ SHOW CREATE TABLE mysqltest1.t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `f1` bigint(20) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 /* `compression`='tokudb_zlib' */
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
 -------- switch to master --------
 INSERT INTO mysqltest1.t1 SET f1= 1;
 DROP TEMPORARY TABLE mysqltest1.tmp;

@@ -2461,7 +2461,7 @@ TABLE *spider_mk_sys_tmp_table_for_result(
   if (i_list.push_back(i_field1))
     goto error_push_item1;
 
-  if (!(field2 = new Field_blob(
+  if (!(field2 = new (thd->mem_root) Field_blob(
     4294967295U, FALSE, field_name2, cs, TRUE)))
     goto error_alloc_field2;
   field2->init(table);
@@ -2477,7 +2477,7 @@ TABLE *spider_mk_sys_tmp_table_for_result(
   if (i_list.push_back(i_field2))
     goto error_push_item2;
 
-  if (!(field3 = new Field_blob(
+  if (!(field3 = new (thd->mem_root) Field_blob(
     4294967295U, FALSE, field_name3, cs, TRUE)))
     goto error_alloc_field3;
   field3->init(table);

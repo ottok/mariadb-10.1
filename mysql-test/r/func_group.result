@@ -787,7 +787,7 @@ drop table t2;
 create table t2 select f2 from (select now() f2 from t1) a;
 show columns from t2;
 Field	Type	Null	Key	Default	Extra
-f2	datetime	NO		0000-00-00 00:00:00	
+f2	datetime	NO		NULL	
 drop table t2, t1;
 CREATE TABLE t1(
 id int PRIMARY KEY,
@@ -2107,6 +2107,9 @@ select avg(export_set( 3, 'y', sha(i))), group_concat(d) from t1 group by d orde
 avg(export_set( 3, 'y', sha(i)))	group_concat(d)
 0	2008-10-02
 0	2010-12-12
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'y,y,356a192b7913b04c54574d18c28d46e6395428ab,356a192b7913b04c54574d18c28d46e6395428ab,356a192b7913b04c54574d18c28d46e6395428ab,3'
+Warning	1292	Truncated incorrect DOUBLE value: 'y,y,da4b9237bacccdf19c0760cab7aec4a8359010b0,da4b9237bacccdf19c0760cab7aec4a8359010b0,da4b9237bacccdf19c0760cab7aec4a8359010b0,d'
 drop table t1;
 #
 # MDEV-4290: crash in st_select_lex::mark_as_dependent
@@ -2309,3 +2312,134 @@ Warning	1292	Truncated incorrect DOUBLE value: '-1e+309'
 SELECT STDDEV(f) FROM (SELECT 1.7976931348623157e+308 AS f UNION SELECT -1.7976931348623157e+308 AS f) tbl;
 STDDEV(f)
 1.7976931348623157e308
+#
+# MDEV-8852 Implicit or explicit CAST from MAX(string) to INT,DOUBLE,DECIMAL does not produce warnings
+#
+SELECT MAX('x') << 1, CAST(MAX('x') AS DOUBLE), CAST(MAX('x') AS DECIMAL);
+MAX('x') << 1	CAST(MAX('x') AS DOUBLE)	CAST(MAX('x') AS DECIMAL)
+0	0	0
+Warnings:
+Warning	1292	Truncated incorrect INTEGER value: 'x'
+Warning	1292	Truncated incorrect DOUBLE value: 'x'
+Warning	1292	Truncated incorrect DECIMAL value: 'x'
+#
+#  MDEV-8918 Wrong result for CAST(AVG(a) AS SIGNED)
+#
+CREATE TABLE t1 (id INT, a BIGINT);
+INSERT INTO t1 VALUES (1,0x7FFFFFFFFFFFFFFF),(2,0x7FFFFFFFFFFFFFFF);
+SELECT id, AVG(a) AS avg, CAST(MIN(a) AS SIGNED) AS cast_min FROM t1 GROUP BY id HAVING avg!=123 ORDER BY id;
+id	avg	cast_min
+1	9223372036854775807.0000	9223372036854775807
+2	9223372036854775807.0000	9223372036854775807
+SELECT id, AVG(a) AS avg, CAST(AVG(a) AS SIGNED) AS cast_avg FROM t1 GROUP BY id HAVING avg!=123 ORDER BY id;
+id	avg	cast_avg
+1	9223372036854775807.0000	9223372036854775807
+2	9223372036854775807.0000	9223372036854775807
+DROP TABLE t1;
+#
+# MDEV-9656 Assertion `0' failed in Item_sum_field::get_tmp_table_field()
+#
+CREATE TABLE t1 (i INT);
+INSERT INTO t1 VALUES (1),(2);
+SELECT DISTINCT VAR_POP(1) FROM t1 GROUP BY @a := 's';
+VAR_POP(1)
+0.0000
+DROP TABLE t1;
+#
+# MDEV-8921 Wrong result for CAST(AVG(double_column) AS SIGNED)
+#
+CREATE TABLE t1 (id INT, a DOUBLE);
+INSERT INTO t1 VALUES (1,0x7FFFFFFFFFFFFFFF),(2,0x7FFFFFFFFFFFFFFF);
+SELECT id, AVG(a) AS avg, CAST(MIN(a) AS SIGNED) AS cast_min,CAST(AVG(a) AS SIGNED) AS cast_avg FROM t1 GROUP BY id HAVING avg!=123 ORDER BY id;
+id	avg	cast_min	cast_avg
+1	9.223372036854776e18	9223372036854775807	9223372036854775807
+2	9.223372036854776e18	9223372036854775807	9223372036854775807
+DROP TABLE t1;
+CREATE TABLE t1 (a DOUBLE);
+INSERT INTO t1 VALUES (0x7FFFFFFFFFFFFFFF);
+SELECT MIN(a), SUM(a), CAST(SUM(a) AS SIGNED), CAST(AVG(a) AS SIGNED) FROM t1;
+MIN(a)	SUM(a)	CAST(SUM(a) AS SIGNED)	CAST(AVG(a) AS SIGNED)
+9.223372036854776e18	9.223372036854776e18	9223372036854775807	9223372036854775807
+DROP TABLE t1;
+#
+# MDEV-7195 AVG() loses precision in INT context
+#
+CREATE TABLE t1 (
+auto SERIAL,
+fld1 bigint unsigned NOT NULL,
+companynr tinyint(2) unsigned zerofill DEFAULT '00' NOT NULL,
+UNIQUE fld1 (fld1)
+);
+INSERT INTO t1 VALUES (1,0x7FFFFFFFFFFFFFFF,00);
+INSERT INTO t1 VALUES (2,0x7FFFFFFFFFFFFFFE,37);
+INSERT INTO t1 VALUES (3,0x7FFFFFFFFFFFFFFC,37);
+SELECT companynr, AVG(fld1), AVG(fld1)<<0 AS avg1, CAST(AVG(fld1) AS UNSIGNED)<<0 AS avg2 FROM t1 GROUP BY companynr;
+companynr	AVG(fld1)	avg1	avg2
+00	9223372036854775807.0000	9223372036854775807	9223372036854775807
+37	9223372036854775805.0000	9223372036854775805	9223372036854775805
+DROP TABLE t1;
+#
+# case where aggregate resolved in the local SELECT
+# but outer ones are checked
+#
+create table t10 (a int , b int, c int);
+insert into t10 values (0,0,0),(1,1,1);
+create table t11 as select * from t10;
+create table t12 as select * from t10;
+explain extended select a from t10 where c<3 or a in (select c from t12 union select max(t10.b) from t11 group by t11.c);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	PRIMARY	t10	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
+2	DEPENDENT SUBQUERY	t12	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
+3	DEPENDENT UNION	t11	ALL	NULL	NULL	NULL	NULL	2	100.00	Using temporary
+NULL	UNION RESULT	<union2,3>	ALL	NULL	NULL	NULL	NULL	NULL	NULL	
+Warnings:
+Note	1276	Field or reference 'test.t10.b' of SELECT #3 was resolved in SELECT #1
+Note	1003	select `test`.`t10`.`a` AS `a` from `test`.`t10` where ((`test`.`t10`.`c` < 3) or <expr_cache><`test`.`t10`.`a`,`test`.`t10`.`b`>(<in_optimizer>(`test`.`t10`.`a`,<exists>(select `test`.`t12`.`c` from `test`.`t12` where (<cache>(`test`.`t10`.`a`) = `test`.`t12`.`c`) union select max(`test`.`t10`.`b`) from `test`.`t11` group by `test`.`t11`.`c` having (<cache>(`test`.`t10`.`a`) = <ref_null_helper>(max(`test`.`t10`.`b`)))))))
+drop table t10,t11,t12;
+#
+# MDEV-10017: Get unexpected `Empty Set` for correlated subquery
+# with aggregate functions
+#
+create table t1(c1 int, c2 int, c3 int);
+insert into t1 values(1,1,1),(2,2,2),(3,3,3);
+select * from t1;
+c1	c2	c3
+1	1	1
+2	2	2
+3	3	3
+create table t2(c1 int, c2 int);
+insert into t2 values(2,2);
+select * from t2;
+c1	c2
+2	2
+explain extended
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+c) from t2 tt));
+ERROR HY000: Invalid use of group function
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+c) from t2 tt));
+ERROR HY000: Invalid use of group function
+explain extended
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+tt.c1) from t2 tt));
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	3	100.00	
+2	DEPENDENT SUBQUERY	t	system	NULL	NULL	NULL	NULL	1	100.00	
+3	DEPENDENT SUBQUERY	tt	system	NULL	NULL	NULL	NULL	1	100.00	
+Warnings:
+Note	1276	Field or reference 'test.t1.c1' of SELECT #3 was resolved in SELECT #1
+Note	1003	select `test`.`t1`.`c1` AS `c1` from `test`.`t1` having (`test`.`t1`.`c1` >= <expr_cache><`test`.`t1`.`c1`>((select 2 AS `c` from dual order by (select min((`test`.`t1`.`c1` + 2)) from dual))))
+select c1 from t1 having c1 >= (select t.c1 as c from t2 t order by (select min(t1.c1+tt.c1) from t2 tt));
+c1
+2
+3
+drop table t1,t2;
+#
+# MDEV-10556 Assertion `0' failed in virtual void Item_sum_field::set_result_field(Field*)
+#
+CREATE TABLE t1 (i INT, KEY(i)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES (10),(20),(30);
+SELECT DISTINCT STDDEV(1) FROM t1 GROUP BY i ORDER BY BENCHMARK(0, BIT_XOR(i));
+STDDEV(1)
+0.0000
+DROP TABLE t1;
+#
+# End of 10.1 tests
+#

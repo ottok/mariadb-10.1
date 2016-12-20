@@ -240,10 +240,7 @@ End of 5.2 tests
 #
 CREATE TABLE `t1` (
 `datas` VARCHAR(25) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-Warnings:
-Warning	1286	Unknown storage engine 'InnoDB'
-Warning	1266	Using storage engine MyISAM for table 't1'
+) DEFAULT CHARSET=utf8;
 INSERT INTO `t1` VALUES ('1,2'), ('2,3'), ('3,4');
 SELECT IF(FIND_IN_SET('1', `datas`), 1.5, IF(FIND_IN_SET('2', `datas`), 2, NULL)) AS `First`, '1' AS `Second`, '2' AS `Third` FROM `t1`;
 First	Second	Third

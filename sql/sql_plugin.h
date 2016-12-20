@@ -17,7 +17,6 @@
 #ifndef _sql_plugin_h
 #define _sql_plugin_h
 
-
 /*
   the following #define adds server-only members to enum_mysql_show_type,
   that is defined in plugin.h
@@ -79,8 +78,6 @@ typedef struct st_mysql_show_var SHOW_VAR;
 #define PLUGIN_IS_DYING         16
 #define PLUGIN_IS_DISABLED      32
 
-/* A handle for the dynamic library containing a plugin or plugins. */
-
 struct st_ptr_backup {
   void **ptr;
   void *value;
@@ -88,6 +85,8 @@ struct st_ptr_backup {
   void save(const char **p) { save((void**)p); }
   void restore() { *ptr= value; }
 };
+
+/* A handle for the dynamic library containing a plugin or plugins. */
 
 struct st_plugin_dl
 {
@@ -181,6 +180,7 @@ sys_var *find_plugin_sysvar(st_plugin_int *plugin, st_mysql_sys_var *var);
 void plugin_opt_set_limits(struct my_option *, const struct st_mysql_sys_var *);
 extern SHOW_COMP_OPTION plugin_status(const char *name, size_t len, int type);
 extern bool check_valid_path(const char *path, size_t length);
+extern void plugin_mutex_init();
 
 typedef my_bool (plugin_foreach_func)(THD *thd,
                                       plugin_ref plugin,
@@ -192,4 +192,12 @@ extern void sync_dynamic_session_variables(THD* thd, bool global_lock);
 
 extern bool plugin_dl_foreach(THD *thd, const LEX_STRING *dl,
                               plugin_foreach_func *func, void *arg);
+
+extern void sync_dynamic_session_variables(THD* thd, bool global_lock);
 #endif
+
+#ifdef WITH_WSREP
+extern void wsrep_plugins_pre_init();
+extern void wsrep_plugins_post_init();
+#endif /* WITH_WSREP */
+

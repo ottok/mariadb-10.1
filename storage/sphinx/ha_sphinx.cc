@@ -857,9 +857,9 @@ bool sphinx_show_status ( THD * thd )
 	}
 	CSphTLS * pTls = (CSphTLS*) thd->ha_data[sphinx_hton.slot];
 
-	field_list.push_back ( new Item_empty_string ( "Type", 10 ) );
-	field_list.push_back ( new Item_empty_string ( "Name", FN_REFLEN ) );
-	field_list.push_back ( new Item_empty_string ( "Status", 10 ) );
+	field_list.push_back ( new Item_empty_string ( thd, "Type", 10 ) );
+	field_list.push_back ( new Item_empty_string ( thd, "Name", FN_REFLEN ) );
+	field_list.push_back ( new Item_empty_string ( thd, "Status", 10 ) );
 	if ( protocol->send_fields ( &field_list, Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF ) )
 		SPH_RET(TRUE);
 
@@ -1413,6 +1413,14 @@ static bool myismagic ( char c )
 	return c=='@';
 }
 
+static bool myisjson ( char c )
+{
+	return
+		c=='.' ||
+		c=='[' ||
+		c==']';
+}
+
 
 bool CSphSEQuery::ParseField ( char * sField )
 {
@@ -1624,7 +1632,7 @@ bool CSphSEQuery::ParseField ( char * sField )
 				break;
 
 			tFilter.m_sAttrName = sValue;
-			while ( (*sValue) && ( myisattr(*sValue) || myismagic(*sValue) ) )
+			while ( (*sValue) && ( myisattr(*sValue) || myismagic(*sValue) || myisjson(*sValue) ) )
 				sValue++;
 			if ( !*sValue )
 				break;
@@ -2337,10 +2345,11 @@ int ha_sphinx::write_row ( byte * )
 
 		} else
 		{
+                        THD *thd= ha_thd();
 			if ( (*ppField)->type()==MYSQL_TYPE_TIMESTAMP )
 			{
-				Item_field * pWrap = new Item_field ( *ppField ); // autofreed by query arena, I assume
-				Item_func_unix_timestamp * pConv = new Item_func_unix_timestamp ( pWrap );
+                          Item_field * pWrap = new (thd->mem_root) Item_field(thd, *ppField); // autofreed by query arena, I assume
+                          Item_func_unix_timestamp * pConv = new (thd->mem_root) Item_func_unix_timestamp(thd, pWrap);
 				pConv->quick_fix_field();
 				unsigned int uTs = (unsigned int) pConv->val_int();
 

@@ -159,8 +159,6 @@ enum ha_extra_function {
     Ignore if the a tuple is not found, continue processing the
     transaction and ignore that 'row'.  Needed for idempotency
     handling on the slave
-
-    Currently only used by NDB storage engine. Partition handler ignores flag.
   */
   HA_EXTRA_IGNORE_NO_KEY,
   HA_EXTRA_NO_IGNORE_NO_KEY,
@@ -356,6 +354,7 @@ enum ha_base_keytype {
 #define HA_CREATE_DELAY_KEY_WRITE 64
 #define HA_CREATE_RELIES_ON_SQL_LAYER 128
 #define HA_CREATE_INTERNAL_TABLE 256
+#define HA_PRESERVE_INSERT_ORDER 512
 
 /* Flags used by start_bulk_insert */
 
@@ -502,7 +501,9 @@ enum ha_base_keytype {
 #define HA_ERR_DISK_FULL          189
 #define HA_ERR_INCOMPATIBLE_DEFINITION 190
 #define HA_ERR_FTS_TOO_MANY_WORDS_IN_PHRASE 191 /* Too many words in a phrase */
-#define HA_ERR_LAST               191    /* Copy of last error nr */
+#define HA_ERR_DECRYPTION_FAILED  192 /* Table encrypted but
+						decypt failed */
+#define HA_ERR_LAST               192    /* Copy of last error nr */
 
 /* Number of different errors */
 #define HA_ERR_ERRORS            (HA_ERR_LAST - HA_ERR_FIRST + 1)

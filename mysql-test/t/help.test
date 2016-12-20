@@ -69,12 +69,14 @@ help 'impossible_function_1';
 SET sql_mode=DEFAULT;
 ##############
 
+set sql_mode="";
 --disable_warnings
 alter table mysql.help_relation engine=innodb;
 alter table mysql.help_keyword engine=innodb;
 alter table mysql.help_topic engine=innodb;
 alter table mysql.help_category engine=innodb;
 --enable_warnings
+set sql_mode=default;
 
 ##############
 help 'function_of_my_dream';

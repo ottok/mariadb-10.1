@@ -13,7 +13,6 @@ kernel_types.h : .*only defines private constructors and has no friends.* : 51
 Dbtup.hpp:   .*only defines private constructors and has no friends.*
 diskpage.hpp:   .*only defines private constructors and has no friends.*
 tuppage.hpp:   .*only defines private constructors and has no friends.*
-NdbScanOperation.cpp: .*unused variable '__align'.* : 1190-1200
 sql_yacc.cc : .*label 'yyerrlab1' defined but not used.*
 kernel_types.h : .*'struct Local_key' only defines private constructors and has no friends.*
 lgman.hpp : .*'struct Lgman::Buffer_idx' only defines private constructors and has no friends.*
@@ -57,6 +56,8 @@ buf/buf0buf\.c : label.*loop2.* defined but not used
 #
 storage/xtradb/handler/ha_innodb\.cc: ignoring return value of
 storage/xtradb/row/row0log\.cc: ignoring return value of
+storage/xtradb/btr/btr0cur\.cc : null argument where non-null required
+storage/xtradb/btr/btr0scrub\.cc : null argument where non-null required
 
 #
 # bdb is not critical to keep up to date
@@ -128,13 +129,6 @@ signal\.c : .*unused parameter.*
 .* : uninitialized local variable .* used
 
 #
-# The following should be fixed by the ndb team
-#
-.*/ndb/.* : .*used uninitialized in this function.*
-.*/ndb/.* : .*unused variable.*
-.*/ndb/.* : .*defined but not used.*
-
-#
 # Aria warning that is ok in debug builds
 #
 storage/maria/ma_pagecache.c: .*'info_check_pin' defined but not used
@@ -199,16 +193,22 @@ groonga/lib/expr\.c: PRE disabled
 groonga/lib/expr\.c: always false
 
 #
+# Mroonga
+#
+groonga/lib/expr\.c : const/copy propagation disabled
+
+#
 # Unexplanable (?) stuff
 #
-listener.cc : .*conversion from 'SOCKET' to 'int'.*
-net_serv.cc : .*conversion from 'SOCKET' to 'int'.*
+listener\.cc : .*conversion from 'SOCKET' to 'int'.*
+net_serv\.cc : .*conversion from 'SOCKET' to 'int'.*
 
 #
 # Ignorable warnings from header files
 #
 backward_warning\.h : This file includes at least one
 /usr/include/i386-linux-gnu/bits/string3\.h: memset used with constant zero length parameter
+bits/string3.h : might overflow destination buffer
 
 # allow a little moving space for the warning below
 mi_packrec\.c : .*result of 32-bit shift implicitly converted to 64 bits.* : 560-600

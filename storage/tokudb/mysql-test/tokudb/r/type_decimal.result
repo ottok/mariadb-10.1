@@ -182,7 +182,7 @@ Note	1265	Data truncated for column 'a' at row 3
 Warning	1366	Incorrect decimal value: '1e-9223372036854775809' for column 'a' at row 4
 insert into t1 values ("123.4e"),("123.4e+2"),("123.4e-2"),("123e1"),("123e+0");
 Warnings:
-Note	1265	Data truncated for column 'a' at row 1
+Warning	1265	Data truncated for column 'a' at row 1
 Note	1265	Data truncated for column 'a' at row 3
 select * from t1;
 a
@@ -222,7 +222,6 @@ drop  table t1;
 create table t1 (a decimal(10,2) unsigned);
 insert into t1 values ("0.0"),("-0.0"),("+0.0"),("01.0"),("+01.0"),("-01.0");
 Warnings:
-Warning	1264	Out of range value for column 'a' at row 2
 Warning	1264	Out of range value for column 'a' at row 6
 insert into t1 values ("-.1"),("+.1"),(".1");
 Warnings:
@@ -247,7 +246,7 @@ Note	1265	Data truncated for column 'a' at row 2
 Warning	1264	Out of range value for column 'a' at row 3
 insert into t1 values ("123.4e"),("123.4e+2"),("123.4e-2"),("123e1"),("123e+0");
 Warnings:
-Note	1265	Data truncated for column 'a' at row 1
+Warning	1265	Data truncated for column 'a' at row 1
 Note	1265	Data truncated for column 'a' at row 3
 select * from t1;
 a
@@ -281,7 +280,6 @@ drop  table t1;
 create table t1 (a decimal(10,2) zerofill);
 insert into t1 values ("0.0"),("-0.0"),("+0.0"),("01.0"),("+01.0"),("-01.0");
 Warnings:
-Warning	1264	Out of range value for column 'a' at row 2
 Warning	1264	Out of range value for column 'a' at row 6
 insert into t1 values ("-.1"),("+.1"),(".1");
 Warnings:
@@ -306,7 +304,7 @@ Note	1265	Data truncated for column 'a' at row 2
 Warning	1264	Out of range value for column 'a' at row 3
 insert into t1 values ("123.4e"),("123.4e+2"),("123.4e-2"),("123e1"),("123e+0");
 Warnings:
-Note	1265	Data truncated for column 'a' at row 1
+Warning	1265	Data truncated for column 'a' at row 1
 Note	1265	Data truncated for column 'a' at row 3
 select * from t1;
 a
@@ -359,6 +357,9 @@ insert into t1 values (123.4e0),(123.4e+2),(123.4e-2),(123e1),(123e+0);
 Warnings:
 Note	1265	Data truncated for column 'a' at row 3
 insert into t1 values (MID("987",1,2)),("987 "),("987.6e+2 ");
+Warnings:
+Note	1265	Data truncated for column 'a' at row 2
+Note	1265	Data truncated for column 'a' at row 3
 select * from t1;
 a
 0.00
@@ -712,14 +713,14 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `d` decimal(5,0) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=ENGINE DEFAULT CHARSET=latin1
 drop table t1;
 create table t1 (d decimal);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `d` decimal(10,0) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=ENGINE DEFAULT CHARSET=latin1
 drop table t1;
 create table t1 (d decimal(66,0));
 ERROR 42000: Too big precision 66 specified for 'd'. Maximum is 65.
@@ -892,7 +893,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` decimal(10,0) DEFAULT NULL,
   `b` int(11) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=ENGINE DEFAULT CHARSET=latin1
 select round(a,b) as c from t1 order by c;
 c
 1000

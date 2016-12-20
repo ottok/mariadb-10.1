@@ -1,6 +1,7 @@
 /*****************************************************************************
 
 Copyright (c) 2012, 2016, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 2016, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -1898,6 +1899,15 @@ PageConverter::update_index_page(
 		row_index_t*	index = find_index(id);
 
 		if (index == 0) {
+			ib_logf(IB_LOG_LEVEL_ERROR,
+				"Page for tablespace %lu is "
+				" index page with id %lu but that"
+				" index is not found from configuration file."
+				" Current index name %s and id %lu.",
+				m_space,
+				id,
+				m_index->m_name,
+				m_index->m_id);
 			m_index = 0;
 			return(DB_CORRUPTION);
 		}
@@ -1970,7 +1980,8 @@ PageConverter::update_header(
 	}
 
 	mach_write_to_8(
-		get_frame(block) + FIL_PAGE_FILE_FLUSH_LSN, m_current_lsn);
+		get_frame(block) + FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION,
+		m_current_lsn);
 
 	/* Write space_id to the tablespace header, page 0. */
 	mach_write_to_4(
@@ -3611,10 +3622,13 @@ row_import_for_mysql(
 		innobase_format_name(
 			table_name, sizeof(table_name), table->name, FALSE);
 
-		ib_errf(trx->mysql_thd, IB_LOG_LEVEL_ERROR,
-			ER_INTERNAL_ERROR,
-			"Cannot reset LSNs in table '%s' : %s",
-			table_name, ut_strerr(err));
+		if (err != DB_DECRYPTION_FAILED) {
+
+			ib_errf(trx->mysql_thd, IB_LOG_LEVEL_ERROR,
+				ER_INTERNAL_ERROR,
+				"Cannot reset LSNs in table '%s' : %s",
+				table_name, ut_strerr(err));
+		}
 
 		return(row_import_cleanup(prebuilt, trx, err));
 	}
@@ -3642,7 +3656,7 @@ row_import_for_mysql(
 	err = fil_open_single_table_tablespace(
 		true, true, table->space,
 		dict_tf_to_fsp_flags(table->flags),
-		table->name, filepath);
+		table->name, filepath, table);
 
 	DBUG_EXECUTE_IF("ib_import_open_tablespace_failure",
 			err = DB_TABLESPACE_NOT_FOUND;);

@@ -934,6 +934,14 @@ row_ins_invalidate_query_cache(
 	innobase_invalidate_query_cache(thr_get_trx(thr), buf, len);
 	mem_free(buf);
 }
+#ifdef WITH_WSREP
+dberr_t wsrep_append_foreign_key(trx_t *trx,  
+			       dict_foreign_t*	foreign,
+			       const rec_t*	clust_rec,
+			       dict_index_t*	clust_index,
+			       ibool		referenced,
+			       ibool            shared);
+#endif /* WITH_WSREP */
 
 /*********************************************************************//**
 Perform referential actions or checks when a parent row is deleted or updated
@@ -1285,7 +1293,19 @@ row_ins_foreign_check_on_constraint(
 
 	cascade->state = UPD_NODE_UPDATE_CLUSTERED;
 
-	err = row_update_cascade_for_mysql(thr, cascade,
+#ifdef WITH_WSREP
+	err = wsrep_append_foreign_key(
+				       thr_get_trx(thr),
+				       foreign,
+				       clust_rec,
+				       clust_index,
+				       FALSE, FALSE);
+	if (err != DB_SUCCESS) {
+		fprintf(stderr,
+			"WSREP: foreign key append failed: %d\n", err);
+	} else
+#endif /* WITH_WSREP */
+		err = row_update_cascade_for_mysql(thr, cascade,
 					   foreign->foreign_table);
 
 	if (foreign->foreign_table->n_foreign_key_checks_running == 0) {
@@ -1625,7 +1645,14 @@ run_again:
 
 				if (check_ref) {
 					err = DB_SUCCESS;
-
+#ifdef WITH_WSREP
+					err = wsrep_append_foreign_key(
+						thr_get_trx(thr),
+						foreign,
+						rec, 
+						check_index, 
+						check_ref, TRUE);
+#endif /* WITH_WSREP */
 					goto end_scan;
 				} else if (foreign->type != 0) {
 					/* There is an ON UPDATE or ON DELETE
@@ -2339,7 +2366,7 @@ row_ins_clust_index_entry_low(
 {
 	btr_cur_t	cursor;
 	ulint*		offsets		= NULL;
-	dberr_t		err;
+	dberr_t		err		= DB_SUCCESS;
 	big_rec_t*	big_rec		= NULL;
 	mtr_t		mtr;
 	mem_heap_t*	offsets_heap	= NULL;
@@ -2379,8 +2406,15 @@ row_ins_clust_index_entry_low(
 	the function will return in both low_match and up_match of the
 	cursor sensible values */
 
-	btr_cur_search_to_nth_level(index, 0, entry, PAGE_CUR_LE, search_mode,
+	err = btr_cur_search_to_nth_level(index, 0, entry, PAGE_CUR_LE, search_mode,
 				    &cursor, 0, __FILE__, __LINE__, &mtr);
+
+	if (err != DB_SUCCESS) {
+		index->table->is_encrypted = true;
+		index->table->ibd_file_missing = true;
+		mtr_commit(&mtr);
+		goto func_exit;
+	}
 
 #ifdef UNIV_DEBUG
 	{
@@ -2725,9 +2759,22 @@ row_ins_sec_index_entry_low(
 	/* Note that we use PAGE_CUR_LE as the search mode, because then
 	the function will return in both low_match and up_match of the
 	cursor sensible values */
-	btr_cur_search_to_nth_level(index, 0, entry, PAGE_CUR_LE,
-				    search_mode,
-				    &cursor, 0, __FILE__, __LINE__, &mtr);
+	err = btr_cur_search_to_nth_level(index, 0, entry, PAGE_CUR_LE,
+					  search_mode,
+					  &cursor, 0, __FILE__, __LINE__, &mtr);
+
+	if (err != DB_SUCCESS) {
+		if (err == DB_DECRYPTION_FAILED) {
+			ib_push_warning(trx->mysql_thd,
+				DB_DECRYPTION_FAILED,
+				"Table %s is encrypted but encryption service or"
+				" used key_id is not available. "
+				" Can't continue reading table.",
+				index->table->name);
+			index->table->is_encrypted = true;
+		}
+		goto func_exit;
+	}
 
 	if (cursor.flag == BTR_CUR_INSERT_TO_IBUF) {
 		/* The insert was buffered during the search: we are done */

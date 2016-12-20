@@ -133,12 +133,16 @@ Warning	1292	Truncated incorrect DOUBLE value: '1.5b'
 SELECT (SELECT 'b',2,'a') = ROW(1.5,2,'a');
 (SELECT 'b',2,'a') = ROW(1.5,2,'a')
 0
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'b'
 SELECT (SELECT 1.5,2,'a') = ROW(1.5,'2','a');
 (SELECT 1.5,2,'a') = ROW(1.5,'2','a')
 1
 SELECT (SELECT 1.5,'c','a') = ROW(1.5,2,'a');
 (SELECT 1.5,'c','a') = ROW(1.5,2,'a')
 0
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'c'
 SELECT (SELECT * FROM (SELECT 'test' a,'test' b) a);
 ERROR 21000: Operand should contain 1 column(s)
 SELECT 1 as a,(SELECT a+a) b,(SELECT b);
@@ -405,13 +409,13 @@ EXPLAIN EXTENDED SELECT DISTINCT date FROM t1 WHERE date='2002-08-03';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	index	NULL	PRIMARY	43	NULL	2	100.00	Using where; Using index
 Warnings:
-Note	1003	select distinct `test`.`t1`.`date` AS `date` from `test`.`t1` where (`test`.`t1`.`date` = '2002-08-03')
+Note	1003	select distinct `test`.`t1`.`date` AS `date` from `test`.`t1` where (`test`.`t1`.`date` = DATE'2002-08-03')
 EXPLAIN EXTENDED SELECT (SELECT DISTINCT date FROM t1 WHERE date='2002-08-03');
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 2	SUBQUERY	t1	index	NULL	PRIMARY	43	NULL	2	100.00	Using where; Using index
 Warnings:
-Note	1003	select (select distinct `test`.`t1`.`date` from `test`.`t1` where (`test`.`t1`.`date` = '2002-08-03')) AS `(SELECT DISTINCT date FROM t1 WHERE date='2002-08-03')`
+Note	1003	select (select distinct `test`.`t1`.`date` from `test`.`t1` where (`test`.`t1`.`date` = DATE'2002-08-03')) AS `(SELECT DISTINCT date FROM t1 WHERE date='2002-08-03')`
 SELECT DISTINCT date FROM t1 WHERE date='2002-08-03';
 date
 2002-08-03
@@ -1055,6 +1059,8 @@ create table t1 (a float);
 select 10.5 IN (SELECT * from t1 LIMIT 1);
 ERROR 42000: This version of MariaDB doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'
 select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
+ERROR HY000: Incorrect usage of UNION and LIMIT
+select 10.5 IN (SELECT * from t1 UNION SELECT 1.5 LIMIT 1);
 ERROR 42000: This version of MariaDB doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'
 drop table t1;
 create table t1 (a int, b int, c varchar(10));
@@ -1256,7 +1262,7 @@ a
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` bigint(20) NOT NULL DEFAULT '0'
+  `a` bigint(20) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 drop table t1;
 create table t1 (a int);
@@ -3695,8 +3701,8 @@ WHERE t1.t < t2.t  AND t1.i2=1 AND t2.i1=t1.i1
 ORDER BY t1.t DESC LIMIT 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	t2	system	NULL	NULL	NULL	NULL	1	
-1	PRIMARY	t1	index	NULL	PRIMARY	16	NULL	11	Using where; Using index
-2	SUBQUERY	t1	range	PRIMARY	PRIMARY	16	NULL	5	Using where; Using index
+1	PRIMARY	t1	index	NULL	PRIMARY	13	NULL	11	Using where; Using index
+2	SUBQUERY	t1	range	PRIMARY	PRIMARY	13	NULL	5	Using where; Using index
 SELECT * FROM t1,t2
 WHERE t1.t = (SELECT t1.t FROM t1
 WHERE t1.t < t2.t  AND t1.i2=1 AND t2.i1=t1.i1
@@ -4659,6 +4665,8 @@ SELECT 1 FROM t1 WHERE 1 < SOME (SELECT 2.0 FROM t2);
 1
 SELECT 1 FROM t1 WHERE 1 < SOME (SELECT 'a' FROM t2);
 1
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
 SELECT 1 FROM t1 WHERE 1 < SOME (SELECT a1 FROM t2);
 1
 1
@@ -5126,8 +5134,9 @@ SELECT a FROM t1 WHERE a = 2
 a
 1
 2
-SELECT * FROM ((SELECT 1 a) UNION SELECT 1 a);
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')' at line 1
+SELECT * FROM ((SELECT 1 a) UNION SELECT 1 a) q;
+a
+1
 SELECT * FROM (SELECT 1 a UNION (SELECT 1 a)) alias;
 a
 1
@@ -5169,7 +5178,7 @@ a	1
 1	1
 2	1
 SELECT * FROM t1 JOIN ((SELECT 1 UNION SELECT 1)) ON 1;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')) ON 1' at line 1
+ERROR 42000: Every derived table must have its own alias
 SELECT * FROM t1 JOIN  (t1 t1a UNION SELECT 1)  ON 1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')  ON 1' at line 1
 SELECT * FROM t1 JOIN ((t1 t1a UNION SELECT 1)) ON 1;
@@ -5288,7 +5297,10 @@ SELECT ((SELECT 1 UNION SELECT 1 UNION SELECT 1));
 SELECT * FROM ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'UNION SELECT 1 ) )' at line 1
 SELECT * FROM ( ( SELECT 1 UNION SELECT 1 ) UNION SELECT 1 );
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ') UNION SELECT 1 )' at line 1
+ERROR 42000: Every derived table must have its own alias
+SELECT * FROM ( ( SELECT 1 UNION SELECT 1 ) UNION SELECT 1 ) a;
+1
+1
 SELECT * FROM ( SELECT 1 UNION SELECT 1 UNION SELECT 1 ) a;
 1
 1
@@ -5924,6 +5936,8 @@ SELECT 1 FROM t1 WHERE 1 < SOME (SELECT 2.0 FROM t2);
 1
 SELECT 1 FROM t1 WHERE 1 < SOME (SELECT 'a' FROM t2);
 1
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
 SELECT 1 FROM t1 WHERE 1 < SOME (SELECT a1 FROM t2);
 1
 1
@@ -6301,12 +6315,22 @@ SELECT 1 FROM t1 WHERE a =
 ORDER BY b
 );
 1
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
+Warning	1292	Truncated incorrect DOUBLE value: 'b'
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
+Warning	1292	Truncated incorrect DOUBLE value: 'b'
 SELECT 1 FROM t1 WHERE a = 
 (SELECT 1 FROM t2 WHERE b = 
 (SELECT 1 FROM t1 t11 WHERE c = 1 OR t1.a = 1 AND 1 = 2)
 GROUP BY b
 );
 1
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
+Warning	1292	Truncated incorrect DOUBLE value: 'b'
+Warning	1292	Truncated incorrect DOUBLE value: 'a'
+Warning	1292	Truncated incorrect DOUBLE value: 'b'
 DROP TABLE t1, t2;
 #
 # BUG#12616253 - WRONG RESULT WITH EXISTS(SUBQUERY) (MISSING ROWS)
@@ -6967,7 +6991,7 @@ INSERT INTO t2 VALUES (45),(17),(20);
 EXPLAIN SELECT * FROM t1 WHERE EXISTS ( SELECT a FROM t1, t2 WHERE b = a GROUP BY a HAVING a <> 1 ) ;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-2	SUBQUERY	t1	index	a	a	5	NULL	2	Using where; Using index
+2	SUBQUERY	t1	range	a	a	5	NULL	2	Using where; Using index
 2	SUBQUERY	t2	ref	b	b	5	test.t1.a	2	Using index
 DROP TABLE t1,t2;
 #
@@ -7001,7 +7025,7 @@ INSERT INTO t2 VALUES (45),(17),(20);
 EXPLAIN SELECT * FROM t1 WHERE EXISTS ( SELECT a FROM t1, t2 WHERE b = a GROUP BY a HAVING a <> 1 ) ;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-2	SUBQUERY	t1	index	a	a	5	NULL	2	Using where; Using index
+2	SUBQUERY	t1	range	a	a	5	NULL	2	Using where; Using index
 2	SUBQUERY	t2	ref	b	b	5	test.t1.a	2	Using index
 DROP TABLE t1,t2;
 #
@@ -7093,6 +7117,17 @@ a
 DROP TABLE t1;
 SET SESSION big_tables=0;
 #
+# MDEV-10776: Server crash on query
+#
+create table t1 (field1 int);
+insert into t1 values (1);
+select round((select 1 from t1 limit 1))
+from t1
+group by round((select 1 from t1 limit 1));
+round((select 1 from t1 limit 1))
+1
+drop table t1;
+#
 # MDEV-7930: Assertion `table_share->tmp_table != NO_TMP_TABLE ||
 # m_lock_type != 2' failed in  handler::ha_index_read_map
 #
@@ -7116,4 +7151,32 @@ sq
 NULL
 drop view v2;
 drop table t1,t2;
+#
+# MDEV-9487: Server crashes in Time_and_counter_tracker::incr_loops
+# with UNION in ALL subquery
+#
+SET NAMES utf8;
+CREATE TABLE t1 (f VARCHAR(8)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES ('foo');
+SELECT f FROM t1 WHERE f > ALL ( SELECT 'bar' UNION SELECT 'baz' );
+f
+foo
+SELECT f FROM t1 WHERE f > ALL ( SELECT 'bar');
+f
+foo
+drop table t1;
+SET NAMES default;
+#
+# MDEV-10045: Server crashes in Time_and_counter_tracker::incr_loops
+#
+SET NAMES utf8;
+CREATE TABLE t1 (f1 VARCHAR(3), f2 INT UNSIGNED) ENGINE=MyISAM;
+CREATE TABLE t2 (f3 INT) ENGINE=MyISAM;
+SELECT * FROM t1, t2 WHERE f3 = f2 AND f1 > ANY ( SELECT 'foo' UNION SELECT 'bar' );
+f1	f2	f3
+SELECT * FROM t1, t2 WHERE f3 = f2 AND f1 > ANY ( SELECT 'foo');
+f1	f2	f3
+DROP TABLE t1, t2;
+SET NAMES default;
+End of 10.1 tests
 set @optimizer_switch_for_subselect_test=null;

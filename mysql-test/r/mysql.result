@@ -1,3 +1,5 @@
+set GLOBAL sql_mode="";
+set LOCAL sql_mode="";
 drop table if exists t1,t2,t3;
 create table t1(a int);
 insert into t1 values(1);
@@ -527,5 +529,18 @@ a
 | a                 |
 | aaaaaaaaaaaaaaaaa |
 +-------------------+
+#
+# Start of 10.1 tests
+#
+#
+# MDEV-6572 "USE dbname" with a bad sequence erroneously connects to a wrong database
+#
+#
+# End of 10.1 tests
+#
+ERROR 1300 (HY000): Invalid utf8 character string: 'test\xF0\x9F\x98\x81 '
+ERROR 1300 (HY000): Invalid binary character string: 'test\xF0\x9F\x98\x81 '
+ERROR 1300 (HY000) at line 2: Invalid utf8 character string: 'test\xF0\x9F\x98\x81'
+set GLOBAL sql_mode=default;
 
 End of tests

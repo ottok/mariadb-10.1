@@ -14,3 +14,10 @@ drop table `clock$`;
 select convert(convert(',' using filename) using binary);
 convert(convert(',' using filename) using binary)
 @002c
+#
+# MDEV-7677 my_charset_handler_filename has a wrong "ismbchar" member
+#
+SET NAMES utf8;
+SELECT @a:=CONVERT('aя' USING filename) AS `@a`, BINARY @a, REVERSE(@a), HEX(@a), HEX(REVERSE(@a));
+@a	BINARY @a	REVERSE(@a)	HEX(@a)	HEX(REVERSE(@a))
+aя	a@r1	яa	61407231	40723161

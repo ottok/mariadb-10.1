@@ -46,7 +46,6 @@
 #           ----> MyISAM                                               #
 #     -  There is no impact of the GLOBAL(server) or SESSION default   #
 #        storage engine setting on the engine used for I_S tables.     #
-#        That means we cannot get NDB or InnoDB instead.               #
 #                                                                      #
 # Creation:                                                            #
 # 2007-08    hhunger Implement this test as part of                    #
@@ -66,7 +65,7 @@
 let $table= processlist;
 #
 # columns of the information_schema table e.g. to use in a select.
-let $columns= ID, USER, HOST, DB, COMMAND, TIME, STATE, INFO, TIME_MS, STAGE, MAX_STAGE, PROGRESS, MEMORY_USED, EXAMINED_ROWS, QUERY_ID;
+let $columns= ID, USER, HOST, DB, COMMAND, TIME, STATE, INFO, TIME_MS, STAGE, MAX_STAGE, PROGRESS, MEMORY_USED, EXAMINED_ROWS, QUERY_ID, INFO_BINARY;
 #
 # Where clause for an update.
 let $update_where= WHERE id=1 ;
@@ -159,9 +158,9 @@ WHERE DB = 'information_schema' AND COMMAND = 'Sleep' AND USER = 'ddicttestuser1
 eval SHOW CREATE TABLE $table;
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 eval SHOW $table;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 eval SELECT * FROM $table $select_where ORDER BY id;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 eval SELECT $columns FROM $table $select_where ORDER BY id;
 --source suite/funcs_1/datadict/datadict_priv.inc
 --real_sleep 0.3
@@ -179,9 +178,9 @@ connection con100;
 eval SHOW CREATE TABLE $table;
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 eval SHOW $table;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 eval SELECT * FROM $table $select_where ORDER BY id;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 eval SELECT $columns FROM $table $select_where ORDER BY id;
 --source suite/funcs_1/datadict/datadict_priv.inc
 --real_sleep 0.3
@@ -205,7 +204,7 @@ connection con100;
 SHOW GRANTS;
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -217,7 +216,7 @@ connect (con101,localhost,ddicttestuser1,ddictpass,information_schema);
 SHOW GRANTS;
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -227,6 +226,7 @@ SELECT * FROM information_schema.processlist;
 --echo   connection default (user=root)
 --echo ####################################################################################
 connection default;
+create user ''@'localhost';
 GRANT PROCESS ON *.* TO ''@'localhost';
 --real_sleep 0.3
 
@@ -239,7 +239,7 @@ connect (anonymous1,localhost,"''",,information_schema);
 SHOW GRANTS;
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -261,7 +261,7 @@ connect (con102,localhost,ddicttestuser1,ddictpass,information_schema);
 SHOW GRANTS;
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -287,7 +287,7 @@ if ($fixed_bug_30395)
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
 }
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -308,7 +308,7 @@ connect (con103,localhost,ddicttestuser1,ddictpass,information_schema);
 SHOW GRANTS FOR 'ddicttestuser1'@'localhost';
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -330,7 +330,7 @@ connect (con104,localhost,ddicttestuser1,ddictpass,information_schema);
 SHOW GRANTS FOR 'ddicttestuser1'@'localhost';
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -377,7 +377,7 @@ connect (con200,localhost,ddicttestuser2,ddictpass,information_schema);
 SHOW GRANTS FOR 'ddicttestuser2'@'localhost';
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -398,7 +398,7 @@ connect (con201,localhost,ddicttestuser2,ddictpass,information_schema);
 SHOW GRANTS;
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -421,7 +421,7 @@ SHOW GRANTS FOR 'ddicttestuser1'@'localhost';
 GRANT PROCESS ON *.* TO 'ddicttestuser2'@'localhost';
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 
@@ -445,7 +445,7 @@ connect (con108,localhost,ddicttestuser1,ddictpass,information_schema);
 SHOW GRANTS FOR 'ddicttestuser1'@'localhost';
 --replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS
 SHOW processlist;
---replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID
+--replace_column 1 ID 3 HOST_NAME 6 TIME 9 TIME_MS 13 MEMORY 14 ROWS 15 QUERY_ID 17 TID
 SELECT * FROM information_schema.processlist;
 --real_sleep 0.3
 

@@ -24,7 +24,6 @@
 #include "sql_base.h"                       // close_tables_for_reopen
 #include "key.h"                            // key_copy
 #include "lock.h"                           // mysql_unlock_tables
-#include "sql_parse.h"             // mysql_reset_thd_for_next_command
 #include "rpl_rli.h"
 #include "rpl_utility.h"
 #endif
@@ -82,14 +81,14 @@ Old_rows_log_event::do_apply_event(Old_rows_log_event *ev, rpl_group_info *rgi)
       Lock_tables() reads the contents of ev_thd->lex, so they must be
       initialized.
 
-      We also call the mysql_reset_thd_for_next_command(), since this
+      We also call the THD::reset_for_next_command(), since this
       is the logical start of the next "statement". Note that this
       call might reset the value of current_stmt_binlog_format, so
       we need to do any changes to that value after this function.
     */
     delete_explain_query(thd->lex);
     lex_start(ev_thd);
-    mysql_reset_thd_for_next_command(ev_thd);
+    ev_thd->reset_for_next_command();
 
     /*
       This is a row injection, so we flag the "statement" as
@@ -318,50 +317,7 @@ last_uniq_key(TABLE *table, uint keyno)
 */
 static bool record_compare(TABLE *table)
 {
-  /*
-    Need to set the X bit and the filler bits in both records since
-    there are engines that do not set it correctly.
-
-    In addition, since MyISAM checks that one hasn't tampered with the
-    record, it is necessary to restore the old bytes into the record
-    after doing the comparison.
-
-    TODO[record format ndb]: Remove it once NDB returns correct
-    records. Check that the other engines also return correct records.
-   */
-
   bool result= FALSE;
-  uchar saved_x[2]= {0, 0}, saved_filler[2]= {0, 0};
-
-  if (table->s->null_bytes > 0)
-  {
-    for (int i = 0 ; i < 2 ; ++i)
-    { 
-      /* 
-        If we have an X bit then we need to take care of it.
-      */
-      if (!(table->s->db_options_in_use & HA_OPTION_PACK_RECORD))
-      {
-        saved_x[i]= table->record[i][0];
-        table->record[i][0]|= 1U;
-      }
-      
-      /*
-         If (last_null_bit_pos == 0 && null_bytes > 1), then:
-
-         X bit (if any) + N nullable fields + M Field_bit fields = 8 bits 
-
-         Ie, the entire byte is used.
-      */
-      if (table->s->last_null_bit_pos > 0)
-      {
-        saved_filler[i]= table->record[i][table->s->null_bytes - 1];
-        table->record[i][table->s->null_bytes - 1]|=
-          256U - (1U << table->s->last_null_bit_pos);
-      }
-    }
-  }
-
   if (table->s->blob_fields + table->s->varchar_fields == 0)
   {
     result= cmp_record(table,record[1]);
@@ -388,24 +344,6 @@ static bool record_compare(TABLE *table)
   }
 
 record_compare_exit:
-  /*
-    Restore the saved bytes.
-
-    TODO[record format ndb]: Remove this code once NDB returns the
-    correct record format.
-  */
-  if (table->s->null_bytes > 0)
-  {
-    for (int i = 0 ; i < 2 ; ++i)
-    {
-      if (!(table->s->db_options_in_use & HA_OPTION_PACK_RECORD))
-        table->record[i][0]= saved_x[i];
-
-      if (table->s->last_null_bit_pos > 0)
-        table->record[i][table->s->null_bytes - 1]= saved_filler[i];
-    }
-  }
-
   return result;
 }
 
@@ -796,21 +734,6 @@ static int find_and_fetch_row(TABLE *table, uchar *key)
     {
       int error;
 
-      /*
-        We need to set the null bytes to ensure that the filler bit
-        are all set when returning.  There are storage engines that
-        just set the necessary bits on the bytes and don't set the
-        filler bits correctly.
-
-        TODO[record format ndb]: Remove this code once NDB returns the
-        correct record format.
-      */
-      if (table->s->null_bytes > 0)
-      {
-        table->record[1][table->s->null_bytes - 1]|=
-          256U - (1U << table->s->last_null_bit_pos);
-      }
-
       while ((error= table->file->ha_index_next(table->record[1])))
       {
         /* We just skip records that has already been deleted */
@@ -905,34 +828,13 @@ int Write_rows_log_event_old::do_before_row_operations(TABLE *table)
   /* Tell the storage engine that we are using REPLACE semantics. */
   thd->lex->duplicates= DUP_REPLACE;
 
-  /*
-    Pretend we're executing a REPLACE command: this is needed for
-    InnoDB and NDB Cluster since they are not (properly) checking the
-    lex->duplicates flag.
-  */
   thd->lex->sql_command= SQLCOM_REPLACE;
   /* 
      Do not raise the error flag in case of hitting to an unique attribute
   */
   table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
-  /* 
-     NDB specific: update from ndb master wrapped as Write_rows
-  */
-  /*
-    so that the event should be applied to replace slave's row
-  */
   table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
-  /* 
-     NDB specific: if update from ndb master wrapped as Write_rows
-     does not find the row it's assumed idempotent binlog applying
-     is taking place; don't raise the error.
-  */
   table->file->extra(HA_EXTRA_IGNORE_NO_KEY);
-  /*
-    TODO: the cluster team (Tomas?) says that it's better if the engine knows
-    how many rows are going to be inserted, then it can allocate needed memory
-    from the start.
-  */
   table->file->ha_start_bulk_insert(0);
   return error;
 }
@@ -1646,6 +1548,7 @@ int Old_rows_log_event::do_apply_event(rpl_group_info *rgi)
     bitmap_set_all(table->write_set);
     if (!get_flags(COMPLETE_ROWS_F))
       bitmap_intersect(table->write_set,&m_cols);
+    table->rpl_write_set= table->write_set;
 
     // Do event specific preparations 
     
@@ -1877,7 +1780,7 @@ Old_rows_log_event::do_update_pos(rpl_group_info *rgi)
 
 
 #ifndef MYSQL_CLIENT
-bool Old_rows_log_event::write_data_header(IO_CACHE *file)
+bool Old_rows_log_event::write_data_header()
 {
   uchar buf[ROWS_HEADER_LEN];	// No need to init the buffer
 
@@ -1889,15 +1792,15 @@ bool Old_rows_log_event::write_data_header(IO_CACHE *file)
                   {
                     int4store(buf + 0, m_table_id);
                     int2store(buf + 4, m_flags);
-                    return (my_b_safe_write(file, buf, 6));
+                    return write_data(buf, 6);
                   });
   int6store(buf + RW_MAPID_OFFSET, (ulonglong)m_table_id);
   int2store(buf + RW_FLAGS_OFFSET, m_flags);
-  return (my_b_safe_write(file, buf, ROWS_HEADER_LEN));
+  return write_data(buf, ROWS_HEADER_LEN);
 }
 
 
-bool Old_rows_log_event::write_data_body(IO_CACHE*file)
+bool Old_rows_log_event::write_data_body()
 {
   /*
      Note that this should be the number of *bits*, not the number of
@@ -1914,13 +1817,12 @@ bool Old_rows_log_event::write_data_body(IO_CACHE*file)
   DBUG_ASSERT(static_cast<size_t>(sbuf_end - sbuf) <= sizeof(sbuf));
 
   DBUG_DUMP("m_width", sbuf, (size_t) (sbuf_end - sbuf));
-  res= res || my_b_safe_write(file, sbuf, (size_t) (sbuf_end - sbuf));
+  res= res || write_data(sbuf, (size_t) (sbuf_end - sbuf));
 
   DBUG_DUMP("m_cols", (uchar*) m_cols.bitmap, no_bytes_in_map(&m_cols));
-  res= res || my_b_safe_write(file, (uchar*) m_cols.bitmap,
-                              no_bytes_in_map(&m_cols));
+  res= res || write_data((uchar*)m_cols.bitmap, no_bytes_in_map(&m_cols));
   DBUG_DUMP("rows", m_rows_buf, data_size);
-  res= res || my_b_safe_write(file, m_rows_buf, (size_t) data_size);
+  res= res || write_data(m_rows_buf, (size_t) data_size);
 
   return res;
 
@@ -1929,7 +1831,7 @@ bool Old_rows_log_event::write_data_body(IO_CACHE*file)
 
 
 #if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
-void Old_rows_log_event::pack_info(THD *thd, Protocol *protocol)
+void Old_rows_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
   char const *const flagstr=
@@ -2021,8 +1923,9 @@ Old_rows_log_event::write_row(rpl_group_info *rgi, const bool overwrite)
     DBUG_RETURN(error);
   
   /* unpack row into table->record[0] */
-  error= unpack_current_row(rgi); // TODO: how to handle errors?
-
+  if ((error= unpack_current_row(rgi)))
+    DBUG_RETURN(error);
+  
 #ifndef DBUG_OFF
   DBUG_DUMP("record[0]", table->record[0], table->s->reclength);
   DBUG_PRINT_BITSET("debug", "write_set = %s", table->write_set);
@@ -2399,21 +2302,6 @@ int Old_rows_log_event::find_row(rpl_group_info *rgi)
 
     while (record_compare(table))
     {
-      /*
-        We need to set the null bytes to ensure that the filler bit
-        are all set when returning.  There are storage engines that
-        just set the necessary bits on the bytes and don't set the
-        filler bits correctly.
-
-        TODO[record format ndb]: Remove this code once NDB returns the
-        correct record format.
-      */
-      if (table->s->null_bytes > 0)
-      {
-        table->record[0][table->s->null_bytes - 1]|=
-          256U - (1U << table->s->last_null_bit_pos);
-      }
-
       while ((error= table->file->ha_index_next(table->record[0])))
       {
         /* We just skip records that has already been deleted */
@@ -2553,34 +2441,13 @@ Write_rows_log_event_old::do_before_row_operations(const Slave_reporting_capabil
   /* Tell the storage engine that we are using REPLACE semantics. */
   thd->lex->duplicates= DUP_REPLACE;
 
-  /*
-    Pretend we're executing a REPLACE command: this is needed for
-    InnoDB and NDB Cluster since they are not (properly) checking the
-    lex->duplicates flag.
-  */
   thd->lex->sql_command= SQLCOM_REPLACE;
   /* 
      Do not raise the error flag in case of hitting to an unique attribute
   */
   m_table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
-  /* 
-     NDB specific: update from ndb master wrapped as Write_rows
-  */
-  /*
-    so that the event should be applied to replace slave's row
-  */
   m_table->file->extra(HA_EXTRA_WRITE_CAN_REPLACE);
-  /* 
-     NDB specific: if update from ndb master wrapped as Write_rows
-     does not find the row it's assumed idempotent binlog applying
-     is taking place; don't raise the error.
-  */
   m_table->file->extra(HA_EXTRA_IGNORE_NO_KEY);
-  /*
-    TODO: the cluster team (Tomas?) says that it's better if the engine knows
-    how many rows are going to be inserted, then it can allocate needed memory
-    from the start.
-  */
   m_table->file->ha_start_bulk_insert(0);
   return error;
 }

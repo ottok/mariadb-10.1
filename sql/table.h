@@ -30,6 +30,7 @@
 #include "mysql_com.h"              /* enum_field_types */
 #include "thr_lock.h"                  /* thr_lock_type */
 #include "filesort_utils.h"
+#include "parse_file.h"
 
 /* Structs that defines the TABLE */
 
@@ -47,6 +48,7 @@ class ACL_internal_schema_access;
 class ACL_internal_table_access;
 class Field;
 class Table_statistics;
+class TDC_element;
 
 /*
   Used to identify NESTED_JOIN structures within a join (applicable only to
@@ -522,6 +524,16 @@ public:
 };
 
 
+/*
+  If the table isn't valid, report the error to the server log only.
+*/
+class Table_check_intact_log_error : public Table_check_intact
+{
+protected:
+  void report_error(uint, const char *fmt, ...);
+};
+
+
 /**
   Class representing the fact that some thread waits for table
   share to be flushed. Is used to represent information about
@@ -611,32 +623,7 @@ struct TABLE_SHARE
   mysql_mutex_t LOCK_ha_data;           /* To protect access to ha_data */
   mysql_mutex_t LOCK_share;             /* To protect TABLE_SHARE */
 
-  typedef I_P_List <TABLE, TABLE_share> TABLE_list;
-  typedef I_P_List <TABLE, All_share_tables> All_share_tables_list;
-  struct
-  {
-    /**
-      Protects ref_count, m_flush_tickets, all_tables, free_tables, flushed,
-      all_tables_refs.
-    */
-    mysql_mutex_t LOCK_table_share;
-    mysql_cond_t COND_release;
-    TABLE_SHARE *next, **prev;            /* Link to unused shares */
-    uint ref_count;                       /* How many TABLE objects uses this */
-    uint all_tables_refs;                 /* Number of refs to all_tables */
-    /**
-      List of tickets representing threads waiting for the share to be flushed.
-    */
-    Wait_for_flush_list m_flush_tickets;
-    /*
-      Doubly-linked (back-linked) lists of used and unused TABLE objects
-      for this share.
-    */
-    All_share_tables_list all_tables;
-    TABLE_list free_tables;
-    ulong version;
-    bool flushed;
-  } tdc;
+  TDC_element *tdc;
 
   LEX_CUSTRING tabledef_version;
 
@@ -753,6 +740,13 @@ struct TABLE_SHARE
     to modify create_info->used_fields for ALTER TABLE.
   */
   ulong incompatible_version;
+
+  /**
+    For shares representing views File_parser object with view
+    definition read from .FRM file.
+  */
+  const File_parser *view_def;
+
 
   /*
     Cache for row-based replication table share checks that does not
@@ -993,6 +987,57 @@ struct TABLE_SHARE
 };
 
 
+/**
+   Class is used as a BLOB field value storage for
+   intermediate GROUP_CONCAT results. Used only for
+   GROUP_CONCAT with  DISTINCT or ORDER BY options.
+ */
+
+class Blob_mem_storage: public Sql_alloc
+{
+private:
+  MEM_ROOT storage;
+  /**
+    Sign that some values were cut
+    during saving into the storage.
+  */
+  bool truncated_value;
+public:
+  Blob_mem_storage() :truncated_value(false)
+  {
+    init_alloc_root(&storage, MAX_FIELD_VARCHARLENGTH, 0, MYF(0));
+  }
+  ~ Blob_mem_storage()
+  {
+    free_root(&storage, MYF(0));
+  }
+  void reset()
+  {
+    free_root(&storage, MYF(MY_MARK_BLOCKS_FREE));
+    truncated_value= false;
+  }
+  /**
+     Fuction creates duplicate of 'from'
+     string in 'storage' MEM_ROOT.
+
+     @param from           string to copy
+     @param length         string length
+
+     @retval Pointer to the copied string.
+     @retval 0 if an error occured.
+  */
+  char *store(const char *from, uint length)
+  {
+    return (char*) memdup_root(&storage, from, length);
+  }
+  void set_truncated_value(bool is_truncated_value)
+  {
+    truncated_value= is_truncated_value;
+  }
+  bool is_truncated_value() { return truncated_value; }
+};
+
+
 /* Information for one open table */
 enum index_hint_type
 {
@@ -1072,13 +1117,24 @@ public:
   TABLE_LIST *pos_in_table_list;/* Element referring to this table */
   /* Position in thd->locked_table_list under LOCK TABLES */
   TABLE_LIST *pos_in_locked_tables;
+
+  /*
+    Not-null for temporary tables only. Non-null values means this table is
+    used to compute GROUP BY, it has a unique of GROUP BY columns.
+    (set by create_tmp_table)
+  */
   ORDER		*group;
   String	alias;            	  /* alias or table name */
   uchar		*null_flags;
-  MY_BITMAP     def_read_set, def_write_set, def_vcol_set, tmp_set; 
+  MY_BITMAP     def_read_set, def_write_set, tmp_set;
+  MY_BITMAP     def_rpl_write_set;
   MY_BITMAP     eq_join_set;         /* used to mark equi-joined fields */
   MY_BITMAP     cond_set;   /* used to mark fields from sargable conditions*/
-  MY_BITMAP     *read_set, *write_set, *vcol_set; /* Active column sets */
+  /* Active column sets */
+  MY_BITMAP     *read_set, *write_set, *rpl_write_set;
+  /* Set if using virtual fields */
+  MY_BITMAP     *vcol_set, *def_vcol_set;
+
   /*
    The ID of the query that opened and is using this table. Has different
    meanings depending on the table type.
@@ -1113,6 +1169,7 @@ public:
     and max #key parts that range access would use.
   */
   ha_rows	quick_rows[MAX_KEY];
+  double 	quick_costs[MAX_KEY];
 
   /* 
     Bitmaps of key parts that =const for the duration of join execution. If
@@ -1251,6 +1308,12 @@ public:
 
   REGINFO reginfo;			/* field connections */
   MEM_ROOT mem_root;
+  /**
+     Initialized in Item_func_group_concat::setup for appropriate
+     temporary table if GROUP_CONCAT is used with ORDER BY | DISTINCT
+     and BLOB field count > 0.
+   */
+  Blob_mem_storage *blob_storage;
   GRANT_INFO grant;
   Filesort_info sort;
   /*
@@ -1284,6 +1347,7 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
+  void mark_columns_per_binlog_row_image(void);
   bool mark_virtual_col(Field *field);
   void mark_virtual_columns_for_write(bool insert_fl);
   void mark_default_fields_for_write();
@@ -1328,7 +1392,8 @@ public:
   {
     read_set= &def_read_set;
     write_set= &def_write_set;
-    vcol_set= &def_vcol_set;
+    vcol_set= def_vcol_set;                     /* Note that this may be 0 */
+    rpl_write_set= 0;
   }
   /** Should this instance of the table be reopened? */
   inline bool needs_reopen()
@@ -1387,6 +1452,9 @@ public:
   void prepare_triggers_for_insert_stmt_or_event();
   bool prepare_triggers_for_delete_stmt_or_event();
   bool prepare_triggers_for_update_stmt_or_event();
+
+  inline Field **field_to_fill();
+  bool validate_default_values_of_unset_fields(THD *thd) const;
 };
 
 
@@ -1493,8 +1561,8 @@ typedef struct st_schema_table
 {
   const char* table_name;
   ST_FIELD_INFO *fields_info;
-  /* Create information_schema table */
-  TABLE *(*create_table)  (THD *thd, TABLE_LIST *table_list);
+  /* for FLUSH table_name */
+  int (*reset_table) ();
   /* Fill table with data */
   int (*fill_table) (THD *thd, TABLE_LIST *tables, COND *cond);
   /* Handle fileds for old SHOW */
@@ -1506,6 +1574,7 @@ typedef struct st_schema_table
   uint i_s_requested_object;  /* the object we need to open(TABLE | VIEW) */
 } ST_SCHEMA_TABLE;
 
+class IS_table_read_plan;
 
 /*
   Types of derived tables. The ending part is a bitmap of phases that are
@@ -1946,6 +2015,7 @@ struct TABLE_LIST
   bool          updating;               /* for replicate-do/ignore table */
   bool		force_index;		/* prefer index over table scan */
   bool          ignore_leaves;          /* preload only non-leaf nodes */
+  bool          crashed;                 /* Table was found crashed */
   table_map     dep_tables;             /* tables the table depends on      */
   table_map     on_expr_dep_tables;     /* tables on expression depends on  */
   struct st_nested_join *nested_join;   /* if the element is a nested join  */
@@ -2054,11 +2124,22 @@ struct TABLE_LIST
   /* TRUE <=> this table is a const one and was optimized away. */
   bool optimized_away;
 
+  /* I_S: Flags to open_table (e.g. OPEN_TABLE_ONLY or OPEN_VIEW_ONLY) */
   uint i_s_requested_object;
-  bool has_db_lookup_value;
-  bool has_table_lookup_value;
+
+  /*
+    I_S: how to read the tables (SKIP_OPEN_TABLE/OPEN_FRM_ONLY/OPEN_FULL_TABLE)
+  */
   uint table_open_method;
+  /*
+    I_S: where the schema table was filled
+    (this is a hack. The code should be able to figure out whether reading
+    from I_S should be done by create_sort_index() or by JOIN::exec.)
+  */
   enum enum_schema_table_state schema_table_state;
+
+  /* Something like a "query plan" for reading INFORMATION_SCHEMA table */
+  IS_table_read_plan *is_table_read_plan;
 
   MDL_request mdl_request;
 

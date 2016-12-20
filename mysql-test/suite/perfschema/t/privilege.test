@@ -5,6 +5,9 @@
 
 show grants;
 
+create user 'pfs_user_1'@localhost;
+create user 'pfs_user_2'@localhost;
+create user 'pfs_user_3'@localhost;
 grant ALL on *.* to 'pfs_user_1'@localhost with GRANT OPTION;
 
 # Test denied privileges on performance_schema.*
@@ -333,4 +336,3 @@ UPDATE performance_schema.setup_consumers SET enabled = 'YES';
 UPDATE performance_schema.setup_timers SET timer_name = 'MICROSECOND' where name="idle";
 UPDATE performance_schema.setup_timers SET timer_name = 'NANOSECOND'  where name="stage";
 UPDATE performance_schema.setup_timers SET timer_name = 'NANOSECOND'  where name="statement";
-

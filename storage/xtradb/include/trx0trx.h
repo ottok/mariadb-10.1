@@ -1,7 +1,8 @@
 /*****************************************************************************
 
 Copyright (c) 1996, 2016, Oracle and/or its affiliates. All Rights Reserved.
-Copyright (c) 2015, MariaDB Corporation
+Copyright (c) 2015, 2016, MariaDB Corporation. All Rights Reserved.
+
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -393,10 +394,14 @@ ibool
 trx_state_eq(
 /*=========*/
 	const trx_t*	trx,	/*!< in: transaction */
-	trx_state_t	state)	/*!< in: state;
+	trx_state_t	state,	/*!< in: state;
 				if state != TRX_STATE_NOT_STARTED
 				asserts that
 				trx->state != TRX_STATE_NOT_STARTED */
+	bool		relaxed = false)
+				/*!< in: whether to allow
+				trx->state == TRX_STATE_NOT_STARTED
+				after an error has been reported */
 	MY_ATTRIBUTE((nonnull, warn_unused_result));
 # ifdef UNIV_DEBUG
 /**********************************************************************//**
@@ -705,6 +710,12 @@ lock_rec_convert_impl_to_expl()) will access transactions associated
 to other connections. The locks of transactions are protected by
 lock_sys->mutex and sometimes by trx->mutex. */
 
+typedef enum {
+	TRX_SERVER_ABORT = 0,
+	TRX_WSREP_ABORT  = 1,
+	TRX_REPLICATION_ABORT = 2
+} trx_abort_t;
+
 struct trx_t{
 	ulint		magic_n;
 
@@ -871,6 +882,8 @@ struct trx_t{
 
 	time_t		start_time;	/*!< time the trx state last time became
 					TRX_STATE_ACTIVE */
+	clock_t		start_time_micro;	/*!< start time of transaction in
+					microseconds */
 	trx_id_t	id;		/*!< transaction id */
 	XID		xid;		/*!< X/Open XA transaction
 					identification to identify a
@@ -881,6 +894,8 @@ struct trx_t{
 	/*------------------------------*/
 	THD*		mysql_thd;	/*!< MySQL thread handle corresponding
 					to this trx, or NULL */
+	trx_abort_t	abort_type;	/*!< Transaction abort type */
+
 	const char*	mysql_log_file_name;
 					/*!< if MySQL binlog is used, this field
 					contains a pointer to the latest file
@@ -1031,11 +1046,6 @@ struct trx_t{
 					count of tables being flushed. */
 
 	/*------------------------------*/
-	THD*		current_lock_mutex_owner;
-					/*!< If this is equal to current_thd,
-					then in innobase_kill_query() we know we
-					already hold the lock_sys->mutex. */
-	/*------------------------------*/
 #ifdef UNIV_DEBUG
 	ulint		start_line;	/*!< Track where it was started from */
 	const char*	start_file;	/*!< Filename where it was started */
@@ -1048,6 +1058,9 @@ struct trx_t{
 	/*------------------------------*/
 	char detailed_error[256];	/*!< detailed error message for last
 					error, or empty. */
+#ifdef WITH_WSREP
+	os_event_t	wsrep_event;	/* event waited for in srv_conc_slot */
+#endif /* WITH_WSREP */
 	/*------------------------------*/
 	ulint		io_reads;
 	ib_uint64_t	io_read;

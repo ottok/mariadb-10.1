@@ -73,8 +73,8 @@ class Select_materialize: public select_union
   select_result *result; /**< the result object of the caller (PS or SP) */
 public:
   Materialized_cursor *materialized_cursor;
-  Select_materialize(select_result *result_arg)
-    :result(result_arg), materialized_cursor(0) {}
+  Select_materialize(THD *thd_arg, select_result *result_arg):
+    select_union(thd_arg), result(result_arg), materialized_cursor(0) {}
   virtual bool send_result_set_metadata(List<Item> &list, uint flags);
   bool send_eof()
   {
@@ -119,7 +119,7 @@ int mysql_open_cursor(THD *thd, select_result *result,
   LEX *lex= thd->lex;
   int rc;
 
-  if (! (result_materialize= new (thd->mem_root) Select_materialize(result)))
+  if (!(result_materialize= new (thd->mem_root) Select_materialize(thd, result)))
     return 1;
 
   save_result= lex->result;
@@ -139,6 +139,7 @@ int mysql_open_cursor(THD *thd, select_result *result,
   /* Mark that we can't use query cache with cursors */
   thd->query_cache_is_applicable= 0;
   rc= mysql_execute_command(thd);
+  thd->lex->restore_set_statement_var();
   thd->m_digest= parent_digest;
   thd->m_statement_psi= parent_locker;
   MYSQL_QUERY_EXEC_DONE(rc);

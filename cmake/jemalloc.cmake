@@ -1,7 +1,7 @@
 INCLUDE (CheckLibraryExists)
 
 SET(WITH_JEMALLOC auto CACHE STRING
-  "Build with jemalloc. Possible values are 'yes', 'no', 'auto'")
+  "Build with jemalloc. Possible values are 'yes', 'no', 'static', 'auto'")
 
 MACRO (CHECK_JEMALLOC)
   # compatibility with old WITH_JEMALLOC values

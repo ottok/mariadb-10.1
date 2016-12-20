@@ -29,7 +29,7 @@ typedef struct st_net {
   my_bool thread_specific_malloc;
   unsigned char compress;
   my_bool unused3;
-  unsigned char *unused;
+  void *thd;
   unsigned int last_errno;
   unsigned char error;
   my_bool unused4;
@@ -81,7 +81,7 @@ enum enum_mysql_set_option
   MYSQL_OPTION_MULTI_STATEMENTS_ON,
   MYSQL_OPTION_MULTI_STATEMENTS_OFF
 };
-my_bool my_net_init(NET *net, Vio* vio, unsigned int my_flags);
+my_bool my_net_init(NET *net, Vio* vio, void *thd, unsigned int my_flags);
 void my_net_local_init(NET *net);
 void net_end(NET *net);
 void net_clear(NET *net, my_bool clear_buffer);
@@ -100,7 +100,7 @@ struct my_rnd_struct;
 enum Item_result
 {
   STRING_RESULT=0, REAL_RESULT, INT_RESULT, ROW_RESULT, DECIMAL_RESULT,
-  TIME_RESULT,IMPOSSIBLE_RESULT
+  TIME_RESULT
 };
 typedef struct st_udf_args
 {
@@ -130,13 +130,11 @@ void scramble_323(char *to, const char *message, const char *password);
 my_bool check_scramble_323(const unsigned char *reply, const char *message,
                            unsigned long *salt);
 void get_salt_from_password_323(unsigned long *res, const char *password);
-void make_password_from_salt_323(char *to, const unsigned long *salt);
 void make_scrambled_password(char *to, const char *password);
 void scramble(char *to, const char *message, const char *password);
 my_bool check_scramble(const unsigned char *reply, const char *message,
                        const unsigned char *hash_stage2);
 void get_salt_from_password(unsigned char *res, const char *password);
-void make_password_from_salt(char *to, const unsigned char *hash_stage2);
 char *octet2hex(char *to, const char *str, unsigned int len);
 char *get_tty_password(const char *opt_message);
 void get_tty_password_buff(const char *opt_message, char *to, size_t length);

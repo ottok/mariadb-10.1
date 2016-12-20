@@ -789,12 +789,114 @@ int stringcmp(const String *s,const String *t)
 }
 
 
+/**
+  Return a string which has the same value with "from" and
+  which is safe to modify, trying to avoid unnecessary allocation
+  and copying when possible.
+
+  @param to           Buffer. Must not be a constant string.
+  @param from         Some existing value. We'll try to reuse it.
+                      Can be a constant or a variable string.
+  @param from_length  The total size that will be possibly needed.
+                      Note, can be 0.
+
+  Note, in some cases "from" and "to" can point to the same object.
+
+  If "from" is a variable string and its allocated memory is enough
+  to store "from_length" bytes, then "from" is returned as is.
+
+  If "from" is a variable string and its allocated memory is not enough
+  to store "from_length" bytes, then "from" is reallocated and returned.
+
+  Otherwise (if "from" is a constant string, or looks like a constant string),
+  then "to" is reallocated to fit "from_length" bytes, the value is copied
+  from "from" to "to", then "to" is returned.
+*/
 String *copy_if_not_alloced(String *to,String *from,uint32 from_length)
 {
-  if (from->Alloced_length >= from_length)
-    return from;
-  if ((from->alloced && (from->Alloced_length != 0)) || !to || from == to)
+  DBUG_ASSERT(to);
+  /*
+    If "from" is a constant string, e.g.:
+       SELECT INSERT('', <pos>, <length>, <replacement>);
+    we should not return it. See MDEV-9332.
+
+    The code below detects different string types:
+
+    a. All constant strings have Alloced_length==0 and alloced==false.
+       They point to a static memory array, or a mem_root memory,
+       and should stay untouched until the end of their life cycle.
+       Not safe to reuse.
+
+    b. Some variable string have Alloced_length==0 and alloced==false initially,
+       they are not bound to any char array and allocate space on the first use
+       (and become #d). A typical example of such String is Item::str_value.
+       This type of string could be reused, but there is no a way to distinguish
+       them from the true constant strings (#a).
+       Not safe to reuse.
+
+    c. Some variable strings have Alloced_length>0 and alloced==false.
+       They point to a fixed size writtable char array (typically on stack)
+       initially but can later allocate more space on the heap when the
+       fixed size array is too small (these strings become #d after allocation).
+       Safe to reuse.
+
+    d. Some variable strings have Alloced_length>0 and alloced==true.
+       They already store data on the heap.
+       Safe to reuse.
+
+    e. Some strings can have Alloced_length==0 and alloced==true.
+       This type of strings allocate space on the heap, but then are marked
+       as constant strings using String::mark_as_const().
+       A typical example - the result of a character set conversion
+       of a constant string.
+       Not safe to reuse.
+  */
+  if (from->Alloced_length > 0) // "from" is  #c or #d (not a constant)
   {
+    if (from->Alloced_length >= from_length)
+      return from; // #c or #d (large enough to store from_length bytes)
+
+    if (from->alloced)
+    {
+      (void) from->realloc(from_length);
+      return from; // #d (reallocated to fit from_length bytes)
+    }
+    /*
+      "from" is of type #c. It currently points to a writtable char array
+      (typically on stack), but is too small for "from_length" bytes.
+      We need to reallocate either "from" or "to".
+
+      "from" typically points to a temporary buffer inside Item_xxx::val_str(),
+      or to Item::str_value, and thus is "less permanent" than "to".
+
+      Reallocating "to" may give more benifits:
+      - "to" can point to a "more permanent" storage and can be reused
+        for multiple rows, e.g. str_buffer in Protocol::send_result_set_row(),
+        which is passed to val_str() for all string type rows.
+      - "from" can stay pointing to its original fixed size stack char array,
+        and thus reduce the total amount of my_alloc/my_free.
+    */
+  }
+
+  if (from == to)
+  {
+    /*
+      Possible string types:
+      #a  not possible (constants should not be passed as "to")
+      #b  possible     (a fresh variable with no associated char buffer)
+      #c  possible     (a variable with a char buffer,
+                        in case it's smaller than fixed_length)
+      #d  not possible (handled earlier)
+      #e  not possible (constants should not be passed as "to")
+
+      If a string of types #a or #e appears here, that means the caller made
+      something wrong. Otherwise, it's safe to reallocate and return "to".
+
+      Note, as we can't distinguish between #a and #b for sure,
+      so we can't assert "not #a", but we can at least assert "not #e".
+    */
+    DBUG_ASSERT(!from->alloced || from->Alloced_length > 0); // Not #e
+
     (void) from->realloc(from_length);
     return from;
   }
@@ -803,7 +905,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32 from_length)
   if ((to->str_length=MY_MIN(from->str_length,from_length)))
     memcpy(to->Ptr,from->Ptr,to->str_length);
   to->str_charset=from->str_charset;
-  return to;
+  return to; // "from" was of types #a, #b, #e, or small #c.
 }
 
 
@@ -875,182 +977,50 @@ my_copy_with_hex_escaping(CHARSET_INFO *cs,
 
 
 /*
-  copy a string,
+  Copy a string,
   with optional character set conversion,
   with optional left padding (for binary -> UCS2 conversion)
-  
-  SYNOPSIS
-    well_formed_copy_nchars()
-    to			     Store result here
-    to_length                Maxinum length of "to" string
-    to_cs		     Character set of "to" string
-    from		     Copy from here
-    from_length		     Length of from string
-    from_cs		     From character set
-    nchars                   Copy not more that nchars characters
-    well_formed_error_pos    Return position when "from" is not well formed
+
+  Bad input bytes are replaced to '?'.
+
+  The string that is written to "to" is always well-formed.
+
+  @param to                  The destination string
+  @param to_length           Space available in "to"
+  @param to_cs               Character set of the "to" string
+  @param from                The source string
+  @param from_length         Length of the "from" string
+  @param from_cs             Character set of the "from" string
+  @param nchars              Copy not more than "nchars" characters
+
+  The members as set as follows:
+  m_well_formed_error_pos    To the position when "from" is not well formed
                              or NULL otherwise.
-    cannot_convert_error_pos Return position where a not convertable
+  m_cannot_convert_error_pos To the position where a not convertable
                              character met, or NULL otherwise.
-    from_end_pos             Return position where scanning of "from"
+  m_source_end_pos           To the position where scanning of the "from"
                              string stopped.
-  NOTES
 
-  RETURN
-    length of bytes copied to 'to'
+  @returns                   number of bytes that were written to 'to'
 */
-
-
-uint32
-well_formed_copy_nchars(CHARSET_INFO *to_cs,
-                        char *to, uint to_length,
-                        CHARSET_INFO *from_cs,
-                        const char *from, uint from_length,
-                        uint nchars,
-                        const char **well_formed_error_pos,
-                        const char **cannot_convert_error_pos,
-                        const char **from_end_pos)
+uint
+String_copier::well_formed_copy(CHARSET_INFO *to_cs,
+                                char *to, uint to_length,
+                                CHARSET_INFO *from_cs,
+                                const char *from, uint from_length,
+                                uint nchars)
 {
-  uint res;
-
   if ((to_cs == &my_charset_bin) || 
       (from_cs == &my_charset_bin) ||
       (to_cs == from_cs) ||
       my_charset_same(from_cs, to_cs))
   {
-    if (to_length < to_cs->mbminlen || !nchars)
-    {
-      *from_end_pos= from;
-      *cannot_convert_error_pos= NULL;
-      *well_formed_error_pos= NULL;
-      return 0;
-    }
-
-    if (to_cs == &my_charset_bin)
-    {
-      res= MY_MIN(MY_MIN(nchars, to_length), from_length);
-      memmove(to, from, res);
-      *from_end_pos= from + res;
-      *well_formed_error_pos= NULL;
-      *cannot_convert_error_pos= NULL;
-    }
-    else
-    {
-      int well_formed_error;
-      uint from_offset;
-
-      if ((from_offset= (from_length % to_cs->mbminlen)) &&
-          (from_cs == &my_charset_bin))
-      {
-        /*
-          Copying from BINARY to UCS2 needs to prepend zeros sometimes:
-          INSERT INTO t1 (ucs2_column) VALUES (0x01);
-          0x01 -> 0x0001
-        */
-        uint pad_length= to_cs->mbminlen - from_offset;
-        bzero(to, pad_length);
-        memmove(to + pad_length, from, from_offset);
-        /*
-          In some cases left zero-padding can create an incorrect character.
-          For example:
-            INSERT INTO t1 (utf32_column) VALUES (0x110000);
-          We'll pad the value to 0x00110000, which is a wrong UTF32 sequence!
-          The valid characters range is limited to 0x00000000..0x0010FFFF.
-          
-          Make sure we didn't pad to an incorrect character.
-        */
-        if (to_cs->cset->well_formed_len(to_cs,
-                                         to, to + to_cs->mbminlen, 1,
-                                         &well_formed_error) !=
-                                         to_cs->mbminlen)
-        {
-          *from_end_pos= *well_formed_error_pos= from;
-          *cannot_convert_error_pos= NULL;
-          return 0;
-        }
-        nchars--;
-        from+= from_offset;
-        from_length-= from_offset;
-        to+= to_cs->mbminlen;
-        to_length-= to_cs->mbminlen;
-      }
-
-      set_if_smaller(from_length, to_length);
-      res= to_cs->cset->well_formed_len(to_cs, from, from + from_length,
-                                        nchars, &well_formed_error);
-      memmove(to, from, res);
-      *from_end_pos= from + res;
-      *well_formed_error_pos= well_formed_error ? from + res : NULL;
-      *cannot_convert_error_pos= NULL;
-      if (from_offset)
-        res+= to_cs->mbminlen;
-    }
+    m_cannot_convert_error_pos= NULL;
+    return to_cs->cset->copy_fix(to_cs, to, to_length, from, from_length,
+                                 nchars, &m_native_copy_status);
   }
-  else
-  {
-    int cnvres;
-    my_wc_t wc;
-    my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
-    my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-    const uchar *from_end= (const uchar*) from + from_length;
-    uchar *to_end= (uchar*) to + to_length;
-    char *to_start= to;
-    *well_formed_error_pos= NULL;
-    *cannot_convert_error_pos= NULL;
-
-    for ( ; nchars; nchars--)
-    {
-      const char *from_prev= from;
-      if ((cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from, from_end)) > 0)
-        from+= cnvres;
-      else if (cnvres == MY_CS_ILSEQ)
-      {
-        if (!*well_formed_error_pos)
-          *well_formed_error_pos= from;
-        from++;
-        wc= '?';
-      }
-      else if (cnvres > MY_CS_TOOSMALL)
-      {
-        /*
-          A correct multibyte sequence detected
-          But it doesn't have Unicode mapping.
-        */
-        if (!*cannot_convert_error_pos)
-          *cannot_convert_error_pos= from;
-        from+= (-cnvres);
-        wc= '?';
-      }
-      else
-      {
-        if ((uchar *) from >= from_end)
-          break; // End of line
-        // Incomplete byte sequence
-        if (!*well_formed_error_pos)
-          *well_formed_error_pos= from;
-        from++;
-        wc= '?';
-      }
-outp:
-      if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
-        to+= cnvres;
-      else if (cnvres == MY_CS_ILUNI && wc != '?')
-      {
-        if (!*cannot_convert_error_pos)
-          *cannot_convert_error_pos= from_prev;
-        wc= '?';
-        goto outp;
-      }
-      else
-      {
-        from= from_prev;
-        break;
-      }
-    }
-    *from_end_pos= from;
-    res= (uint) (to - to_start);
-  }
-  return (uint32) res;
+  return my_convert_fix(to_cs, to, to_length, from_cs, from, from_length,
+                        nchars, this);
 }
 
 
@@ -1085,6 +1055,16 @@ void String::print(String *str) const
 {
   str->append_for_single_quote(Ptr, str_length);
 }
+
+
+void String::print_with_conversion(String *print, CHARSET_INFO *cs) const
+{
+  StringBuffer<256> tmp(cs);
+  uint errors= 0;
+  tmp.copy(this, cs, &errors);
+  tmp.print(print);
+}
+
 
 /*
   Exchange state of this object and argument.

@@ -1,7 +1,6 @@
 --source include/big_test.inc
 --source include/have_xtradb.inc
 
-drop table if exists t1;
 #
 # test for bug LP#875797 "Using 'innodb_sys_indexes' causes core dump"
 #

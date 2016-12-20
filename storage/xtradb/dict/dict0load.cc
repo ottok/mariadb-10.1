@@ -1,6 +1,7 @@
 /*****************************************************************************
 
 Copyright (c) 1996, 2016, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 2016, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -1310,6 +1311,15 @@ loop:
 					space_id, name);
 			}
 
+			/* We could read page 0 to get (optional) IV
+			if encryption is turned on, if it's off
+			we will read the page 0 later and find out
+			if we should decrypt a potentially
+			already encrypted table
+			bool read_page_0 = srv_encrypt_tables; */
+
+			bool read_page_0 = false;
+
 			/* We set the 2nd param (fix_dict = true)
 			here because we already have an x-lock on
 			dict_operation_lock and dict_sys->mutex. Besides,
@@ -1317,9 +1327,9 @@ loop:
 			If the filepath is not known, it will need to
 			be discovered. */
 			dberr_t	err = fil_open_single_table_tablespace(
-				false, srv_read_only_mode ? false : true,
+				read_page_0, srv_read_only_mode ? false : true,
 				space_id, dict_tf_to_fsp_flags(flags),
-				name, filepath);
+				name, filepath, NULL);
 
 			if (err != DB_SUCCESS) {
 				ib_logf(IB_LOG_LEVEL_ERROR,
@@ -2393,8 +2403,9 @@ dict_get_and_save_data_dir_path(
 	bool		dict_mutex_own)	/*!< in: true if dict_sys->mutex
 					is owned already */
 {
-	if (DICT_TF_HAS_DATA_DIR(table->flags)
-	    && (!table->data_dir_path)) {
+	bool is_temp = DICT_TF2_FLAG_IS_SET(table, DICT_TF2_TEMPORARY);
+
+	if (!is_temp && !table->data_dir_path && table->space) {
 		char*	path = fil_space_get_first_path(table->space);
 
 		if (!dict_mutex_own) {
@@ -2406,6 +2417,7 @@ dict_get_and_save_data_dir_path(
 		}
 
 		if (path) {
+			table->flags |= (1 << DICT_TF_POS_DATA_DIR);
 			dict_save_data_dir_path(table, path);
 			mem_free(path);
 		}
@@ -2546,16 +2558,14 @@ err_exit:
 			}
 
 			/* Use the remote filepath if needed. */
-			if (DICT_TF_HAS_DATA_DIR(table->flags)) {
-				/* This needs to be added to the table
-				from SYS_DATAFILES */
-				dict_get_and_save_data_dir_path(table, true);
+			/* This needs to be added to the table
+			from SYS_DATAFILES */
+			dict_get_and_save_data_dir_path(table, true);
 
-				if (table->data_dir_path) {
-					filepath = os_file_make_remote_pathname(
+			if (table->data_dir_path) {
+				filepath = os_file_make_remote_pathname(
 						table->data_dir_path,
 						table->name, "ibd");
-				}
 			}
 
 			/* Try to open the tablespace.  We set the
@@ -2564,7 +2574,7 @@ err_exit:
 			err = fil_open_single_table_tablespace(
 				true, false, table->space,
 				dict_tf_to_fsp_flags(table->flags),
-				name, filepath);
+				name, filepath, table);
 
 			if (err != DB_SUCCESS) {
 				/* We failed to find a sensible
@@ -2798,6 +2808,99 @@ check_rec:
 	mem_heap_free(heap);
 
 	return(table);
+}
+
+/***********************************************************************//**
+Loads a table id based on the index id.
+@return	true if found */
+static
+bool
+dict_load_table_id_on_index_id(
+/*==================*/
+	index_id_t		index_id,  /*!< in: index id */
+	table_id_t*		table_id) /*!< out: table id */
+{
+	/* check hard coded indexes */
+	switch(index_id) {
+	case DICT_TABLES_ID:
+	case DICT_COLUMNS_ID:
+	case DICT_INDEXES_ID:
+	case DICT_FIELDS_ID:
+		*table_id = index_id;
+		return true;
+	case DICT_TABLE_IDS_ID:
+		/* The following is a secondary index on SYS_TABLES */
+		*table_id = DICT_TABLES_ID;
+		return true;
+	}
+
+	bool		found = false;
+	mtr_t		mtr;
+
+	ut_ad(mutex_own(&(dict_sys->mutex)));
+
+	/* NOTE that the operation of this function is protected by
+	the dictionary mutex, and therefore no deadlocks can occur
+	with other dictionary operations. */
+
+	mtr_start(&mtr);
+
+	btr_pcur_t pcur;
+	const rec_t* rec = dict_startscan_system(&pcur, &mtr, SYS_INDEXES);
+
+	while (rec) {
+		ulint len;
+		const byte* field = rec_get_nth_field_old(
+			rec, DICT_FLD__SYS_INDEXES__ID, &len);
+		ut_ad(len == 8);
+
+		/* Check if the index id is the one searched for */
+		if (index_id == mach_read_from_8(field)) {
+			found = true;
+			/* Now we get the table id */
+			const byte* field = rec_get_nth_field_old(
+				rec,
+				DICT_FLD__SYS_INDEXES__TABLE_ID,
+				&len);
+			*table_id = mach_read_from_8(field);
+			break;
+		}
+		mtr_commit(&mtr);
+		mtr_start(&mtr);
+		rec = dict_getnext_system(&pcur, &mtr);
+	}
+
+	btr_pcur_close(&pcur);
+	mtr_commit(&mtr);
+
+	return(found);
+}
+
+UNIV_INTERN
+dict_table_t*
+dict_table_open_on_index_id(
+/*==================*/
+	index_id_t index_id,	/*!< in: index id */
+	bool dict_locked)	/*!< in: dict locked */
+{
+	if (!dict_locked) {
+		mutex_enter(&dict_sys->mutex);
+	}
+
+	ut_ad(mutex_own(&dict_sys->mutex));
+	table_id_t table_id;
+	dict_table_t * table = NULL;
+	if (dict_load_table_id_on_index_id(index_id, &table_id)) {
+		bool local_dict_locked = true;
+		table = dict_table_open_on_id(table_id,
+					      local_dict_locked,
+					      DICT_TABLE_OP_LOAD_TABLESPACE);
+	}
+
+	if (!dict_locked) {
+		mutex_exit(&dict_sys->mutex);
+	}
+	return table;
 }
 
 /********************************************************************//**

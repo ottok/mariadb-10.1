@@ -34,14 +34,12 @@
 #include "sql_array.h"          /* Dynamic_array<> */
 #include "mdl.h"
 
+#include "sql_analyze_stmt.h" // for Exec_time_tracker 
+
 #include <my_compare.h>
 #include <ft_global.h>
 #include <keycache.h>
 #include <mysql/psi/mysql_table.h>
-
-#if MAX_KEY > 128
-#error MAX_KEY is too large.  Values up to 128 are supported.
-#endif
 
 class Alter_info;
 
@@ -131,7 +129,7 @@ enum enum_alter_inplace_result {
 */ 
 #define HA_PRIMARY_KEY_REQUIRED_FOR_POSITION (1ULL << 16) 
 #define HA_CAN_RTREEKEYS       (1ULL << 17)
-#define HA_NOT_DELETE_WITH_CACHE (1ULL << 18)
+#define HA_NOT_DELETE_WITH_CACHE (1ULL << 18) /* unused */
 /*
   The following is we need to a primary key to delete (and update) a row.
   If there is no primary key, all columns needs to be read on update and delete
@@ -145,7 +143,7 @@ enum enum_alter_inplace_result {
 #define HA_HAS_OLD_CHECKSUM    (1ULL << 24)
 /* Table data are stored in separate files (for lower_case_table_names) */
 #define HA_FILE_BASED	       (1ULL << 26)
-#define HA_NO_VARCHAR	       (1ULL << 27)
+#define HA_NO_VARCHAR	       (1ULL << 27) /* unused */
 #define HA_CAN_BIT_FIELD       (1ULL << 28) /* supports bit fields */
 #define HA_NEED_READ_RANGE_BUFFER (1ULL << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1ULL << 30)
@@ -197,17 +195,11 @@ enum enum_alter_inplace_result {
 #define HA_RECORD_MUST_BE_CLEAN_ON_WRITE (1ULL << 41)
 
 /*
-  Table condition pushdown must be performed regardless of
-  'engine_condition_pushdown' setting.
-
-  This flag is aimed at storage engines that come with "special" predicates
-  that can only be evaluated inside the storage engine.  
-  For example, when one does 
-    select * from sphinx_table where query='{fulltext_query}'
-  then the "query=..." condition must be always pushed down into storage
-  engine.
+  This storage engine supports condition pushdown
 */
-#define HA_MUST_USE_TABLE_CONDITION_PUSHDOWN (1ULL << 42)
+#define HA_CAN_TABLE_CONDITION_PUSHDOWN (1ULL << 42)
+/* old name for the same flag */
+#define HA_MUST_USE_TABLE_CONDITION_PUSHDOWN HA_CAN_TABLE_CONDITION_PUSHDOWN
 
 /**
   The handler supports read before write removal optimization
@@ -256,6 +248,15 @@ enum enum_alter_inplace_result {
  */
 #define HA_CAN_EXPORT                 (1LL << 45)
 
+/*
+  Storage engine does not require an exclusive metadata lock
+  on the table during optimize. (TODO and repair?).
+  It can allow other connections to open the table.
+  (it does not necessarily mean that other connections can
+  read or modify the table - this is defined by THR locks and the
+  ::store_lock() method).
+*/
+#define HA_CONCURRENT_OPTIMIZE          (1LL << 46)
 
 /*
   Set of all binlog flags. Currently only contain the capabilities
@@ -349,9 +350,6 @@ enum enum_alter_inplace_result {
 
 /*
   Note: the following includes binlog and closing 0.
-  so: innodb + bdb + ndb + binlog + myisam + myisammrg + archive +
-      example + csv + heap + blackhole + federated + 0
-  (yes, the sum is deliberately inaccurate)
   TODO remove the limit, use dynarrays
 */
 #define MAX_HA 64
@@ -385,10 +383,8 @@ enum enum_alter_inplace_result {
 #define HA_KEY_BLOB_LENGTH	2
 
 #define HA_LEX_CREATE_TMP_TABLE	1
-#define HA_LEX_CREATE_IF_NOT_EXISTS 2
-#define HA_LEX_CREATE_TABLE_LIKE 4
 #define HA_CREATE_TMP_ALTER     8
-#define HA_LEX_CREATE_REPLACE   16
+
 #define HA_MAX_REC_LENGTH	65535
 
 /* Table caching type */
@@ -431,7 +427,6 @@ enum legacy_db_type
   DB_TYPE_MYISAM=9,
   DB_TYPE_MRG_MYISAM=10,
   DB_TYPE_INNODB=12,
-  DB_TYPE_NDBCLUSTER=14,
   DB_TYPE_EXAMPLE_DB=15,
   DB_TYPE_ARCHIVE_DB=16,
   DB_TYPE_CSV_DB=17,
@@ -626,11 +621,11 @@ struct xid_t {
     return sizeof(formatID)+sizeof(gtrid_length)+sizeof(bqual_length)+
            gtrid_length+bqual_length;
   }
-  uchar *key()
+  uchar *key() const
   {
     return (uchar *)&gtrid_length;
   }
-  uint key_length()
+  uint key_length() const
   {
     return sizeof(gtrid_length)+sizeof(bqual_length)+gtrid_length+bqual_length;
   }
@@ -730,7 +725,6 @@ enum enum_schema_tables
   SCH_ALL_PLUGINS,
   SCH_APPLICABLE_ROLES,
   SCH_CHARSETS,
-  SCH_CLIENT_STATS,
   SCH_COLLATIONS,
   SCH_COLLATION_CHARACTER_SET_APPLICABILITY,
   SCH_COLUMNS,
@@ -742,7 +736,6 @@ enum enum_schema_tables
   SCH_FILES,
   SCH_GLOBAL_STATUS,
   SCH_GLOBAL_VARIABLES,
-  SCH_INDEX_STATS,
   SCH_KEY_CACHES,
   SCH_KEY_COLUMN_USAGE,
   SCH_OPEN_TABLES,
@@ -758,18 +751,19 @@ enum enum_schema_tables
   SCH_SESSION_STATUS,
   SCH_SESSION_VARIABLES,
   SCH_STATISTICS,
-  SCH_STATUS,
+  SCH_SYSTEM_VARIABLES,
   SCH_TABLES,
   SCH_TABLESPACES,
   SCH_TABLE_CONSTRAINTS,
   SCH_TABLE_NAMES,
   SCH_TABLE_PRIVILEGES,
-  SCH_TABLE_STATS,
   SCH_TRIGGERS,
   SCH_USER_PRIVILEGES,
-  SCH_USER_STATS,
-  SCH_VARIABLES,
-  SCH_VIEWS
+  SCH_VIEWS,
+#ifdef HAVE_SPATIAL
+  SCH_GEOMETRY_COLUMNS,
+  SCH_SPATIAL_REF_SYS,
+#endif /*HAVE_SPATIAL*/
 };
 
 struct TABLE_SHARE;
@@ -962,6 +956,11 @@ struct handler_iterator {
 };
 
 class handler;
+class group_by_handler;
+struct Query;
+typedef class st_select_lex SELECT_LEX;
+typedef struct st_order ORDER;
+
 /*
   handlerton is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
@@ -1234,6 +1233,11 @@ struct handlerton
    enum handler_create_iterator_result
      (*create_iterator)(handlerton *hton, enum handler_iterator_type type,
                         struct handler_iterator *fill_this_in);
+   int (*abort_transaction)(handlerton *hton, THD *bf_thd,
+			    THD *victim_thd, my_bool signal);
+   int (*set_checkpoint)(handlerton *hton, const XID* xid);
+   int (*get_checkpoint)(handlerton *hton, XID* xid);
+   void (*fake_trx_id)(handlerton *hton, THD *thd);
    /*
      Optional clauses in the CREATE/ALTER TABLE
    */
@@ -1258,6 +1262,20 @@ struct handlerton
      assumed by REPAIR TABLE ... USE_FRM implementation.
    */
    const char **tablefile_extensions; // by default - empty list
+
+  /**********************************************************************
+   Functions to intercept queries
+  **********************************************************************/
+
+  /*
+    Create and return a group_by_handler, if the storage engine can execute
+    the summary / group by query.
+    If the storage engine can't do that, return NULL.
+
+    The server guaranteeds that all tables in the list belong to this
+    storage engine.
+  */
+  group_by_handler *(*create_group_by)(THD *thd, Query *query);
 
    /*********************************************************************
      Table discovery API.
@@ -1364,6 +1382,8 @@ static inline sys_var *find_hton_sysvar(handlerton *hton, st_mysql_sys_var *var)
   return find_plugin_sysvar(hton2plugin[hton->slot], var);
 }
 
+handlerton *ha_default_handlerton(THD *thd);
+handlerton *ha_default_tmp_handlerton(THD *thd);
 
 /* Possible flags of a handlerton (there can be 32 of them) */
 #define HTON_NO_FLAGS                 0
@@ -1371,7 +1391,6 @@ static inline sys_var *find_hton_sysvar(handlerton *hton, st_mysql_sys_var *var)
 #define HTON_ALTER_NOT_SUPPORTED     (1 << 1) //Engine does not support alter
 #define HTON_CAN_RECREATE            (1 << 2) //Delete all is used for truncate
 #define HTON_HIDDEN                  (1 << 3) //Engine does not appear in lists
-#define HTON_FLUSH_AFTER_RENAME      (1 << 4)
 #define HTON_NOT_USER_SELECTABLE     (1 << 5)
 #define HTON_TEMPORARY_NOT_SUPPORTED (1 << 6) //Having temporary tables not supported
 #define HTON_SUPPORT_LOG_TABLES      (1 << 7) //Engine supports log tables
@@ -1434,7 +1453,11 @@ struct THD_TRANS
   */
   bool modified_non_trans_table;
 
-  void reset() { no_2pc= FALSE; modified_non_trans_table= FALSE; }
+  void reset() {
+    no_2pc= FALSE;
+    modified_non_trans_table= FALSE;
+    m_unsafe_rollback_flags= 0;
+  }
   bool is_empty() const { return ha_list == NULL; }
   THD_TRANS() {}                        /* Remove gcc warning */
 
@@ -1446,11 +1469,16 @@ struct THD_TRANS
   static unsigned int const MODIFIED_NON_TRANS_TABLE= 0x01;
   static unsigned int const CREATED_TEMP_TABLE= 0x02;
   static unsigned int const DROPPED_TEMP_TABLE= 0x04;
+  static unsigned int const DID_WAIT= 0x08;
 
   void mark_created_temp_table()
   {
     DBUG_PRINT("debug", ("mark_created_temp_table"));
     m_unsafe_rollback_flags|= CREATED_TEMP_TABLE;
+  }
+  void mark_trans_did_wait() { m_unsafe_rollback_flags|= DID_WAIT; }
+  bool trans_did_wait() const {
+    return (m_unsafe_rollback_flags & DID_WAIT) != 0;
   }
 
 };
@@ -1583,9 +1611,41 @@ enum enum_stats_auto_recalc { HA_STATS_AUTO_RECALC_DEFAULT= 0,
                               HA_STATS_AUTO_RECALC_ON,
                               HA_STATS_AUTO_RECALC_OFF };
 
-struct HA_CREATE_INFO
+/**
+  A helper struct for schema DDL statements:
+    CREATE SCHEMA [IF NOT EXISTS] name [ schema_specification... ]
+    ALTER SCHEMA name [ schema_specification... ]
+
+  It stores the "schema_specification" part of the CREATE/ALTER statements and
+  is passed to mysql_create_db() and  mysql_alter_db().
+  Currently consists only of the schema default character set and collation.
+*/
+struct Schema_specification_st
 {
-  CHARSET_INFO *table_charset, *default_table_charset;
+  CHARSET_INFO *default_table_charset;
+  void init()
+  {
+    bzero(this, sizeof(*this));
+  }
+};
+
+
+/**
+  A helper struct for table DDL statements, e.g.:
+  CREATE [OR REPLACE] [TEMPORARY]
+    TABLE [IF NOT EXISTS] tbl_name table_contents_source;
+
+  Represents a combinations of:
+  1. The scope, i.e. TEMPORARY or not TEMPORARY
+  2. The "table_contents_source" part of the table DDL statements,
+     which can be initialized from either of these:
+     - table_element_list ...      // Explicit definition (column and key list)
+     - LIKE another_table_name ... // Copy structure from another table
+     - [AS] SELECT ...             // Copy structure from a subquery
+*/
+struct Table_scope_and_contents_source_st
+{
+  CHARSET_INFO *table_charset;
   LEX_CUSTRING tabledef_version;
   LEX_STRING connect_string;
   const char *password, *tablespace;
@@ -1605,7 +1665,6 @@ struct HA_CREATE_INFO
   uint stats_sample_pages;
   uint null_bits;                       /* NULL bits at start of record */
   uint options;				/* OR of HA_CREATE_ options */
-  uint org_options;                     /* original options from query */
   uint merge_insert_method;
   uint extra_size;                      /* length of extra data segment */
   SQL_I_List<TABLE_LIST> merge_list;
@@ -1638,7 +1697,32 @@ struct HA_CREATE_INFO
   MDL_ticket *mdl_ticket;
   bool table_was_deleted;
 
-  bool tmp_table() { return options & HA_LEX_CREATE_TMP_TABLE; }
+  void init()
+  {
+    bzero(this, sizeof(*this));
+  }
+  bool tmp_table() const { return options & HA_LEX_CREATE_TMP_TABLE; }
+  void use_default_db_type(THD *thd)
+  {
+    db_type= tmp_table() ? ha_default_tmp_handlerton(thd)
+                         : ha_default_handlerton(thd);
+  }
+};
+
+
+/**
+  This struct is passed to handler table routines, e.g. ha_create().
+  It does not include the "OR REPLACE" and "IF NOT EXISTS" parts, as these
+  parts are handled on the SQL level and are not needed on the handler level.
+*/
+struct HA_CREATE_INFO: public Table_scope_and_contents_source_st,
+                       public Schema_specification_st
+{
+  void init()
+  {
+    Table_scope_and_contents_source_st::init();
+    Schema_specification_st::init();
+  }
   bool check_conflicting_charset_declarations(CHARSET_INFO *cs);
   bool add_table_option_default_charset(CHARSET_INFO *cs)
   {
@@ -1665,6 +1749,38 @@ struct HA_CREATE_INFO
     table_charset= default_table_charset= cs;
     used_fields|= (HA_CREATE_USED_CHARSET | HA_CREATE_USED_DEFAULT_CHARSET);  
     return false;
+  }
+};
+
+
+/**
+  This struct is passed to mysql_create_table() and similar creation functions,
+  as well as to show_create_table().
+*/
+struct Table_specification_st: public HA_CREATE_INFO,
+                               public DDL_options_st
+{
+  // Deep initialization
+  void init()
+  {
+    HA_CREATE_INFO::init();
+    DDL_options_st::init();
+  }
+  void init(DDL_options_st::Options options_arg)
+  {
+    HA_CREATE_INFO::init();
+    DDL_options_st::init(options_arg);
+  }
+  /*
+    Quick initialization, for parser.
+    Most of the HA_CREATE_INFO is left uninitialized.
+    It gets fully initialized in sql_yacc.yy, only when the parser
+    scans a related keyword (e.g. CREATE, ALTER).
+  */
+  void lex_start()
+  {
+    HA_CREATE_INFO::options= 0;
+    DDL_options_st::init();
   }
 };
 
@@ -2537,6 +2653,13 @@ public:
   /* One bigger than needed to avoid to test if key == MAX_KEY */
   ulonglong index_rows_read[MAX_KEY+1];
 
+private:
+  /* ANALYZE time tracker, if present */
+  Exec_time_tracker *tracker;
+public:
+  void set_time_tracker(Exec_time_tracker *tracker_arg) { tracker=tracker_arg;}
+
+
   Item *pushed_idx_cond;
   uint pushed_idx_cond_keyno;  /* The index which the above condition is for */
 
@@ -2590,6 +2713,7 @@ public:
     ft_handler(0), inited(NONE),
     implicit_emptied(0),
     pushed_cond(0), next_insert_id(0), insert_id_for_cur_row(0),
+    tracker(NULL),
     pushed_idx_cond(NULL),
     pushed_idx_cond_keyno(MAX_KEY),
     auto_inc_intervals_count(0),
@@ -3989,6 +4113,7 @@ protected:
 };
 
 #include "multi_range_read.h"
+#include "group_by_handler.h"
 
 bool key_uses_partial_cols(TABLE_SHARE *table, uint keyno);
 
@@ -4002,15 +4127,18 @@ extern const char *myisam_stats_method_names[];
 extern ulong total_ha, total_ha_2pc;
 
 /* lookups */
-handlerton *ha_default_handlerton(THD *thd);
-plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name);
+plugin_ref ha_resolve_by_name(THD *thd, const LEX_STRING *name, bool tmp_table);
 plugin_ref ha_lock_engine(THD *thd, const handlerton *hton);
 handlerton *ha_resolve_by_legacy_type(THD *thd, enum legacy_db_type db_type);
 handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
                          handlerton *db_type);
-handlerton *ha_checktype(THD *thd, enum legacy_db_type database_type,
-                          bool no_substitute, bool report_error);
+handlerton *ha_checktype(THD *thd, handlerton *hton, bool no_substitute);
 
+static inline handlerton *ha_checktype(THD *thd, enum legacy_db_type type,
+                                       bool no_substitute = 0)
+{
+  return ha_checktype(thd, ha_resolve_by_legacy_type(thd, type), no_substitute);
+}
 
 static inline enum legacy_db_type ha_legacy_type(const handlerton *db_type)
 {
@@ -4116,6 +4244,12 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv);
 bool ha_rollback_to_savepoint_can_release_mdl(THD *thd);
 int ha_savepoint(THD *thd, SAVEPOINT *sv);
 int ha_release_savepoint(THD *thd, SAVEPOINT *sv);
+#ifdef WITH_WSREP
+int ha_abort_transaction(THD *bf_thd, THD *victim_thd, my_bool signal);
+void ha_fake_trx_id(THD *thd);
+#else
+inline void ha_fake_trx_id(THD *thd) { }
+#endif
 
 /* these are called by storage engines */
 void trans_register_ha(THD *thd, bool all, handlerton *ht);
@@ -4128,25 +4262,6 @@ void trans_register_ha(THD *thd, bool all, handlerton *ht);
 #define trans_need_2pc(thd, all)                   ((total_ha_2pc > 1) && \
         !((all ? &thd->transaction.all : &thd->transaction.stmt)->no_2pc))
 
-#ifdef HAVE_NDB_BINLOG
-int ha_reset_logs(THD *thd);
-int ha_binlog_index_purge_file(THD *thd, const char *file);
-void ha_reset_slave(THD *thd);
-void ha_binlog_log_query(THD *thd, handlerton *db_type,
-                         enum_binlog_command binlog_command,
-                         const char *query, uint query_length,
-                         const char *db, const char *table_name);
-void ha_binlog_wait(THD *thd);
-int ha_binlog_end(THD *thd);
-#else
-#define ha_reset_logs(a) do {} while (0)
-#define ha_binlog_index_purge_file(a,b) do {} while (0)
-#define ha_reset_slave(a) do {} while (0)
-#define ha_binlog_log_query(a,b,c,d,e,f,g) do {} while (0)
-#define ha_binlog_wait(a) do {} while (0)
-#define ha_binlog_end(a)  do {} while (0)
-#endif
-
 const char *get_canonical_filename(handler *file, const char *path,
                                    char *tmp_path);
 bool mysql_xa_recover(THD *thd);
@@ -4157,6 +4272,22 @@ inline const char *table_case_name(HA_CREATE_INFO *info, const char *name)
   return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
 }
 
+
+#define TABLE_IO_WAIT(TRACKER, PSI, OP, INDEX, FLAGS, PAYLOAD) \
+  { \
+    Exec_time_tracker *this_tracker; \
+    if (unlikely((this_tracker= tracker))) \
+      tracker->start_tracking(); \
+    \
+    MYSQL_TABLE_IO_WAIT(PSI, OP, INDEX, FLAGS, PAYLOAD); \
+    \
+    if (unlikely(this_tracker)) \
+      tracker->stop_tracking(); \
+  }
+
 void print_keydup_error(TABLE *table, KEY *key, const char *msg, myf errflag);
 void print_keydup_error(TABLE *table, KEY *key, myf errflag);
+
+int del_global_index_stat(THD *thd, TABLE* table, KEY* key_info);
+int del_global_table_stat(THD *thd, LEX_STRING *db, LEX_STRING *table);
 #endif /* HANDLER_INCLUDED */

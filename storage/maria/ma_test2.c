@@ -27,9 +27,6 @@
 #define STANDARD_LENGTH 37
 #define MARIA_KEYS 6
 #define MAX_PARTS 4
-#if !defined(MSDOS) && !defined(labs)
-#define labs(a) abs(a)
-#endif
 
 static void get_options(int argc, char *argv[]);
 static uint rnd(uint max_value);
@@ -665,7 +662,7 @@ int main(int argc, char *argv[])
   if (!silent)
     puts("- Test if: Read rrnd - same");
   DBUG_PRINT("progpos",("Read rrnd - same"));
-  assert(maria_scan_init(file) == 0);
+  maria_scan_init(file);
   for (i=0 ; i < write_count ; i++)
   {
     int tmp;
@@ -818,7 +815,7 @@ int main(int argc, char *argv[])
     }
   }
   ant=0;
-  assert(maria_scan_init(file) == 0);
+  maria_scan_init(file);
   while ((error= maria_scan(file,record)) != HA_ERR_END_OF_FILE &&
 	 ant < write_count + 10)
     ant+= error ? 0 : 1;

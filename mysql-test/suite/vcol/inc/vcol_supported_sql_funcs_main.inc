@@ -1068,7 +1068,7 @@ let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 
 --echo # WEEK()
-let $cols = a datetime, b int as (week(a));
+let $cols = a datetime, b int as (week(a,0));
 let $values1 = '2008-09-01',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
@@ -1139,24 +1139,6 @@ let $rows = 1;
 --echo # BIT_COUNT()
 let $cols = a int, b int as (bit_count(a));
 let $values1 = 5,default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # CHARSET()
-let $cols = a varchar(1024), b varchar(1024) as (charset(a));
-let $values1 = 'abc',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # COERCIBILITY()
-let $cols = a varchar(1024), b int as (coercibility(a));
-let $values1 = 'abc',default;
-let $rows = 1;
---source suite/vcol/inc/vcol_supported_sql_funcs.inc
-
---echo # COLLATION()
-let $cols = a varchar(1024), b varchar(1024) as (collation(a));
-let $values1 = 'abc',default;
 let $rows = 1;
 --source suite/vcol/inc/vcol_supported_sql_funcs.inc
 

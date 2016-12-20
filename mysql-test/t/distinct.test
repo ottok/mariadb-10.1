@@ -561,7 +561,7 @@ DROP TABLE t1;
 #
 # Bug #34928: Confusion by having Primary Key and Index
 #
-CREATE TABLE t1(a INT, b INT, c INT, d INT, e INT,
+CREATE TABLE t1(a INT, b INT, c INT, d INT default 0, e INT default 0,
                 PRIMARY KEY(a,b,c,d,e),
                 KEY(a,b,d,c)
 );
@@ -727,10 +727,12 @@ SELECT STRAIGHT_JOIN DISTINCT t1.id  FROM
   t1, v1, t2 WHERE v1.id = t2.i AND t1.i1 = v1.i1 AND t2.i != 3;
 
 set join_buffer_size=1024;
+--sorted_result
 SELECT STRAIGHT_JOIN DISTINCT t1.id  FROM
   t1, v1, t2 WHERE v1.id = t2.i AND t1.i1 = v1.i1 AND t2.i != 3;
 
 set join_buffer_size=1024*16;
+--sorted_result
 SELECT STRAIGHT_JOIN DISTINCT t1.id  FROM
   t1, v1, t2 WHERE v1.id = t2.i AND t1.i1 = v1.i1 AND t2.i != 3;
 

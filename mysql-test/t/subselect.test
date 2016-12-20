@@ -569,8 +569,10 @@ drop table t1, t2;
 create table t1 (a float);
 -- error ER_NOT_SUPPORTED_YET
 select 10.5 IN (SELECT * from t1 LIMIT 1);
--- error ER_NOT_SUPPORTED_YET
+-- error ER_WRONG_USAGE
 select 10.5 IN (SELECT * from t1 LIMIT 1 UNION SELECT 1.5);
+-- error ER_NOT_SUPPORTED_YET
+select 10.5 IN (SELECT * from t1 UNION SELECT 1.5 LIMIT 1);
 drop table t1;
 
 create table t1 (a int, b int, c varchar(10));
@@ -4272,8 +4274,7 @@ SELECT * FROM (
 
 # This was not allowed previously. Possibly, it should be allowed on the future.
 # For now, the intent is to keep the fix as non-intrusive as possible.
---error ER_PARSE_ERROR
-SELECT * FROM ((SELECT 1 a) UNION SELECT 1 a);
+SELECT * FROM ((SELECT 1 a) UNION SELECT 1 a) q;
 SELECT * FROM (SELECT 1 a UNION (SELECT 1 a)) alias;
 SELECT * FROM (SELECT 1 UNION SELECT 1) t1a;
 --error ER_PARSE_ERROR
@@ -4308,7 +4309,7 @@ SELECT * FROM (SELECT 1 a UNION SELECT 1 a ORDER BY a LIMIT 1) t1a;
 # aliases after.
 # 
 SELECT * FROM t1 JOIN  (SELECT 1 UNION SELECT 1) alias ON 1;
---error ER_PARSE_ERROR
+--error ER_DERIVED_MUST_HAVE_ALIAS
 SELECT * FROM t1 JOIN ((SELECT 1 UNION SELECT 1)) ON 1;
 --error ER_PARSE_ERROR
 SELECT * FROM t1 JOIN  (t1 t1a UNION SELECT 1)  ON 1;
@@ -4400,8 +4401,9 @@ SELECT ((SELECT 1 UNION SELECT 1 UNION SELECT 1));
 
 --error ER_PARSE_ERROR
 SELECT * FROM ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
---error ER_PARSE_ERROR
+--error ER_DERIVED_MUST_HAVE_ALIAS
 SELECT * FROM ( ( SELECT 1 UNION SELECT 1 ) UNION SELECT 1 );
+SELECT * FROM ( ( SELECT 1 UNION SELECT 1 ) UNION SELECT 1 ) a;
 SELECT * FROM ( SELECT 1 UNION SELECT 1 UNION SELECT 1 ) a;
 
 --error ER_PARSE_ERROR
@@ -5977,6 +5979,19 @@ DROP TABLE t1;
 SET SESSION big_tables=0;
 
 --echo #
+--echo # MDEV-10776: Server crash on query
+--echo #
+create table t1 (field1 int);
+
+insert into t1 values (1);
+
+select round((select 1 from t1 limit 1))
+from t1
+group by round((select 1 from t1 limit 1));
+
+drop table t1;
+
+--echo #
 --echo # MDEV-7930: Assertion `table_share->tmp_table != NO_TMP_TABLE ||
 --echo # m_lock_type != 2' failed in  handler::ha_index_read_map
 --echo #
@@ -5998,3 +6013,31 @@ SELECT ( SELECT MIN(v2.f2) FROM t1 ) AS sq FROM v2 GROUP BY sq;
 
 drop view v2;
 drop table t1,t2;
+
+--echo #
+--echo # MDEV-9487: Server crashes in Time_and_counter_tracker::incr_loops
+--echo # with UNION in ALL subquery
+--echo #
+SET NAMES utf8;
+CREATE TABLE t1 (f VARCHAR(8)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES ('foo');
+SELECT f FROM t1 WHERE f > ALL ( SELECT 'bar' UNION SELECT 'baz' );
+SELECT f FROM t1 WHERE f > ALL ( SELECT 'bar');
+drop table t1;
+SET NAMES default;
+
+--echo #
+--echo # MDEV-10045: Server crashes in Time_and_counter_tracker::incr_loops
+--echo #
+SET NAMES utf8;
+
+CREATE TABLE t1 (f1 VARCHAR(3), f2 INT UNSIGNED) ENGINE=MyISAM;
+CREATE TABLE t2 (f3 INT) ENGINE=MyISAM;
+
+SELECT * FROM t1, t2 WHERE f3 = f2 AND f1 > ANY ( SELECT 'foo' UNION SELECT 'bar' );
+SELECT * FROM t1, t2 WHERE f3 = f2 AND f1 > ANY ( SELECT 'foo');
+
+DROP TABLE t1, t2;
+SET NAMES default;
+
+--echo End of 10.1 tests

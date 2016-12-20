@@ -337,3 +337,84 @@ Note	1003	select (strcmp('a','b') <> 0) AS `NOT NOT strcmp('a','b')`
 #
 # End of 10.0 tests
 #
+#
+# Start of 10.1 tests
+#
+#
+# MDEV-8167 XOR returns bad results for an indexed column
+#
+CREATE TABLE t1 (
+id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+k INTEGER UNSIGNED DEFAULT '0' NOT NULL,
+c CHAR(120) DEFAULT '' NOT NULL,
+pad CHAR(60) DEFAULT '' NOT NULL,
+PRIMARY KEY (id)
+) ENGINE=MyISAM;
+INSERT INTO t1 (k, c, pad) VALUES (10, 'a', 'xxx');
+INSERT INTO t1 (k, c, pad) VALUES (11, 'a', 'xxx');
+INSERT INTO t1 (k, c, pad) VALUES (12, 'a', 'xxx');
+INSERT INTO t1 (k, c, pad) VALUES (13, 'a', 'xxx');
+INSERT INTO t1 (k, c, pad) VALUES (14, 'a', 'xxx');
+INSERT INTO t1 (k, c, pad) VALUES (15, 'a', 'xxx');
+INSERT INTO t1 (k, c, pad) VALUES (16, 'a', 'xxx');
+SELECT * FROM t1 WHERE id XOR 0;
+id	k	c	pad
+1	10	a	xxx
+2	11	a	xxx
+3	12	a	xxx
+4	13	a	xxx
+5	14	a	xxx
+6	15	a	xxx
+7	16	a	xxx
+SELECT * FROM t1 IGNORE KEY(PRIMARY) WHERE id XOR 0;
+id	k	c	pad
+1	10	a	xxx
+2	11	a	xxx
+3	12	a	xxx
+4	13	a	xxx
+5	14	a	xxx
+6	15	a	xxx
+7	16	a	xxx
+DROP TABLE t1;
+#
+# MDEV-8871 Wrong result for CREATE TABLE .. SELECT LEAST(unsigned_column,unsigned_column)
+#
+CREATE TABLE t1 (a INT,b INT UNSIGNED);
+INSERT INTO t1 VALUES (-2147483648,4294967295);
+SELECT a, b, LEAST(a,a), LEAST(b,b), LEAST(a,b), LEAST(b,a), GREATEST(a,b), GREATEST(b,a) FROM t1;
+a	-2147483648
+b	4294967295
+LEAST(a,a)	-2147483648
+LEAST(b,b)	4294967295
+LEAST(a,b)	-2147483648
+LEAST(b,a)	-2147483648
+GREATEST(a,b)	4294967295
+GREATEST(b,a)	4294967295
+CREATE TABLE t2 AS
+SELECT a, b, LEAST(a,a), LEAST(b,b), LEAST(a,b), LEAST(b,a), GREATEST(a,b), GREATEST(b,a) FROM t1;
+SHOW CREATE TABLE t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` int(11) DEFAULT NULL,
+  `b` int(10) unsigned DEFAULT NULL,
+  `LEAST(a,a)` int(11) DEFAULT NULL,
+  `LEAST(b,b)` int(10) unsigned DEFAULT NULL,
+  `LEAST(a,b)` decimal(10,0) DEFAULT NULL,
+  `LEAST(b,a)` decimal(10,0) DEFAULT NULL,
+  `GREATEST(a,b)` decimal(10,0) DEFAULT NULL,
+  `GREATEST(b,a)` decimal(10,0) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT * FROM t2;
+a	-2147483648
+b	4294967295
+LEAST(a,a)	-2147483648
+LEAST(b,b)	4294967295
+LEAST(a,b)	-2147483648
+LEAST(b,a)	-2147483648
+GREATEST(a,b)	4294967295
+GREATEST(b,a)	4294967295
+DROP TABLE t2;
+DROP TABLE t1;
+#
+# End of 10.1 tests
+#

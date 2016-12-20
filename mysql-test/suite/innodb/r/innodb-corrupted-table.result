@@ -40,7 +40,7 @@ Level	Code	Message
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `pk` int(11) NOT NULL DEFAULT '0',
+  `pk` int(11) NOT NULL,
   `i` int(11) DEFAULT NULL,
   `j` int(11) DEFAULT NULL,
   PRIMARY KEY (`pk`),

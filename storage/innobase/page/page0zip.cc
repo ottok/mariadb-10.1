@@ -87,7 +87,7 @@ UNIV_INTERN uint	page_zip_level = DEFAULT_COMPRESSION_LEVEL;
 
 /* Whether or not to log compressed page images to avoid possible
 compression algorithm changes in zlib. */
-UNIV_INTERN my_bool	page_zip_log_pages = true;
+UNIV_INTERN my_bool	page_zip_log_pages = false;
 
 /* Please refer to ../include/page0zip.ic for a description of the
 compressed page format. */
@@ -672,8 +672,8 @@ page_zip_dir_encode(
 #if PAGE_ZIP_DIR_SLOT_MASK & (PAGE_ZIP_DIR_SLOT_MASK + 1)
 # error "PAGE_ZIP_DIR_SLOT_MASK is not 1 less than a power of 2"
 #endif
-#if PAGE_ZIP_DIR_SLOT_MASK < UNIV_PAGE_SIZE_MAX - 1
-# error "PAGE_ZIP_DIR_SLOT_MASK < UNIV_PAGE_SIZE_MAX - 1"
+#if PAGE_ZIP_DIR_SLOT_MASK < UNIV_PAGE_ZIP_SIZE_MAX - 1
+# error "PAGE_ZIP_DIR_SLOT_MASK < UNIV_ZIP_SIZE_MAX - 1"
 #endif
 		if (UNIV_UNLIKELY(rec_get_n_owned_new(rec))) {
 			offs |= PAGE_ZIP_DIR_SLOT_OWNED;
@@ -925,7 +925,7 @@ page_zip_compress_sec(
 			rec - REC_N_NEW_EXTRA_BYTES
 			- c_stream->next_in);
 
-		if (UNIV_LIKELY(c_stream->avail_in)) {
+		if (UNIV_LIKELY(c_stream->avail_in != 0)) {
 			UNIV_MEM_ASSERT_RW(c_stream->next_in,
 					   c_stream->avail_in);
 			err = deflate(c_stream, Z_NO_FLUSH);
@@ -1020,7 +1020,7 @@ page_zip_compress_clust_ext(
 
 			c_stream->avail_in = static_cast<uInt>(
 				src - c_stream->next_in);
-			if (UNIV_LIKELY(c_stream->avail_in)) {
+			if (UNIV_LIKELY(c_stream->avail_in != 0)) {
 				err = deflate(c_stream, Z_NO_FLUSH);
 				if (UNIV_UNLIKELY(err != Z_OK)) {
 

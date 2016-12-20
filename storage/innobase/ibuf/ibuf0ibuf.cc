@@ -1,6 +1,7 @@
 /*****************************************************************************
 
 Copyright (c) 1997, 2016, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 2016, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -383,12 +384,18 @@ ibuf_header_page_get(
 	buf_block_t*	block;
 
 	ut_ad(!ibuf_inside(mtr));
+	page_t* page = NULL;
 
 	block = buf_page_get(
 		IBUF_SPACE_ID, 0, FSP_IBUF_HEADER_PAGE_NO, RW_X_LATCH, mtr);
-	buf_block_dbg_add_level(block, SYNC_IBUF_HEADER);
 
-	return(buf_block_get_frame(block));
+	if (!block->page.encrypted) {
+		buf_block_dbg_add_level(block, SYNC_IBUF_HEADER);
+
+		page = buf_block_get_frame(block);
+	}
+
+	return page;
 }
 
 /******************************************************************//**
@@ -500,9 +507,10 @@ ibuf_size_update(
 
 /******************************************************************//**
 Creates the insert buffer data structure at a database startup and initializes
-the data structures for the insert buffer. */
+the data structures for the insert buffer.
+@return DB_SUCCESS or failure */
 UNIV_INTERN
-void
+dberr_t
 ibuf_init_at_db_start(void)
 /*=======================*/
 {
@@ -513,7 +521,7 @@ ibuf_init_at_db_start(void)
 	dict_index_t*	index;
 	ulint		n_used;
 	page_t*		header_page;
-	dberr_t		error;
+	dberr_t		error= DB_SUCCESS;
 
 	ibuf = static_cast<ibuf_t*>(mem_zalloc(sizeof(ibuf_t)));
 
@@ -542,6 +550,10 @@ ibuf_init_at_db_start(void)
 	mtr_x_lock(fil_space_get_latch(IBUF_SPACE_ID, NULL), &mtr);
 
 	header_page = ibuf_header_page_get(&mtr);
+
+	if (!header_page) {
+		return (DB_DECRYPTION_FAILED);
+	}
 
 	fseg_n_reserved_pages(header_page + IBUF_HEADER + IBUF_TREE_SEG_HEADER,
 			      &n_used, &mtr);
@@ -593,6 +605,7 @@ ibuf_init_at_db_start(void)
 	ut_a(error == DB_SUCCESS);
 
 	ibuf->index = dict_table_get_first_index(table);
+	return (error);
 }
 
 /*********************************************************************//**
@@ -851,12 +864,18 @@ ibuf_bitmap_get_map_page_func(
 	ulint		line,	/*!< in: line where called */
 	mtr_t*		mtr)	/*!< in: mtr */
 {
-	buf_block_t*	block;
+	buf_block_t*	block = NULL;
+	dberr_t		err = DB_SUCCESS;
 
 	block = buf_page_get_gen(space, zip_size,
 				 ibuf_bitmap_page_no_calc(zip_size, page_no),
 				 RW_X_LATCH, NULL, BUF_GET,
-				 file, line, mtr);
+				 file, line, mtr, &err);
+
+	if (err != DB_SUCCESS) {
+		return NULL;
+	}
+
 	buf_block_dbg_add_level(block, SYNC_IBUF_BITMAP);
 
 	return(buf_block_get_frame(block));
@@ -896,9 +915,15 @@ ibuf_set_free_bits_low(
 	page_t*	bitmap_page;
 	ulint	space;
 	ulint	page_no;
+	buf_frame_t* frame;
 
-	if (!page_is_leaf(buf_block_get_frame(block))) {
+	if (!block) {
+		return;
+	}
 
+	frame = buf_block_get_frame(block);
+
+	if (!frame || !page_is_leaf(frame)) {
 		return;
 	}
 
@@ -1072,7 +1097,11 @@ ibuf_update_free_bits_zip(
 	page_no = buf_block_get_page_no(block);
 	zip_size = buf_block_get_zip_size(block);
 
-	ut_a(page_is_leaf(buf_block_get_frame(block)));
+	ut_a(block);
+
+	buf_frame_t* frame = buf_block_get_frame(block);
+
+	ut_a(frame && page_is_leaf(frame));
 	ut_a(zip_size);
 
 	bitmap_page = ibuf_bitmap_get_map_page(space, page_no, zip_size, mtr);
@@ -4597,16 +4626,20 @@ ibuf_merge_or_delete_for_page(
 			block = NULL;
 			update_ibuf_bitmap = FALSE;
 		} else {
-			page_t*	bitmap_page;
-			ulint	bitmap_bits;
+			page_t*	bitmap_page = NULL;
+			ulint	bitmap_bits = 0;
 
 			ibuf_mtr_start(&mtr);
 
 			bitmap_page = ibuf_bitmap_get_map_page(
 				space, page_no, zip_size, &mtr);
-			bitmap_bits = ibuf_bitmap_page_get_bits(
-				bitmap_page, page_no, zip_size,
-				IBUF_BITMAP_BUFFERED, &mtr);
+
+			if (bitmap_page &&
+			    fil_page_get_type(bitmap_page) != FIL_PAGE_TYPE_ALLOCATED) {
+				bitmap_bits = ibuf_bitmap_page_get_bits(
+					bitmap_page, page_no, zip_size,
+					IBUF_BITMAP_BUFFERED, &mtr);
+			}
 
 			ibuf_mtr_commit(&mtr);
 
@@ -4657,8 +4690,14 @@ ibuf_merge_or_delete_for_page(
 
 			bitmap_page = ibuf_bitmap_get_map_page(space, page_no,
 							       zip_size, &mtr);
-			buf_page_print(bitmap_page, 0,
-				       BUF_PAGE_PRINT_NO_CRASH);
+			if (bitmap_page == NULL)
+			{
+				fputs("InnoDB: cannot retrieve bitmap page\n",
+				      stderr);
+			} else {
+				buf_page_print(bitmap_page, 0,
+					       BUF_PAGE_PRINT_NO_CRASH);
+			}
 			ibuf_mtr_commit(&mtr);
 
 			fputs("\nInnoDB: Dump of the page:\n", stderr);

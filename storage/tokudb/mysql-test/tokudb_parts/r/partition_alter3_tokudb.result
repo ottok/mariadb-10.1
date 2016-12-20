@@ -11,8 +11,8 @@ SELECT @max_row DIV 4 INTO @max_row_div4;
 SET @max_int_4 = 2147483647;
 DROP TABLE IF EXISTS t0_template;
 CREATE TABLE t0_template (
-f_int1 INTEGER,
-f_int2 INTEGER,
+f_int1 INTEGER DEFAULT 0,
+f_int2 INTEGER DEFAULT 0,
 f_char1 CHAR(20),
 f_char2 CHAR(20),
 f_charbig VARCHAR(1000) ,
@@ -27,8 +27,8 @@ file_list      VARBINARY(10000),
 PRIMARY KEY (state)
 ) ENGINE = MEMORY;
 DROP TABLE IF EXISTS t0_aux;
-CREATE TABLE t0_aux ( f_int1 INTEGER,
-f_int2 INTEGER,
+CREATE TABLE t0_aux ( f_int1 INTEGER DEFAULT 0,
+f_int2 INTEGER DEFAULT 0,
 f_char1 CHAR(20),
 f_char2 CHAR(20),
 f_charbig VARCHAR(1000) )
@@ -55,7 +55,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 t1.frm
 EXPLAIN PARTITIONS SELECT COUNT(*) FROM t1 WHERE f_date = '1000-02-10';
 id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
@@ -76,7 +76,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date)) */
 t1.frm
 t1.par
@@ -94,7 +94,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (DAYOFYEAR(f_date)) */
 t1.frm
 t1.par
@@ -110,7 +110,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date)) */
 t1.frm
 t1.par
@@ -132,7 +132,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -155,7 +155,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -176,7 +176,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -213,7 +213,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -236,7 +236,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -258,7 +258,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -279,7 +279,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -299,7 +299,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -318,7 +318,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB) */
@@ -336,7 +336,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY HASH (YEAR(f_date))
 (PARTITION p0 ENGINE = TokuDB) */
 t1.frm
@@ -357,7 +357,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f_date` date DEFAULT NULL,
   `f_varchar` varchar(30) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 t1.frm
 EXPLAIN PARTITIONS SELECT COUNT(*) FROM t1 WHERE f_date = '1000-02-10';
 id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
@@ -381,8 +381,8 @@ unified filelist
 #========================================================================
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1 (
-f_int1 INTEGER,
-f_int2 INTEGER,
+f_int1 INTEGER DEFAULT 0,
+f_int2 INTEGER DEFAULT 0,
 f_char1 CHAR(20),
 f_char2 CHAR(20),
 f_charbig VARCHAR(1000)
@@ -392,12 +392,12 @@ SELECT f_int1,f_int2,f_char1,f_char2,f_charbig FROM t0_template;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 t1.frm
 EXPLAIN PARTITIONS SELECT COUNT(*) <> 1 FROM t1 WHERE f_int1 = 3;
 id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
@@ -414,12 +414,12 @@ ALTER TABLE t1 PARTITION BY KEY(f_int1);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1) */
 t1.frm
 t1.par
@@ -439,12 +439,12 @@ ALTER TABLE t1 ADD PARTITION (PARTITION part1, PARTITION part7);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -462,12 +462,12 @@ ALTER TABLE t1 ADD PARTITION (PARTITION part2);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -486,12 +486,12 @@ ALTER TABLE t1 ADD PARTITION PARTITIONS 4;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -521,12 +521,12 @@ ALTER TABLE t1 COALESCE PARTITION 1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -547,12 +547,12 @@ ALTER TABLE t1 COALESCE PARTITION 1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -572,12 +572,12 @@ ALTER TABLE t1 COALESCE PARTITION 1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -596,12 +596,12 @@ ALTER TABLE t1 COALESCE PARTITION 1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -619,12 +619,12 @@ ALTER TABLE t1 COALESCE PARTITION 1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB,
@@ -641,12 +641,12 @@ ALTER TABLE t1 COALESCE PARTITION 1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB,
  PARTITION part1 ENGINE = TokuDB) */
@@ -662,12 +662,12 @@ ALTER TABLE t1 COALESCE PARTITION 1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 /*!50100 PARTITION BY KEY (f_int1)
 (PARTITION p0 ENGINE = TokuDB) */
 t1.frm
@@ -686,12 +686,12 @@ ALTER TABLE t1 REMOVE PARTITIONING;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f_int1` int(11) DEFAULT NULL,
-  `f_int2` int(11) DEFAULT NULL,
+  `f_int1` int(11) DEFAULT '0',
+  `f_int2` int(11) DEFAULT '0',
   `f_char1` char(20) DEFAULT NULL,
   `f_char2` char(20) DEFAULT NULL,
   `f_charbig` varchar(1000) DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`='tokudb_zlib'
+) ENGINE=TokuDB DEFAULT CHARSET=latin1
 t1.frm
 EXPLAIN PARTITIONS SELECT COUNT(*) <> 1 FROM t1 WHERE f_int1 = 3;
 id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
