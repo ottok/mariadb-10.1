@@ -1,8 +1,26 @@
-mariadb-10.1 (10.1.20-1) UNRELEASED; urgency=low
+mariadb-10.1 (10.1.20-1) experimental; urgency=low
 
-  * New upstream release 10.1.20
+  * Upgrade package to new MariaDB 10.1.x series:
+    - New upstream release  10.1.20
+    - Refresh patches after 10.1.20 import
+    - Update strings 10.0 -> 10.1 after importing 10.1.20
+    - Refresh patches after 10.1.20 import
+    - Update d/control after 10.1 import
+    - Use https protected git url in d/control
+    - Backwards compatible XS-Testsuite syntax in d/control
+    - Import debian/* changes done in upstream 10.1
+    - Replace deprecated iproute with iproute2
+    - Remove unnecessary dependencies as packages are Essential anyway
+    - Remove unnecessary and big file mysql_embedded
+    - Switch to 10.1 style build flag for unix socket auth module in d/rules
+    - Update d/copyright after 10.1 import
+    - Add missing aria_add_gis_sp.sql to mariadb-server-10.1
+    - Ship SELinux and AppArmor files with the server, but as inactive
+    - New package from upstream 10.1: GSS API (Kerberos) client and server
+    - Extend GSSAPI plugin descriptions to satisfy Lintian
+    - New plugin from upstream 10.1: Cracklib password validation
 
- -- Otto Kekäläinen <otto@debian.org>  Mon, 19 Dec 2016 13:56:49 +0200
+ -- Otto Kekäläinen <otto@debian.org>  Tue, 20 Dec 2016 22:46:59 +0200
 
 mariadb-10.0 (10.0.28-3) unstable; urgency=low
 
