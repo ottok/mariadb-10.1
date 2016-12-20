@@ -14,6 +14,7 @@ Build-Depends: bison,
                libboost-dev,
                libjemalloc-dev [linux-any],
                libjudy-dev,
+               libkrb5-dev,
                libncurses5-dev (>= 5.0-6~),
                libpam0g-dev,
                libpcre3-dev (>= 2:8.35-3.2~),
@@ -396,6 +397,26 @@ Description: Spider storage engine for MariaDB
  partitioning and xa transactions, and allows tables of different MariaDB
  instances to be handled as if they were on the same instance. It refers to one
  possible implementation of ISO/IEC 9075-9:2008 SQL/MED.
+
+Package: mariadb-plugin-gssapi-server
+Architecture: any
+Depends: libgssapi-krb5-2,
+         mariadb-server-10.1,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: mariadb-gssapi-server-10.1, mariadb-gssapi-server-10.2
+Replaces: mariadb-gssapi-server-10.1, mariadb-gssapi-server-10.2
+Description: GSSAPI authentication plugin for MariaDB server
+
+Package: mariadb-plugin-gssapi-client
+Architecture: any
+Depends: libgssapi-krb5-2,
+         mariadb-client-10.1,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: mariadb-gssapi-client-10.1, mariadb-gssapi-client-10.2
+Replaces: mariadb-gssapi-client-10.1, mariadb-gssapi-client-10.2
+Description: GSSAPI authentication plugin for MariaDB client
 
 Package: mariadb-test
 Architecture: any
