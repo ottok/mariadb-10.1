@@ -58,6 +58,7 @@ usr/lib/*/mariadb18/plugin/wsrep_info.so
 usr/share/doc/mariadb-server-10.1/mysqld.sym.gz
 usr/share/mysql/errmsg-utf8.txt
 usr/share/mysql/fill_help_tables.sql
+usr/share/mysql/maria_add_gis_sp.sql
 usr/share/mysql/maria_add_gis_sp_bootstrap.sql
 usr/share/mysql/mysql_performance_tables.sql
 usr/share/mysql/mysql_system_tables.sql
