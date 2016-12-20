@@ -1,0 +1,21 @@
+Description: Disable cracklib tests
+ The password tests expect certain word lists to exist, but as they are created
+ by a daily cron (/etc/cron.daily/cracklib), they don't exists in a clean build
+ environment.
+ .
+ Once the wordlists are generated as part of the test suite run, the tests
+ can be enabled again.
+Author: Otto Kekäläinen <otto@debian.org>
+Last-Update: 2016-12-20
+
+--- a/mysql-test/unstable-tests
++++ b/mysql-test/unstable-tests
+@@ -232,6 +232,8 @@ perfschema.threads_mysql                     : MDEV-10677 - sporadic wrong resul
+ plugins.feedback_plugin_send     : MDEV-7932 - ssl failed for url
+ plugins.server_audit             : MDEV-9562 - crashes on sol10-sparc
+ plugins.thread_pool_server_audit : MDEV-9562 - crashes on sol10-sparc
++plugins.cracklib_password_check  : Missing /var/cache/cracklib/cracklib_dict.[hwm|pwd|pwi] in clean build environments
++plugins.two_password_validations : Missing /var/cache/cracklib/cracklib_dict.[hwm|pwd|pwi] in clean build environments
+ 
+ 
+ #----------------------------------------------------------------
