@@ -407,6 +407,8 @@ Depends: libgssapi-krb5-2,
 Breaks: mariadb-gssapi-server-10.1, mariadb-gssapi-server-10.2
 Replaces: mariadb-gssapi-server-10.1, mariadb-gssapi-server-10.2
 Description: GSSAPI authentication plugin for MariaDB server
+ This plugin includes support for Kerberos on Unix, but can also be used for
+ Windows authentication with or without domain environment.
 
 Package: mariadb-plugin-gssapi-client
 Architecture: any
@@ -417,6 +419,8 @@ Depends: libgssapi-krb5-2,
 Breaks: mariadb-gssapi-client-10.1, mariadb-gssapi-client-10.2
 Replaces: mariadb-gssapi-client-10.1, mariadb-gssapi-client-10.2
 Description: GSSAPI authentication plugin for MariaDB client
+ This plugin includes support for Kerberos on Unix, but can also be used for
+ Windows authentication with or without domain environment.
 
 Package: mariadb-test
 Architecture: any
