@@ -124,8 +124,11 @@ Comment:
 
 Files: *
 Copyright:
- 2000-2012, Oracle and/or its affiliates. All rights reserved.
+ 2000-2016, Oracle and/or its affiliates. All rights reserved.
  2008-2013 Monty Program AB
+ 2008-2014 SkySQL Ab
+ 2013-2016 MariaDB Corporation
+ 2012-2016 MariaDB Foundation
 License: GPL-2
 
 Files: debian/*
@@ -158,13 +161,13 @@ Copyright:
  2015 Jean Weisbuch <jean@phpnet.org>
  2015 Olaf van der Spek <olafvdspek@gmail.com>
  2015-2106 Robie Basak <robie.basak@canonical.com>
- 2016 Axel Beckert abe@debian.org
- 2016 Dieter Adriaenssens dieter.adriaenssens@gmail.com
- 2016 Ian Gilfillan ian@mariadb.org
- 2016 James Cowgill jcowgill@debian.org
- 2016 Paul Gevers elbrus@debian.org
- 2016 Samuel Thibault sthibault@debian.org
- 2016 Vicențiu Ciorbaru vicentiu@mariadb.org
+ 2016 Axel Beckert <abe@debian.org>
+ 2016 Dieter Adriaenssens <dieter.adriaenssens@gmail.com>
+ 2016 Ian Gilfillan <ian@mariadb.org>
+ 2016 James Cowgill <jcowgill@debian.org>
+ 2016 Paul Gevers <elbrus@debian.org>
+ 2016 Samuel Thibault <sthibault@debian.org>
+ 2016 Vicențiu Ciorbaru <vicentiu@mariadb.org>
 License: GPL-2+
 
 Files: plugin/feedback/*
@@ -172,7 +175,8 @@ Copyright: 2010 Sergei Golubchik and Monty Program Ab
 License: GPL-2
 
 Files: debian/additions/mysqlreport*
-Copyright: 2006-2008, Daniel Nichter <public@codenode.com>
+Copyright: 2006-2008 Daniel Nichter <public@codenode.com>
+ 2012-2015 Jean Weisbuch
 License: GPL-2+
 
 Files:
@@ -188,8 +192,6 @@ Files:
  include/probes_mysql_nodtrace.h.in
  libmysqld/resource.h
  mysql-test/*
- storage/ndb/bin/*
- storage/ndb/demos/*
  support-files/binary-configure.sh
  support-files/my-huge.cnf.sh
  support-files/my-innodb-heavy-4G.cnf.sh
@@ -279,16 +281,10 @@ Files: BUILD/*
  sql-common/*
  storage/*
  strings/*
- support-files/config.huge.ini.sh
- support-files/config.medium.ini.sh
- support-files/config.small.ini.sh
  support-files/MacOSX/*
- support-files/RHEL4-SElinux/mysql.*
- support-files/MySQL-shared-compat.spec.sh
  support-files/compiler_warnings.supp
  support-files/mysql.*
  support-files/dtrace/*
- support-files/ndb-config-2-node.ini.sh
  tests/*
  unittest/*
  vio/*
@@ -478,30 +474,14 @@ Files: storage/innobase/COPYING.Percona storage/xtradb/COPYING.Percona
 Copyright: 2008-2009 Percona Inc
 License: BSD-3-clause
 
-Files: cmd-line-utils/readline/*
+Files: storage/sphinx/*
+Copyright: 2001-2014 Andrew Aksyonoff
+ 2008-2014 Sphinx Technologies Inc
+License: GPL-2
+
+Files: extra/readline/*
 Copyright: 1987-2006 Free Software Foundation Inc
 License: GPL-2+
-
-Files: cmd-line-utils/libedit/*
-Copyright: 1989-1990,1992-1993 The Regents of the University of California.
-License: BSD-3-clause
-
-Files: cmd-line-utils/libedit/chartype.* cmd-line-utils/libedit/eln.c
-Copyright: 2009, The NetBSD Foundation, Inc.
-License: BSD-4-clause
-
-Files: cmd-line-utils/libedit/np/wcsdup.c
-Copyright: 2006 Aleksey Cheusov
-License: public-domain
-
-Files: cmd-line-utils/libedit/filecomplete.c
- cmd-line-utils/libedit/filecomplete.h
- cmd-line-utils/libedit/np/fgetln.c
- cmd-line-utils/libedit/read.h
- cmd-line-utils/libedit/readline.c
- cmd-line-utils/libedit/readline/*
-Copyright: 1997-2001 The NetBSD Foundation Inc
-License: BSD-2-clause
 
 Files: sql-bench/*.sh
 Copyright: 2009 Sun Microsystems, Inc
@@ -514,11 +494,6 @@ Files: client/completion_hash.h
  scripts/mysql_setpermission.sh
  storage/myisam/ftbench/ft-test-run.sh
  storage/myisam/mi_test_all.sh
- storage/ndb/test/run-test/atrt-*
- storage/ndb/test/run-test/make-config.sh
- storage/ndb/test/run-test/make-html-reports.sh
- storage/ndb/test/run-test/make-index.sh
- storage/ndb/test/run-test/ndb-autotest.sh
  strings/ctype-uca.c
  strings/ctype-ucs2.c
  strings/ctype-utf8.c
@@ -577,15 +552,6 @@ Files: sql-bench/innotest1.sh
  sql-bench/innotest2b.sh
 Copyright: 2000-2002 Innobase Oy & MySQL AB
 Comment: These files fall under the blanket license specified in the file COPYING
-License: GPL-2
-
-Files: sql-bench/graph-compare-results.sh
- cmd-line-utils/libedit/config.h
- cmd-line-utils/libedit/historyn.c
- cmd-line-utils/libedit/tokenizern.c
-Copyright: UNKNOWN
-Comment: These files fall under the blanket license specified in the file
- COPYING and README
 License: GPL-2
 
 Files: storage/myisam/rt_index.h
@@ -696,22 +662,6 @@ Copyright: Richard A. O'Keefe.
    2009-2011, Monty Program Ab
 License: BSD-2-clause
 
-Files: cmd-line-utils/libedit/np/strlcat.c
- cmd-line-utils/libedit/np/strlcpy.c
-Copyright: 1998 Todd C. Miller <Todd.Miller@courtesan.com>
-License: ISC
- Permission to use, copy, modify, and distribute this software for any
- purpose with or without fee is hereby granted, provided that the above
- copyright notice and this permission notice appear in all copies.
- .
- THE SOFTWARE IS PROVIDED "AS IS" AND TODD C. MILLER DISCLAIMS ALL
- WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL TODD C. MILLER BE LIABLE
- FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
 Files: sql/nt_servc.cc
  sql/nt_servc.h
 Copyright: 1998 Abandoned Irena Pancirov - Irnet Snc
@@ -722,32 +672,44 @@ Files: dbug/dbug.c
 Copyright: 1987 Abandoned Fred Fish
 License: public-domain
 
-Files: cmd-line-utils/libedit/np/vis.c
-Copyright: 1989-1993 The Regents of the University of California.
- 1999-2005 The NetBSD Foundation Inc
-License: BSD-3-clause
-
 Files: scripts/dheadgen.pl
 Copyright: 2008-2009 Sun Microsystems Inc
 License: BSD-3-clause
-
-Files: storage/ndb/test/src/getarg.c
-Copyright: 1997-2000 - Kungliga Tekniska Högskolan
-License: BSD-3-clause
-
-Files: storage/ndb/test/include/getarg.h
-Copyright: 2003-2005 MySQL AB
- 1997-1999 Kungliga Tekniska Högskolan
-License: BSD-3-clause or GPL-2
 
 Files: plugin/handler_socket/*
 Copyright:
  2010 DeNA Co.,Ltd.
 License: BSD-3-clause
 
+Files: plugin/auth_gssapi/*
+Copyright: 2015 Shuang Qiu
+ 2015 Robbie Harwood
+License: BSD-2-clause
+
+Files: plugin/file_key_management/*
+Copyright: 2002-2012 eperi GmbH
+License: GPL-2
+
+Files: storage/mroonga/*
+Copyright: 2011-2015 Kouhei Sutou <kou@clear-code.com>
+ 2011-2013 Kentoku SHIBA
+ 2010 Tetsuro IKEDA
+ 2014 Kenji Maruyama <mmmaru777@gmail.com>
+ 2014-2015 Naoya Murakami <naoya@createfield.com>
+License: LGPL-2.1+
+
+Files: storage/mroonga/vendor/groonga/vendor/plugins/groonga-normalizer-mysql/*
+Copyright: 2009-2015 Brazil
+License: LGPL-2.1+
+
+Files: storage/spider/*
+Copyright: 2008-2015 Kentoku Shiba
+License: GPL-2
+
 Files: pcre/*
-Copyright: 1997-2014 University of Cambridge
-           2003-2014 Google Inc.
+Copyright: 1997-2016 University of Cambridge
+           2003-2014 Google Inc
+           2009-2016 Zoltan Herczeg
 License: BSD-3-clause
 
 Files: plugin/semisync/*
@@ -771,10 +733,6 @@ License: GPL-2
 Files: plugin/server_audit/CMakeLists.txt
 Copyright: 2013 Alexey Botchkov and SkySQL Ab
 License: GPL-2
-
-Files: storage/ndb/test/ndbnet/*
-Copyright: 2004-2005 MySQL AB
-License: LGPL
 
 Files: strings/ctype-win1250ch.c
 Copyright: 2002-2010 Oracle and/or its affiliates.
@@ -905,8 +863,24 @@ License: MIT/X11
  .
  FSF changes to this file are in the public domain.
 
+Files: storage/tokudb/PerconaFT/third_party/snappy-1.1.2/*
+Copyright: 2005-2011 Google Inc.
+License: BSD-3-clause
+
 Files: zlib/CMakeLists.txt
 Copyright: 2006, 2014, Oracle and/or its affiliates
+License: GPL-2
+
+Files: cmake/systemd.cmake
+ include/my_systemd.h
+ scripts/mariadb-service-convert
+Copyright: 2015 Daniel Black
+License: GPL-2
+
+Files: wsrep/*
+ sql/wsrep_*
+ scripts/wsrep_*
+Copyright: 2008-2015 Codership Oy <http://www.codership.com>
 License: GPL-2
 
 License: GPL-2
@@ -1019,35 +993,6 @@ License: BSD-3-clause
  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
-
-License: BSD-4-clause
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- 1. Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
- 2. Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
- 3. All advertising materials mentioning features or use of this software
-    must display the following acknowledgement:
-        This product includes software developed by the NetBSD
-        Foundation, Inc. and its contributors.
- 4. Neither the name of The NetBSD Foundation nor the names of its
-    contributors may be used to endorse or promote products derived
-    from this software without specific prior written permission.
- .
- THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
 
 License: Artistic
  			 The "Artistic License"
