@@ -1,8 +1,18 @@
-mariadb-10.0 (10.0.28-3) UNRELEASED; urgency=low
+mariadb-10.0 (10.0.28-3) unstable; urgency=low
 
-  * Open a new changelog entry
+  [ Otto Kekäläinen ]
+  * Move libmariadbd and -dev next to each other for a more logical flow in d/control
+  * Move mariadb-test to last in file for a more logical flow in d/control
+  * Clean away unused Lintian overrides
+  * Add Lintian override for impossible mysql_config multi-arch requirement
+  * Update Debian copyright based on the 2016 git log author list
+  * Remove unnecessary /var/lib/mysql-upgrade (Closes: #848620)
 
- -- Otto Kekäläinen <otto@debian.org>  Sun, 27 Nov 2016 13:00:09 +0100
+  [ Vicențiu Ciorbaru ]
+  * Fix connect.upd test in armhf
+  * Fix mroonga/storage.index_read_multiple_double test in armhf
+
+ -- Otto Kekäläinen <otto@debian.org>  Tue, 20 Dec 2016 21:59:47 +0200
 
 mariadb-10.0 (10.0.28-2) unstable; urgency=low
 
