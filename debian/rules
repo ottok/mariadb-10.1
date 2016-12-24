@@ -38,6 +38,10 @@ else
     NUMJOBS = 1
 endif
 
+ifeq ($(ARCH), mips)
+    EXTRA_REQ_LIBARIES:=atomic
+endif
+
 # Ignore test suite exit code on unstable platforms
 ifneq (,$(filter $(ARCH), mips mipsel))
     TESTSUITE_FAIL_CMD:=true
@@ -91,6 +95,7 @@ endif
 	    -DINSTALL_PLUGINDIR=lib/$(DEB_HOST_MULTIARCH)/mariadb18/plugin \
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
 	    -DPLUGIN_AUTH_SOCKET=STATIC \
+	    -DEXTRA_REQ_LIBRARIES="$(EXTRA_REQ_LIBARIES)" \
 	    -DDEB=$(DISTRIBUTION) ..'
 	touch $@
 
