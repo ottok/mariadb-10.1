@@ -38,13 +38,10 @@ else
     NUMJOBS = 1
 endif
 
-ifeq ($(ARCH), mips)
-    EXTRA_REQ_LIBARIES:=atomic
-endif
-
 # Ignore test suite exit code on unstable platforms
 ifneq (,$(filter $(ARCH), mips mipsel))
     TESTSUITE_FAIL_CMD:=true
+    EXTRA_REQ_LIBARIES:=atomic
 else
     TESTSUITE_FAIL_CMD:=exit 1
 endif
