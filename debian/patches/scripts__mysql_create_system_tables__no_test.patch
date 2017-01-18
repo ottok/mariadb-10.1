@@ -24,4 +24,4 @@
 -
  -- Fill "user" table with default users allowing root access
  -- from local machine if "user" table didn't exist before
- CREATE TEMPORARY TABLE tmp_user LIKE user;
+ CREATE TEMPORARY TABLE tmp_user_nopasswd LIKE user;

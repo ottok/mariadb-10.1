@@ -4,7 +4,7 @@ Author: James Cowgill <jcowgill@debian.org>
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/mysql-test/unstable-tests
 +++ b/mysql-test/unstable-tests
-@@ -140,9 +140,8 @@ extra/binlog_tests.database      : Modif
+@@ -160,9 +160,8 @@ engines/funcs.*                  : Not m
  #----------------------------------------------------------------
  
  federated.federatedx             : MDEV-10617 - Wrong checksum, timeouts
@@ -16,7 +16,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
  #----------------------------------------------------------------
  
-@@ -207,9 +206,8 @@ mroonga/storage.repair_table_no_index_fi
+@@ -233,9 +232,8 @@ mroonga/storage.repair_table_no_index_fi
  
  #----------------------------------------------------------------
  
@@ -27,10 +27,10 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  multi_source.reset_slave : MDEV-10690 - wrong result; also uses binlog_start_pos.inc modified in 10.1.20
  multi_source.simple      : MDEV-4633 - Wrong slave status output; also uses binlog_start_pos.inc modified in 10.1.20
  multi_source.status_vars : MDEV-4632 - failed while waiting for Slave_received_heartbeats
-@@ -243,14 +241,11 @@ roles.create_and_grant_role      : MDEV-
- #----------------------------------------------------------------
+@@ -271,14 +269,11 @@ roles.create_and_drop_role       : Modif
  
  rpl.last_insert_id                    : MDEV-10625 - warnings in error log
+ rpl.rpl_alter_extra_persistent        : Added in 10.1.21
 -rpl.rpl_auto_increment                : MDEV-10417 - Fails on Mips
 -rpl.rpl_auto_increment_bug45679       : MDEV-10417 - Fails on Mips
  rpl.rpl_auto_increment_update_failure : MDEV-10625 - warnings in error log
@@ -40,12 +40,12 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  rpl.rpl_circular_for_4_hosts          : MDEV-10627 - Testcase timeout
 -rpl.rpl_ddl                           : MDEV-10417 - Fails on Mips
  rpl.rpl_domain_id_filter_restart      : MDEV-10684 - Wrong result
- rpl.rpl_drop_db                       : Modified in 10.1.19
  rpl.rpl_gtid_basic                    : MDEV-10681 - server startup problem
-@@ -260,19 +255,16 @@ rpl.rpl_gtid_master_promote           :
- rpl.rpl_gtid_mdev9033                 : MDEV-10680 - warnings
+ rpl.rpl_gtid_crash                    : MDEV-9501 - Warning: failed registering on master
+@@ -288,19 +283,16 @@ rpl.rpl_gtid_mdev9033                 :
  rpl.rpl_gtid_stop_start               : MDEV-10629 - Crash on shutdown
  rpl.rpl_gtid_until                    : MDEV-10625 - warnings in error log
+ rpl.rpl_heartbeat_basic               : MDEV-11668 - wrong result
 -rpl.rpl_innodb_bug30888               : MDEV-10417 - Fails on Mips
  rpl.rpl_insert                        : MDEV-9329 - Fails on Ubuntu/s390x
  rpl.rpl_insert_delayed                : MDEV-9329 - Fails on Ubuntu/s390x

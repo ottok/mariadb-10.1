@@ -1,7 +1,6 @@
 libmariadbclient-rename.patch
 scripts__mysql_create_system_tables__no_test.patch
 scripts__mysqld_safe.sh__signals.patch
-mysql_install_db_auth_options.patch
 mysql-test__db_test.patch
 replace_dash_with_bash_mbug675185.patch
 extend_default_test_timeout_for_tokudb.patch
@@ -15,7 +14,5 @@ mips-connect-unaligned.patch
 mips-machine.patch
 mips-unstable-tests.patch
 hurd_socket.patch
-armhf_upd_fail.patch
 armhf_mroonga_storage_fail.patch
-disable-cracklib-tests.patch
 mips_64_atomic.patch
