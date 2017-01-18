@@ -157,6 +157,9 @@ EOF
     # NOTE: $MYSQL_BOOTSTRAP requires one SQL statement per line, semicolon at the end.
     echo "$password_column_fix_query" | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
 
+    # Update timezone tables
+    mysql_tzinfo_to_sql /usr/share/zoneinfo 2>/dev/null | $MYSQL_BOOTSTRAP 2>&1 | $ERR_LOGGER
+
   ;;
 
   abort-upgrade|abort-remove|abort-configure)
