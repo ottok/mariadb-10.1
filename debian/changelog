@@ -1,8 +1,29 @@
-mariadb-10.1 (10.1.21-1) UNRELEASED; urgency=low
+mariadb-10.1 (10.1.21-1) unstable; urgency=low
 
-  * Open a new changelog entry
+  [ Otto Kekäläinen ]
+  * New upstream release 10.0.28. Includes fixes for the following
+    security vulnerabilities (Closes: #851759, Closes: ##849435):
+    - CVE-2017-3318
+    - CVE-2017-3317
+    - CVE-2017-3312
+    - CVE-2017-3291
+    - CVE-2017-3265
+    - CVE-2017-3258
+    - CVE-2017-3257
+    - CVE-2017-3244
+    - CVE-2017-3243
+    - CVE-2017-3238
+    - CVE-2016-6664
+  * Add new program introduced in upstream 10.1.21: mysqld_safe_helper
+  * Deb-CI: remove parameter --skip-ndbcluster not available in 10.1 any more
+  * Make libmariadbclient18 depend on mysql-common only (Closes: #850216)
+  * Fix misleading config file comment (Closes: #677223)
+  * Update preinst variable $this_version from 10.0 to 10.1 (Closes: #851257)
 
- -- Otto Kekäläinen <otto@debian.org>  Sun, 25 Dec 2016 18:55:48 +0200
+  [ Kristian Nielsen ]
+  * Re-implement passwordless root login (Closes: #851131)
+
+ -- Otto Kekäläinen <otto@debian.org>  Thu, 19 Jan 2017 11:33:01 +0200
 
 mariadb-10.1 (10.1.20-3) unstable; urgency=low
 
