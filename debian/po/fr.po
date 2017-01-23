@@ -1,7 +1,7 @@
-# Translation of mysql-dfsg-* debconf templates to French
-# Copyright (C) 2004-2009 Debian French l10n team <debian-l10n-french@lists.debian.org>
-# This file is distributed under the same license as the mysql-dfsg-* packages.
-# 
+# Translation of mariadb-10.1 debconf templates to French
+# Copyright (C) 2004-2016 Debian French l10n team <debian-l10n-french@lists.debian.org>
+# This file is distributed under the same license as the mariadb-10.1 packages.
+#
 # Translators:
 # Christian Perrier <bubulle@debian.org>, 2004, 2006, 2007, 2009, 2013.
 # Baptiste Jammet <baptiste@mailoo.org>, 2016.
@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: mariadb-10.1@packages.debian.org\n"
 "POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2016-06-05 22:44+0200\n"
+"PO-Revision-Date: 2016-12-31 18:35+0100\n"
 "Last-Translator: Baptiste Jammet <baptiste@mailoo.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "Language: fr\n"
@@ -30,11 +30,6 @@ msgstr "L'ancien répertoire de données sera sauvegardé à un nouvel emplaceme
 #. Type: note
 #. Description
 #: ../mariadb-server-10.1.templates:2001
-#, fuzzy
-#| msgid ""
-#| "A file named /var/lib/mysql/debian-*.flag exists on this system. The "
-#| "number indicated a database binary format version that cannot "
-#| "automatically be upgraded (or downgraded)."
 msgid ""
 "A file named /var/lib/mysql/debian-*.flag exists on this system. The number "
 "indicates a database binary format version that cannot automatically be "
