@@ -1,3 +1,8 @@
+Description: Fix mips missing atomics primitives
+ On mips we don't have native support for 64bit atomic operations. Make use
+ of libatomic to emulate them.
+Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
+
 diff --git a/configure.cmake b/configure.cmake
 index 0057c7f..548b720 100644
 --- a/configure.cmake

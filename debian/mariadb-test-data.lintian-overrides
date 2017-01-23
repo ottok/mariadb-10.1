@@ -1,6 +1,5 @@
 # OK, this file is part of test suite and only used for a test
 mariadb-test-data: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_myisam.result
-mariadb-test-data: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_10.result
 mariadb-test-data: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_7_innodb.result
 mariadb-test-data: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_innodb.result
 mariadb-test-data: executable-not-elf-or-script usr/share/mysql/mysql-test/suite/parts/r/partition_exch_qa_6.result

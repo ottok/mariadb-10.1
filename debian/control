@@ -411,6 +411,8 @@ Replaces: mariadb-gssapi-server-10.1, mariadb-gssapi-server-10.2
 Description: GSSAPI authentication plugin for MariaDB server
  This plugin includes support for Kerberos on Unix, but can also be used for
  Windows authentication with or without domain environment.
+ .
+ This package contains the server parts.
 
 Package: mariadb-plugin-gssapi-client
 Architecture: any
@@ -423,6 +425,8 @@ Replaces: mariadb-gssapi-client-10.1, mariadb-gssapi-client-10.2
 Description: GSSAPI authentication plugin for MariaDB client
  This plugin includes support for Kerberos on Unix, but can also be used for
  Windows authentication with or without domain environment.
+ .
+ This package contains the client parts.
 
 Package: mariadb-plugin-cracklib-password-check
 Architecture: any
