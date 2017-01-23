@@ -11,6 +11,20 @@ used to provide the full systemd experience. Some features available in
 traditional /etc/init.d/mysql have been changed. For details see
 https://mariadb.com/kb/en/mariadb/systemd/
 
+* MIXING PACKAGES FROM MARIAD.ORG AND OFFICIAL DEBIAN REPOSITORIES
+==================================================================
+
+Please note that the MariaDB packaging in official Debian repositories are of
+a completely new generation compared to the legacy packaging used in MariaDB.org
+repositories. You cannot mix and match MariaDB 10.1 packages from official
+Debian (or Ubuntu) repositories with packages from MariaDB.org repositories.
+Packages from the MariaDB.org repositories include the revision string '+maria'.
+
+If a MariaDB.org repository is enabled, learn to use apt pinning properly.
+
+Please do not file bugs in Debian regarding packages with '+maria' in the
+revision string.
+
 * ROOT USER AUTHENTICATION VIA UNIX SOCKET
 ==========================================
 
