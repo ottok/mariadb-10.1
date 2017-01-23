@@ -3,6 +3,14 @@
 First check the contents of syslog (or systemd journal) and then check the
 logs at /var/log/mysql/ for any hints of what might be wrong.
 
+* NATIVE SYSTEMD SERVICE INTRODUCED IN MARIADB 10.1
+===================================================
+
+From MariaDB 10.1 onwards the upstream mariadb.service and mariadb@.service are
+used to provide the full systemd experience. Some features available in
+traditional /etc/init.d/mysql have been changed. For details see
+https://mariadb.com/kb/en/mariadb/systemd/
+
 * ROOT USER AUTHENTICATION VIA UNIX SOCKET
 ==========================================
 
