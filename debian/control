@@ -167,16 +167,16 @@ Depends: debianutils (>=1.6),
          ${perl:Depends},
          ${shlibs:Depends}
 Conflicts: mysql-client-core-5.5, mysql-client-core-5.6, mysql-client-core-5.7
-Breaks: mariadb-client-5.5,
-        mariadb-client-10.0,
+Breaks: mariadb-client-10.0,
+        mariadb-client-5.5,
         mariadb-server-10.0 (<< 10.0.13-1~),
         mysql-client,
         mysql-client-5.5,
         mysql-client-5.6,
         mysql-client-5.7,
         virtual-mysql-client
-Replaces: mariadb-client-5.5,
-          mariadb-client-10.0,
+Replaces: mariadb-client-10.0,
+          mariadb-client-5.5,
           mariadb-server-10.0 (<< 10.0.13-1~),
           mysql-client,
           mysql-client-5.5,
@@ -205,8 +205,8 @@ Conflicts: mariadb-galera-server-5.5,
            mysql-server-5.7
 Breaks: mariadb-client-10.1 (<< ${source:Version}),
         mariadb-server-10.1 (<< ${source:Version}),
-        mariadb-server-core-5.5,
         mariadb-server-core-10.0,
+        mariadb-server-core-5.5,
         mysql-client-5.5,
         mysql-client-5.6,
         mysql-server-core-5.5,
@@ -215,8 +215,8 @@ Breaks: mariadb-client-10.1 (<< ${source:Version}),
         virtual-mysql-server-core
 Replaces: mariadb-client-10.1 (<< ${source:Version}),
           mariadb-server-10.1 (<< ${source:Version}),
-          mariadb-server-core-5.5,
           mariadb-server-core-10.0,
+          mariadb-server-core-5.5,
           mysql-client-5.5,
           mysql-client-5.6,
           mysql-client-5.7,
@@ -260,10 +260,10 @@ Conflicts: mariadb-tokudb-engine-10.0,
            mysql-server-core-5.6,
            mysql-server-core-5.7
 Breaks: mariadb-galera-server,
-        mariadb-galera-server-5.5,
         mariadb-galera-server-10.0,
-        mariadb-server-5.5,
+        mariadb-galera-server-5.5,
         mariadb-server-10.0,
+        mariadb-server-5.5,
         mariadb-tokudb-engine-10.0,
         mariadb-tokudb-engine-10.1,
         mariadb-tokudb-engine-5.5,
@@ -274,10 +274,10 @@ Breaks: mariadb-galera-server,
         mysql-server-5.7,
         virtual-mysql-server
 Replaces: mariadb-galera-server,
-          mariadb-galera-server-5.5,
           mariadb-galera-server-10.0,
-          mariadb-server-5.5,
+          mariadb-galera-server-5.5,
           mariadb-server-10.0,
+          mariadb-server-5.5,
           mariadb-tokudb-engine-10.0,
           mariadb-tokudb-engine-10.1,
           mariadb-tokudb-engine-5.5,
@@ -344,10 +344,7 @@ Description: Connect storage engine for MariaDB
 
 Package: mariadb-plugin-oqgraph
 Architecture: any
-Depends: libjudydebian1,
-         mariadb-server-10.1,
-         ${misc:Depends},
-         ${shlibs:Depends}
+Depends: libjudydebian1, mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
 Conflicts: mariadb-oqgraph-engine-10.0, mariadb-oqgraph-engine-10.1
 Breaks: mariadb-oqgraph-engine-10.0,
         mariadb-oqgraph-engine-10.1,
@@ -364,9 +361,7 @@ Description: OQGraph storage engine for MariaDB
 
 Package: mariadb-plugin-tokudb
 Architecture: any
-Depends: mariadb-server-10.1,
-         ${misc:Depends},
-         ${shlibs:Depends}
+Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
 Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Description: TokuDB storage engine for MariaDB
@@ -377,9 +372,7 @@ Description: TokuDB storage engine for MariaDB
 
 Package: mariadb-plugin-mroonga
 Architecture: any
-Depends: mariadb-server-10.1,
-         ${misc:Depends},
-         ${shlibs:Depends}
+Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
 Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Description: Mroonga storage engine for MariaDB
@@ -389,9 +382,7 @@ Description: Mroonga storage engine for MariaDB
 
 Package: mariadb-plugin-spider
 Architecture: any
-Depends: mariadb-server-10.1,
-         ${misc:Depends},
-         ${shlibs:Depends}
+Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
 Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Description: Spider storage engine for MariaDB

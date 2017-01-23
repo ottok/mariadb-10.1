@@ -120,10 +120,10 @@ override_dh_auto_install:
 	dh_testroot
 
 	# If TokuDB plugin was not built skip the package
-	[ -f $(BUILDDIR)/storage/tokudb/ha_tokudb.so ] || sed -i -e "/Package: mariadb-plugin-tokudb/,+12d" debian/control
+	[ -f $(BUILDDIR)/storage/tokudb/ha_tokudb.so ] || sed -i -e "/Package: mariadb-plugin-tokudb/,+10d" debian/control
 
 	# If Mroonga plugin was not built skip the package
-	[ -f $(BUILDDIR)/storage/mroonga/ha_mroonga.so ] || sed -i -e "/Package: mariadb-plugin-mroonga/,+11d" debian/control
+	[ -f $(BUILDDIR)/storage/mroonga/ha_mroonga.so ] || sed -i -e "/Package: mariadb-plugin-mroonga/,+9d" debian/control
 
 	# Copy systemd files to a location available for dh_installinit
 	cp $(BUILDDIR)/support-files/mariadb.service debian/mariadb-server-10.1.mariadb.service
