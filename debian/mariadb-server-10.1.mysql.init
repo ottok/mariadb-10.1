@@ -32,6 +32,13 @@ if [ -f /etc/default/mysql ]; then
   . /etc/default/mysql
 fi
 
+# Also source default/mariadb in case the installation was upgraded from
+# packages originally installed from MariaDB.org repositories, which have
+# had support for reading /etc/default/mariadb since March 2016.
+if [ -f /etc/default/mariadb ]; then
+  . /etc/default/mariadb
+fi
+
 # Safeguard (relative paths, core dumps..)
 cd /
 umask 077
@@ -194,7 +201,7 @@ case "${1:-''}" in
 	;;
 
   *)
-  echo "Usage: $SELF start|stop|restart|reload|force-reload|status"
+  echo "Usage: $SELF start|stop|restart|reload|force-reload|status|bootstrap"
   exit 1
   ;;
 esac
