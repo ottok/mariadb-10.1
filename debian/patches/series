@@ -10,6 +10,7 @@ innodb_simulate_comp_test_speedup.patch
 mysqld_multi_confd.patch
 mysqld_multi.server_lsb-header.patch
 man_page_tokuftdump.patch
+man_pages_wsrep.patch
 mips-groonga-atomic.patch
 mips-connect-unaligned.patch
 mips-machine.patch
