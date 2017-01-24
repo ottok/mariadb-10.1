@@ -92,7 +92,7 @@ EOF
     # circumstances as it contains scripts that are executed by root.
     set +e
     chown -R 0:0 $mysql_statedir
-    chown -R mysql $mysql_datadir
+    find $mysql_datadir ! -uid $(id -u mysql) -print0 | xargs -0 -r chown mysql
     chown -R mysql:adm $mysql_logdir
     chmod 2750 $mysql_logdir
     set -e
