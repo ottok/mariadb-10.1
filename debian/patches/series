@@ -18,3 +18,4 @@ mips-unstable-tests.patch
 hurd_socket.patch
 armhf_mroonga_storage_fail.patch
 mips_64_atomic.patch
+remove-systemd-obsolete-target.patch
