@@ -1,8 +1,27 @@
-mariadb-10.1 (10.1.21-2) UNRELEASED; urgency=low
+mariadb-10.1 (10.1.21-2) unstable; urgency=low
 
-  * Open a new changelog entry
+  [ Otto Kekäläinen ]
+  * Implement systemd packaging the Debian way
+  * Extend README.Debian regarding new systemd files
+  * Add config file comments about SysV init and systemd differences
+  * Extend Debian.README with section about mixing with packages MariaDB.org
+  * Update /etc/init.d/mysql after comparison with upstream MariaDB 10.1.21
+  * Run chown much faster on the datadir during install/update
+  * Check if /var/lib/mysql exists before running 'find' on it
+  * Skip mysqld stopping if no mysqld process is running at all
+  * Update French debconf translation by Baptiste Jammet (Closes: #850066)
+  * Remove unnecessary XS-Testsuite field (as instructed by Lintian)
+  * Add a modified version of upstream autobake-deb script to utilize CI tools
+  * Fix server config example on how to enable SSL with YaSSL (Closes: #851132)
+  * Make commands mariadb and mariadbcheck available with symlinks
 
- -- Otto Kekäläinen <otto@debian.org>  Thu, 19 Jan 2017 22:54:39 +0200
+  [ Jean Weisbuch ]
+  * Update Innotop to latest version
+
+  [ Ian Gilfillan ]
+  * Add wsrep_* man pages
+
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 25 Jan 2017 10:42:45 +0200
 
 mariadb-10.1 (10.1.21-1) unstable; urgency=low
 
