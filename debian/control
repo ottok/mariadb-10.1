@@ -360,7 +360,7 @@ Description: OQGraph storage engine for MariaDB
  This package contains the OQGraph plugin for MariaDB.
 
 Package: mariadb-plugin-tokudb
-Architecture: any
+Architecture: amd64
 Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
 Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
@@ -371,7 +371,7 @@ Description: TokuDB storage engine for MariaDB
  This package contains the TokuDB plugin for MariaDB.
 
 Package: mariadb-plugin-mroonga
-Architecture: any
+Architecture: amd64 arm64 armel armhf i386 mips64el mipsel ppc64el
 Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
 Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
 Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
