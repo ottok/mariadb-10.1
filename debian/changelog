@@ -1,3 +1,9 @@
+mariadb-10.1 (10.1.21-4) unstable; urgency=low
+
+  * Hotfix to full build failure: Add missing galera_new_cluster.1 to patch
+
+ -- Otto Kekäläinen <otto@debian.org>  Thu, 26 Jan 2017 23:33:32 +0200
+
 mariadb-10.1 (10.1.21-3) unstable; urgency=low
 
   [ Ian Gilfillan ]
