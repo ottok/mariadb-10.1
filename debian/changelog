@@ -1,8 +1,16 @@
-mariadb-10.1 (10.1.21-3) UNRELEASED; urgency=low
+mariadb-10.1 (10.1.21-3) unstable; urgency=low
 
-  * Open a new changelog entry
+  [ Ian Gilfillan ]
+  * Extend WSREP and Galera man pages patch to cover all commands
 
- -- Otto Kekäläinen <otto@debian.org>  Thu, 26 Jan 2017 21:43:03 +0200
+  [ Dieter Adriaenssens ]
+  * Specify Architecture for mariadb-plugin-mroonga and mariadb-plugin-tokudb 
+    (Closes: #852709)
+
+  [ James Clarke ]
+  * Fix FTBFS on non-Linux architectures (Closes: #852728)
+
+ -- Otto Kekäläinen <otto@debian.org>  Thu, 26 Jan 2017 22:18:26 +0200
 
 mariadb-10.1 (10.1.21-2) unstable; urgency=low
 
