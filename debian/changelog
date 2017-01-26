@@ -1,3 +1,11 @@
+mariadb-10.1 (10.1.21-5) unstable; urgency=low
+
+  * Open a new changelog entry (and bump revision number). If you submit
+    patches, please don't edit the changelog file. Your commit message
+    will end up here automatically (with git-dch) at upload time.
+
+ -- Otto Kekäläinen <otto@debian.org>  Thu, 26 Jan 2017 23:59:34 +0200
+
 mariadb-10.1 (10.1.21-4) unstable; urgency=low
 
   * Hotfix to full build failure: Add missing galera_new_cluster.1 to patch
