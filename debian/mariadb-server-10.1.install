@@ -1,3 +1,8 @@
+#!/usr/bin/dh-exec
+[linux-any] lib/systemd/system/mariadb@bootstrap.service.d/use_galera_new_cluster.conf
+[linux-any] usr/bin/galera_new_cluster
+[linux-any] usr/bin/galera_recovery
+[linux-any] usr/bin/mariadb-service-convert
 debian/additions/debian-start etc/mysql
 debian/additions/debian-start.inc.sh usr/share/mysql
 debian/additions/echo_stderr usr/share/mysql
@@ -5,15 +10,11 @@ debian/additions/mariadb.conf.d/50-mysqld_safe.cnf etc/mysql/mariadb.conf.d
 debian/additions/mariadb.conf.d/50-server.cnf etc/mysql/mariadb.conf.d
 debian/additions/source_mariadb-10.1.py usr/share/apport/package-hooks
 etc/apparmor.d/usr.sbin.mysqld
-lib/systemd/system/mariadb@bootstrap.service.d/use_galera_new_cluster.conf
 usr/bin/aria_chk
 usr/bin/aria_dump_log
 usr/bin/aria_ftdump
 usr/bin/aria_pack
 usr/bin/aria_read_log
-usr/bin/galera_new_cluster
-usr/bin/galera_recovery
-usr/bin/mariadb-service-convert
 usr/bin/msql2mysql
 usr/bin/my_print_defaults
 usr/bin/myisam_ftdump
