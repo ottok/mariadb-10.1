@@ -4,23 +4,24 @@ Author: Ian Gilfillan <ian@mariadb.org>
 
 --- a/man/CMakeLists.txt
 +++ b/man/CMakeLists.txt
-@@ -22,7 +22,9 @@ SET(MAN1_SERVER innochecksum.1 my_print_
+@@ -22,7 +22,10 @@ SET(MAN1_SERVER innochecksum.1 my_print_
  		mysql_tzinfo_to_sql.1 mysql_upgrade.1 mysql_zap.1
  		mysqld_multi.1 mysqld_safe.1 mysqldumpslow.1 mysqlhotcopy.1
  		mysqltest.1 perror.1 replace.1 resolve_stack_dump.1
 -		resolveip.1 mysqlbug.1 tokuftdump.1)
 +		resolveip.1 mysqlbug.1 tokuftdump.1
++		galera_new_cluster.1 galera_recovery.1 mariadb-service-convert.1 mysqld_safe_helper.1
 +		wsrep_sst_common.1 wsrep_sst_mysqldump.1 wsrep_sst_rsync.1
 +		wsrep_sst_xtrabackup-v2.1 wsrep_sst_xtrabackup.1)
  SET(MAN8_SERVER mysqld.8)
  SET(MAN1_CLIENT msql2mysql.1 mysql.1 mysql_find_rows.1 mysql_waitpid.1
  		mysqlaccess.1 mysqladmin.1 mysqlbinlog.1 mysqlcheck.1
 --- /dev/null
-+++ b/man/wsrep_sst_common.1
++++ b/man/galera_recovery.1
 @@ -0,0 +1,16 @@
 +'\" t
 +.\"
-+.TH "\FBWSREP_SST_COMMON\FR" "1" "24 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.TH "\FBGALERA_RECOVERY\FR" "1" "26 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
 +.\" -----------------------------------------------------------------
 +.\" * set default formatting
 +.\" -----------------------------------------------------------------
@@ -29,9 +30,70 @@ Author: Ian Gilfillan <ian@mariadb.org>
 +.\" disable justification (adjust text to left margin only)
 +.ad l
 +.SH NAME
-+wsrep_sst_common \- common wsrep state transfer binary
++galera_recovery \- recover from non\-graceful shutdown
 +.SH DESCRIPTION
-+Use:
++Use: Recover from non\-graceful shutdown\.
++.PP
++For more information, please refer to the MariaDB Knowledge Base, available online at https://mariadb.com/kb/
+--- /dev/null
++++ b/man/mariadb-service-convert.1
+@@ -0,0 +1,20 @@
++'\" t
++.\"
++.TH "\FBMARIADB-SERVICE-CONVERT\FR" "1" "26 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.\" -----------------------------------------------------------------
++.\" * set default formatting
++.\" -----------------------------------------------------------------
++.\" disable hyphenation
++.nh
++.\" disable justification (adjust text to left margin only)
++.ad l
++.SH NAME
++mariadb-service-convert \- generate a mariadb.service file based on the current mysql/mariadb settings
++.SH DESCRIPTION
++Use: Generate a mariadb.service file based on the current mysql/mariadb settings\.
++This is to assist distro maintainers in migrating to systemd service definations from 
++a user mysqld_safe settings in the my.cnf files\.
++.PP
++Redirect output to user directory like /etc/systemd/system/mariadb.service.d/migrated-from-my.cnf-settings.conf
++.PP
++For more information, please refer to the MariaDB Knowledge Base, available online at https://mariadb.com/kb/
+--- /dev/null
++++ b/man/mysqld_safe_helper.1
+@@ -0,0 +1,16 @@
++'\" t
++.\"
++.TH "\FBMYSQLD_SAFE_HELPER\FR" "1" "26 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.\" -----------------------------------------------------------------
++.\" * set default formatting
++.\" -----------------------------------------------------------------
++.\" disable hyphenation
++.nh
++.\" disable justification (adjust text to left margin only)
++.ad l
++.SH NAME
++mysqld_safe_helper \- helper script
++.SH DESCRIPTION
++Use: Helper script\.
++.PP
++For more information, please refer to the MariaDB Knowledge Base, available online at https://mariadb.com/kb/
+--- /dev/null
++++ b/man/wsrep_sst_common.1
+@@ -0,0 +1,16 @@
++'\" t
++.\"
++.TH "\FBWSREP_SST_COMMON\FR" "1" "26 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.\" -----------------------------------------------------------------
++.\" * set default formatting
++.\" -----------------------------------------------------------------
++.\" disable hyphenation
++.nh
++.\" disable justification (adjust text to left margin only)
++.ad l
++.SH NAME
++wsrep_sst_common \- common command line parser to be sourced by other SST scripts
++.SH DESCRIPTION
++Use: Common command line parser to be sourced by other SST scripts\.
 +.PP
 +For more information, please refer to the MariaDB Knowledge Base, available online at https://mariadb.com/kb/
 --- /dev/null
@@ -39,7 +101,7 @@ Author: Ian Gilfillan <ian@mariadb.org>
 @@ -0,0 +1,16 @@
 +'\" t
 +.\"
-+.TH "\FBWSREP_SST_COMMON\FR" "1" "24 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.TH "\FBWSREP_SST_MYSQLDUMP\FR" "1" "26 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
 +.\" -----------------------------------------------------------------
 +.\" * set default formatting
 +.\" -----------------------------------------------------------------
@@ -48,7 +110,7 @@ Author: Ian Gilfillan <ian@mariadb.org>
 +.\" disable justification (adjust text to left margin only)
 +.ad l
 +.SH NAME
-+wsrep_sst_mysqldump \- mysqldump-based state snapshot transfer
++wsrep_sst_mysqldump \- mysqldump\-based state snapshot transfer
 +.SH DESCRIPTION
 +Use: mysqldump-based state snapshot transfer\.
 +.PP
@@ -58,7 +120,7 @@ Author: Ian Gilfillan <ian@mariadb.org>
 @@ -0,0 +1,16 @@
 +'\" t
 +.\"
-+.TH "\FBWSREP_SST_COMMON\FR" "1" "24 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.TH "\FBWSREP_SST_RSYNC\FR" "1" "26 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
 +.\" -----------------------------------------------------------------
 +.\" * set default formatting
 +.\" -----------------------------------------------------------------
@@ -77,7 +139,7 @@ Author: Ian Gilfillan <ian@mariadb.org>
 @@ -0,0 +1,16 @@
 +'\" t
 +.\"
-+.TH "\FBWSREP_SST_COMMON\FR" "1" "24 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.TH "\FBWSREP_SST_XTRABACKUP-V2\FR" "1" "26 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
 +.\" -----------------------------------------------------------------
 +.\" * set default formatting
 +.\" -----------------------------------------------------------------
@@ -86,7 +148,7 @@ Author: Ian Gilfillan <ian@mariadb.org>
 +.\" disable justification (adjust text to left margin only)
 +.ad l
 +.SH NAME
-+wsrep_sst_xtrabackup-v2 \- xtrabackup-v2-based state snapshot transfer
++wsrep_sst_xtrabackup-v2 \- xtrabackup\-based state snapshot transfer
 +.SH DESCRIPTION
 +Use: xtrabackup-based state snapshot transfer\.
 +.PP
@@ -96,7 +158,7 @@ Author: Ian Gilfillan <ian@mariadb.org>
 @@ -0,0 +1,16 @@
 +'\" t
 +.\"
-+.TH "\FBWSREP_SST_COMMON\FR" "1" "24 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
++.TH "\FBWSREP_SST_XTRABACKUP\FR" "1" "24 January 2017" "MariaDB 10\&.1" "MariaDB Database System"
 +.\" -----------------------------------------------------------------
 +.\" * set default formatting
 +.\" -----------------------------------------------------------------
@@ -105,7 +167,7 @@ Author: Ian Gilfillan <ian@mariadb.org>
 +.\" disable justification (adjust text to left margin only)
 +.ad l
 +.SH NAME
-+wsrep_sst_xtrabackup \- xtrabackup-based state snapshot transfer
++wsrep_sst_xtrabackup \- xtrabackup\-based state snapshot transfer
 +.SH DESCRIPTION
 +Use: xtrabackup-based state snapshot transfer\.
 +.PP
