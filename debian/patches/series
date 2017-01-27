@@ -17,5 +17,5 @@ mips-machine.patch
 mips-unstable-tests.patch
 hurd_socket.patch
 armhf_mroonga_storage_fail.patch
-mips_64_atomic.patch
+c11_atomics.patch
 remove-systemd-obsolete-target.patch

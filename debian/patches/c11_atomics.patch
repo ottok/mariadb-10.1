@@ -10,10 +10,38 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
    FIND_PACKAGE(Threads)
  
 -  SET(CMAKE_REQUIRED_LIBRARIES 
-+  SET(CMAKE_REQUIRED_LIBRARIES ${EXTRA_REQ_LIBRARIES}
++  LIST(APPEND CMAKE_REQUIRED_LIBRARIES
      ${LIBM} ${LIBNSL} ${LIBBIND} ${LIBCRYPT} ${LIBSOCKET} ${LIBDL} ${CMAKE_THREAD_LIBS_INIT} ${LIBRT} ${LIBEXECINFO})
    # Need explicit pthread for gcc -fsanitize=address
    IF(CMAKE_USE_PTHREADS_INIT AND CMAKE_C_FLAGS MATCHES "-fsanitize=")
+@@ -1028,7 +1028,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
+     long long int *ptr= &var;
+     return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
+   }"
+-  HAVE_GCC_C11_ATOMICS)
++  HAVE_GCC_C11_ATOMICS_WITHOUT_LIBATOMIC)
++  IF(HAVE_GCC_C11_ATOMICS_WITHOUT_LIBATOMIC)
++    SET(HAVE_GCC_C11_ATOMICS True)
++  ELSE()
++    SET(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
++    LIST(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
++    CHECK_CXX_SOURCE_COMPILES("
++    int main()
++    {
++      long long int var= 1;
++      long long int *ptr= &var;
++      return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
++    }"
++    HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
++    IF(HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
++      SET(HAVE_GCC_C11_ATOMICS True)
++    ELSE()
++      SET(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
++    ENDIF()
++  ENDIF()
+ ELSE()
+   MESSAGE(FATAL_ERROR "${WITH_ATOMIC_OPS} is not a valid value for WITH_ATOMIC_OPS!")
+ ENDIF()
 --- a/include/atomic/gcc_builtins.h
 +++ b/include/atomic/gcc_builtins.h
 @@ -16,6 +16,7 @@
@@ -71,7 +99,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
    TARGET_LINK_LIBRARIES(mysys bfd)  
  ENDIF(HAVE_BFD_H)
  
-+IF (EXTRA_REQ_LIBRARIES MATCHES "atomic")
++IF(HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
 +  TARGET_LINK_LIBRARIES(mysys atomic)
 +ENDIF()
 +
@@ -84,7 +112,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  
-+IF (EXTRA_REQ_LIBRARIES MATCHES "atomic")
++IF(HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
 +  TARGET_LINK_LIBRARIES(sql atomic)
 +ENDIF()
 +
