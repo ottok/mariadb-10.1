@@ -11,7 +11,7 @@ Author: Otto Kekäläinen <otto@mariadb.org>
  Description=MariaDB database server
  After=network.target
 -After=syslog.target
-
+ 
  [Install]
  WantedBy=multi-user.target
 --- a/support-files/mariadb@.service.in
@@ -21,5 +21,6 @@ Author: Otto Kekäläinen <otto@mariadb.org>
  Description=MariaDB database server
  After=network.target
 -After=syslog.target
-
+ 
  ConditionPathExists=@INSTALL_SYSCONF2DIR@/my%I.cnf
+ 
