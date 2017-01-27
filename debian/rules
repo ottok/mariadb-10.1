@@ -68,6 +68,15 @@ override_dh_auto_clean:
 
 	[ ! -f debian/libmariadbclient18.symbols.disabled ] || \
 	    mv debian/libmariadbclient18.symbols.disabled debian/libmariadbclient18.symbols
+
+	[ ! -f debian/mariadb-server-10.1.mariadb.service ] || \
+	    rm -f debian/mariadb-server-10.1.mariadb.service
+	[ ! -f debian/mariadb-server-10.1.mariadb@.service ] || \
+	    rm -f debian/mariadb-server-10.1.mariadb@.service
+
+	[ ! -f debian/mysql-test-unstable-tests.orig ] || \
+	    mv debian/mysql-test-unstable-tests.orig mysql-test/unstable-tests
+
 	rm -rf $(BUILDDIR)
 	debconf-updatepo # Update po-files when clean runs before each build
 
@@ -114,6 +123,7 @@ override_dh_auto_test:
 	@echo "RULES.$@"
 	dh_testdir
 	# Skip unstable tests if such are defined for arch
+	cp mysql-test/unstable-tests debian/mysql-test-unstable-tests.orig
 	[ ! -f debian/unstable-tests.$(DEB_HOST_ARCH) ] || cat debian/unstable-tests.$(DEB_HOST_ARCH) >> mysql-test/unstable-tests
 	# Run testsuite
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
