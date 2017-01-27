@@ -61,6 +61,9 @@ override_dh_auto_clean:
 	dh_testdir
 	dh_testroot
 	[ ! -d mysql-test/var ] || rm -rf mysql-test/var
+
+	[ ! -f debian/libmariadbclient18.symbols.disabled ] || \
+	    mv debian/libmariadbclient18.symbols.disabled debian/libmariadbclient18.symbols
 	rm -rf $(BUILDDIR)
 	debconf-updatepo # Update po-files when clean runs before each build
 
@@ -75,7 +78,7 @@ override_dh_auto_configure:
 	# Remove symbols file on kFreeBSD and Hurd builds so that
 	# dpkg-gensymbols will not fail the build.
 ifneq (,$(filter $(DEB_HOST_ARCH_OS), kfreebsd hurd))
-	rm debian/libmariadbclient18.symbols
+	mv debian/libmariadbclient18.symbols debian/libmariadbclient18.symbols.disabled
 endif
 
 	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && \
