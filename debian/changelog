@@ -1,10 +1,13 @@
 mariadb-10.1 (10.1.21-5) unstable; urgency=low
 
-  * Open a new changelog entry (and bump revision number). If you submit
-    patches, please don't edit the changelog file. Your commit message
-    will end up here automatically (with git-dch) at upload time.
+  [ James Clarke ]
+  * Make debian/mariadb-server-10.1.install executable (Closes: #852728)
+  * Allow mariadb-plugin-tokudb/mroonga on non-linux and non-release arches
+  * Detect whether libatomic is needed rather than hard-coding for mips
+  * Use host architecture, not build architecture, and clean up variables
+  * General clean-up in d/rules
 
- -- Otto Kekäläinen <otto@debian.org>  Thu, 26 Jan 2017 23:59:34 +0200
+ -- Otto Kekäläinen <otto@debian.org>  Fri, 27 Jan 2017 20:42:36 +0200
 
 mariadb-10.1 (10.1.21-4) unstable; urgency=low
 
