@@ -61,6 +61,10 @@ override_dh_auto_clean:
 	dh_testdir
 	dh_testroot
 	[ ! -d mysql-test/var ] || rm -rf mysql-test/var
+	[ ! -f storage/mroonga/mysql-test/mroonga/storage/r/information_schema_plugins.result ] || \
+	    rm -f storage/mroonga/mysql-test/mroonga/storage/r/information_schema_plugins.result
+	[ ! -f storage/mroonga/mysql-test/mroonga/storage/r/variable_version.result ] || \
+	    rm -f storage/mroonga/mysql-test/mroonga/storage/r/variable_version.result
 
 	[ ! -f debian/libmariadbclient18.symbols.disabled ] || \
 	    mv debian/libmariadbclient18.symbols.disabled debian/libmariadbclient18.symbols
