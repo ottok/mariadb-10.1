@@ -95,7 +95,6 @@ endif
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
 	    -DPLUGIN_AUTH_SOCKET=STATIC \
 	    -DDEB=$(DISTRIBUTION) ..'
-	touch $@
 
 # This is needed, otherwise 'make test' will run before binaries have been built
 override_dh_auto_build:
@@ -103,7 +102,6 @@ override_dh_auto_build:
 	# Print build env info to help debug builds on different platforms
 	dpkg-architecture
 	cd $(BUILDDIR) && $(MAKE)
-	touch $@
 
 override_dh_auto_test:
 	@echo "RULES.$@"
@@ -140,8 +138,6 @@ endif
 
 	# rename and install AppArmor profile
 	install -D -m 644 debian/apparmor-profile $(TMP)/etc/apparmor.d/usr.sbin.mysqld
-
-	touch $@
 
 override_dh_installlogrotate-arch:
 	dh_installlogrotate --name mysql-server
