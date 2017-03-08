@@ -1,3 +1,9 @@
+mariadb-10.1 (10.1.21-6) UNRELEASED; urgency=low
+
+  * Open a new changelog entry
+
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 08 Mar 2017 10:10:11 +0200
+
 mariadb-10.1 (10.1.21-5) unstable; urgency=low
 
   [ James Clarke ]
