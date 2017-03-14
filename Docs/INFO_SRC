@@ -1,8 +1,8 @@
-commit: f7d030489d2980c9deb733925515099ec256f6d2
-date: 2017-01-17 20:17:35 +0100
-build-date: 2017-01-17 20:38:38 +0100 
-short: f7d0304
+commit: 68be011cf2ec96a622db857fe9c418380d106d0d
+date: 2017-03-11 20:59:52 +0200
+build-date: 2017-03-11 20:09:31 +0100 
+short: 68be011
 branch: HEAD
 
 
-MariaDB source 10.1.21
+MariaDB source 10.1.22
