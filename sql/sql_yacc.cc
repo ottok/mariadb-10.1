@@ -29263,7 +29263,7 @@ yyreduce:
                                 (yyvsp[(5) - (5)].charset)->name, (yyvsp[(4) - (5)].charset)->csname));
             if (Lex->create_info.add_alter_list_item_convert_to_charset((yyvsp[(5) - (5)].charset)))
               MYSQL_YYABORT;
-            Lex->alter_info.flags|= Alter_info::ALTER_CONVERT;
+            Lex->alter_info.flags|= Alter_info::ALTER_OPTIONS;
           }
     break;
 

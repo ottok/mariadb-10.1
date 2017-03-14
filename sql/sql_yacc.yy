@@ -1022,7 +1022,7 @@ bool LEX::set_bincmp(CHARSET_INFO *cs, bool bin)
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %}
 
-%pure_parser                                    /* We have threads */
+%pure-parser                                    /* We have threads */
 %parse-param { THD *thd }
 %lex-param { THD *thd }
 /*
@@ -7533,7 +7533,7 @@ alter_list_item:
                                 $5->name, $4->csname));
             if (Lex->create_info.add_alter_list_item_convert_to_charset($5))
               MYSQL_YYABORT;
-            Lex->alter_info.flags|= Alter_info::ALTER_CONVERT;
+            Lex->alter_info.flags|= Alter_info::ALTER_OPTIONS;
           }
         | create_table_options_space_separated
           {
