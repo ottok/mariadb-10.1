@@ -1,8 +1,14 @@
-mariadb-10.1 (10.1.21-6) UNRELEASED; urgency=low
+mariadb-10.1 (10.1.22-1) unstable; urgency=high
 
-  * Open a new changelog entry
+  * New upstream release 10.1.22. Includes fixes for the following
+    security vulnerabilities:
+    - CVE-2017-3313
+    - CVE-2017-3302
+  * New upstream also includes fix to logrotate so that it no longer
+    risks interrupting binary/relay log processing on the server.
+    https://github.com/MariaDB/server/commit/156cf86defdc59353f37f6
 
- -- Otto Kekäläinen <otto@debian.org>  Wed, 08 Mar 2017 10:10:11 +0200
+ -- Otto Kekäläinen <otto@debian.org>  Tue, 14 Mar 2017 16:21:58 +0200
 
 mariadb-10.1 (10.1.21-5) unstable; urgency=low
 

@@ -22,5 +22,5 @@ Author: Otto Kekäläinen <otto@mariadb.org>
  After=network.target
 -After=syslog.target
  
- ConditionPathExists=@INSTALL_SYSCONF2DIR@/my%I.cnf
+ ConditionPathExists=@sysconf2dir@/my%I.cnf
  
