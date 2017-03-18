@@ -1,5 +1,6 @@
 mariadb-10.1 (10.1.22-1) unstable; urgency=high
 
+  [ Otto Kekäläinen ]
   * New upstream release 10.1.22. Includes fixes for the following
     security vulnerabilities:
     - CVE-2017-3313
@@ -7,8 +8,22 @@ mariadb-10.1 (10.1.22-1) unstable; urgency=high
   * New upstream also includes fix to logrotate so that it no longer
     risks interrupting binary/relay log processing on the server.
     https://github.com/MariaDB/server/commit/156cf86defdc59353f37f6
+  * Add a NEWS.Debian item with same contents as the Stretch release notes
 
- -- Otto Kekäläinen <otto@debian.org>  Tue, 14 Mar 2017 16:21:58 +0200
+  [ Ondřej Surý ]
+  * Add myself to Uploaders
+  * Use https URI for Homepage
+  * Use /usr/share/dpkg/default.mk to define dpkg-architecture and other
+    build variables
+  * Install and use non-versioned symbols files for kFreeBSD and Hurd
+    architectures
+  * Make mysql_config and mariadb.pc return -lmariadbclient instead of
+    missing -lmysqlclient
+  * Add mysqlclient.pc -> mariadb.pc symlink into
+    libmariadbclient-dev-compat package
+  * MDEV-11884: Fix logrotate failing if mysqld is not running (Closes: #830976)
+
+ -- Ondřej Surý <ondrej@debian.org>  Sun, 19 Mar 2017 15:23:26 +0100
 
 mariadb-10.1 (10.1.21-5) unstable; urgency=low
 
