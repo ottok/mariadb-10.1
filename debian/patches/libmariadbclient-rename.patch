@@ -6,8 +6,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
   libmariadbclient-dev-compat package that links libmysqlclient.so
   to libmariadbclient.so.
 
---- a/client/CMakeLists.txt
-+++ b/client/CMakeLists.txt
+--- mariadb-10.1.orig/client/CMakeLists.txt
++++ mariadb-10.1/client/CMakeLists.txt
 @@ -32,7 +32,7 @@ COPY_OPENSSL_DLLS(copy_openssl_client)
  ADD_DEFINITIONS(${SSL_DEFINES})
  MYSQL_ADD_EXECUTABLE(mysql completion_hash.cc mysql.cc readline.cc
@@ -76,8 +76,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
  
  SET_TARGET_PROPERTIES (mysqlcheck mysqldump mysqlimport mysql_upgrade mysqlshow mysqlslap mysql_plugin async_example
  PROPERTIES HAS_CXX TRUE)
---- a/libmysql/CMakeLists.txt
-+++ b/libmysql/CMakeLists.txt
+--- mariadb-10.1.orig/libmysql/CMakeLists.txt
++++ mariadb-10.1/libmysql/CMakeLists.txt
 @@ -278,7 +278,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
  
      INCLUDE (CheckCSourceCompiles)
@@ -183,8 +183,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
          "${CMAKE_SHARED_LIBRARY_SUFFIX}"
          "${ver}"
          linkname)
---- a/man/mysql_config.1
-+++ b/man/mysql_config.1
+--- mariadb-10.1.orig/man/mysql_config.1
++++ mariadb-10.1/man/mysql_config.1
 @@ -38,7 +38,7 @@ supports the following options\&.
  \fB\-\-cflags\fR
  .sp
@@ -206,8 +206,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
                      \-lpthread \-lz \-lcrypt \-lnsl \-lm \-lpthread]
    \-\-socket         [/tmp/mysql\&.sock]
    \-\-port           [3306]
---- a/cmake/for_clients.cmake
-+++ b/cmake/for_clients.cmake
+--- mariadb-10.1.orig/cmake/for_clients.cmake
++++ mariadb-10.1/cmake/for_clients.cmake
 @@ -2,8 +2,8 @@
  # Generate LIBS and CFLAGS that third-party clients should use
  #
@@ -219,7 +219,7 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
  SET(CLIENT_LIBS "")
  SET(LIBS "")
  
-@@ -45,7 +45,7 @@ MACRO(EXTRACT_LINK_LIBRARIES target var)
+@@ -45,10 +45,10 @@ MACRO(EXTRACT_LINK_LIBRARIES target var)
    ENDIF()
  ENDMACRO()
  
@@ -227,9 +227,13 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
 +EXTRACT_LINK_LIBRARIES(mariadbclient LIBS)
  EXTRACT_LINK_LIBRARIES(mysqlserver EMB_LIBS)
  
- SET(LIBS     "-lmysqlclient ${ZLIB_DEPS} ${LIBS} ${openssl_libs}")
---- a/scripts/make_win_bin_dist
-+++ b/scripts/make_win_bin_dist
+-SET(LIBS     "-lmysqlclient ${ZLIB_DEPS} ${LIBS} ${openssl_libs}")
++SET(LIBS     "-lmariadbclient ${ZLIB_DEPS} ${LIBS} ${openssl_libs}")
+ SET(EMB_LIBS "-lmysqld ${ZLIB_DEPS} ${EMB_LIBS} ${openssl_libs}")
+ 
+ MACRO(REPLACE_FOR_CLIENTS VAR)
+--- mariadb-10.1.orig/scripts/make_win_bin_dist
++++ mariadb-10.1/scripts/make_win_bin_dist
 @@ -293,7 +293,7 @@ mkdir -p $DESTDIR/lib/plugin
  cp sql/$TARGET/mysqld.lib $DESTDIR/lib/
  cp libmysql/$TARGET/libmysql.dll \
@@ -259,8 +263,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
       mysys/debug/mysys.lib \
       mysys/debug/mysys.pdb \
       regex/debug/regex.lib \
---- a/scripts/mysql_config.pl.in
-+++ b/scripts/mysql_config.pl.in
+--- mariadb-10.1.orig/scripts/mysql_config.pl.in
++++ mariadb-10.1/scripts/mysql_config.pl.in
 @@ -183,15 +183,15 @@ if ( $^O eq "MSWin32" )
    my $linkpath   = "$pkglibdir";
    # user32 is only needed for debug or embedded
@@ -280,8 +284,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
    @lib_e_opts = ($linkpath,"-lmysqld");
  }
  
---- a/tests/CMakeLists.txt
-+++ b/tests/CMakeLists.txt
+--- mariadb-10.1.orig/tests/CMakeLists.txt
++++ mariadb-10.1/tests/CMakeLists.txt
 @@ -18,12 +18,12 @@ ADD_DEFINITIONS("-DMYSQL_CLIENT")
  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
  
@@ -306,8 +310,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
    SET_TARGET_PROPERTIES(async_queries PROPERTIES LINKER_LANGUAGE CXX)
  
  ENDIF()
---- a/unittest/mysys/CMakeLists.txt
-+++ b/unittest/mysys/CMakeLists.txt
+--- mariadb-10.1.orig/unittest/mysys/CMakeLists.txt
++++ mariadb-10.1/unittest/mysys/CMakeLists.txt
 @@ -21,7 +21,7 @@ MY_ADD_TESTS(my_vsnprintf LINK_LIBRARIES
  ADD_DEFINITIONS(${SSL_DEFINES})
  
