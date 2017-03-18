@@ -47,24 +47,19 @@ override_dh_auto_clean:
 	@echo "RULES.$@"
 	dh_testdir
 	dh_testroot
-	[ ! -d mysql-test/var ] || rm -rf mysql-test/var
-	[ ! -f storage/mroonga/mysql-test/mroonga/storage/r/information_schema_plugins.result ] || \
-	    rm -f storage/mroonga/mysql-test/mroonga/storage/r/information_schema_plugins.result
-	[ ! -f storage/mroonga/mysql-test/mroonga/storage/r/variable_version.result ] || \
-	    rm -f storage/mroonga/mysql-test/mroonga/storage/r/variable_version.result
+	rm -rf mysql-test/var
+	rm -f storage/mroonga/mysql-test/mroonga/storage/r/information_schema_plugins.result
+	rm -f storage/mroonga/mysql-test/mroonga/storage/r/variable_version.result
+	rm -f debian/mariadb-server-10.1.mariadb.service
+	rm -f debian/mariadb-server-10.1.mariadb@.service
+	rm -rf $(BUILDDIR)
 
 	[ ! -f debian/libmariadbclient18.symbols.disabled ] || \
 	    mv debian/libmariadbclient18.symbols.disabled debian/libmariadbclient18.symbols
 
-	[ ! -f debian/mariadb-server-10.1.mariadb.service ] || \
-	    rm -f debian/mariadb-server-10.1.mariadb.service
-	[ ! -f debian/mariadb-server-10.1.mariadb@.service ] || \
-	    rm -f debian/mariadb-server-10.1.mariadb@.service
-
 	[ ! -f debian/mysql-test-unstable-tests.orig ] || \
 	    mv debian/mysql-test-unstable-tests.orig mysql-test/unstable-tests
 
-	rm -rf $(BUILDDIR)
 	debconf-updatepo # Update po-files when clean runs before each build
 
 override_dh_prep:
