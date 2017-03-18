@@ -30,7 +30,7 @@ Build-Depends: bison,
                unixodbc-dev,
                zlib1g-dev (>= 1:1.1.3-5~)
 Standards-Version: 3.9.8
-Homepage: http://mariadb.org/
+Homepage: https://mariadb.org/
 Vcs-Git: https://anonscm.debian.org/git/pkg-mysql/mariadb-10.1.git
 Vcs-Browser: https://anonscm.debian.org/git/pkg-mysql/mariadb-10.1.git
 
