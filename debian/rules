@@ -54,9 +54,6 @@ override_dh_auto_clean:
 	rm -f debian/mariadb-server-10.1.mariadb@.service
 	rm -rf $(BUILDDIR)
 
-	[ ! -f debian/libmariadbclient18.symbols.disabled ] || \
-	    mv debian/libmariadbclient18.symbols.disabled debian/libmariadbclient18.symbols
-
 	[ ! -f debian/mysql-test-unstable-tests.orig ] || \
 	    mv debian/mysql-test-unstable-tests.orig mysql-test/unstable-tests
 
@@ -68,13 +65,6 @@ override_dh_prep:
 override_dh_auto_configure:
 	@echo "RULES.$@"
 	dh_testdir
-
-	# Versioned symbols are only available on Linux.
-	# Remove symbols file on kFreeBSD and Hurd builds so that
-	# dpkg-gensymbols will not fail the build.
-ifneq (,$(filter $(DEB_HOST_ARCH_OS), kfreebsd hurd))
-	mv debian/libmariadbclient18.symbols debian/libmariadbclient18.symbols.disabled
-endif
 
 	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && \
 	sh -c  'PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
