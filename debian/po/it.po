@@ -1,13 +1,13 @@
 # Italian (it) translation of debconf templates for mariadb-10.1
 # This file is distributed under the same license as the mariadb-10.1 package.
-# Luca Monducci <luca.mo@tiscali.it>, 2006-2014.
+# Luca Monducci <luca.mo@tiscali.it>, 2006-2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mariadb-10.1 10.0.13 italian debconf templates\n"
 "Report-Msgid-Bugs-To: mariadb-10.1@packages.debian.org\n"
 "POT-Creation-Date: 2016-04-30 22:44+0300\n"
-"PO-Revision-Date: 2014-08-30 18:35+0200\n"
+"PO-Revision-Date: 2017-083-20 20:29+0100\n"
 "Last-Translator: Luca Monducci <luca.mo@tiscali.it>\n"
 "Language-Team: Italian <debian-l10n-italian@lists.debian.org>\n"
 "Language: it\n"
@@ -19,7 +19,7 @@ msgstr ""
 #. Description
 #: ../mariadb-server-10.1.templates:2001
 msgid "The old data directory will be saved at new location"
-msgstr ""
+msgstr "La vecchia directory data verrà salvata in una nuova posizione"
 
 #. Type: note
 #. Description
@@ -29,6 +29,9 @@ msgid ""
 "indicates a database binary format version that cannot automatically be "
 "upgraded (or downgraded)."
 msgstr ""
+"Su questo sistema esiste già un file con nome /var/lib/mysql/debian-*.flag. "
+"Il numero indica una versione del database in formato binario che non è "
+"possibile promuovere (o retrocedere) a una nuova versione automaticamente."
 
 #. Type: note
 #. Description
@@ -37,6 +40,9 @@ msgid ""
 "Therefore the previous data directory will be renamed to /var/lib/mysql-* "
 "and a new data directory will be initialized at /var/lib/mysql."
 msgstr ""
+"Di conseguenza la precedene directory data verrà rinominata in "
+"/var/lib/mysql-* e verrà preparata una nuova directory data in "
+"/var/lib/mysql."
 
 #. Type: note
 #. Description
@@ -44,6 +50,8 @@ msgstr ""
 msgid ""
 "Please manually export/import your data (e.g. with mysqldump) if needed."
 msgstr ""
+"Se necessario eseguire manualmente l'export/import (per esempio con "
+"mysqldump) dei propri dati." 
 
 #. Type: note
 #. Description
