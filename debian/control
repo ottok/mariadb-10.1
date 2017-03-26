@@ -240,10 +240,10 @@ Recommends: libhtml-template-perl
 Pre-Depends: adduser (>= 3.40), debconf, mariadb-common (>= ${source:Version})
 Depends: galera-3 (>=25.3),
          gawk,
-         iproute2,
+         iproute2 [linux-any],
          libdbi-perl,
          lsb-base (>= 3.0-10),
-         lsof,
+         lsof [linux-any],
          mariadb-client-10.1 (>= ${source:Version}),
          mariadb-server-core-10.1 (>= ${binary:Version}),
          passwd,
