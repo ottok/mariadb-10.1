@@ -1,3 +1,13 @@
+mariadb-10.1 (10.1.22-3) unstable; urgency=medium
+
+  * Use pidof instead of pgrep, so we don't have to depend on procps
+  * Stop stopping mariadb server that many times and just add a simple
+    check to preinst that it has been really stopped (Closes: #852495)
+  * Fix small typo in gettid patch
+  * Disable TokuDB on kfreebsd-amd64
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 28 Mar 2017 22:59:06 +0200
+
 mariadb-10.1 (10.1.22-2) unstable; urgency=medium
 
   [ Ondřej Surý ]
@@ -20,7 +30,7 @@ mariadb-10.1 (10.1.22-2) unstable; urgency=medium
   * Disable specific tests on hppa to make the build succeed (Courtesy of
     John David Anglin) (Closes: #858869)
 
- -- Ondřej Surý <ondrej@debian.org>  Tue, 28 Mar 2017 11:48:27 +0200
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 28 Mar 2017 22:59:01 +0200
 
 mariadb-10.1 (10.1.22-1) unstable; urgency=high
 
