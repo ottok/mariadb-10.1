@@ -7,7 +7,7 @@
 +#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 +    long lwpid;
 +    thr_self( &lwpid );
-+    return lwpid;a
++    return lwpid;
  #else
  # error "no implementation of gettid available"
  #endif
