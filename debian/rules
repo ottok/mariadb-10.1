@@ -26,10 +26,6 @@ else
     NUMJOBS = 1
 endif
 
-ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH),hppa))
-    DEB_BUILD_OPTIONS := $(DEB_BUILD_OPTIONS) nocheck
-endif
-
 # Ignore test suite exit code on unstable platforms
 ifeq ($(DEB_HOST_ARCH),$(filter $(DEB_HOST_ARCH),mips mipsel alpha powerpc sh4))
     TESTSUITE_FAIL_CMD:=true
