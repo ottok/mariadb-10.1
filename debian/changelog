@@ -1,3 +1,27 @@
+mariadb-10.1 (10.1.22-2) unstable; urgency=medium
+
+  [ Ondřej Surý ]
+  * Add correct kfreebsd-i386 symbols file (but this needs to be fixed in
+    how upstream uses linker)
+  * Update italian translation (Closes: #858300)
+
+  [ Otto Kekäläinen ]
+  * Add Vietnamese translation by Trần Ngọc Quân
+  * Add Finnish translation by Antti Järvinen
+
+  [ Ondřej Surý ]
+  * Disable test suite on hppa, don't fail test suite on more unstable
+    platforms: alpha, powerpc, and x32
+  * Add swedish debconf translation (Closes: #858536)
+  * Add Catalan debconf translation (Closes: #858632)
+  * Use thr_self() as gettid implementation onf __FreeBSD_kernel__
+  * Make mariadb-server-10.1 installable on kFreeBSD and Hurd (Closes: #851687)
+  * Update Turkish debconf translation (Closes: #858340)
+  * Disable specific tests on hppa to make the build succeed (Courtesy of
+    John David Anglin) (Closes: #858869)
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 28 Mar 2017 11:48:27 +0200
+
 mariadb-10.1 (10.1.22-1) unstable; urgency=high
 
   [ Otto Kekäläinen ]
