@@ -77,6 +77,7 @@ override_dh_auto_configure:
 	    	CXX=${CXX} \
 	    cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(CMAKEFLAGS) \
+	    -DAWS_SDK_EXTERNAL_PROJECT=OFF \
 	    -DWITH_SSL=bundled \
 	    -DCOMPILATION_COMMENT="$(DEB_VENDOR) $(RELEASE)" \
 	    -DMYSQL_SERVER_SUFFIX="-$(DEB_VERSION_REVISION)" \
