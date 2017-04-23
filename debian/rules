@@ -9,8 +9,8 @@ DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/default.mk
 
 BUILDDIR := builddir
-DEB_VERSION_REVISION := $(echo $(DEB_VERSION) | sed -e 's/^.*-//')
-MARIADB_SERIES := $(echo '$(DEB_VERSION)' | sed -e 's/\.[0-9]*$//')
+DEB_VERSION_REVISION := $(shell echo '$(DEB_VERSION)' | sed -e 's/^.*-//')
+MARIADB_SERIES := $(shell echo '$(DEB_VERSION_UPSTREAM)' | sed -e 's/\.[0-9]*$$//')
 RELEASE := $(shell lsb_release -r -s) # Use changelog based DEB_DISTRIBUTION instead?
 TMP:=$(CURDIR)/debian/tmp
 
