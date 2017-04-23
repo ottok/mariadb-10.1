@@ -1,4 +1,4 @@
-libmariadbclient.so.18 libmariadbclient18 #MINVER#
+libmariadb.so.3 libmariadb3 #MINVER#
  PSI_hook@Base 10.1.22
  PSI_server@Base 10.1.22
  THR_COND_threads@Base 10.1.22

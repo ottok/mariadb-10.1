@@ -1,7 +1,7 @@
-dialog.so libmariadbclient18 #MINVER#
+dialog.so libmariadb3 #MINVER#
  (arch=linux-any)_mysql_client_plugin_declaration_@Base 5.5.35
  (arch=linux-any)get_tty_password_buff@Base 5.5.35
-libmariadbclient.so.18 libmariadbclient18 #MINVER#
+libmariadb.so.3 libmariadb3 #MINVER#
  (arch=linux-any)THR_KEY_mysys@libmariadbclient_16 5.5.36
  (arch=linux-any)THR_KEY_mysys@libmariadbclient_18 5.5.36
  (arch=linux-any)alloc_dynamic@libmariadbclient_18 5.5.37

@@ -36,7 +36,7 @@ Homepage: https://mariadb.org/
 Vcs-Git: https://anonscm.debian.org/git/pkg-mysql/mariadb.git
 Vcs-Browser: https://anonscm.debian.org/git/pkg-mysql/mariadb.git
 
-Package: libmariadbclient18
+Package: libmariadb3
 Section: libs
 Architecture: any
 Depends: mysql-common,
@@ -52,11 +52,11 @@ Description: MariaDB database client library
  .
  This package includes the client library.
 
-Package: libmariadbclient-dev
+Package: libmariadb-dev
 Architecture: any
 Section: libdevel
 Pre-Depends: ${misc:Pre-Depends}
-Depends: libmariadbclient18 (= ${binary:Version}),
+Depends: libmariadb3 (= ${binary:Version}),
          zlib1g-dev,
          ${misc:Depends},
          ${shlibs:Depends}
@@ -74,7 +74,7 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Pre-Depends: ${misc:Pre-Depends}
-Depends: libmariadbclient-dev,
+Depends: libmariadb-dev,
          ${misc:Depends},
          ${shlibs:Depends}
 Conflicts: libmariadb-client-lgpl-dev-compat,
@@ -88,7 +88,7 @@ Description: MariaDB database development files (libmysqlclient compatibility)
  .
  This package provides a version of libmysqlclient.so to allow
  packages to link using -lmysqlclient but end up with a link against
- libmariadbclient instead. This allows packages designed for
+ libmariadb instead. This allows packages designed for
  MySQL to link against MariaDB's client library instead, while still permitting
  MySQL's client library to co-exist on users' systems.
 
@@ -115,7 +115,7 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Pre-Depends: ${misc:Pre-Depends}
-Depends: libmariadbclient-dev (= ${binary:Version}),
+Depends: libmariadb-dev (= ${binary:Version}),
          libmariadbd18 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
@@ -475,7 +475,7 @@ Description: CrackLib Password Validation Plugin for MariaDB
 
 Package: mariadb-test
 Architecture: any
-Depends: libmariadbclient18 (= ${binary:Version}),
+Depends: libmariadb3 (= ${binary:Version}),
          mariadb-client-10.3 (= ${binary:Version}),
          mariadb-server-10.3 (= ${binary:Version}),
          mariadb-test-data (= ${source:Version}),
