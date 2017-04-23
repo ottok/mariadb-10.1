@@ -3,7 +3,7 @@
 Copyright (c) 1995, 2016, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2008, 2009 Google Inc.
 Copyright (c) 2009, Percona Inc.
-Copyright (c) 2013, 2017, MariaDB Corporation Ab. All Rights Reserved.
+Copyright (c) 2013, 2017, MariaDB Corporation.
 
 Portions of this file contain modifications contributed and copyrighted by
 Google, Inc. Those modifications are gratefully acknowledged and are described
@@ -569,11 +569,6 @@ UNIV_INTERN ib_uint64_t srv_index_page_decompressed     = 0;
 
 /* Ensure status variables are on separate cache lines */
 
-#ifdef __powerpc__
-#define CACHE_LINE_SIZE 128
-#else
-#define CACHE_LINE_SIZE 64
-#endif
 #define CACHE_ALIGNED MY_ATTRIBUTE((aligned (CACHE_LINE_SIZE)))
 
 UNIV_INTERN byte
@@ -604,7 +599,7 @@ UNIV_INTERN const char* srv_io_thread_function[SRV_MAX_N_IO_THREADS];
 
 UNIV_INTERN time_t	srv_last_monitor_time;
 
-UNIV_INTERN ib_mutex_t	srv_innodb_monitor_mutex;
+static ib_mutex_t	srv_innodb_monitor_mutex;
 
 /* Mutex for locking srv_monitor_file. Not created if srv_read_only_mode */
 UNIV_INTERN ib_mutex_t	srv_monitor_file_mutex;
@@ -1284,16 +1279,22 @@ srv_free(void)
 			os_event_free(srv_sys->sys_threads[i].event);
 
 		os_event_free(srv_error_event);
+		srv_error_event = NULL;
 		os_event_free(srv_monitor_event);
+		srv_monitor_event = NULL;
 		os_event_free(srv_buf_dump_event);
+		srv_buf_dump_event = NULL;
 		os_event_free(srv_checkpoint_completed_event);
+		srv_checkpoint_completed_event = NULL;
 		os_event_free(srv_redo_log_tracked_event);
+		srv_redo_log_tracked_event = NULL;
 		mutex_free(&srv_sys->mutex);
 		mutex_free(&srv_sys->tasks_mutex);
 	}
 
 #ifdef WITH_INNODB_DISALLOW_WRITES
 	os_event_free(srv_allow_writes_event);
+	srv_allow_writes_event = NULL;
 #endif /* WITH_INNODB_DISALLOW_WRITES */
 
 #ifndef HAVE_ATOMIC_BUILTINS
@@ -2111,6 +2112,8 @@ srv_export_innodb_status(void)
 		crypt_stat.estimated_iops;
 	export_vars.innodb_encryption_key_requests =
 		srv_stats.n_key_requests;
+	export_vars.innodb_key_rotation_list_length =
+		srv_stats.key_rotation_list_length;
 
 	export_vars.innodb_scrub_page_reorganizations =
 		scrub_stat.page_reorganizations;

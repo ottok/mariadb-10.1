@@ -278,29 +278,6 @@ void make_password_from_salt_323(char *to, const ulong *salt)
      **************** MySQL 4.1.1 authentication routines *************
 */
 
-#if MYSQL_VERSION_ID < 0x100200
-/**
-    Generate string of printable random characters of requested length.
-  
-    @param to[out]  Buffer for generation; must be at least length+1 bytes
-                    long; result string is always null-terminated
-    length[in]      How many random characters to put in buffer
-    rand_st         Structure used for number generation
-*/
-
-void create_random_string(char *to, uint length,
-                          struct my_rnd_struct *rand_st)
-{
-  char *end= to + length;
-  /* Use pointer arithmetics as it is faster way to do so. */
-  for (; to < end; to++)
-    *to= (char) (my_rnd(rand_st)*94+33);
-  *to= '\0';
-}
-#else
-#error
-#endif
-
 
 /* Character to use as version identifier for version 4.1 */
 

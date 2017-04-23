@@ -380,9 +380,7 @@ int fill_misc_data(THD *thd, TABLE_LIST *tables)
 {
   TABLE *table= tables->table;
 
-#ifdef MY_ATOMIC_OK
   INSERT1("Cpu_count", (my_getncpus(), UNSIGNED));
-#endif
   INSERT1("Mem_total", (my_getphysmem(), UNSIGNED));
   INSERT1("Now", (thd->query_start(), UNSIGNED));
 
@@ -428,8 +426,8 @@ int calculate_server_uid(char *dest)
 
   my_sha1((uint8*) shabuf, (char*) rawbuf, sizeof(rawbuf));
 
-  assert(base64_needed_encoded_length(sizeof(shabuf)) <= SERVER_UID_SIZE);
-  base64_encode(shabuf, sizeof(shabuf), dest);
+  assert(my_base64_needed_encoded_length(sizeof(shabuf)) <= SERVER_UID_SIZE);
+  my_base64_encode(shabuf, sizeof(shabuf), dest);
 
   return 0;
 }

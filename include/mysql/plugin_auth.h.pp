@@ -9,12 +9,12 @@ extern struct base64_service_st {
   int (*base64_decode_ptr)(const char *src, size_t src_len,
                            void *dst, const char **end_ptr, int flags);
 } *base64_service;
-int base64_needed_encoded_length(int length_of_data);
-int base64_encode_max_arg_length(void);
-int base64_needed_decoded_length(int length_of_encoded_data);
-int base64_decode_max_arg_length();
-int base64_encode(const void *src, size_t src_len, char *dst);
-int base64_decode(const char *src, size_t src_len,
+int my_base64_needed_encoded_length(int length_of_data);
+int my_base64_encode_max_arg_length(void);
+int my_base64_needed_decoded_length(int length_of_encoded_data);
+int my_base64_decode_max_arg_length();
+int my_base64_encode(const void *src, size_t src_len, char *dst);
+int my_base64_decode(const char *src, size_t src_len,
                   void *dst, const char **end_ptr, int flags);
 extern void (*debug_sync_C_callback_ptr)(void*, const char *, size_t);
 struct encryption_service_st {

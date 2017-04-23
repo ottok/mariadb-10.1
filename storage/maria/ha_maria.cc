@@ -255,9 +255,9 @@ static MYSQL_SYSVAR_ULONG(pagecache_file_hash_size, pagecache_file_hash_size,
        "value is probably 1/10 of number of possible open Aria files.", 0,0,
        512, 128, 16384, 1);
 
-static MYSQL_SYSVAR_SET(recover, maria_recover_options, PLUGIN_VAR_OPCMDARG,
+static MYSQL_SYSVAR_SET(recover_options, maria_recover_options, PLUGIN_VAR_OPCMDARG,
        "Specifies how corrupted tables should be automatically repaired",
-       NULL, NULL, HA_RECOVER_DEFAULT, &maria_recover_typelib);
+       NULL, NULL, HA_RECOVER_BACKUP|HA_RECOVER_QUICK, &maria_recover_typelib);
 
 static MYSQL_THDVAR_ULONG(repair_threads, PLUGIN_VAR_RQCMDARG,
        "Number of threads to use when repairing Aria tables. The value of 1 "
@@ -435,8 +435,8 @@ static void _ma_check_print_msg(HA_CHECK *param, const char *msg_type,
                           NullS) - name);
   /*
     TODO: switch from protocol to push_warning here. The main reason we didn't
-    it yet is parallel repair. Due to following trace:
-    ma_check_print_msg/push_warning/sql_alloc/my_pthread_getspecific_ptr.
+    it yet is parallel repair, which threads have no THD object accessible via
+    current_thd.
 
     Also we likely need to lock mutex here (in both cases with protocol and
     push_warning).
@@ -522,6 +522,14 @@ static int table2maria(TABLE *table_arg, data_file_type row_type,
     for (j= 0; j < pos->user_defined_key_parts; j++)
     {
       Field *field= pos->key_part[j].field;
+
+      if (!table_arg->field[field->field_index]->stored_in_db())
+      {
+        my_free(*recinfo_out);
+        my_error(ER_KEY_BASED_ON_GENERATED_VIRTUAL_COLUMN, MYF(0));
+        DBUG_RETURN(HA_ERR_UNSUPPORTED);
+      }
+
       type= field->key_type();
       keydef[i].seg[j].flag= pos->key_part[j].key_part_flag;
 
@@ -979,7 +987,8 @@ int_table_flags(HA_NULL_IN_KEY | HA_CAN_FULLTEXT | HA_CAN_SQL_HANDLER |
                 HA_FILE_BASED | HA_CAN_GEOMETRY | CANNOT_ROLLBACK_FLAG |
                 HA_CAN_BIT_FIELD | HA_CAN_RTREEKEYS | HA_CAN_REPAIR |
                 HA_CAN_VIRTUAL_COLUMNS |
-                HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT),
+                HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT |
+                HA_CAN_TABLES_WITHOUT_ROLLBACK),
 can_enable_indexes(1), bulk_insert_single_undo(BULK_INSERT_NONE)
 {}
 
@@ -3091,6 +3100,13 @@ int ha_maria::create(const char *name, register TABLE *table_arg,
                  ER_ILLEGAL_HA_CREATE_OPTION,
                  "Row format set to PAGE because of TRANSACTIONAL=1 option");
 
+  if (share->table_type == TABLE_TYPE_SEQUENCE)
+  {
+    /* For sequences, the simples record type is appropriate */
+    row_type= STATIC_RECORD;
+    ha_create_info->transactional= HA_CHOICE_NO;
+  }
+
   bzero((char*) &create_info, sizeof(create_info));
   if ((error= table2maria(table_arg, row_type, &keydef, &recinfo,
                           &record_count, &create_info)))
@@ -3494,7 +3510,7 @@ static int mark_recovery_start(const char* log_dir)
   DBUG_ENTER("mark_recovery_start");
   if (!(maria_recover_options & HA_RECOVER_ANY))
     ma_message_no_user(ME_JUST_WARNING, "Please consider using option"
-                       " --aria-recover[=...] to automatically check and"
+                       " --aria-recover-options[=...] to automatically check and"
                        " repair tables when logs are removed by option"
                        " --aria-force-start-after-recovery-failures=#");
   if (recovery_failures >= force_start_after_recovery_failures)
@@ -3697,7 +3713,7 @@ struct st_mysql_sys_var* system_variables[]= {
   MYSQL_SYSVAR(pagecache_buffer_size),
   MYSQL_SYSVAR(pagecache_division_limit),
   MYSQL_SYSVAR(pagecache_file_hash_size),
-  MYSQL_SYSVAR(recover),
+  MYSQL_SYSVAR(recover_options),
   MYSQL_SYSVAR(repair_threads),
   MYSQL_SYSVAR(sort_buffer_size),
   MYSQL_SYSVAR(stats_method),
@@ -3910,6 +3926,36 @@ Item *ha_maria::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
   if (active_index == pushed_idx_cond_keyno)
     ma_set_index_cond_func(file, handler_index_cond_check, this);
   return NULL;
+}
+
+/**
+  Find record by unique constrain (used in temporary tables)
+
+  @param record          (IN|OUT) the record to find
+  @param constrain_no    (IN) number of constrain (for this engine)
+
+  @note It is like hp_search but uses function for raw where hp_search
+        uses functions for index.
+
+  @retval  0 OK
+  @retval  1 Not found
+  @retval -1 Error
+*/
+
+int ha_maria::find_unique_row(uchar *record, uint constrain_no)
+{
+  MARIA_UNIQUEDEF *def= file->s->uniqueinfo + constrain_no;
+  ha_checksum unique_hash= _ma_unique_hash(def, record);
+  int rc= _ma_check_unique(file, def, record, unique_hash, HA_OFFSET_ERROR);
+  if (rc)
+  {
+    file->cur_row.lastpos= file->dup_key_pos;
+    if ((*file->read_record)(file, record, file->cur_row.lastpos))
+      return -1;
+    file->update|= HA_STATE_AKTIV;                     /* Record is read */
+  }
+  // invert logic
+  return (rc ? 0 : 1);
 }
 
 struct st_mysql_storage_engine maria_storage_engine=

@@ -34,7 +34,21 @@
 
 #include "mysql_client_fw.c"
 
+static const my_bool my_true= 1;
+
+
 /* Query processing */
+
+static my_bool get_reconnect(MYSQL *mysql)
+{
+#ifdef EMBEDDED_LIBRARY
+  return mysql->reconnect;
+#else
+  my_bool reconnect;
+  mysql_get_option(mysql, MYSQL_OPT_RECONNECT, &reconnect);
+  return reconnect;
+#endif
+}
 
 static void client_query()
 {
@@ -447,7 +461,7 @@ static void test_prepare_simple()
   strmov(query, "SHOW SLAVE STATUS");
   stmt= mysql_simple_prepare(mysql, query);
   check_stmt(stmt);
-  DIE_UNLESS(mysql_stmt_field_count(stmt) == 47);
+  DIE_UNLESS(mysql_stmt_field_count(stmt) == 50);
   mysql_stmt_close(stmt);
 
   /* show master status */
@@ -3123,7 +3137,7 @@ static void test_long_data_str1()
   int        rc, i;
   char       data[255];
   long       length;
-  ulong      max_blob_length, blob_length, length1;
+  ulong      max_blob_length, blob_length= 0, length1;
   my_bool    true_value;
   MYSQL_RES  *result;
   MYSQL_BIND my_bind[2];
@@ -4812,7 +4826,7 @@ static void test_stmt_close()
     myerror("connection failed");
     exit(1);
   }
-  lmysql->reconnect= 1;
+  mysql_options(lmysql, MYSQL_OPT_RECONNECT, &my_true);
   if (!opt_silent)
     fprintf(stdout, "OK");
 
@@ -5496,7 +5510,7 @@ DROP TABLE IF EXISTS test_multi_tab";
     fprintf(stdout, "\n connection failed(%s)", mysql_error(mysql_local));
     exit(1);
   }
-  mysql_local->reconnect= 1;
+  mysql_options(mysql_local, MYSQL_OPT_RECONNECT, &my_true);
 
   rc= mysql_query(mysql_local, query);
   myquery(rc);
@@ -5620,7 +5634,7 @@ static void test_prepare_multi_statements()
     fprintf(stderr, "\n connection failed(%s)", mysql_error(mysql_local));
     exit(1);
   }
-  mysql_local->reconnect= 1;
+  mysql_options(mysql_local, MYSQL_OPT_RECONNECT, &my_true);
   strmov(query, "select 1; select 'another value'");
   stmt= mysql_simple_prepare(mysql_local, query);
   check_stmt_r(stmt);
@@ -6338,10 +6352,10 @@ static void test_pure_coverage()
 
   my_bind[0].buffer_type= MYSQL_TYPE_GEOMETRY;
   rc= mysql_stmt_bind_result(stmt, my_bind);
-  check_execute_r(stmt, rc); /* unsupported buffer type */
+  check_execute(stmt, rc); /* MariaDB C/C converts geometry to string */
 
   rc= mysql_stmt_store_result(stmt);
-  DIE_UNLESS(rc);
+  DIE_IF(rc);
 
   rc= mysql_stmt_store_result(stmt);
   DIE_UNLESS(rc); /* Old error must be reset first */
@@ -7225,7 +7239,7 @@ static void test_prepare_grant()
       mysql_close(lmysql);
       exit(1);
     }
-    lmysql->reconnect= 1;
+    mysql_options(lmysql, MYSQL_OPT_RECONNECT, &my_true);
     if (!opt_silent)
       fprintf(stdout, "OK");
 
@@ -7538,7 +7552,7 @@ static void test_explain_bug()
   verify_prepare_field(result, 5, "Extra", "EXTRA",
                        mysql_get_server_version(mysql) <= 50000 ?
                        MYSQL_TYPE_STRING : MYSQL_TYPE_VAR_STRING,
-                       0, 0, "information_schema", 27, 0);
+                       0, 0, "information_schema", 30, 0);
 
   mysql_free_result(result);
   mysql_stmt_close(stmt);
@@ -7687,7 +7701,7 @@ static void test_drop_temp()
       mysql_close(lmysql);
       exit(1);
     }
-    lmysql->reconnect= 1;
+    mysql_options(lmysql, MYSQL_OPT_RECONNECT, &my_true);
     if (!opt_silent)
       fprintf(stdout, "OK");
 
@@ -8381,6 +8395,76 @@ static void test_list_fields()
 
   mysql_free_result(result);
   myquery(mysql_query(mysql, "drop table t1"));
+}
+
+
+static void test_list_fields_default()
+{
+  int rc, i;
+  myheader("test_list_fields_default");
+
+  rc= mysql_query(mysql, "DROP TABLE IF EXISTS t1");
+  myquery(rc);
+
+  rc= mysql_query(mysql,
+                  "CREATE TABLE t1 ("
+                  " i1 INT NOT NULL DEFAULT 0,"
+                  " i3 BIGINT UNSIGNED NOT NULL DEFAULT 0xFFFFFFFFFFFFFFFF,"
+                  " s1 VARCHAR(10) CHARACTER SET latin1 NOT NULL DEFAULT 's1def',"
+                  " d1 DECIMAL(31,1) NOT NULL DEFAULT 111111111122222222223333333333.9,"
+                  " t1 DATETIME(6) NOT NULL DEFAULT '2001-01-01 10:20:30.123456',"
+                  " e1 ENUM('a','b') NOT NULL DEFAULT 'a'"
+                  ")");
+  myquery(rc);
+
+  rc= mysql_query(mysql, "DROP VIEW IF EXISTS v1");
+  myquery(rc);
+
+  rc= mysql_query(mysql, "CREATE VIEW v1 AS SELECT * FROM t1");
+  myquery(rc);
+
+  /*
+    Checking that mysql_list_fields() returns the same result
+    for a TABLE and a VIEW on the same table.
+  */
+  for (i= 0; i < 2; i++)
+  {
+    const char *table_name= i == 0 ? "t1" : "v1";
+    MYSQL_RES *result= mysql_list_fields(mysql, table_name, NULL);
+    mytest(result);
+
+    rc= my_process_result_set(result);
+    DIE_UNLESS(rc == 0);
+
+    verify_prepare_field(result, 0, "i1", "i1", MYSQL_TYPE_LONG,
+                         table_name, table_name, current_db,
+                         11, "0");
+
+    verify_prepare_field(result, 1, "i3", "i3", MYSQL_TYPE_LONGLONG,
+                         table_name, table_name, current_db,
+                         20, "18446744073709551615");
+
+    verify_prepare_field(result, 2, "s1", "s1", MYSQL_TYPE_VAR_STRING,
+                         table_name, table_name, current_db,
+                         10, "s1def");
+
+    verify_prepare_field(result, 3, "d1", "d1", MYSQL_TYPE_NEWDECIMAL,
+                         table_name, table_name, current_db,
+                         33, "111111111122222222223333333333.9");
+
+    verify_prepare_field(result, 4, "t1", "t1", MYSQL_TYPE_DATETIME,
+                         table_name, table_name, current_db,
+                         26, "2001-01-01 10:20:30.123456");
+
+    verify_prepare_field(result, 5, "e1", "e1", MYSQL_TYPE_STRING,
+                         table_name, table_name, current_db,
+                         1, "a");
+
+    mysql_free_result(result);
+  }
+
+  myquery(mysql_query(mysql, "DROP VIEW v1"));
+  myquery(mysql_query(mysql, "DROP TABLE t1"));
 }
 
 
@@ -13402,10 +13486,7 @@ static void test_bug9478()
       /* Fill in the fetch packet */
       int4store(buff, stmt->stmt_id);
       buff[4]= 1;                               /* prefetch rows */
-      rc= ((*mysql->methods->advanced_command)(mysql, COM_STMT_FETCH,
-                                               (uchar*) buff,
-                                               sizeof(buff), 0,0,1,NULL) ||
-           (*mysql->methods->read_query_result)(mysql));
+      rc= mysql_stmt_fetch(stmt);
       DIE_UNLESS(rc);
       if (!opt_silent && i == 0)
         printf("Got error (as expected): %s\n", mysql_error(mysql));
@@ -14992,7 +15073,7 @@ static void test_bug15510()
 static void test_opt_reconnect()
 {
   MYSQL *lmysql;
-  my_bool my_true= TRUE;
+
 
   myheader("test_opt_reconnect");
 
@@ -15003,8 +15084,8 @@ static void test_opt_reconnect()
   }
 
   if (!opt_silent)
-    fprintf(stdout, "reconnect before mysql_options: %d\n", lmysql->reconnect);
-  DIE_UNLESS(lmysql->reconnect == 0);
+    fprintf(stdout, "reconnect before mysql_options: %d\n", get_reconnect(lmysql));
+  DIE_UNLESS(get_reconnect(lmysql) == 0);
 
   if (mysql_options(lmysql, MYSQL_OPT_RECONNECT, &my_true))
   {
@@ -15014,8 +15095,8 @@ static void test_opt_reconnect()
 
   /* reconnect should be 1 */
   if (!opt_silent)
-    fprintf(stdout, "reconnect after mysql_options: %d\n", lmysql->reconnect);
-  DIE_UNLESS(lmysql->reconnect == 1);
+    fprintf(stdout, "reconnect after mysql_options: %d\n", get_reconnect(lmysql));
+  DIE_UNLESS(get_reconnect(lmysql) == 1);
 
   if (!(mysql_real_connect(lmysql, opt_host, opt_user,
                            opt_password, current_db, opt_port,
@@ -15028,8 +15109,8 @@ static void test_opt_reconnect()
   /* reconnect should still be 1 */
   if (!opt_silent)
     fprintf(stdout, "reconnect after mysql_real_connect: %d\n",
-	    lmysql->reconnect);
-  DIE_UNLESS(lmysql->reconnect == 1);
+	    get_reconnect(lmysql));
+  DIE_UNLESS(get_reconnect(lmysql) == 1);
 
   mysql_close(lmysql);
 
@@ -15040,8 +15121,8 @@ static void test_opt_reconnect()
   }
 
   if (!opt_silent)
-    fprintf(stdout, "reconnect before mysql_real_connect: %d\n", lmysql->reconnect);
-  DIE_UNLESS(lmysql->reconnect == 0);
+    fprintf(stdout, "reconnect before mysql_real_connect: %d\n", get_reconnect(lmysql));
+  DIE_UNLESS(get_reconnect(lmysql) == 0);
 
   if (!(mysql_real_connect(lmysql, opt_host, opt_user,
                            opt_password, current_db, opt_port,
@@ -15054,8 +15135,8 @@ static void test_opt_reconnect()
   /* reconnect should still be 0 */
   if (!opt_silent)
     fprintf(stdout, "reconnect after mysql_real_connect: %d\n",
-	    lmysql->reconnect);
-  DIE_UNLESS(lmysql->reconnect == 0);
+	    get_reconnect(lmysql));
+  DIE_UNLESS(get_reconnect(lmysql) == 0);
 
   mysql_close(lmysql);
 }
@@ -15390,7 +15471,7 @@ static void test_mysql_insert_id()
 
   myheader("test_mysql_insert_id");
 
-  rc= mysql_query(mysql, "drop table if exists t1");
+  rc= mysql_query(mysql, "drop table if exists t1,t2");
   myquery(rc);
   /* table without auto_increment column */
   rc= mysql_query(mysql, "create table t1 (f1 int, f2 varchar(255), key(f1))");
@@ -16232,7 +16313,6 @@ static void test_change_user()
   const char *db= "mysqltest_user_test_database";
   int rc;
   MYSQL*       conn;
-
   DBUG_ENTER("test_change_user");
   myheader("test_change_user");
 
@@ -16243,6 +16323,9 @@ static void test_change_user()
 
   sprintf(buff, "create database %s", db);
   rc= mysql_query(mysql, buff);
+  myquery(rc);
+
+  rc= mysql_query(mysql, "SET SQL_MODE=''");
   myquery(rc);
 
   sprintf(buff,
@@ -17486,7 +17569,6 @@ static void test_wl4166_2()
   mysql_stmt_close(stmt);
   rc= mysql_query(mysql, "drop table t1");
   myquery(rc);
-
 }
 
 
@@ -17987,7 +18069,8 @@ static void test_bug43560(void)
   strncpy(buffer, values[2], BUFSIZE);
   length= strlen(buffer);
   rc= mysql_stmt_execute(stmt);
-  DIE_UNLESS(rc && mysql_stmt_errno(stmt) == CR_SERVER_LOST);
+  DIE_UNLESS(rc && (mysql_stmt_errno(stmt) == CR_SERVER_LOST ||
+                    mysql_stmt_errno(stmt) == CR_SERVER_GONE_ERROR));
 
   opt_drop_db= 0;
   client_disconnect(conn);
@@ -18753,8 +18836,11 @@ static void test_progress_reporting()
 
   myheader("test_progress_reporting");
 
-  conn= client_connect(CLIENT_PROGRESS, MYSQL_PROTOCOL_TCP, 0);
-  DIE_UNLESS(conn->client_flag & CLIENT_PROGRESS);
+
+  conn= client_connect(CLIENT_PROGRESS_OBSOLETE, MYSQL_PROTOCOL_TCP, 0);
+  if (!(conn->server_capabilities & CLIENT_PROGRESS_OBSOLETE))
+    return;
+  DIE_UNLESS(conn->client_flag & CLIENT_PROGRESS_OBSOLETE);
 
   mysql_options(conn, MYSQL_PROGRESS_CALLBACK, (void*) report_progress);
   rc= mysql_query(conn, "set @save=@@global.progress_report_time");
@@ -19487,6 +19573,33 @@ static void test_big_packet()
 }
 
 
+static void test_prepare_analyze()
+{
+  MYSQL_STMT *stmt;
+  const char *query= "ANALYZE SELECT 1";
+  int rc;
+  myheader("test_prepare_analyze");
+
+  stmt= mysql_stmt_init(mysql);
+  check_stmt(stmt);
+  rc= mysql_stmt_prepare(stmt, query, strlen(query));
+  check_execute(stmt, rc);
+
+  rc= mysql_stmt_execute(stmt);
+  check_execute(stmt, rc);
+
+  rc= mysql_stmt_store_result(stmt);
+  check_execute(stmt, rc);
+
+  while (!(rc= mysql_stmt_fetch(stmt)))
+    ;
+
+  DIE_UNLESS(rc == MYSQL_NO_DATA);
+
+  rc= mysql_stmt_close(stmt);
+  check_execute(stmt, rc);
+}
+
 static struct my_tests_st my_tests[]= {
   { "disable_query_logs", disable_query_logs },
   { "test_view_sp_list_fields", test_view_sp_list_fields },
@@ -19585,6 +19698,7 @@ static struct my_tests_st my_tests[]= {
   { "test_fetch_column", test_fetch_column },
   { "test_mem_overun", test_mem_overun },
   { "test_list_fields", test_list_fields },
+  { "test_list_fields_default", test_list_fields_default },
   { "test_free_result", test_free_result },
   { "test_free_store_result", test_free_store_result },
   { "test_sqlmode", test_sqlmode },
@@ -19763,6 +19877,7 @@ static struct my_tests_st my_tests[]= {
 #endif
   { "test_compressed_protocol", test_compressed_protocol },
   { "test_big_packet", test_big_packet },
+  { "test_prepare_analyze", test_prepare_analyze },
   { 0, 0 }
 };
 

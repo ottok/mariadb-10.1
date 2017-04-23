@@ -695,6 +695,7 @@ create_log_files(
 		FIL_LOG,
 		NULL /* no encryption yet */,
 		true /* this is create */);
+
 	ut_a(fil_validate());
 
 	logfile0 = fil_node_create(
@@ -1187,13 +1188,14 @@ check_first_page:
 
 		if (i == 0) {
 			if (!crypt_data) {
-				crypt_data = fil_space_create_crypt_data(FIL_SPACE_ENCRYPTION_DEFAULT, FIL_DEFAULT_ENCRYPTION_KEY);
+				crypt_data = fil_space_create_crypt_data(FIL_ENCRYPTION_DEFAULT,
+					FIL_DEFAULT_ENCRYPTION_KEY);
 			}
 
 			flags = FSP_FLAGS_PAGE_SSIZE();
 
 			fil_space_create(name, 0, flags, FIL_TABLESPACE,
-					crypt_data, (*create_new_db) == true);
+				crypt_data, (*create_new_db) == true);
 		}
 
 		ut_a(fil_validate());
@@ -1832,32 +1834,7 @@ innobase_start_or_create_for_mysql(void)
 	srv_startup_is_before_trx_rollback_phase = TRUE;
 
 #ifdef __WIN__
-	switch (os_get_os_version()) {
-	case OS_WIN95:
-	case OS_WIN31:
-	case OS_WINNT:
-		srv_use_native_conditions = FALSE;
-		/* On Win 95, 98, ME, Win32 subsystem for Windows 3.1,
-		and NT use simulated aio. In NT Windows provides async i/o,
-		but when run in conjunction with InnoDB Hot Backup, it seemed
-		to corrupt the data files. */
-
-		srv_use_native_aio = FALSE;
-		break;
-
-	case OS_WIN2000:
-	case OS_WINXP:
-		/* On 2000 and XP, async IO is available, but no condition variables. */
-		srv_use_native_aio = TRUE;
-		srv_use_native_conditions = FALSE;
- 		break;
-
-	default:
-		/* Vista and later have both async IO and condition variables */
-		srv_use_native_aio = TRUE;
-		srv_use_native_conditions = TRUE;
-		break;
-	}
+  srv_use_native_aio = TRUE;
 
 #elif defined(LINUX_NATIVE_AIO)
 
@@ -1959,13 +1936,7 @@ innobase_start_or_create_for_mysql(void)
 
 	srv_boot();
 
-	if (ut_crc32_sse2_enabled) {
-		ib_logf(IB_LOG_LEVEL_INFO, "Using SSE crc32 instructions");
-	} else if (ut_crc32_power8_enabled) {
-		ib_logf(IB_LOG_LEVEL_INFO, "Using POWER8 crc32 instructions");
-	} else {
-		ib_logf(IB_LOG_LEVEL_INFO, "Using generic crc32 instructions");
-	}
+	ib_logf(IB_LOG_LEVEL_INFO, ut_crc32_implementation);
 
 	if (!srv_read_only_mode) {
 

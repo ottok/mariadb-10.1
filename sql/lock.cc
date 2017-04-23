@@ -90,6 +90,7 @@ extern HASH open_cache;
 static int lock_external(THD *thd, TABLE **table,uint count);
 static int unlock_external(THD *thd, TABLE **table,uint count);
 
+
 /* Map the return value of thr_lock to an error from errmsg.txt */
 static int thr_lock_errno_to_mysql[]=
 { 0, ER_LOCK_ABORTED, ER_LOCK_WAIT_TIMEOUT, ER_LOCK_DEADLOCK };
@@ -163,18 +164,12 @@ lock_tables_check(THD *thd, TABLE **tables, uint count, uint flags)
       write we must own metadata lock of MDL_SHARED_WRITE or stronger
       type. For table to be locked for read we must own metadata lock
       of MDL_SHARED_READ or stronger type).
-      The only exception are HANDLER statements which are allowed to
-      lock table for read while having only MDL_SHARED lock on it.
     */
     DBUG_ASSERT(t->s->tmp_table ||
                 thd->mdl_context.is_lock_owner(MDL_key::TABLE,
                                  t->s->db.str, t->s->table_name.str,
                                  t->reginfo.lock_type >= TL_WRITE_ALLOW_WRITE ?
-                                 MDL_SHARED_WRITE : MDL_SHARED_READ) ||
-                (t->open_by_handler &&
-                 thd->mdl_context.is_lock_owner(MDL_key::TABLE,
-                                  t->s->db.str, t->s->table_name.str,
-                                  MDL_SHARED)));
+                                 MDL_SHARED_WRITE : MDL_SHARED_READ));
 
     /*
       Prevent modifications to base tables if READ_ONLY is activated.
@@ -244,6 +239,39 @@ void reset_lock_data(MYSQL_LOCK *sql_lock, bool unlock)
 
 
 /**
+  Scan array of tables for access types; update transaction tracker
+  accordingly.
+
+   @param thd          The current thread.
+   @param tables       An array of pointers to the tables to lock.
+   @param count        The number of tables to lock.
+*/
+
+#ifndef EMBEDDED_LIBRARY
+static void track_table_access(THD *thd, TABLE **tables, size_t count)
+{
+  if (thd->variables.session_track_transaction_info > TX_TRACK_NONE)
+  {
+    Transaction_state_tracker *tst= (Transaction_state_tracker *)
+      thd->session_tracker.get_tracker(TRANSACTION_INFO_TRACKER);
+
+    while (count--)
+    {
+      TABLE *t= tables[count];
+
+      if (t)
+        tst->add_trx_state(thd,  t->reginfo.lock_type,
+                           t->file->has_transaction_manager());
+    }
+  }
+}
+#else
+#define track_table_access(A,B,C)
+#endif //EMBEDDED_LIBRARY
+
+
+
+/**
    Lock tables.
 
    @param thd          The current thread.
@@ -280,6 +308,9 @@ MYSQL_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count, uint flags)
       my_free(sql_lock);
     sql_lock= 0;
   }
+
+  track_table_access(thd, tables, count);
+
   DBUG_RETURN(sql_lock);
 }
 
@@ -374,7 +405,6 @@ static int lock_external(THD *thd, TABLE **tables, uint count)
     }
     else
     {
-      (*tables)->db_stat &= ~ HA_BLOCK_LOCK;
       (*tables)->current_lock= lock_type;
     }
   }
@@ -409,10 +439,10 @@ void mysql_unlock_tables(THD *thd, MYSQL_LOCK *sql_lock, bool free_lock)
   This will work even if get_lock_data fails (next unlock will free all)
 */
 
-void mysql_unlock_some_tables(THD *thd, TABLE **table,uint count)
+void mysql_unlock_some_tables(THD *thd, TABLE **table,uint count, uint flag)
 {
   MYSQL_LOCK *sql_lock=
-    get_lock_data(thd, table, count, GET_LOCK_UNLOCK | GET_LOCK_ON_THD);
+    get_lock_data(thd, table, count, GET_LOCK_UNLOCK | GET_LOCK_ON_THD | flag);
   if (sql_lock)
     mysql_unlock_tables(thd, sql_lock, 0);
 }
@@ -509,7 +539,7 @@ void mysql_lock_remove(THD *thd, MYSQL_LOCK *locked,TABLE *table)
         DBUG_ASSERT(table->lock_position == i);
 
         /* Unlock the table. */
-        mysql_unlock_some_tables(thd, &table, /* table count */ 1);
+        mysql_unlock_some_tables(thd, &table, /* table count */ 1, 0);
 
         /* Decrement table_count in advance, making below expressions easier */
         old_tables= --locked->table_count;
@@ -703,6 +733,7 @@ static int unlock_external(THD *thd, TABLE **table,uint count)
   @param flags		    One of:
            - GET_LOCK_UNLOCK      : If we should send TL_IGNORE to store lock
            - GET_LOCK_STORE_LOCKS : Store lock info in TABLE
+           - GET_LOCK_SKIP_SEQUENCES : Ignore sequences (for temporary unlock)
 */
 
 MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count, uint flags)
@@ -720,7 +751,8 @@ MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count, uint flags)
     TABLE *t= table_ptr[i];
     
     if (t->s->tmp_table != NON_TRANSACTIONAL_TMP_TABLE && 
-        t->s->tmp_table != INTERNAL_TMP_TABLE)
+        t->s->tmp_table != INTERNAL_TMP_TABLE &&
+        (!(flags & GET_LOCK_SKIP_SEQUENCES) || t->s->sequence == 0))
     {
       lock_count+= t->file->lock_count();
       table_count++;
@@ -751,7 +783,8 @@ MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count, uint flags)
     THR_LOCK_DATA **locks_start;
     table= table_ptr[i];
     if (table->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE ||
-        table->s->tmp_table == INTERNAL_TMP_TABLE) 
+        table->s->tmp_table == INTERNAL_TMP_TABLE ||
+        ((flags & GET_LOCK_SKIP_SEQUENCES) && table->s->sequence))
       continue;
     lock_type= table->reginfo.lock_type;
     DBUG_ASSERT(lock_type != TL_WRITE_DEFAULT && lock_type != TL_READ_DEFAULT);

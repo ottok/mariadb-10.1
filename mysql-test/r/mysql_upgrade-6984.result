@@ -56,6 +56,7 @@ performance_schema
 test
 Phase 7/7: Running 'FLUSH PRIVILEGES'
 OK
+connect con1,localhost,root,foo,,,;
 update mysql.user set password='' where user='root';
 flush privileges;
 set global event_scheduler=OFF;

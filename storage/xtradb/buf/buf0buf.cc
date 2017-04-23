@@ -692,7 +692,7 @@ buf_page_is_corrupted(
 	ulint		checksum_field2;
 	ulint 		space_id = mach_read_from_4(
 		read_buf + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
-	ulint page_type = mach_read_from_4(
+	ulint page_type = mach_read_from_2(
 		read_buf + FIL_PAGE_TYPE);
 
 	/* We can trust page type if page compression is set on tablespace
@@ -1269,10 +1269,11 @@ buf_chunk_init(
 
 #ifdef HAVE_LIBNUMA
 	if (srv_numa_interleave) {
+		struct bitmask *numa_mems_allowed = numa_get_mems_allowed();
 		int	st = mbind(chunk->mem, chunk->mem_size,
 				   MPOL_INTERLEAVE,
-				   numa_all_nodes_ptr->maskp,
-				   numa_all_nodes_ptr->size,
+				   numa_mems_allowed->maskp,
+				   numa_mems_allowed->size,
 				   MPOL_MF_MOVE);
 		if (st != 0) {
 			ib_logf(IB_LOG_LEVEL_WARN,
@@ -1679,11 +1680,13 @@ buf_pool_init(
 
 #ifdef HAVE_LIBNUMA
 	if (srv_numa_interleave) {
+		struct bitmask *numa_mems_allowed = numa_get_mems_allowed();
+
 		ib_logf(IB_LOG_LEVEL_INFO,
 			"Setting NUMA memory policy to MPOL_INTERLEAVE");
 		if (set_mempolicy(MPOL_INTERLEAVE,
-				  numa_all_nodes_ptr->maskp,
-				  numa_all_nodes_ptr->size) != 0) {
+				  numa_mems_allowed->maskp,
+				  numa_mems_allowed->size) != 0) {
 			ib_logf(IB_LOG_LEVEL_WARN,
 				"Failed to set NUMA memory policy to"
 				" MPOL_INTERLEAVE (error: %s).",
@@ -4571,11 +4574,14 @@ buf_page_check_corrupt(
 	byte* dst_frame = (zip_size) ? bpage->zip.data :
 		((buf_block_t*) bpage)->frame;
 	ulint space_id = bpage->space;
-	fil_space_t* space = fil_space_found_by_id(space_id);
-	fil_space_crypt_t* crypt_data = space->crypt_data;
+	fil_space_t* space = fil_space_acquire_silent(space_id);
 	bool still_encrypted = false;
 	bool corrupted = false;
 	ulint page_type = mach_read_from_2(dst_frame + FIL_PAGE_TYPE);
+	fil_space_crypt_t* crypt_data = NULL;
+
+	ut_ad(space);
+	crypt_data = space->crypt_data;
 
 	/* In buf_decrypt_after_read we have either decrypted the page if
 	page post encryption checksum matches and used key_id is found
@@ -4605,7 +4611,7 @@ buf_page_check_corrupt(
 		ib_logf(IB_LOG_LEVEL_ERROR,
 			"%s: Block in space_id " ULINTPF " in file %s corrupted.",
 			page_type ==  FIL_PAGE_PAGE_COMPRESSED_ENCRYPTED ? "Maybe corruption" : "Corruption",
-			space_id, space->name ? space->name : "NULL");
+			space_id, (space && space->name) ? space->name : "NULL");
 		ib_logf(IB_LOG_LEVEL_ERROR,
 			"Based on page type %s (" ULINTPF ")",
 			fil_get_page_type_name(page_type), page_type);
@@ -4615,7 +4621,7 @@ buf_page_check_corrupt(
 
 		ib_logf(IB_LOG_LEVEL_ERROR,
 			"Block in space_id " ULINTPF " in file %s encrypted.",
-			space_id, space->name ? space->name : "NULL");
+			space_id, (space && space->name) ? space->name : "NULL");
 		ib_logf(IB_LOG_LEVEL_ERROR,
 				"However key management plugin or used key_version %u is not found or"
 				" used encryption algorithm or method does not match.",
@@ -4625,6 +4631,10 @@ buf_page_check_corrupt(
 				"Marking tablespace as missing. You may drop this table or"
 				" install correct key management plugin and key file.");
 		}
+	}
+
+	if (space) {
+		fil_space_release(space);
 	}
 
 	return corrupted;
@@ -6248,13 +6258,6 @@ buf_page_encrypt_before_write(
 	byte*		src_frame,
 	ulint		space_id)
 {
-	fil_space_crypt_t* crypt_data = fil_space_get_crypt_data(space_id);
-	ulint zip_size = buf_page_get_zip_size(bpage);
-	ulint page_size = (zip_size) ? zip_size : UNIV_PAGE_SIZE;
-	buf_pool_t* buf_pool = buf_pool_from_bpage(bpage);
-	bool page_compressed = fil_space_is_page_compressed(bpage->space);
-	bool encrypted = true;
-
 	bpage->real_size = UNIV_PAGE_SIZE;
 
 	fil_page_type_validate(src_frame);
@@ -6271,7 +6274,20 @@ buf_page_encrypt_before_write(
 		return src_frame;
 	}
 
-	if (crypt_data != NULL && crypt_data->not_encrypted()) {
+	fil_space_t* space = fil_space_acquire_silent(space_id);
+
+	/* Tablespace must exist during write operation */
+	if (!space) {
+		/* This could be true on discard if we have injected a error
+		case e.g. in innodb.innodb-wl5522-debug-zip so that space
+		is already marked as stop_new_ops = true. */
+		return src_frame;
+	}
+
+	fil_space_crypt_t* crypt_data = space->crypt_data;
+	bool encrypted = true;
+
+	if (space->crypt_data != NULL && space->crypt_data->not_encrypted()) {
 		/* Encryption is disabled */
 		encrypted = false;
 	}
@@ -6288,11 +6304,17 @@ buf_page_encrypt_before_write(
 		encrypted = false;
 	}
 
+	bool page_compressed = fil_space_is_page_compressed(bpage->space);
+
 	if (!encrypted && !page_compressed) {
 		/* No need to encrypt or page compress the page */
+		fil_space_release(space);
 		return src_frame;
 	}
 
+	ulint zip_size = buf_page_get_zip_size(bpage);
+	ulint page_size = (zip_size) ? zip_size : UNIV_PAGE_SIZE;
+	buf_pool_t* buf_pool = buf_pool_from_bpage(bpage);
 	/* Find free slot from temporary memory array */
 	buf_tmp_buffer_t* slot = buf_pool_reserve_tmp_slot(buf_pool, page_compressed);
 	slot->out_buf = NULL;
@@ -6302,11 +6324,10 @@ buf_page_encrypt_before_write(
 
 	if (!page_compressed) {
 		/* Encrypt page content */
-		byte* tmp = fil_space_encrypt(bpage->space,
+		byte* tmp = fil_space_encrypt(space,
 					      bpage->offset,
 					      bpage->newest_modification,
 					      src_frame,
-					      zip_size,
 					      dst_frame);
 
 		ulint key_version = mach_read_from_4(dst_frame + FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION);
@@ -6344,11 +6365,10 @@ buf_page_encrypt_before_write(
 		if(encrypted) {
 
 			/* And then we encrypt the page content */
-			tmp = fil_space_encrypt(bpage->space,
+			tmp = fil_space_encrypt(space,
 						bpage->offset,
 						bpage->newest_modification,
 						tmp,
-						zip_size,
 						dst_frame);
 		}
 
@@ -6359,6 +6379,7 @@ buf_page_encrypt_before_write(
 	fil_page_type_validate(dst_frame);
 #endif
 
+	fil_space_release(space);
 	// return dst_frame which will be written
 	return dst_frame;
 }
@@ -6384,22 +6405,21 @@ buf_page_decrypt_after_read(
 	bool page_compressed_encrypted = fil_page_is_compressed_encrypted(dst_frame);
 	buf_pool_t* buf_pool = buf_pool_from_bpage(bpage);
 	bool success = true;
-	ulint 		space_id = mach_read_from_4(
-		dst_frame + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
-	fil_space_crypt_t* crypt_data = fil_space_get_crypt_data(space_id);
-
-	/* Page is encrypted if encryption information is found from
-	tablespace and page contains used key_version. This is true
-	also for pages first compressed and then encrypted. */
-	if (!crypt_data) {
-		key_version = 0;
-	}
 
 	bpage->key_version = key_version;
 
 	if (bpage->offset == 0) {
 		/* File header pages are not encrypted/compressed */
 		return (true);
+	}
+
+	fil_space_t* space = fil_space_acquire(bpage->space, true);
+
+	/* Page is encrypted if encryption information is found from
+	tablespace and page contains used key_version. This is true
+	also for pages first compressed and then encrypted. */
+	if (!space || !space->crypt_data) {
+		key_version = 0;
 	}
 
 	if (page_compressed) {
@@ -6443,15 +6463,15 @@ buf_page_decrypt_after_read(
 #endif
 
 			/* decrypt using crypt_buf to dst_frame */
-			byte* res = fil_space_decrypt(bpage->space,
+			byte* res = fil_space_decrypt(space,
 						slot->crypt_buf,
-						size,
 						dst_frame,
 						&bpage->encrypted);
 
 			if (!res) {
 				success = false;
 			}
+
 #ifdef UNIV_DEBUG
 			fil_page_type_validate(dst_frame);
 #endif
@@ -6482,5 +6502,8 @@ buf_page_decrypt_after_read(
 		}
 	}
 
+	if (space != NULL) {
+		fil_space_release(space);
+	}
 	return (success);
 }

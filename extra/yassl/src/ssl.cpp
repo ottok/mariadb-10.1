@@ -1514,7 +1514,8 @@ int SSLeay_add_ssl_algorithms()  // compatibility only
 
 void ERR_remove_state(unsigned long)
 {
-    GetErrors().Remove();
+    if (HasErrors())
+       GetErrors().Remove();
 }
 
 

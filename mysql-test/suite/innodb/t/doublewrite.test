@@ -11,11 +11,10 @@
 # Slow shutdown and restart to make sure ibuf merge is finished
 SET GLOBAL innodb_fast_shutdown = 0;
 --disable_query_log
-call mtr.add_suppression("space header page consists of zero bytes.*test.t1");
-call mtr.add_suppression("checksum mismatch in tablespace.*test.t1");
-call mtr.add_suppression("Current page size .* !=  page size on page");
-call mtr.add_suppression("innodb-page-size mismatch in tablespace.*test.t1");
-call mtr.add_suppression("Trying to recover page.*from the doublewrite buffer");
+call mtr.add_suppression("Header page consists of zero bytes");
+call mtr.add_suppression("Checksum mismatch in datafile");
+call mtr.add_suppression("but the innodb_page_size start-up parameter is");
+call mtr.add_suppression("adjusting FSP_SPACE_FLAGS");
 --enable_query_log
 --source include/restart_mysqld.inc
 

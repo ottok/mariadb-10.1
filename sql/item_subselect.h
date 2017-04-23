@@ -95,6 +95,9 @@ public:
   subselect_engine *engine;
   /* unit of subquery */
   st_select_lex_unit *unit;
+  /* Cached buffers used when calling filesort in sub queries */
+  Filesort_buffer filesort_buffer;
+  LEX_STRING sortbuffer;
   /* A reference from inside subquery predicate to somewhere outside of it */
   class Ref_to_outside : public Sql_alloc
   {
@@ -123,7 +126,14 @@ public:
   bool changed;
 
   /* TRUE <=> The underlying SELECT is correlated w.r.t some ancestor select */
-  bool is_correlated; 
+  bool is_correlated;
+
+  /* 
+    TRUE <=> the subquery contains a recursive reference in the FROM list
+    of one of its selects. In this case some of subquery optimization
+    strategies cannot be applied for the subquery;
+  */
+  bool with_recursive_reference; 
 
   enum subs_type {UNKNOWN_SUBS, SINGLEROW_SUBS,
 		  EXISTS_SUBS, IN_SUBS, ALL_SUBS, ANY_SUBS};
@@ -212,14 +222,14 @@ public:
   */
   virtual void reset_value_registration() {}
   enum_parsing_place place() { return parsing_place; }
-  bool walk(Item_processor processor, bool walk_subquery, uchar *arg);
-  bool mark_as_eliminated_processor(uchar *arg);
-  bool eliminate_subselect_processor(uchar *arg);
-  bool set_fake_select_as_master_processor(uchar *arg);
-  bool enumerate_field_refs_processor(uchar *arg);
-  bool check_vcol_func_processor(uchar *int_arg) 
+  bool walk(Item_processor processor, bool walk_subquery, void *arg);
+  bool mark_as_eliminated_processor(void *arg);
+  bool eliminate_subselect_processor(void *arg);
+  bool set_fake_select_as_master_processor(void *arg);
+  bool enumerate_field_refs_processor(void *arg);
+  bool check_vcol_func_processor(void *arg) 
   {
-    return trace_unsupported_by_check_vcol_func_processor("subselect");
+    return mark_unsupported_function("select ...", arg, VCOL_IMPOSSIBLE);
   }
   /**
     Callback to test if an IN predicate is expensive.
@@ -230,7 +240,7 @@ public:
     @retval TRUE  if the predicate is expensive
     @retval FALSE otherwise
   */
-  bool is_expensive_processor(uchar *arg) { return is_expensive(); }
+  bool is_expensive_processor(void *arg) { return is_expensive(); }
 
   /**
     Get the SELECT_LEX structure associated with this Item.
@@ -239,14 +249,17 @@ public:
   st_select_lex* get_select_lex();
   virtual bool expr_cache_is_needed(THD *);
   virtual void get_cache_parameters(List<Item> &parameters);
-  virtual bool is_subquery_processor (uchar *opt_arg) { return 1; }
-  bool exists2in_processor(uchar *opt_arg) { return 0; }
-  bool limit_index_condition_pushdown_processor(uchar *opt_arg) 
+  virtual bool is_subquery_processor (void *opt_arg) { return 1; }
+  bool exists2in_processor(void *opt_arg) { return 0; }
+  bool limit_index_condition_pushdown_processor(void *opt_arg) 
   {
     return TRUE;
   }
 
   void init_expr_cache_tracker(THD *thd);
+  
+  Item* build_clone(THD *thd, MEM_ROOT *mem_root) { return 0; }
+  Item* get_copy(THD *thd, MEM_ROOT *mem_root) { return 0; }
 
 
   friend class select_result_interceptor;
@@ -288,6 +301,7 @@ public:
   enum Item_result result_type() const;
   enum Item_result cmp_type() const;
   enum_field_types field_type() const;
+  const Type_handler *type_handler() const;
   void fix_length_and_dec();
 
   uint cols();
@@ -378,6 +392,7 @@ public:
   void no_rows_in_result();
 
   enum Item_result result_type() const { return INT_RESULT;}
+  enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
   longlong val_int();
   double val_real();
   String *val_str(String*);
@@ -385,11 +400,11 @@ public:
   bool val_bool();
   bool fix_fields(THD *thd, Item **ref);
   void fix_length_and_dec();
-  virtual void print(String *str, enum_query_type query_type);
+  void print(String *str, enum_query_type query_type);
   bool select_transformer(JOIN *join);
   void top_level_item() { abort_on_null=1; }
   inline bool is_top_level_item() { return abort_on_null; }
-  bool exists2in_processor(uchar *opt_arg);
+  bool exists2in_processor(void *opt_arg);
 
   Item* expr_cache_insert_transformer(THD *thd, uchar *unused);
 
@@ -602,7 +617,8 @@ public:
   void update_null_value () { (void) val_bool(); }
   bool val_bool();
   bool test_limit(st_select_lex_unit *unit);
-  virtual void print(String *str, enum_query_type query_type);
+  void print(String *str, enum_query_type query_type);
+  enum precedence precedence() const { return CMP_PRECEDENCE; }
   bool fix_fields(THD *thd, Item **ref);
   void fix_length_and_dec();
   void fix_after_pullout(st_select_lex *new_parent, Item **ref);
@@ -704,7 +720,7 @@ public:
     in_strategy= (SUBS_STRATEGY_CHOSEN | strategy);
     DBUG_VOID_RETURN;
   }
-  bool exists2in_processor(uchar *opt_arg __attribute__((unused)))
+  bool exists2in_processor(void *opt_arg __attribute__((unused)))
   {
     return 0;
   };
@@ -735,22 +751,20 @@ public:
   subs_type substype() { return all?ALL_SUBS:ANY_SUBS; }
   bool select_transformer(JOIN *join);
   void create_comp_func(bool invert) { func= func_creator(invert); }
-  virtual void print(String *str, enum_query_type query_type);
+  void print(String *str, enum_query_type query_type);
   bool is_maxmin_applicable(JOIN *join);
   bool transform_into_max_min(JOIN *join);
   void no_rows_in_result();
 };
 
 
-class subselect_engine: public Sql_alloc
+class subselect_engine: public Sql_alloc,
+                        public Type_handler_hybrid_field_type
 {
 protected:
   select_result_interceptor *result; /* results storage class */
   THD *thd; /* pointer to current THD */
   Item_subselect *item; /* item, that use this engine */
-  enum Item_result res_type; /* type of results */
-  enum Item_result cmp_type; /* how to compare the results */
-  enum_field_types res_field_type; /* column type of the results */
   bool maybe_null; /* may be null (first item in select) */
 public:
 
@@ -761,12 +775,11 @@ public:
 
   subselect_engine(Item_subselect *si,
                    select_result_interceptor *res):
+    Type_handler_hybrid_field_type(&type_handler_varchar),
     thd(NULL)
   {
     result= res;
     item= si;
-    cmp_type= res_type= STRING_RESULT;
-    res_field_type= MYSQL_TYPE_VAR_STRING;
     maybe_null= 0;
   }
   virtual ~subselect_engine() {}; // to satisfy compiler
@@ -803,9 +816,6 @@ public:
   virtual int exec()= 0;
   virtual uint cols()= 0; /* return number of columns in select */
   virtual uint8 uncacheable()= 0; /* query is uncacheable */
-  enum Item_result type() { return res_type; }
-  enum Item_result cmptype() { return cmp_type; }
-  enum_field_types field_type() { return res_field_type; }
   virtual void exclude()= 0;
   virtual bool may_be_null() { return maybe_null; };
   virtual table_map upper_select_const_tables()= 0;
@@ -844,7 +854,7 @@ public:
   uint8 uncacheable();
   void exclude();
   table_map upper_select_const_tables();
-  virtual void print (String *str, enum_query_type query_type);
+  void print (String *str, enum_query_type query_type);
   bool change_result(Item_subselect *si,
                      select_result_interceptor *result,
                      bool temp);
@@ -878,7 +888,7 @@ public:
   uint8 uncacheable();
   void exclude();
   table_map upper_select_const_tables();
-  virtual void print (String *str, enum_query_type query_type);
+  void print (String *str, enum_query_type query_type);
   bool change_result(Item_subselect *si,
                      select_result_interceptor *result,
                      bool temp= FALSE);
@@ -935,7 +945,7 @@ public:
   uint8 uncacheable() { return UNCACHEABLE_DEPENDENT_INJECTED; }
   void exclude();
   table_map upper_select_const_tables() { return 0; }
-  virtual void print (String *str, enum_query_type query_type);
+  void print (String *str, enum_query_type query_type);
   bool change_result(Item_subselect *si,
                      select_result_interceptor *result,
                      bool temp= FALSE);
@@ -993,7 +1003,7 @@ public:
      having(having_arg)
   {}
   int exec();
-  virtual void print (String *str, enum_query_type query_type);
+  void print (String *str, enum_query_type query_type);
   virtual enum_engine_type engine_type() { return INDEXSUBQUERY_ENGINE; }
 };
 
@@ -1068,11 +1078,8 @@ public:
   void cleanup();
   int prepare(THD *);
   int exec();
-  virtual void print(String *str, enum_query_type query_type);
-  uint cols()
-  {
-    return materialize_engine->cols();
-  }
+  void print(String *str, enum_query_type query_type);
+  uint cols() { return materialize_engine->cols(); }
   uint8 uncacheable() { return materialize_engine->uncacheable(); }
   table_map upper_select_const_tables() { return 0; }
   bool no_rows() { return !tmp_table->file->stats.records; }
@@ -1231,10 +1238,10 @@ public:
 
   uint get_column_count() { return key_column_count; }
   uint get_keyid() { return keyid; }
-  uint get_field_idx(uint i)
+  Field *get_field(uint i)
   {
     DBUG_ASSERT(i < key_column_count);
-    return key_columns[i]->field->field_index;
+    return key_columns[i]->field;
   }
   rownum_t get_min_null_row() { return min_null_row; }
   rownum_t get_max_null_row() { return max_null_row; }
