@@ -14,6 +14,9 @@ MARIADB_SERIES := $(shell echo '$(DEB_VERSION_UPSTREAM)' | sed -e 's/\.[0-9]*$$/
 RELEASE := $(shell lsb_release -r -s) # Use changelog based DEB_DISTRIBUTION instead?
 TMP:=$(CURDIR)/debian/tmp
 
+GENERATED_SOURCES=$(shell find debian/ -name '*@MARIADB_SERIES@*')
+GENERATED_FILES=$(shell echo $(GENERATED_SOURCES) | sed -e 's/@MARIADB_SERIES@/$(MARIADB_SERIES)/g')
+
 CC := $(DEB_HOST_GNU_TYPE)-gcc
 CXX := $(DEB_HOST_GNU_TYPE)-g++
 
@@ -44,7 +47,7 @@ endif
 # Add support for verbose builds
 MAKEFLAGS += VERBOSE=1
 
-override_dh_auto_clean:
+override_dh_auto_clean: generated-files
 	@echo "RULES.$@"
 	dh_testdir
 	dh_testroot
@@ -59,6 +62,7 @@ override_dh_auto_clean:
 	    mv debian/mysql-test-unstable-tests.orig mysql-test/unstable-tests
 
 	debconf-updatepo # Update po-files when clean runs before each build
+	rm -f $(GENERATED_FILES)
 
 override_dh_prep:
         # Don't clean /tmp/ away, it is needed by all binary packages
@@ -152,6 +156,16 @@ get-orig-source:
 %:
 	dh $@ --parallel --with systemd
 
+
+generated-files: $(GENERATED_FILES)
+
+$(GENERATED_FILES): $(GENERATED_SOURCES)
+	for f in $(GENERATED_SOURCES); do \
+	  sed -e 's/@MARIADB_SERIES@/$(MARIADB_SERIES)/g' \
+	    < $$f \
+	    > $$(echo $$f | sed -e 's/@MARIADB_SERIES@/$(MARIADB_SERIES)/g'); \
+	done
+
 prepared-files: debian/control debian/tests/control debian/po/templates.pot debian/po/POTFILES.in
 	wrap-and-sort -a
 
@@ -167,6 +181,6 @@ debian/po/templates.pot: debian/po/templates.pot.in debian/rules debian/changelo
 debian/po/POTFILES.in: debian/po/POTFILES.in.in debian/rules debian/changelog
 	sed -e "s/@MARIADB_SERIES@/$(MARIADB_SERIES)/g" >$@ <debian/po/templates.pot.in
 
-.PHONY: get-orig-source prepared-files
+.PHONY: get-orig-source prepared-files generated-files $(GENERATED_FILES)
 
 # vim: ts=8
