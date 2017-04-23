@@ -32,6 +32,6 @@
 #define QPLAN_TMP_DISK        (1U << 7)
 #define QPLAN_TMP_TABLE       (1U << 8)
 #define QPLAN_FILESORT_PRIORITY_QUEUE       (1U << 9)
- 
+
 /* ... */
-#define QPLAN_MAX             (1U << 31) /* reserved as placeholder */
+#define QPLAN_MAX             (1UL << 31) /* reserved as placeholder */

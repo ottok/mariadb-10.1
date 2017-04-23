@@ -221,6 +221,11 @@ set by user, however, it will be adjusted to the newer file format if
 a table of such format is created/opened. */
 static char*	innobase_file_format_max		= NULL;
 
+/** Default value of innodb_file_format */
+static const char*	innodb_file_format_default	= "Barracuda";
+/** Default value of innodb_file_format_max */
+static const char*	innodb_file_format_max_default	= "Antelope";
+
 static char*	innobase_file_flush_method		= NULL;
 
 /* This variable can be set in the server configure file, specifying
@@ -953,7 +958,7 @@ static MYSQL_THDVAR_BOOL(table_locks, PLUGIN_VAR_OPCMDARG,
 
 static MYSQL_THDVAR_BOOL(strict_mode, PLUGIN_VAR_OPCMDARG,
   "Use strict mode when evaluating create options.",
-  NULL, NULL, FALSE);
+  NULL, NULL, TRUE);
 
 static MYSQL_THDVAR_BOOL(ft_enable_stopword, PLUGIN_VAR_OPCMDARG,
   "Create FTS index with stopword.",
@@ -1290,6 +1295,9 @@ static SHOW_VAR innodb_status_variables[]= {
   {"encryption_rotation_estimated_iops",
   (char*) &export_vars.innodb_encryption_rotation_estimated_iops,
    SHOW_LONG},
+  {"encryption_key_rotation_list_length",
+  (char*)&export_vars.innodb_key_rotation_list_length,
+   SHOW_LONGLONG},
 
   /* Scrubing feature */
   {"scrub_background_page_reorganizations",
@@ -1976,6 +1984,15 @@ thd_has_edited_nontrans_tables(
 	THD*	thd)	/*!< in: thread handle */
 {
 	return((ibool) thd_non_transactional_update(thd));
+}
+
+/* Return high resolution timestamp for the start of the current query */
+UNIV_INTERN
+unsigned long long
+thd_query_start_micro(
+	const THD*	thd)	/*!< in: thread handle */
+{
+	return thd_start_utime(thd);
 }
 
 /******************************************************************//**
@@ -12383,7 +12400,7 @@ ha_innobase::check_table_options(
 	atomic_writes_t awrites = (atomic_writes_t)options->atomic_writes;
 	fil_encryption_t encrypt = (fil_encryption_t)options->encryption;
 
-	if (encrypt != FIL_SPACE_ENCRYPTION_DEFAULT && !use_tablespace) {
+	if (encrypt != FIL_ENCRYPTION_DEFAULT && !use_tablespace) {
 		push_warning(
 			thd, Sql_condition::WARN_LEVEL_WARN,
 			HA_WRONG_CREATE_OPTION,
@@ -12391,7 +12408,7 @@ ha_innobase::check_table_options(
 		return "ENCRYPTED";
 	}
 
-        if (encrypt == FIL_SPACE_ENCRYPTION_OFF && srv_encrypt_tables == 2) {
+        if (encrypt == FIL_ENCRYPTION_OFF && srv_encrypt_tables == 2) {
 		push_warning(
 			thd, Sql_condition::WARN_LEVEL_WARN,
 			HA_WRONG_CREATE_OPTION,
@@ -12472,8 +12489,8 @@ ha_innobase::check_table_options(
 	}
 
 	/* If encryption is set up make sure that used key_id is found */
-	if (encrypt == FIL_SPACE_ENCRYPTION_ON ||
-            (encrypt == FIL_SPACE_ENCRYPTION_DEFAULT && srv_encrypt_tables)) {
+	if (encrypt == FIL_ENCRYPTION_ON ||
+            (encrypt == FIL_ENCRYPTION_DEFAULT && srv_encrypt_tables)) {
 		if (!encryption_key_id_exists((unsigned int)options->encryption_key_id)) {
 			push_warning_printf(
 				thd, Sql_condition::WARN_LEVEL_WARN,
@@ -12487,7 +12504,7 @@ ha_innobase::check_table_options(
 	}
 
 	/* Ignore nondefault key_id if encryption is set off */
-	if (encrypt == FIL_SPACE_ENCRYPTION_OFF &&
+	if (encrypt == FIL_ENCRYPTION_OFF &&
 		options->encryption_key_id != THDVAR(thd, default_encryption_key_id)) {
 		push_warning_printf(
 			thd, Sql_condition::WARN_LEVEL_WARN,
@@ -12500,7 +12517,7 @@ ha_innobase::check_table_options(
 
 	/* If default encryption is used make sure that used kay is found
 	from key file. */
-	if (encrypt == FIL_SPACE_ENCRYPTION_DEFAULT &&
+	if (encrypt == FIL_ENCRYPTION_DEFAULT &&
 		!srv_encrypt_tables &&
 		options->encryption_key_id != FIL_DEFAULT_ENCRYPTION_KEY) {
 		if (!encryption_key_id_exists((unsigned int)options->encryption_key_id)) {
@@ -13259,6 +13276,17 @@ ha_innobase::defragment_table(
 
 	for (index = dict_table_get_first_index(table); index;
 	     index = dict_table_get_next_index(index)) {
+
+		if (dict_index_is_corrupted(index)) {
+			continue;
+		}
+
+		if (index->page == FIL_NULL) {
+			/* Do not defragment auxiliary tables related
+			to FULLTEXT INDEX. */
+			ut_ad(index->type & DICT_FTS);
+			continue;
+		}
 
 		if (one_index && strcasecmp(index_name, index->name) != 0) {
 			continue;
@@ -20002,7 +20030,7 @@ static MYSQL_SYSVAR_ENUM(checksum_algorithm, srv_checksum_algorithm,
     "magic number when reading; "
   "Files updated when this option is set to crc32 or strict_crc32 will "
   "not be readable by MySQL versions older than 5.6.3",
-  NULL, NULL, SRV_CHECKSUM_ALGORITHM_INNODB,
+  NULL, NULL, SRV_CHECKSUM_ALGORITHM_CRC32,
   &innodb_checksum_algorithm_typelib);
 
 
@@ -20135,7 +20163,7 @@ static MYSQL_SYSVAR_ULONG(purge_threads, srv_n_purge_threads,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
   "Purge threads can be from 1 to 32. Default is 1.",
   NULL, NULL,
-  1,			/* Default setting */
+  4,			/* Default setting */
   1,			/* Minimum value */
   SRV_MAX_N_PURGE_THREADS, 0);		/* Maximum value */
 
@@ -20162,7 +20190,7 @@ static MYSQL_SYSVAR_STR(file_format, innobase_file_format_name,
   PLUGIN_VAR_RQCMDARG,
   "File format to use for new tables in .ibd files.",
   innodb_file_format_name_validate,
-  innodb_file_format_name_update, "Antelope");
+  innodb_file_format_name_update, innodb_file_format_default);
 
 /* "innobase_file_format_check" decides whether we would continue
 booting the server if the file format stamped on the system
@@ -20183,7 +20211,7 @@ static MYSQL_SYSVAR_STR(file_format_max, innobase_file_format_max,
   PLUGIN_VAR_OPCMDARG,
   "The highest file format in the tablespace.",
   innodb_file_format_max_validate,
-  innodb_file_format_max_update, "Antelope");
+  innodb_file_format_max_update, innodb_file_format_max_default);
 
 static MYSQL_SYSVAR_STR(ft_server_stopword_table, innobase_server_stopword_table,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_MEMALLOC,
@@ -20217,7 +20245,7 @@ static MYSQL_SYSVAR_STR(flush_method, innobase_file_flush_method,
 static MYSQL_SYSVAR_BOOL(large_prefix, innobase_large_prefix,
   PLUGIN_VAR_NOCMDARG,
   "Support large index prefix length of REC_VERSION_56_MAX_INDEX_COL_LEN (3072) bytes.",
-  NULL, NULL, FALSE);
+  NULL, NULL, TRUE);
 
 static MYSQL_SYSVAR_BOOL(force_load_corrupted, srv_load_corrupted,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -20388,7 +20416,7 @@ static MYSQL_SYSVAR_BOOL(log_compressed_pages, page_zip_log_pages,
   " the zlib compression algorithm changes."
   " When turned OFF, InnoDB will assume that the zlib"
   " compression algorithm doesn't change.",
-  NULL, NULL, FALSE);
+  NULL, NULL, TRUE);
 
 static MYSQL_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_pool_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -20569,12 +20597,12 @@ static MYSQL_SYSVAR_BOOL(buffer_pool_dump_now, innodb_buffer_pool_dump_now,
 static MYSQL_SYSVAR_BOOL(buffer_pool_dump_at_shutdown, srv_buffer_pool_dump_at_shutdown,
   PLUGIN_VAR_RQCMDARG,
   "Dump the buffer pool into a file named @@innodb_buffer_pool_filename",
-  NULL, NULL, FALSE);
+  NULL, NULL, TRUE);
 
 static MYSQL_SYSVAR_ULONG(buffer_pool_dump_pct, srv_buf_pool_dump_pct,
   PLUGIN_VAR_RQCMDARG,
-  "Dump only the hottest N% of each buffer pool, defaults to 100",
-  NULL, NULL, 100, 1, 100, 0);
+  "Dump only the hottest N% of each buffer pool, defaults to 25",
+  NULL, NULL, 25, 1, 100, 0);
 
 #ifdef UNIV_DEBUG
 static MYSQL_SYSVAR_STR(buffer_pool_evict, srv_buffer_pool_evict,
@@ -20597,7 +20625,7 @@ static MYSQL_SYSVAR_BOOL(buffer_pool_load_abort, innodb_buffer_pool_load_abort,
 static MYSQL_SYSVAR_BOOL(buffer_pool_load_at_startup, srv_buffer_pool_load_at_startup,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Load the buffer pool from a file named @@innodb_buffer_pool_filename",
-  NULL, NULL, FALSE);
+  NULL, NULL, TRUE);
 
 static MYSQL_SYSVAR_BOOL(defragment, srv_defragment,
   PLUGIN_VAR_RQCMDARG,
@@ -21290,10 +21318,11 @@ static MYSQL_SYSVAR_UINT(encryption_rotate_key_age,
 			 PLUGIN_VAR_RQCMDARG,
 			 "Key rotation - re-encrypt in background "
                          "all pages that were encrypted with a key that "
-                         "many (or more) versions behind",
+                         "many (or more) versions behind. Value 0 indicates "
+			 "that key rotation is disabled.",
 			 NULL,
 			 innodb_encryption_rotate_key_age_update,
-			 srv_fil_crypt_rotate_key_age, 0, UINT_MAX32, 0);
+			 1, 0, UINT_MAX32, 0);
 
 static MYSQL_SYSVAR_UINT(encryption_rotation_iops, srv_n_fil_crypt_iops,
 			 PLUGIN_VAR_RQCMDARG,
@@ -22254,8 +22283,9 @@ innodb_encrypt_tables_validate(
 						for update function */
 	struct st_mysql_value*		value)	/*!< in: incoming string */
 {
-	if (check_sysvar_enum(thd, var, save, value))
+	if (check_sysvar_enum(thd, var, save, value)) {
 		return 1;
+	}
 
 	ulong encrypt_tables = *(ulong*)save;
 
@@ -22267,6 +22297,17 @@ innodb_encrypt_tables_validate(
 		                    "encryption plugin is not available");
 		return 1;
 	}
+
+	if (!srv_fil_crypt_rotate_key_age) {
+		const char *msg = (encrypt_tables ? "enable" : "disable");
+		push_warning_printf(thd, Sql_condition::WARN_LEVEL_WARN,
+				    HA_ERR_UNSUPPORTED,
+				    "InnoDB: cannot %s encryption, "
+				    "innodb_encryption_rotate_key_age=0"
+				    " i.e. key rotation disabled", msg);
+		return 1;
+	}
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Monty Program Ab
+/* Copyright (C) 2010, 2017, MariaDB Corporation Ab
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #include <my_getopt.h>
 #include "set_var.h"
 
-#define FRM_QUOTED_VALUE 0x8000
+#define FRM_QUOTED_VALUE 0x8000U
 
 /**
   Links this item to the given list end
@@ -184,7 +184,7 @@ static bool set_one_value(ha_create_table_option *opt,
       {
         for (end=start;
              *end && *end != ',';
-             end+= my_mbcharlen(system_charset_info, *end)) /* no-op */;
+             end++) /* no-op */;
         if (!my_strnncoll(system_charset_info,
                           (uchar*)start, end-start,
                           (uchar*)value->str, value->length))
@@ -320,8 +320,8 @@ bool parse_option_list(THD* thd, handlerton *hton, void *option_struct_arg,
            *current* value of the underlying sysvar.
         2. But only if the underlying sysvar value is different from the
            sysvar's default.
-        3. If it's ALTER TABLE and the sysvar option was not explicitly
-           mentioned - do nothing, do not add it to the list.
+        3. If it's ALTER TABLE or CREATE_SEQUENCE and the sysvar option was
+           not explicitly mentioned - do nothing, do not add it to the list.
         4. But if it was ALTER TABLE with sysvar option = DEFAULT, we
            add it to the list (under the same condition #2).
         5. If we're here parsing the option list from the .frm file
@@ -329,7 +329,6 @@ bool parse_option_list(THD* thd, handlerton *hton, void *option_struct_arg,
            do not add it to the list (makes no sense anyway) and
            use the *default* value of the underlying sysvar. Because
            sysvar value can change, but it should not affect existing tables.
-
         This is how it's implemented: the current sysvar value is added
         to the list if suppress_warning is FALSE (meaning a table is created,
         that is CREATE TABLE or ALTER TABLE) and it's actually a CREATE TABLE

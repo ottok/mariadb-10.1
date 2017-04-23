@@ -78,7 +78,7 @@ truncate table t1;
 insert into t1 values ("00000000000000"),("20030101010160"),("20030101016001"),("20030101240101"),("20030132010101"),("20031301010101"),("20031200000000"),("20030000000000");
 select ix+0 from t1;
 truncate table t1;
-insert into t1 values ("0000-00-00 00:00:00 some trailer"),("2003-01-01 00:00:00 some trailer");
+insert ignore into t1 values ("0000-00-00 00:00:00 some trailer"),("2003-01-01 00:00:00 some trailer");
 select ix+0 from t1;
 drop table t1;
 
@@ -554,4 +554,39 @@ let defval='0000-00-00 00:00:00';
 
 --echo #
 --echo # End of 10.1 tests
+--echo #
+
+--echo #
+--echo # Start of 10.3 tests
+--echo #
+
+--echo #
+--echo # MDEV-11333     MDEV-11333 Expect "Impossible where condition" for WHERE timestamp_field>=DATE_ADD(TIMESTAMP'9999-01-01 00:00:00',INTERVAL 1000 YEAR)
+--echo #
+
+SELECT DATE_ADD(TIMESTAMP'9999-01-01 00:00:00',INTERVAL 1000 YEAR);
+CREATE TABLE t1 (a TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY(a)) ENGINE=MyISAM;
+INSERT INTO t1 VALUES('2001-01-01'),('2002-02-02'),('2003-03-03');
+INSERT INTO t1 VALUES('2001-01-01'),('2002-02-02'),('2003-03-03');
+INSERT INTO t1 VALUES('2001-01-01'),('2002-02-02'),('2003-03-03');
+INSERT INTO t1 VALUES('2001-01-01'),('2002-02-02'),('2003-03-03');
+INSERT INTO t1 VALUES('2001-01-01'),('2002-02-02'),('2003-03-03');
+INSERT INTO t1 VALUES('2001-01-01'),('2002-02-02'),('2003-03-03');
+EXPLAIN SELECT * FROM t1 WHERE a >= DATE_ADD(TIMESTAMP'9999-01-01 00:00:00',INTERVAL 1000 YEAR);
+EXPLAIN SELECT * FROM t1 WHERE a >= COALESCE(DATE_ADD(TIMESTAMP'9999-01-01 00:00:00',INTERVAL 1000 YEAR));
+DROP TABLE t1;
+
+--echo #
+--echo # MDEV-11482 Incorrect result for (time_expr BETWEEN timestamp_exp1 AND timestamp_expr2)
+--echo #
+SET @@sql_mode=DEFAULT;
+SET @@timestamp=UNIX_TIMESTAMP('2001-01-01 10:20:30');
+CREATE TABLE t1 (a TIMESTAMP,b TIMESTAMP);
+INSERT INTO t1 VALUES ('2001-01-01 00:00:00','2001-01-01 23:59:59');
+SELECT * FROM t1 WHERE TIME'10:20:30' BETWEEN a and b;
+DROP TABLE t1;
+SET @@timestamp=DEFAULT;
+
+--echo #
+--echo # End of 10.3 tests
 --echo #

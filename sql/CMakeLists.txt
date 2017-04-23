@@ -1,5 +1,5 @@
 # Copyright (c) 2006, 2014, Oracle and/or its affiliates.
-# Copyright (c) 2010, 2015, MariaDB
+# Copyright (c) 2010, 2016, MariaDB Corporation
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,6 +48,8 @@ ${WSREP_INCLUDES}
 SET(GEN_SOURCES
 ${CMAKE_CURRENT_BINARY_DIR}/sql_yacc.h 
 ${CMAKE_CURRENT_BINARY_DIR}/sql_yacc.cc
+${CMAKE_CURRENT_BINARY_DIR}/sql_yacc_ora.h
+${CMAKE_CURRENT_BINARY_DIR}/sql_yacc_ora.cc
 ${CMAKE_CURRENT_BINARY_DIR}/lex_hash.h 
 )
 SET(GEN_DIGEST_SOURCES
@@ -68,7 +70,6 @@ ENDIF()
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lex_token.h
   COMMAND gen_lex_token > lex_token.h
-  DEPENDS gen_lex_token
 )
 
 ADD_DEFINITIONS(-DMYSQL_SERVER -DHAVE_EVENT_SCHEDULER)
@@ -79,7 +80,7 @@ ENDIF()
 
 SET (SQL_SOURCE
               ../sql-common/client.c compat56.cc derror.cc des_key_file.cc
-               discover.cc ../libmysql/errmsg.c field.cc  field_conv.cc 
+               discover.cc ../sql-common/errmsg.c field.cc field_conv.cc
                filesort_utils.cc
                filesort.cc gstream.cc
                signal_handler.cc
@@ -90,12 +91,14 @@ SET (SQL_SOURCE
                key.cc log.cc lock.cc
                log_event.cc rpl_record.cc rpl_reporting.cc
                log_event_old.cc rpl_record_old.cc
-               message.h mf_iocache.cc my_decimal.cc ../sql-common/my_time.c
+               message.h mf_iocache.cc my_decimal.cc
                mysqld.cc net_serv.cc  keycaches.cc
                ../sql-common/client_plugin.c
                opt_range.cc opt_range.h opt_sum.cc 
                ../sql-common/pack.c parse_file.cc password.c procedure.cc 
-               protocol.cc records.cc repl_failsafe.cc rpl_filter.cc set_var.cc 
+               protocol.cc records.cc repl_failsafe.cc rpl_filter.cc
+               session_tracker.cc
+               set_var.cc 
                slave.cc sp.cc sp_cache.cc sp_head.cc sp_pcontext.cc 
                sp_rcontext.cc spatial.cc sql_acl.cc sql_analyse.cc sql_base.cc 
                sql_cache.cc sql_class.cc sql_client.cc sql_crypt.cc sql_crypt.h 
@@ -112,7 +115,8 @@ SET (SQL_SOURCE
                sql_statistics.cc sql_string.cc 
                sql_table.cc sql_test.cc sql_trigger.cc sql_udf.cc sql_union.cc
                sql_update.cc sql_view.cc strfunc.cc table.cc thr_malloc.cc 
-               sql_time.cc tztime.cc uniques.cc unireg.cc item_xmlfunc.cc 
+               sql_time.cc tztime.cc unireg.cc item_xmlfunc.cc 
+               uniques.cc uniques.h
                rpl_tblmap.cc sql_binlog.cc event_scheduler.cc event_data_objects.cc
                event_queue.cc event_db_repository.cc 
                sql_tablespace.cc events.cc ../sql-common/my_user.c 
@@ -122,7 +126,7 @@ SET (SQL_SOURCE
                sql_profile.cc event_parse_data.cc sql_alter.cc
                sql_signal.cc rpl_handler.cc mdl.cc sql_admin.cc
                transaction.cc sys_vars.cc sql_truncate.cc datadict.cc
-               sql_reload.cc sql_cmd.h item_inetfunc.cc
+               sql_reload.cc sql_cmd.h item_inetfunc.cc 
 
                # added in MariaDB:
                sql_explain.h sql_explain.cc
@@ -133,12 +137,15 @@ SET (SQL_SOURCE
                opt_table_elimination.cc sql_expression_cache.cc
                gcalc_slicescan.cc gcalc_tools.cc
                threadpool_common.cc ../sql-common/mysql_async.c
-               my_apc.cc my_apc.h mf_iocache_encr.cc
+               my_apc.cc my_apc.h mf_iocache_encr.cc item_jsonfunc.cc
                my_json_writer.cc my_json_writer.h
                rpl_gtid.cc rpl_parallel.cc
                sql_type.cc sql_type.h
+               item_windowfunc.cc sql_window.cc
+	       sql_cte.cc sql_cte.h
+               sql_sequence.cc sql_sequence.h ha_sequence.h
 	       ${WSREP_SOURCES}
-               table_cache.cc encryption.cc
+               table_cache.cc encryption.cc temporary_tables.cc
                ${CMAKE_CURRENT_BINARY_DIR}/sql_builtin.cc
                ${GEN_SOURCES}
                ${GEN_DIGEST_SOURCES}
@@ -152,12 +159,14 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Linux" OR
  ADD_DEFINITIONS(-DHAVE_POOL_OF_THREADS)
  IF(WIN32)
    SET(SQL_SOURCE ${SQL_SOURCE} threadpool_win.cc)
- ELSE()
-   SET(SQL_SOURCE ${SQL_SOURCE} threadpool_unix.cc)
  ENDIF()
+ SET(SQL_SOURCE ${SQL_SOURCE} threadpool_generic.cc)
+
 ENDIF()
 
 MYSQL_ADD_PLUGIN(partition ha_partition.cc STORAGE_ENGINE DEFAULT STATIC_ONLY
+RECOMPILE_FOR_EMBEDDED)
+MYSQL_ADD_PLUGIN(sql_sequence ha_sequence.cc STORAGE_ENGINE MANDATORY STATIC_ONLY
 RECOMPILE_FOR_EMBEDDED)
 
 ADD_LIBRARY(sql STATIC ${SQL_SOURCE})
@@ -165,7 +174,7 @@ ADD_DEPENDENCIES(sql GenServerSource)
 ADD_DEPENDENCIES(sql GenDigestServerSource)
 DTRACE_INSTRUMENT(sql)
 TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATIC_PLUGIN_LIBS} 
-  mysys mysys_ssl dbug strings vio pcre ${LIBJEMALLOC}
+  mysys mysys_ssl dbug strings vio pcre
   ${LIBWRAP} ${LIBCRYPT} ${LIBDL} ${CMAKE_THREAD_LIBS_INIT}
   ${WSREP_LIB}
   ${SSL_LIBRARIES}
@@ -176,6 +185,63 @@ IF(WIN32)
   TARGET_LINK_LIBRARIES(sql psapi)
 ELSE()
   SET(MYSQLD_SOURCE main.cc ${DTRACE_PROBES_ALL})
+ENDIF()
+
+
+IF(MSVC AND NOT WITHOUT_DYNAMIC_PLUGINS)
+
+  # mysqld.exe must to export symbols from some specific libs.
+  # These symbols are used by dynamic plugins, that "link" to mysqld.
+  #
+  # To do that, we
+  #
+  # 1. Generate mysqld_lib.def text file with all symbols from static
+  # libraries mysys, dbug, strings, sql.
+  # 2. Then we call
+  #  lib.exe /DEF:mysqld_lib.def ...
+  #  to create import library mysqld_lib.lib and export library mysqld_lib.exp
+  # 3. mysqld.exe links with mysqld_lib.exp (exporting symbols)
+  # 4. plugins link with mysqld_lib.lib (importing symbols)
+  #
+  # We do not not regenerate .def, .lib and .exp
+  # without necessity.E.g source modifications, that do not
+  # change list of exported symbols, will not result in a relink for plugins.
+
+  SET(MYSQLD_DEF ${CMAKE_CURRENT_BINARY_DIR}/mysqld_lib.def)
+  SET(MYSQLD_EXP ${CMAKE_CURRENT_BINARY_DIR}/mysqld_lib.exp)
+  SET(MYSQLD_LIB ${CMAKE_CURRENT_BINARY_DIR}/mysqld_lib.lib)
+  SET(MYSQLD_CORELIBS sql mysys mysys_ssl dbug strings)
+  FOREACH (CORELIB ${MYSQLD_CORELIBS})
+    GET_TARGET_PROPERTY(LOC ${CORELIB} LOCATION)
+    FILE(TO_NATIVE_PATH ${LOC} LOC)
+    SET (LIB_LOCATIONS ${LIB_LOCATIONS} ${LOC})
+  ENDFOREACH (CORELIB)
+
+  SET(_PLATFORM x86)
+  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    SET(_PLATFORM  x64)
+  ENDIF()
+
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${MYSQLD_DEF}
+    COMMAND cscript ARGS //nologo ${PROJECT_SOURCE_DIR}/win/create_def_file.js
+    ${_PLATFORM} /forLib ${LIB_LOCATIONS} > mysqld_lib.def.tmp
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different mysqld_lib.def.tmp mysqld_lib.def
+    COMMAND ${CMAKE_COMMAND} -E remove mysqld_lib.def.tmp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${MYSQLD_CORELIBS}
+  )
+
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${MYSQLD_LIB}
+    COMMAND lib
+    ARGS /NAME:mysqld.exe "/DEF:${MYSQLD_DEF}" "/MACHINE:${_PLATFORM}"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${MYSQLD_DEF}
+  )
+  ADD_CUSTOM_TARGET(gen_mysqld_lib DEPENDS ${MYSQLD_LIB})
+  ADD_LIBRARY(mysqld_import_lib UNKNOWN IMPORTED GLOBAL)
+  SET_TARGET_PROPERTIES(mysqld_import_lib PROPERTIES IMPORTED_LOCATION ${MYSQLD_LIB})
 ENDIF()
 
 MYSQL_ADD_EXECUTABLE(mysqld ${MYSQLD_SOURCE} DESTINATION ${INSTALL_SBINDIR} COMPONENT Server)
@@ -198,25 +264,9 @@ IF(NOT WITHOUT_DYNAMIC_PLUGINS)
     SET_TARGET_PROPERTIES(mysqld PROPERTIES LINK_FLAGS "${mysqld_link_flags} -Wl,--export-all-symbols")
   ENDIF()
   IF(MSVC)
-    # Set module definition file. Also use non-incremental linker, 
-    # incremental appears to crash from time to time,if used with /DEF option
-    SET_TARGET_PROPERTIES(mysqld PROPERTIES LINK_FLAGS "${mysqld_link_flags} /DEF:mysqld.def /INCREMENTAL:NO")
-
-    FOREACH (CORELIB sql mysys mysys_ssl dbug strings)
-      GET_TARGET_PROPERTY(LOC ${CORELIB} LOCATION)
-      FILE(TO_NATIVE_PATH ${LOC} LOC)
-      SET (LIB_LOCATIONS ${LIB_LOCATIONS} ${LOC}) 
-    ENDFOREACH (CORELIB ${MYSQLD_CORE_LIBS})
-    SET(_PLATFORM x86)
-    IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-      SET(_PLATFORM  x64)
-    ENDIF()
-    ADD_CUSTOM_COMMAND(TARGET mysqld PRE_LINK
-      COMMAND echo ${_PLATFORM} && cscript ARGS //nologo ${PROJECT_SOURCE_DIR}/win/create_def_file.js
-                  ${_PLATFORM}  ${LIB_LOCATIONS} > mysqld.def 
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    ADD_DEPENDENCIES(sql GenError)
-  ENDIF(MSVC)
+    SET_TARGET_PROPERTIES(mysqld PROPERTIES LINK_FLAGS "${mysqld_link_flags} \"${MYSQLD_EXP}\"")
+    ADD_DEPENDENCIES(mysqld gen_mysqld_lib)
+  ENDIF()
 ENDIF(NOT WITHOUT_DYNAMIC_PLUGINS)
 
 SET_TARGET_PROPERTIES(mysqld PROPERTIES ENABLE_EXPORTS TRUE) 
@@ -272,6 +322,14 @@ RUN_BISON(
   ${CMAKE_CURRENT_SOURCE_DIR}/sql_yacc.yy 
   ${CMAKE_CURRENT_BINARY_DIR}/sql_yacc.cc
   ${CMAKE_CURRENT_BINARY_DIR}/sql_yacc.h
+  MYSQL
+)
+
+RUN_BISON(
+  ${CMAKE_CURRENT_SOURCE_DIR}/sql_yacc_ora.yy
+  ${CMAKE_CURRENT_BINARY_DIR}/sql_yacc_ora.cc
+  ${CMAKE_CURRENT_BINARY_DIR}/sql_yacc_ora.h
+  ORA
 )
 
 # Gen_lex_hash
@@ -282,7 +340,6 @@ ENDIF()
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lex_hash.h
   COMMAND gen_lex_hash > lex_hash.h
-  DEPENDS gen_lex_hash
 )
 
 MYSQL_ADD_EXECUTABLE(mysql_tzinfo_to_sql tztime.cc COMPONENT Server)
@@ -317,13 +374,6 @@ IF(WIN32 OR HAVE_DLOPEN AND NOT DISABLE_SHARED)
   ENDIF()
 ENDIF()
 
-FOREACH(tool glibtoolize libtoolize aclocal autoconf autoheader automake gtar 
- tar git)
- STRING(TOUPPER ${tool}  TOOL)
- FIND_PROGRAM(${TOOL}_EXECUTABLE ${tool} DOC "path to the executable")
- MARK_AS_ADVANCED(${TOOL}_EXECUTABLE)
-ENDFOREACH()
-
 CONFIGURE_FILE(
   ${CMAKE_SOURCE_DIR}/cmake/make_dist.cmake.in
   ${CMAKE_BINARY_DIR}/make_dist.cmake @ONLY)
@@ -331,6 +381,7 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(dist 
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/make_dist.cmake
   DEPENDS ${CMAKE_BINARY_DIR}/sql/sql_yacc.cc ${CMAKE_BINARY_DIR}/sql/sql_yacc.h
+  DEPENDS ${CMAKE_BINARY_DIR}/sql/sql_yacc_ora.cc ${CMAKE_BINARY_DIR}/sql/sql_yacc_ora.h
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
@@ -407,7 +458,7 @@ IF(WIN32)
     ${CMAKE_CURRENT_BINARY_DIR}/my_bootstrap.sql
     mysql_bootstrap_sql.c
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS comp_sql ${my_bootstrap_sql}
+    DEPENDS ${my_bootstrap_sql}
   )
 
   MYSQL_ADD_EXECUTABLE(mysql_install_db 

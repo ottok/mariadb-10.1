@@ -101,6 +101,8 @@
 #define DISK_BUFFER_SIZE	(uint) (IO_SIZE*16) /* Size of diskbuffer */
 
 #define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
+#define FRM_VER_EXPRESSSIONS (FRM_VER+5) /* 11 */
+#define FRM_VER_CURRENT  FRM_VER_EXPRESSSIONS
 
 /***************************************************************************
   Configuration parameters
@@ -112,6 +114,7 @@
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 #define MAX_FIELDS_BEFORE_HASH	32
 #define USER_VARS_HASH_SIZE     16
+#define SEQUENCES_HASH_SIZE     16
 #define TABLE_OPEN_CACHE_MIN    400
 #define TABLE_OPEN_CACHE_DEFAULT 2000
 #define TABLE_DEF_CACHE_DEFAULT 400
@@ -235,6 +238,8 @@
   that does not respond to "initial server greeting" timely
 */
 #define CONNECT_TIMEOUT		10
+ /* Wait 5 minutes before removing thread from thread cache */
+#define THREAD_CACHE_TIMEOUT	5*60
 
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10

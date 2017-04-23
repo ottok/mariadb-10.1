@@ -11,9 +11,11 @@ a	b
 flush tables;
 set debug_sync='mi_open_datafile SIGNAL ok WAIT_FOR go';
 select * from t1;
+connect con1, localhost, root;
 set debug_sync='now WAIT_FOR ok';
 set debug_sync='now SIGNAL go';
-ERROR HY000: File 'MYSQLTEST_VARDIR/tmp/foo/t1.MYD' not found (Errcode: 20 "Not a directory")
+connection default;
+ERROR HY000: File 'MYSQLTEST_VARDIR/tmp/foo/t1.MYD' not found (Errcode: 20 <errmsg>)
 flush tables;
 drop table if exists t1;
 create table t1 (a int, b char(16), index (a))
@@ -29,9 +31,11 @@ a
 flush tables;
 set debug_sync='mi_open_kfile SIGNAL waiting WAIT_FOR run';
 select a from t1;
+connection con1;
 set debug_sync='now WAIT_FOR waiting';
 set debug_sync='now SIGNAL run';
-ERROR HY000: Can't find file: './test/t1.MYI' (errno: 20 "Not a directory")
+connection default;
+ERROR HY000: Can't find file: './test/t1.MYI' (errno: 20 <errmsg>)
 flush tables;
 drop table if exists t1;
 drop table mysql.t1;

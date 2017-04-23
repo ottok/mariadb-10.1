@@ -1,6 +1,6 @@
 /*
    Copyright (c) 2000, 2014, Oracle and/or its affiliates.
-   Copyright (c) 2009, 2015, MariaDB
+   Copyright (c) 2009, 2016, MariaDB Corporation
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -583,15 +583,8 @@ mysql_create_db_internal(THD *thd, char *db,
     DBUG_RETURN(-1);
   }
 
-  char db_tmp[SAFE_NAME_LEN], *dbnorm;
-  if (lower_case_table_names)
-  {
-    strmake_buf(db_tmp, db);
-    my_casedn_str(system_charset_info, db_tmp);
-    dbnorm= db_tmp;
-  }
-  else
-    dbnorm= db;
+  char db_tmp[SAFE_NAME_LEN];
+  char *dbnorm= normalize_db_name(db, db_tmp, sizeof(db_tmp));
 
   if (lock_schema_name(thd, dbnorm))
     DBUG_RETURN(-1);
@@ -824,15 +817,8 @@ mysql_rm_db_internal(THD *thd,char *db, bool if_exists, bool silent)
   Drop_table_error_handler err_handler;
   DBUG_ENTER("mysql_rm_db");
 
-  char db_tmp[SAFE_NAME_LEN], *dbnorm;
-  if (lower_case_table_names)
-  {
-    strmake_buf(db_tmp, db);
-    my_casedn_str(system_charset_info, db_tmp);
-    dbnorm= db_tmp;
-  }
-  else
-    dbnorm= db;
+  char db_tmp[SAFE_NAME_LEN];
+  char *dbnorm= normalize_db_name(db, db_tmp, sizeof(db_tmp));
 
   if (lock_schema_name(thd, dbnorm))
     DBUG_RETURN(true);
@@ -846,7 +832,7 @@ mysql_rm_db_internal(THD *thd,char *db, bool if_exists, bool silent)
      if there exists a table with the name 'db', so let's just do it
      separately. We know this file exists and needs to be deleted anyway.
   */
-  if (my_handler_delete_with_symlink(key_file_misc, path, "", MYF(0)) &&
+  if (mysql_file_delete_with_symlink(key_file_misc, path, "", MYF(0)) &&
       my_errno != ENOENT)
   {
     my_error(EE_DELETE, MYF(0), path, my_errno);
@@ -900,7 +886,8 @@ mysql_rm_db_internal(THD *thd,char *db, bool if_exists, bool silent)
     {
       LEX_STRING db_name= { table->db, table->db_length };
       LEX_STRING table_name= { table->table_name, table->table_name_length };
-      if (table->open_type == OT_BASE_ONLY || !find_temporary_table(thd, table))
+      if (table->open_type == OT_BASE_ONLY ||
+          !thd->find_temporary_table(table))
         (void) delete_statistics_for_table(thd, &db_name, &table_name);
     }
   }
@@ -915,7 +902,8 @@ mysql_rm_db_internal(THD *thd,char *db, bool if_exists, bool silent)
   thd->push_internal_handler(&err_handler);
   if (!thd->killed &&
       !(tables &&
-        mysql_rm_table_no_locks(thd, tables, true, false, true, true, false)))
+        mysql_rm_table_no_locks(thd, tables, true, false, true, false, true,
+                                false)))
   {
     /*
       We temporarily disable the binary log while dropping the objects
@@ -1051,7 +1039,10 @@ exit:
     it to 0.
   */
   if (thd->db && cmp_db_names(thd->db, db) && !error)
+  {
     mysql_change_db_impl(thd, NULL, 0, thd->variables.collation_server);
+    SESSION_TRACKER_CHANGED(thd, CURRENT_SCHEMA_TRACKER, NULL);
+  }
   my_dirend(dirp);
   DBUG_RETURN(error);
 }
@@ -1152,7 +1143,7 @@ static bool find_db_tables_and_rm_known_files(THD *thd, MY_DIR *dirp,
         We ignore ENOENT error in order to skip files that was deleted
         by concurrently running statement like REPAIR TABLE ...
       */
-      if (my_handler_delete_with_symlink(key_file_misc, filePath, "", MYF(0)) &&
+      if (mysql_file_delete_with_symlink(key_file_misc, filePath, "", MYF(0)) &&
           my_errno != ENOENT)
       {
         my_error(EE_DELETE, MYF(0), filePath, my_errno);
@@ -1268,7 +1259,7 @@ long mysql_rm_arc_files(THD *thd, MY_DIR *dirp, const char *org_path)
       continue;
     }
     strxmov(filePath, org_path, "/", file->name, NullS);
-    if (my_handler_delete_with_symlink(key_file_misc, filePath, "", MYF(MY_WME)))
+    if (mysql_file_delete_with_symlink(key_file_misc, filePath, "", MYF(MY_WME)))
     {
       goto err;
     }
@@ -1475,7 +1466,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
       mysql_change_db_impl(thd, NULL, 0, thd->variables.collation_server);
 
-      DBUG_RETURN(FALSE);
+      goto done;
     }
     else
     {
@@ -1492,8 +1483,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
     mysql_change_db_impl(thd, &INFORMATION_SCHEMA_NAME, SELECT_ACL,
                          system_charset_info);
-
-    DBUG_RETURN(FALSE);
+    goto done;
   }
 
   /*
@@ -1580,8 +1570,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
       mysql_change_db_impl(thd, NULL, 0, thd->variables.collation_server);
 
       /* The operation succeed. */
-
-      DBUG_RETURN(FALSE);
+      goto done;
     }
     else
     {
@@ -1605,6 +1594,9 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
   mysql_change_db_impl(thd, &new_db_file_name, db_access, db_default_cl);
 
+done:
+  SESSION_TRACKER_CHANGED(thd, CURRENT_SCHEMA_TRACKER, NULL);
+  SESSION_TRACKER_CHANGED(thd, SESSION_STATE_CHANGE_TRACKER, NULL);
   DBUG_RETURN(FALSE);
 }
 
@@ -1794,7 +1786,7 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
       create trigger trg1 before insert on t2 for each row set @a:=1
       rename database d1 to d2;
 
-    TODO: Triggers, having the renamed database explicitely written
+    TODO: Triggers, having the renamed database explicitly written
     in the table qualifiers.
     1. when the same database is renamed:
         create trigger d1.trg1 before insert on d1.t1 for each row set @a:=1;
@@ -1886,4 +1878,15 @@ bool check_db_dir_existence(const char *db_name)
   /* Check access. */
 
   return my_access(db_dir_path, F_OK);
+}
+
+
+char *normalize_db_name(char *db, char *buffer, size_t buffer_size)
+{
+  DBUG_ASSERT(buffer_size > 1);
+  if (!lower_case_table_names)
+    return db;
+  strmake(buffer, db, buffer_size - 1);
+  my_casedn_str(system_charset_info, buffer);
+  return buffer;
 }

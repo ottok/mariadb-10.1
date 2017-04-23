@@ -18,7 +18,7 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 30,
-      "attached_condition": "(t0.a < 3)"
+      "attached_condition": "t0.a < 3"
     }
   }
 }
@@ -46,7 +46,7 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 0,
-      "attached_condition": "((t0.a > 9) and (t0.a is not null))"
+      "attached_condition": "t0.a > 9 and t0.a is not null"
     },
     "table": {
       "table_name": "t1",
@@ -86,7 +86,7 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 100,
-      "attached_condition": "(t0.a is not null)"
+      "attached_condition": "t0.a is not null"
     },
     "table": {
       "table_name": "t1",
@@ -102,7 +102,7 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 40,
-      "attached_condition": "(t1.b < 4)"
+      "attached_condition": "t1.b < 4"
     }
   }
 }
@@ -128,7 +128,7 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 20,
-      "attached_condition": "(tbl1.b < 20)"
+      "attached_condition": "tbl1.b < 20"
     },
     "block-nl-join": {
       "table": {
@@ -140,7 +140,7 @@ ANALYZE
         "r_total_time_ms": "REPLACED",
         "filtered": 100,
         "r_filtered": 60,
-        "attached_condition": "(tbl2.b < 60)"
+        "attached_condition": "tbl2.b < 60"
       },
       "buffer_type": "flat",
       "buffer_size": "256Kb",
@@ -166,7 +166,7 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 20,
-      "attached_condition": "(tbl1.b < 20)"
+      "attached_condition": "tbl1.b < 20"
     },
     "block-nl-join": {
       "table": {
@@ -178,12 +178,12 @@ ANALYZE
         "r_total_time_ms": "REPLACED",
         "filtered": 100,
         "r_filtered": 60,
-        "attached_condition": "(tbl2.b < 60)"
+        "attached_condition": "tbl2.b < 60"
       },
       "buffer_type": "flat",
       "buffer_size": "256Kb",
       "join_type": "BNL",
-      "attached_condition": "(tbl1.c > tbl2.c)",
+      "attached_condition": "tbl1.c > tbl2.c",
       "r_filtered": 15.833
     }
   }
@@ -213,7 +213,7 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 100,
-      "attached_condition": "(t1.a is not null)"
+      "attached_condition": "t1.a is not null"
     },
     "table": {
       "table_name": "t2",
@@ -242,6 +242,8 @@ insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 select database();
 database()
 test
+connect  con1,localhost,root,,*NO-ONE*;
+connection con1;
 select database();
 database()
 NULL
@@ -261,10 +263,12 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 50,
-      "attached_condition": "(test.t1.a < 5)"
+      "attached_condition": "test.t1.a < 5"
     }
   }
 }
+disconnect con1;
+connection default;
 drop table t1;
 #
 # MDEV-7812: ANALYZE FORMAT=JSON UPDATE/DELETE doesnt print
@@ -316,8 +320,8 @@ ANALYZE
       "r_total_time_ms": "REPLACED",
       "filtered": 100,
       "r_filtered": 50,
-      "index_condition": "(t1.pk < 10)",
-      "attached_condition": "(t1.b > 4)"
+      "index_condition": "t1.pk < 10",
+      "attached_condition": "t1.b > 4"
     }
   }
 }
@@ -340,7 +344,7 @@ ANALYZE
       "r_rows": 10,
       "r_filtered": 50,
       "r_total_time_ms": "REPLACED",
-      "attached_condition": "((t1.pk < 10) and (t1.b > 4))"
+      "attached_condition": "t1.pk < 10 and t1.b > 4"
     }
   }
 }
@@ -440,13 +444,14 @@ ANALYZE
               "r_total_time_ms": "REPLACED",
               "filtered": 100,
               "r_filtered": 50,
-              "attached_condition": "(tbl1.a < 5)"
+              "attached_condition": "tbl1.a < 5"
             }
           }
         },
         {
           "query_block": {
             "select_id": 2,
+            "operation": "UNION",
             "r_loops": 1,
             "r_total_time_ms": "REPLACED",
             "table": {
@@ -458,7 +463,7 @@ ANALYZE
               "r_total_time_ms": "REPLACED",
               "filtered": 100,
               "r_filtered": 20,
-              "attached_condition": "(tbl2.a in (2,3))"
+              "attached_condition": "tbl2.a in (2,3)"
             }
           }
         }
@@ -488,8 +493,9 @@ ANALYZE
     "select_id": 1,
     "r_loops": 1,
     "r_total_time_ms": "REPLACED",
-    "having_condition": "(TOP > a)",
+    "having_condition": "TOP > t2.a",
     "filesort": {
+      "sort_key": "t2.a",
       "r_loops": 1,
       "r_total_time_ms": "REPLACED",
       "r_used_priority_queue": false,
@@ -519,6 +525,7 @@ ANALYZE
     "r_loops": 1,
     "r_total_time_ms": "REPLACED",
     "filesort": {
+      "sort_key": "t2.a",
       "r_loops": 1,
       "r_total_time_ms": "REPLACED",
       "r_used_priority_queue": false,
@@ -559,6 +566,7 @@ ANALYZE
     "r_loops": 1,
     "r_total_time_ms": "REPLACED",
     "filesort": {
+      "sort_key": "t2.a",
       "r_loops": 1,
       "r_total_time_ms": "REPLACED",
       "r_used_priority_queue": false,
@@ -653,7 +661,7 @@ ANALYZE
       "buffer_type": "incremental",
       "buffer_size": "256Kb",
       "join_type": "BNL",
-      "attached_condition": "(t2.b = `<subquery2>`.a)",
+      "attached_condition": "t2.b = `<subquery2>`.a",
       "r_filtered": 0
     }
   }
@@ -680,18 +688,20 @@ ANALYZE
     "r_loops": 1,
     "r_total_time_ms": "REPLACED",
     "filesort": {
+      "sort_key": "group_concat(t3.f3 separator ',')",
       "r_loops": 1,
       "r_total_time_ms": "REPLACED",
       "r_used_priority_queue": false,
       "r_output_rows": 0,
       "r_buffer_size": "REPLACED",
-      "filesort": {
-        "r_loops": 1,
-        "r_total_time_ms": "REPLACED",
-        "r_used_priority_queue": false,
-        "r_output_rows": 0,
-        "r_buffer_size": "REPLACED",
-        "temporary_table": {
+      "temporary_table": {
+        "filesort": {
+          "sort_key": "(subquery#2)",
+          "r_loops": 1,
+          "r_total_time_ms": "REPLACED",
+          "r_used_priority_queue": false,
+          "r_output_rows": 0,
+          "r_buffer_size": "REPLACED",
           "temporary_table": {
             "table": {
               "table_name": "t2",
@@ -713,7 +723,7 @@ ANALYZE
                 "r_total_time_ms": "REPLACED",
                 "filtered": 100,
                 "r_filtered": 0,
-                "attached_condition": "(t3.f3 in (1,2))"
+                "attached_condition": "t3.f3 in (1,2)"
               },
               "buffer_type": "flat",
               "buffer_size": "256Kb",
@@ -749,7 +759,7 @@ ANALYZE
                       "buffer_type": "flat",
                       "buffer_size": "256Kb",
                       "join_type": "BNL",
-                      "attached_condition": "(t2.f2 = t3.f3)",
+                      "attached_condition": "t2.f2 = t3.f3",
                       "r_filtered": null
                     }
                   }

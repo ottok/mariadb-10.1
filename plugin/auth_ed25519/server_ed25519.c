@@ -45,7 +45,7 @@ static int auth(MYSQL_PLUGIN_VIO *vio, MYSQL_SERVER_AUTH_INFO *info)
     return CR_AUTH_USER_CREDENTIALS;
   memcpy(pw, info->auth_string, PASSWORD_LEN);
   pw[PASSWORD_LEN]= '=';
-  if (base64_decode(pw, PASSWORD_LEN_BUF, pk, NULL, 0) != CRYPTO_PUBLICKEYBYTES)
+  if (my_base64_decode(pw, PASSWORD_LEN_BUF, pk, NULL, 0) != CRYPTO_PUBLICKEYBYTES)
     return CR_AUTH_USER_CREDENTIALS;
 
   info->password_used= PASSWORD_USED_YES;
@@ -119,7 +119,7 @@ char *ed25519_password(UDF_INIT *initid __attribute__((unused)),
 
   *length= PASSWORD_LEN;
   crypto_sign_keypair(pk, (unsigned char*)args->args[0], args->lengths[0]);
-  base64_encode(pk, CRYPTO_PUBLICKEYBYTES, result);
+  my_base64_encode(pk, CRYPTO_PUBLICKEYBYTES, result);
   return result;
 }
 

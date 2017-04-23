@@ -1,4 +1,5 @@
 /* Copyright (c) 2000, 2013, Oracle and/or its affiliates.
+   Copyright (c) 2016, MariaDB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -129,6 +130,61 @@ bool String::set_int(longlong num, bool unsigned_flag, CHARSET_INFO *cs)
   return FALSE;
 }
 
+
+// Convert a number into its HEX representation
+bool String::set_hex(ulonglong num)
+{
+  char *n_end;
+  if (alloc(65) || !(n_end= longlong2str(num, Ptr, 16)))
+    return true;
+  length((uint32) (n_end - Ptr));
+  set_charset(&my_charset_latin1);
+  return false;
+}
+
+
+/**
+  Append a hex representation of the byte "value" into "to".
+  Note:
+    "to" is incremented for the caller by two bytes. It's passed by reference!
+    So it resembles a macros, hence capital letters in the name.
+*/
+static inline void APPEND_HEX(char *&to, uchar value)
+{
+  *to++= _dig_vec_upper[((uchar) value) >> 4];
+  *to++= _dig_vec_upper[((uchar) value) & 0x0F];
+}
+
+
+void String::qs_append_hex(const char *str, uint32 len)
+{
+  const char *str_end= str + len;
+  for (char *to= Ptr + str_length ; str < str_end; str++)
+    APPEND_HEX(to, (uchar) *str);
+  str_length+= len * 2;
+}
+
+
+// Convert a string to its HEX representation
+bool String::set_hex(const char *str, uint32 len)
+{
+  /*
+    Safety: cut the source string if "len" is too large.
+    Note, alloc() can allocate some more space than requested, due to:
+    - ALIGN_SIZE
+    - one extra byte for a null terminator
+    So cut the source string to 0x7FFFFFF0 rather than 0x7FFFFFFE.
+  */
+  set_if_smaller(len, 0x7FFFFFF0);
+  if (alloc(len * 2))
+    return true;
+  length(0);
+  qs_append_hex(str, len);
+  set_charset(&my_charset_latin1);
+  return false;
+}
+
+
 bool String::set_real(double num,uint decimals, CHARSET_INFO *cs)
 {
   char buff[FLOATING_POINT_BUFFER];
@@ -136,7 +192,7 @@ bool String::set_real(double num,uint decimals, CHARSET_INFO *cs)
   size_t len;
 
   str_charset=cs;
-  if (decimals >= NOT_FIXED_DEC)
+  if (decimals >= FLOATING_POINT_DECIMALS)
   {
     len= my_gcvt(num, MY_GCVT_ARG_DOUBLE, sizeof(buff) - 1, buff, NULL);
     return copy(buff, len, &my_charset_latin1, cs, &dummy_errors);
@@ -490,6 +546,15 @@ bool String::append_ulonglong(ulonglong val)
   return FALSE;
 }
 
+bool String::append_longlong(longlong val)
+{
+  if (realloc(str_length+MAX_BIGINT_WIDTH+2))
+    return TRUE;
+  char *end= (char*) longlong10_to_str(val, (char*) Ptr + str_length, -10);
+  str_length= end - Ptr;
+  return FALSE;
+}
+
 /*
   Append a string in the given charset to the string
   with character set recoding
@@ -732,7 +797,7 @@ void String::qs_append(int i)
 void String::qs_append(ulonglong i)
 {
   char *buff= Ptr + str_length;
-  char *end= longlong10_to_str(i, buff,10);
+  char *end= longlong10_to_str(i, buff, 10);
   str_length+= (int) (end-buff);
 }
 
@@ -759,7 +824,7 @@ int sortcmp(const String *s,const String *t, CHARSET_INFO *cs)
 {
  return cs->coll->strnncollsp(cs,
                               (uchar *) s->ptr(),s->length(),
-                              (uchar *) t->ptr(),t->length(), 0);
+                              (uchar *) t->ptr(),t->length());
 }
 
 
@@ -959,8 +1024,7 @@ my_copy_with_hex_escaping(CHARSET_INFO *cs,
         break; /* purecov: inspected */
       *dst++= '\\';
       *dst++= 'x';
-      *dst++= _dig_vec_upper[((unsigned char) *src) >> 4];
-      *dst++= _dig_vec_upper[((unsigned char) *src) & 15];
+      APPEND_HEX(dst, (uchar) *src);
       src++;
       dstlen-= 4;
     }
@@ -1017,10 +1081,10 @@ String_copier::well_formed_copy(CHARSET_INFO *to_cs,
   {
     m_cannot_convert_error_pos= NULL;
     return to_cs->cset->copy_fix(to_cs, to, to_length, from, from_length,
-                                 nchars, &m_native_copy_status);
+                                 nchars, this);
   }
   return my_convert_fix(to_cs, to, to_length, from_cs, from, from_length,
-                        nchars, this);
+                        nchars, this, this);
 }
 
 
@@ -1145,8 +1209,7 @@ uint convert_to_printable(char *to, size_t to_len,
         break;
       *t++= '\\';
       *t++= 'x';
-      *t++= _dig_vec_upper[((unsigned char) *f) >> 4];
-      *t++= _dig_vec_upper[((unsigned char) *f) & 0x0F];
+      APPEND_HEX(t, *f);
     }
     if (t_end - t >= 3) // '...'
       dots= t;
