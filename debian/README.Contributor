@@ -18,16 +18,16 @@ Install the tool used to manage and build the source
 ## Getting the source
 
 The official Debian package source is available at
-  * git://git.debian.org/git/pkg-mysql/mariadb-10.1.git
-  * (browseable at http://git.debian.org/?p=pkg-mysql/mariadb-10.1.git
+  * git://git.debian.org/git/pkg-mysql/mariadb.git
+  * browseable at https://anonscm.debian.org/git/pkg-mysql/mariadb.git
 
 However, git.debian.org does not provide any kind of pull request or gerrit
 work-flow, so it is recommended to fork the Github mirror available at
-  * https://github.com/ottok/mariadb-10.1
+  * https://gitlab.sury.org/pkg-mariadb/mariadb
 
 Once you have a fork at Github, clone the source repository with all relevant
 branches (master, upstream, pristine-tar) to your local environment
-  gbp clone --pristine-tar git@github.com:{username}/mariadb-10.1.git
+  gbp clone --pristine-tar git@github.com:{username}/mariadb.git
 
 Clone needs to be run only once. On later runs you can refresh your clone with
 relevant branches using

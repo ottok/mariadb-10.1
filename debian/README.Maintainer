@@ -9,13 +9,12 @@ their own private .deb builds.
 
 Clone sources with all branches
   sudo apt-get install git-buildpackage
-  gbp-clone --pristine-tar git://git.debian.org/git/pkg-mysql/mariadb-10.1.git
+  gbp-clone --pristine-tar git://git.debian.org/git/pkg-mysql/mariadb.git
 
-Alternatively use Github mirror at https://github.com/ottok/mariadb-10.1.git
+Alternatively use Gitlab mirror at https://gitlab.sury.org/pkg-mariadb/mariadb
 
 On later runs make sure to have latest version of sources
-  gbp-pull --pristine-tar --force
-
+  gbp-pull --pristine-tar --force --debian-branch=master-<ver> --upstream-branch=upstream-<ver>
 
 Build
   git-buildpackage --git-pristine-tar
@@ -45,15 +44,15 @@ If the build fails the easiest way to clean up before a new run is
 ## Importing initial sources from upstream the first fime ##
 
 Create repository
-  mkdir mariadb-10.1
-  cd mariadb-10.1
+  mkdir mariadb
+  cd mariadb
   git init
   git branch upstream
-  git-import-orig --pristine-tar ../../upstream/mariadb-10.1.20
+  git-import-orig --pristine-tar ../../upstream/mariadb-10.3.0.tar.gz
 
 Fill in values prompted
-  What will be the source package name? [mariadb] mariadb-10.1
-  What is the upstream version? [10.1.20]
+  What will be the source package name? [mariadb] mariadb-10.3
+  What is the upstream version? [10.3.0]
 
 Checkout master into working dir and finish up manually what needs to be done
   git checkout master
@@ -80,12 +79,13 @@ https://mariadb.com/kb/en/mariadb/development/release-notes/
 ### Steps to import new upstream version ###
 
 Download new source package
-  cd pkg-mariadb-10.1
+  cd pkg-mariadb
   uscan --verbose
 
 Enter git repository path and apply new sources
-  cd mariadb-10.1
-  git-import-orig --pristine-tar ../mariadb-10.1.20.tar.gz
+  cd mariadb
+  git checkout master-10.3
+  git-import-orig --pristine-tar ../mariadb-10.3.0.tar.gz
 
 Generate new debian/changelog entry automatically with git-dch
   git-dch -avR
@@ -93,14 +93,13 @@ Generate new debian/changelog entry automatically with git-dch
 Manually merge what needs to be done
 
 Commit and push
-  git commit -am "Merged with upstream 10.1.20"
-  git push --all; git push --all github
-  git push --tags; git push --tags github
+  git commit -am "Merged with upstream 10.3.20"
+  git push --all --follow-tags; git push --all --follow-tags github
 
 Note that in above if you want to sync to Github directly you need to have
 collaborator rights to the Github repo and you need to add it as a secondary
 remote location with:
-  git remote add origin git@github.com:ottok/mariadb-10.1.git
+  git remote add origin git@github.com:ottok/mariadb-10.3.git
 
 To push to the git.debian.org repos you need to a member of the pkg-mysql team
 at Alioth. It does not matter which repository you push to, eventually they are
@@ -138,7 +137,7 @@ those cleaned up.
 ### Quality control ###
 
 Run wrap-and-sort to style contents in debian/*
-  wrap-and-sort
+  wrap-and-sort -a
 
 Once packages are done check their quality with Lintian
   lintian -EvIL +pedantic --color=always *.deb
@@ -147,11 +146,11 @@ Once packages are done check their quality with Lintian
 ## Uploading to Ubuntu PPA for testing ##
 
 Make sure you have key ID set up in ~/.devscripts to avoid using -k parameter
-  DEBSIGN_KEYID=CEE8DA88
+  DEBSIGN_KEYID=<your_long_gpg_id>
 
 These are good to have as environment variables (replace values with your own)
-  DEBEMAIL="otto@seravo.fi"
-  DEBFULLNAME="Otto Kekäläinen"
+  DEBEMAIL="<your_email>"
+  DEBFULLNAME="<your_fullname>"
   export DEBEMAIL DEBFULLNAME
 
 The run the commands to automatically change version and upload
