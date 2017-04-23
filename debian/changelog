@@ -1,8 +1,9 @@
-mariadb-10.3 (10.3.0~-1) UNRELEASED; urgency=medium
+mariadb-10.3 (10.3.0-1) unstable; urgency=medium
 
-  * unreleased.
+  * New upstream version 10.3.0
+  * Remove several patches already merged upstream
 
- -- Ondřej Surý <ondrej@debian.org>  Sun, 23 Apr 2017 14:37:18 +0200
+ -- Ondřej Surý <ondrej@debian.org>  Sun, 23 Apr 2017 15:11:18 +0200
 
 mariadb-10.1 (10.1.22-3) unstable; urgency=medium
 
