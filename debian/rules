@@ -179,7 +179,7 @@ debian/po/templates.pot: debian/po/templates.pot.in debian/rules debian/changelo
 	sed -e "s/@MARIADB_SERIES@/$(MARIADB_SERIES)/g" >$@ <debian/po/templates.pot.in
 
 debian/po/POTFILES.in: debian/po/POTFILES.in.in debian/rules debian/changelog
-	sed -e "s/@MARIADB_SERIES@/$(MARIADB_SERIES)/g" >$@ <debian/po/templates.pot.in
+	sed -e "s/@MARIADB_SERIES@/$(MARIADB_SERIES)/g" >$@ <debian/po/POTFILES.in.in
 
 .PHONY: get-orig-source prepared-files generated-files $(GENERATED_FILES)
 
