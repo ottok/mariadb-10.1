@@ -1,3 +1,7 @@
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Sun, 23 Apr 2017 15:10:44 +0200
+Subject: replace_dash_with_bash_mbug675185
+
 ## 61_replace_dash_with_bash_mbug675185.dpatch by  <knielsen@knielsen-hq.org>
 ##
 ## All lines beginning with `## DP:' are a description of the patch.
@@ -5,6 +9,12 @@
 ## DP: A race in dash causes mysqld_safe to occasionally loop infinitely.
 ## DP: Fix by using bash instead.
 ## DP: https://bugs.launchpad.net/ubuntu/+source/mysql-dfsg-5.0/+bug/675185
+---
+ scripts/mysqld_safe.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/mysqld_safe.sh b/scripts/mysqld_safe.sh
+index 5946adb..bd52d59 100644
 --- a/scripts/mysqld_safe.sh
 +++ b/scripts/mysqld_safe.sh
 @@ -1,4 +1,4 @@

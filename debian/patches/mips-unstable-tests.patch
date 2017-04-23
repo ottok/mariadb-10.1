@@ -1,10 +1,16 @@
-Description: Remove various tests from unstable-tests which now pass on MIPS
-Author: James Cowgill <jcowgill@debian.org>
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Sun, 23 Apr 2017 15:10:44 +0200
+Subject: mips-unstable-tests
+
 ---
-This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+ mysql-test/unstable-tests | 12 ++----------
+ 1 file changed, 2 insertions(+), 10 deletions(-)
+
+diff --git a/mysql-test/unstable-tests b/mysql-test/unstable-tests
+index 4812456..7483759 100644
 --- a/mysql-test/unstable-tests
 +++ b/mysql-test/unstable-tests
-@@ -165,7 +165,6 @@ engines/funcs.*                  : Not m
+@@ -165,7 +165,6 @@ engines/funcs.*                  : Not maintained in timely manner
  
  federated.federated_bug_35333    : Modified in 10.1.22
  federated.federated_innodb       : MDEV-10617, MDEV-10417 - Wrong checksum, timeouts, fails on Mips
@@ -12,7 +18,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  federated.federated_transactions : MDEV-10617, MDEV-10417 - Wrong checksum, timeouts, fails on Mips
  federated.federatedx             : MDEV-10617 - Wrong checksum, timeouts
  
-@@ -246,10 +245,9 @@ mroonga/storage.repair_table_no_index_fi
+@@ -246,10 +245,9 @@ mroonga/storage.repair_table_no_index_file                         : MDEV-9364 -
  
  #----------------------------------------------------------------
  
@@ -24,7 +30,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  multi_source.simple      : MDEV-4633 - Wrong slave status output
  multi_source.status_vars : MDEV-4632 - failed while waiting for Slave_received_heartbeats
  
-@@ -311,12 +309,9 @@ plugins.two_password_validations : MDEV-
+@@ -311,12 +309,9 @@ plugins.two_password_validations : MDEV-11650 - valgrind warnings
  
  rpl.last_insert_id                    : MDEV-10625 - warnings in error log
  rpl.rpl_alter_extra_persistent        : Added in 10.1.21
@@ -37,7 +43,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  rpl.rpl_domain_id_filter_restart      : MDEV-10684 - Wrong result
  rpl.rpl_gtid_basic                    : MDEV-10681 - server startup problem
  rpl.rpl_gtid_crash                    : MDEV-9501 - Warning: failed registering on master
-@@ -324,18 +319,15 @@ rpl.rpl_gtid_mdev9033                 :
+@@ -324,18 +319,15 @@ rpl.rpl_gtid_mdev9033                 : MDEV-10680 - warnings
  rpl.rpl_gtid_stop_start               : MDEV-10629 - Crash on shutdown
  rpl.rpl_gtid_until                    : MDEV-10625 - warnings in error log
  rpl.rpl_heartbeat_basic               : Modified in 10.1.22

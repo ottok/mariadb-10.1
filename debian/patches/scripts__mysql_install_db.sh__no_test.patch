@@ -1,12 +1,21 @@
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Sun, 23 Apr 2017 15:10:43 +0200
+Subject: scripts__mysql_install_db.sh__no_test
+
 ## 41_scripts__mysql_install_db.sh__no_test.dpatch by  <ch@debian.org>
 ##
 ## All lines beginning with `## DP:' are a description of the patch.
 ## DP: scripts__mysql_install_db.sh__no_test
 ## DP: http://bugs.mysql.com/bug.php?id=6901
+---
+ scripts/mysql_install_db.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/scripts/mysql_install_db.sh b/scripts/mysql_install_db.sh
+index f8f4859..16738a0 100644
 --- a/scripts/mysql_install_db.sh
 +++ b/scripts/mysql_install_db.sh
-@@ -406,7 +406,7 @@ then
+@@ -407,7 +407,7 @@ then
  fi
  
  # Create database directories
