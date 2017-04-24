@@ -94,7 +94,7 @@ Description: MariaDB database development files (libmysqlclient compatibility)
  MySQL to link against MariaDB's client library instead, while still permitting
  MySQL's client library to co-exist on users' systems.
 
-Package: libmariadbd18
+Package: libmariadbd19
 Architecture: any
 Section: libs
 Depends: ${misc:Depends},
@@ -118,7 +118,7 @@ Multi-Arch: same
 Section: libdevel
 Pre-Depends: ${misc:Pre-Depends}
 Depends: libmariadb-dev (= ${binary:Version}),
-         libmariadbd18 (= ${binary:Version}),
+         libmariadbd19 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Breaks: libmysqld-dev
