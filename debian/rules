@@ -48,9 +48,6 @@ endif
 MAKEFLAGS += VERBOSE=1
 
 override_dh_auto_clean: generated-files
-	@echo "RULES.$@"
-	dh_testdir
-	dh_testroot
 	rm -rf mysql-test/var
 	rm -f storage/mroonga/mysql-test/mroonga/storage/r/information_schema_plugins.result
 	rm -f storage/mroonga/mysql-test/mroonga/storage/r/variable_version.result
@@ -64,18 +61,12 @@ override_dh_auto_clean: generated-files
 	debconf-updatepo # Update po-files when clean runs before each build
 	rm -f $(GENERATED_FILES)
 
-override_dh_prep:
-        # Don't clean /tmp/ away, it is needed by all binary packages
-
 override_dh_auto_configure:
-	@echo "RULES.$@"
-	dh_testdir
-
-	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && \
-	sh -c  'PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
-	    	CC=${CC} \
-	    	CXX=${CXX} \
-	    cmake -DCMAKE_INSTALL_PREFIX=/usr \
+	PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
+	CC=${CC} \
+	CXX=${CXX} \
+	dh_auto_configure -B$(BUILDDIR) -- \
+	    -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(CMAKEFLAGS) \
 	    -DAWS_SDK_EXTERNAL_PROJECT=OFF \
 	    -DWITH_SSL=bundled \
@@ -88,18 +79,9 @@ override_dh_auto_configure:
 	    -DINSTALL_PLUGINDIR=lib/$(DEB_HOST_MULTIARCH)/mariadb3/plugin \
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
 	    -DPLUGIN_AUTH_SOCKET=STATIC \
-	    -DDEB=$(DEB_VENDOR) ..'
-
-# This is needed, otherwise 'make test' will run before binaries have been built
-override_dh_auto_build:
-	@echo "RULES.$@"
-	# Print build env info to help debug builds on different platforms
-	dpkg-architecture
-	cd $(BUILDDIR) && $(MAKE)
+	    -DDEB=$(DEB_VENDOR)
 
 override_dh_auto_test:
-	@echo "RULES.$@"
-	dh_testdir
 	# Skip unstable tests if such are defined for arch
 	cp mysql-test/unstable-tests debian/mysql-test-unstable-tests.orig
 	[ ! -f debian/unstable-tests.$(DEB_HOST_ARCH) ] || cat debian/unstable-tests.$(DEB_HOST_ARCH) >> mysql-test/unstable-tests
@@ -108,19 +90,14 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	cd $(BUILDDIR)/mysql-test && ./mtr --force --testcase-timeout=30 --suite-timeout=540 --retry=3 --parallel=$(NUMJOBS) --skip-test-list=unstable-tests  || $(TESTSUITE_FAIL_CMD) ;
 endif
 
-override_dh_auto_install:
-	@echo "RULES.$@"
-	dh_testdir
-	dh_testroot
-
+override_dh_auto_install: generated-files
 ifneq (,$(filter linux,$(DEB_HOST_ARCH_OS)))
 	# Copy systemd files to a location available for dh_installinit
 	cp $(BUILDDIR)/support-files/mariadb.service debian/mariadb-server-$(MARIADB_SERIES).mariadb.service
 	cp $(BUILDDIR)/support-files/mariadb@.service debian/mariadb-server-$(MARIADB_SERIES).mariadb@.service
 endif
 
-	# make install
-	cd $(BUILDDIR) && $(MAKE) install DESTDIR=$(TMP)
+	dh_auto_install -B$(BUILDDIR)
 
 	# Delete runnable files we don't want to have in the test data package.
 	# This avoids triggering multiple Lintian errors.
@@ -153,9 +130,9 @@ override_dh_installcron-arch:
 get-orig-source:
 	uscan --force-download --verbose
 
-%: prepared-files generated-files
+%: prepared-files
 %:
-	dh $@ --parallel --with systemd
+	dh $@ -B$(BUILDDIR) --parallel --with systemd --fail-missing
 
 
 generated-files: $(GENERATED_FILES)
