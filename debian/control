@@ -16,6 +16,7 @@ Build-Depends: bison,
                libaio-dev [linux-any],
                libboost-dev,
                libcrack2-dev (>= 2.9.0),
+               libgnutls28-dev,
                libjemalloc-dev [linux-any],
                libjudy-dev,
                libkrb5-dev,
@@ -61,6 +62,7 @@ Depends: libmariadb3 (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Conflicts: libmysqlclient-dev
+Multi-Arch: same
 Description: MariaDB database development files
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
