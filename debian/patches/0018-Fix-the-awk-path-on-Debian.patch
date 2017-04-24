@@ -1,0 +1,18 @@
+From: =?utf-8?q?Ond=C5=99ej_Sur=C3=BD?= <ondrej@debian.org>
+Date: Mon, 24 Apr 2017 22:36:46 +0200
+Subject: Fix the awk path on Debian
+
+---
+ storage/rocksdb/mysql-test/rocksdb/slow_query_log.awk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/storage/rocksdb/mysql-test/rocksdb/slow_query_log.awk b/storage/rocksdb/mysql-test/rocksdb/slow_query_log.awk
+index 4617b6d..bbf0465 100644
+--- a/storage/rocksdb/mysql-test/rocksdb/slow_query_log.awk
++++ b/storage/rocksdb/mysql-test/rocksdb/slow_query_log.awk
+@@ -1,4 +1,4 @@
+-#!/bin/awk
++#!/usr/bin/awk
+ 
+ /Query_time:/ {
+   results["Rows_examined:"] = "uninit";
