@@ -65,10 +65,11 @@ override_dh_auto_build:
 	cd $(BUILDDIR) && ninja
 
 override_dh_auto_configure:
+	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && \
 	PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
-	CC=${CC} \
-	CXX=${CXX} \
-	dh_auto_configure -B$(BUILDDIR) -- \
+	CC=$(CC) \
+	CXX=$(CXX) \
+	cmake \
 	    -G Ninja -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
 	    -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(CMAKEFLAGS) \
@@ -83,7 +84,7 @@ override_dh_auto_configure:
 	    -DINSTALL_PLUGINDIR=lib/$(DEB_HOST_MULTIARCH)/mariadb3/plugin \
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
 	    -DPLUGIN_AUTH_SOCKET=STATIC \
-	    -DDEB=$(DEB_VENDOR)
+	    -DDEB=$(DEB_VENDOR) ..
 
 override_dh_auto_test:
 	# Skip unstable tests if such are defined for arch
