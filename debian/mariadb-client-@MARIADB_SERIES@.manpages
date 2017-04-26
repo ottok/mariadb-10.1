@@ -5,6 +5,7 @@ debian/tmp/usr/share/man/man1/mysql_fix_extensions.1
 debian/tmp/usr/share/man/man1/mysql_waitpid.1
 debian/tmp/usr/share/man/man1/mysqlaccess.1
 debian/tmp/usr/share/man/man1/mysqladmin.1
+debian/tmp/usr/share/man/man1/mysqlbinlog.1
 debian/tmp/usr/share/man/man1/mysqldump.1
 debian/tmp/usr/share/man/man1/mysqldumpslow.1
 debian/tmp/usr/share/man/man1/mysqlimport.1

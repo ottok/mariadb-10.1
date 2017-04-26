@@ -19,7 +19,6 @@ debian/tmp/usr/share/man/man1/mysql_secure_installation.1
 debian/tmp/usr/share/man/man1/mysql_setpermission.1
 debian/tmp/usr/share/man/man1/mysql_tzinfo_to_sql.1
 debian/tmp/usr/share/man/man1/mysql_zap.1
-debian/tmp/usr/share/man/man1/mysqlbinlog.1
 debian/tmp/usr/share/man/man1/mysqld_multi.1
 debian/tmp/usr/share/man/man1/mysqld_safe.1
 debian/tmp/usr/share/man/man1/mysqld_safe_helper.1

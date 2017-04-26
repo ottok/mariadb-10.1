@@ -7,6 +7,7 @@ usr/bin/mysql_fix_extensions
 usr/bin/mysql_waitpid
 usr/bin/mysqlaccess
 usr/bin/mysqladmin
+usr/bin/mysqlbinlog
 usr/bin/mysqldump
 usr/bin/mysqldumpslow
 usr/bin/mysqlimport
