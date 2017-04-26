@@ -143,10 +143,12 @@ get-orig-source:
 generated-files: $(GENERATED_FILES)
 
 $(GENERATED_FILES): $(GENERATED_SOURCES)
-	for f in $(GENERATED_SOURCES); do \
+	for in in $(GENERATED_SOURCES); do \
+	  out=$$(echo $$in | sed -e 's/@MARIADB_SERIES@/$(MARIADB_SERIES)/g'); \
 	  sed -e 's/@MARIADB_SERIES@/$(MARIADB_SERIES)/g' \
-	    < $$f \
-	    > $$(echo $$f | sed -e 's/@MARIADB_SERIES@/$(MARIADB_SERIES)/g'); \
+	    < "$$in" \
+	    > "$$out"; \
+	  chmod --reference="$$in" "$$out"; \
 	done
 
 prepared-files: debian/control debian/tests/control debian/po/templates.pot debian/po/POTFILES.in
