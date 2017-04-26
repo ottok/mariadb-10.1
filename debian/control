@@ -354,8 +354,8 @@ Conflicts: mariadb-connect-engine-10.0,
            mariadb-connect-engine-10.1
 Breaks: mariadb-connect-engine-10.0,
         mariadb-connect-engine-10.1,
-        mariadb-server-10.0,
-        mariadb-server- (<< ${source:Version})
+        mariadb-server- (<< ${source:Version}),
+        mariadb-server-10.0
 Replaces: mariadb-connect-engine-10.0,
           mariadb-connect-engine-10.1,
           mariadb-server-10.0,

@@ -153,6 +153,7 @@ get-orig-source:
 	dh $@ --parallel --with systemd
 
 prepared-files: debian/control debian/tests/control debian/po/templates.pot debian/po/POTFILES.in
+	wrap-and-sort -a
 
 debian/control: debian/control.in debian/rules debian/changelog
 	sed -e "s/@MARIADB_SERIES@/$(MARIADB_SERIES)/g" >$@ <debian/control.in
