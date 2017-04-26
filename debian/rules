@@ -61,11 +61,15 @@ override_dh_auto_clean: generated-files
 	debconf-updatepo # Update po-files when clean runs before each build
 	rm -f $(GENERATED_FILES)
 
+override_dh_auto_build:
+	cd $(BUILDDIR) && ninja
+
 override_dh_auto_configure:
 	PATH=$${MYSQL_BUILD_PATH:-"/usr/local/bin:/usr/bin:/bin"} \
 	CC=${CC} \
 	CXX=${CXX} \
 	dh_auto_configure -B$(BUILDDIR) -- \
+	    -G Ninja -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja \
 	    -DCMAKE_INSTALL_PREFIX=/usr \
 	    $(CMAKEFLAGS) \
 	    -DAWS_SDK_EXTERNAL_PROJECT=OFF \
@@ -97,7 +101,7 @@ ifneq (,$(filter linux,$(DEB_HOST_ARCH_OS)))
 	cp $(BUILDDIR)/support-files/mariadb@.service debian/mariadb-server-$(MARIADB_SERIES).mariadb@.service
 endif
 
-	dh_auto_install -B$(BUILDDIR)
+	cd $(BUILDDIR) && DESTDIR=$(CURDIR)/debian/tmp ninja install
 
 	# Delete runnable files we don't want to have in the test data package.
 	# This avoids triggering multiple Lintian errors.
