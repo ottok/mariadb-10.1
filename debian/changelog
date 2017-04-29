@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.22-4) unstable; urgency=medium
+
+  * Fix small typo in d/rules that caused MySQL version suffix to not
+    contain information about Debian build
+
+ -- Ondřej Surý <ondrej@debian.org>  Sat, 29 Apr 2017 21:56:23 +0200
+
 mariadb-10.1 (10.1.22-3) unstable; urgency=medium
 
   * Use pidof instead of pgrep, so we don't have to depend on procps
