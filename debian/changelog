@@ -2,8 +2,25 @@ mariadb-10.3 (10.3.0-1) unstable; urgency=medium
 
   * New upstream version 10.3.0
   * Remove several patches already merged upstream
+  * [MDEV-12516]: Move mysqlbinlog to mariadb-client-* package
+  * Rewrite the major.minor specific parts to be generated
+    according to the latest changelog entry.  That would help to
+    keep the history between MariaDB series (10.3 -> 10.4 ...)
+    and to keep the more in the sync in the future.
+  * Rename the client libraries libmariadb{3,-dev}
+  * Build the client library with GnuTLS
+  * Bump the libmariadbd SOVERSION in the package name
+  * (EXPERIMENTAL) Use ninja build CMake backend
+  * Install various additional files added in MariaDB 10.3
+    and enable --fail-missing feature of dh_install
+  * Make the mysql_config mariadb_config multi-arch compatible
+    by moving the real commands to /usr/lib/$(DEB_HOST_MULTIARCH)
+    and putting simple wrappers that call real commands into
+    /usr/bin
+  * Update debian/copyright with information about added files
+    between MariaDB 10.1 and MariaDB 10.3
 
- -- Ondřej Surý <ondrej@debian.org>  Sun, 23 Apr 2017 15:11:18 +0200
+ -- Ondřej Surý <ondrej@debian.org>  Sun, 30 Apr 2017 22:59:48 +0200
 
 mariadb-10.1 (10.1.22-3) unstable; urgency=medium
 
