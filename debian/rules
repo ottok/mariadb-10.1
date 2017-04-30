@@ -62,7 +62,7 @@ override_dh_auto_clean: generated-files
 	rm -f $(GENERATED_FILES)
 
 override_dh_auto_build:
-	cd $(BUILDDIR) && ninja
+	cd $(BUILDDIR) && ninja -j $(NUMJOBS)
 
 override_dh_auto_configure:
 	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && \
@@ -96,7 +96,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 endif
 
 override_dh_auto_install: generated-files
-	cd $(BUILDDIR) && DESTDIR=$(CURDIR)/debian/tmp ninja install
+	cd $(BUILDDIR) && DESTDIR=$(CURDIR)/debian/tmp ninja -j $(NUMJOBS) install
 
 	# Delete runnable files we don't want to have in the test data package.
 	# This avoids triggering multiple Lintian errors.
