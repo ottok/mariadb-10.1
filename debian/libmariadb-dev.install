@@ -1,9 +1,13 @@
 #!/usr/bin/dh-exec
 usr/bin/mysql_config
+usr/bin/mariadb_config
 usr/include/mysql/*.h
 usr/include/mysql/psi/*.h
+usr/include/mysql/mariadb/*.h
+usr/include/mysql/mysql/*.h
 usr/lib/*/libmariadb.so
 usr/lib/*/libmariadbclient.a
 usr/lib/*/libmysqlservices.a
 usr/share/aclocal/mysql.m4
 usr/share/pkgconfig/mariadb.pc usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/
+usr/share/man/man1/mysql_config.1

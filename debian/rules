@@ -96,12 +96,6 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 endif
 
 override_dh_auto_install: generated-files
-ifneq (,$(filter linux,$(DEB_HOST_ARCH_OS)))
-	# Copy systemd files to a location available for dh_installinit
-	cp $(BUILDDIR)/support-files/mariadb.service debian/mariadb-server-$(MARIADB_SERIES).mariadb.service
-	cp $(BUILDDIR)/support-files/mariadb@.service debian/mariadb-server-$(MARIADB_SERIES).mariadb@.service
-endif
-
 	cd $(BUILDDIR) && DESTDIR=$(CURDIR)/debian/tmp ninja install
 
 	# Delete runnable files we don't want to have in the test data package.
@@ -137,7 +131,7 @@ get-orig-source:
 
 %: prepared-files
 %:
-	dh $@ -B$(BUILDDIR) --parallel --with systemd --fail-missing
+	dh $@ -B$(BUILDDIR) --parallel --with systemd --fail-missing -Xtrace_example.so
 
 
 generated-files: $(GENERATED_FILES)
