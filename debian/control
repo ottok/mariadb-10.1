@@ -403,7 +403,24 @@ Description: TokuDB storage engine for MariaDB
  The TokuDB storage engine is for use in high-performance and write-intensive
  environments, offering increased compression and better performance based
  on fractal indexes.
+ .
  This package contains the TokuDB plugin for MariaDB.
+
+Package: mariadb-plugin-rocksdb
+Architecture: amd64 arm64 ppc64el mips64el
+Depends: mariadb-server-10.3,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: mariadb-server-10.0,
+        mariadb-server-10.1
+Replaces: mariadb-server-10.0,
+          mariadb-server-10.1
+Description: RocksDB storage engine for MariaDB
+ The RocksDB storage engine offers excellent write performance without
+ sacrificing too much read performance.  And as a modern storage
+ engine, it compresses data.
+ .
+ This package contains the RocksDB plugin for MariaDB.
 
 Package: mariadb-plugin-mroonga
 Architecture: any-alpha any-amd64 any-arm any-arm64 any-i386 any-ia64 any-mips64el any-mips64r6el any-mipsel any-mipsr6el any-nios2 any-powerpcel any-ppc64el any-sh3 any-sh4 any-tilegx

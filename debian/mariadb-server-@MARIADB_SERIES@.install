@@ -10,7 +10,6 @@ debian/additions/mariadb.conf.d/50-mysqld_safe.cnf etc/mysql/mariadb.conf.d
 debian/additions/mariadb.conf.d/50-server.cnf etc/mysql/mariadb.conf.d
 debian/additions/source_mariadb-*.py usr/share/apport/package-hooks
 etc/apparmor.d/usr.sbin.mysqld
-etc/mysql/conf.d/rocksdb.cnf etc/mysql/mariadb.conf.d/
 usr/bin/aria_chk
 usr/bin/aria_dump_log
 usr/bin/aria_ftdump
@@ -34,9 +33,7 @@ usr/bin/mysqld_safe_helper
 usr/bin/mysqlhotcopy
 usr/bin/perror
 usr/bin/replace
-usr/bin/sst_dump
 usr/bin/resolve_stack_dump
-usr/bin/mysql_ldb
 usr/bin/resolveip
 usr/bin/wsrep_sst_common
 usr/bin/wsrep_sst_mysqldump
@@ -50,7 +47,6 @@ usr/lib/*/mariadb3/plugin/ha_blackhole.so
 usr/lib/*/mariadb3/plugin/ha_federated.so
 usr/lib/*/mariadb3/plugin/ha_federatedx.so
 usr/lib/*/mariadb3/plugin/ha_sphinx.so
-usr/lib/*/mariadb3/plugin/ha_rocksdb.so
 usr/lib/*/mariadb3/plugin/handlersocket.so
 usr/lib/*/mariadb3/plugin/locales.so
 usr/lib/*/mariadb3/plugin/metadata_lock_info.so
