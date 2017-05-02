@@ -1,3 +1,12 @@
+mariadb-10.3 (10.3.0-0+exp2) experimental; urgency=medium
+
+  * Separate RocksDB storage engine into separate package and build it
+    only on 64-bit architectures
+  * Add s390x into a list with unstable tests
+  * Attempt to build TokuDB on all amd64 archs
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 02 May 2017 15:21:14 +0200
+
 mariadb-10.3 (10.3.0-0+exp1) experimental; urgency=medium
 
   * New upstream version 10.3.0
