@@ -3100,7 +3100,7 @@ LONG WINAPI my_unhandler_exception_filter(EXCEPTION_POINTERS *ex_pointers)
 }
 
 
-static void init_signals(void)
+void init_signals(void)
 {
   if(opt_console)
     SetConsoleCtrlHandler(console_event_handler,TRUE);
@@ -3231,7 +3231,7 @@ static size_t my_setstacksize(pthread_attr_t *attr, size_t stacksize)
 
 #ifndef EMBEDDED_LIBRARY
 
-static void init_signals(void)
+void init_signals(void)
 {
   sigset_t set;
   struct sigaction sa;
@@ -6187,7 +6187,7 @@ static void bootstrap(MYSQL_FILE *file)
   thd->variables.wsrep_on= 0;
 #endif
   thd->bootstrap=1;
-  my_net_init(&thd->net,(st_vio*) 0, (void*) 0, MYF(0));
+  my_net_init(&thd->net,(st_vio*) 0, thd, MYF(0));
   thd->max_client_packet_length= thd->net.max_packet;
   thd->security_ctx->master_access= ~(ulong)0;
   thd->thread_id= thd->variables.pseudo_thread_id= thread_id++;
