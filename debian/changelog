@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.23-2) unstable; urgency=medium
+
+  * Add CVE list for 10.1.23 release
+  * Fix FTBFS on kfrebsd-any due missing .service files
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 04 May 2017 10:55:06 +0200
+
 mariadb-10.1 (10.1.23-1) unstable; urgency=medium
 
   * New upstream version 10.1.23, includes fixes for the following
