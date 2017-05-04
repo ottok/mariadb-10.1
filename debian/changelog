@@ -1,3 +1,29 @@
+mariadb-10.1 (10.1.23-1) unstable; urgency=medium
+
+  * New upstream version 10.1.23
+  * Refresh debian/patches on top of MariaDB 10.1.23 release
+  * debian/gbp.conf: Filter most common cruft in the orig tarball
+  * debian/rules: Use --fail-missing to catch extra upstream files
+  * debian/*.manpages: Merge into debian/*.install
+  * debian/*.install: Add few missing binaries into various packages
+  * Declare mariadb-plugin-tokudb as available only on (linux-)amd64
+    to fix FTBFS on kfreebsd-amd64
+  * Remove the extra sanity check as it is already there via standard
+    dh_installinit (|| exit 0) (Closes: #861782)
+  * Stop /usr/sbin/mysqld in prerm script even with systemd
+  * Move mariadb.pc into proper multiarch directory (Closes: #852621)
+  * Add libarchive-dev needed by mariabackup to Build-Depends
+  * debian/control: run wrap-and-sort -a
+  * Move mysql_install_db from mariadb-server-10.1 to
+    mariadb-server-core-10.1 (Closes: #840646)
+  * Add Provides: $database to mysql.init - this partially addresses
+    #852776
+  * Call dh_systemd_start with --no-restart-after-upgrade
+    (Closes: #853137)
+  * d/rules: Remove dh_prep override (legacy cruft)
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 04 May 2017 07:23:23 +0200
+
 mariadb-10.1 (10.1.22-4) unstable; urgency=medium
 
   * Fix small typo in d/rules that caused MySQL version suffix to not
