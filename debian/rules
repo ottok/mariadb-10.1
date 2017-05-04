@@ -59,9 +59,6 @@ override_dh_auto_clean:
 
 	debconf-updatepo # Update po-files when clean runs before each build
 
-override_dh_prep:
-        # Don't clean /tmp/ away, it is needed by all binary packages
-
 override_dh_auto_configure:
 	@echo "RULES.$@"
 	dh_testdir
