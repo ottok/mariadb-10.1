@@ -3,8 +3,8 @@ Description: Extend timeout
  vain as given enough time the build result is fully correct.
 Forwarded: not-needed
 Author: Otto Kekäläinen <otto@seravo.fi>
---- a/mysql-test/CMakeLists.txt
-+++ b/mysql-test/CMakeLists.txt
+--- mariadb-10.1.orig/mysql-test/CMakeLists.txt
++++ mariadb-10.1/mysql-test/CMakeLists.txt
 @@ -64,7 +64,7 @@ ELSE()
  ENDIF()
  

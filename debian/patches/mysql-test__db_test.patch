@@ -4,9 +4,9 @@
 ## DP: Patch 33_scripts__mysql_create_system_tables__no_test removes the
 ## DP: rights for anybody to connect to the test database but the test
 ## DP: suite depends on them.
---- a/mysql-test/mysql-test-run.pl
-+++ b/mysql-test/mysql-test-run.pl
-@@ -3187,6 +3187,11 @@ sub mysql_install_db {
+--- mariadb-10.1.orig/mysql-test/mysql-test-run.pl
++++ mariadb-10.1/mysql-test/mysql-test-run.pl
+@@ -3185,6 +3185,11 @@ sub mysql_install_db {
      mtr_appendfile_to_file("$sql_dir/mysql_system_tables_data.sql",
  			   $bootstrap_sql_file);
  

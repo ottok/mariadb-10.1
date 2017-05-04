@@ -4,8 +4,8 @@ Description: Remove obsoleted systemd target
  https://lintian.debian.org/tags/systemd-service-file-refers-to-obsolete-target.html
 Author: Otto Kekäläinen <otto@mariadb.org>
 
---- a/support-files/mariadb.service.in
-+++ b/support-files/mariadb.service.in
+--- mariadb-10.1.orig/support-files/mariadb.service.in
++++ mariadb-10.1/support-files/mariadb.service.in
 @@ -15,7 +15,6 @@
  [Unit]
  Description=MariaDB database server
@@ -14,8 +14,8 @@ Author: Otto Kekäläinen <otto@mariadb.org>
  
  [Install]
  WantedBy=multi-user.target
---- a/support-files/mariadb@.service.in
-+++ b/support-files/mariadb@.service.in
+--- mariadb-10.1.orig/support-files/mariadb@.service.in
++++ mariadb-10.1/support-files/mariadb@.service.in
 @@ -20,7 +20,6 @@
  [Unit]
  Description=MariaDB database server

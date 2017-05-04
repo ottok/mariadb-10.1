@@ -3,8 +3,8 @@ Description: Fix mips missing atomics primitives
  of libatomic to emulate them.
 Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
 
---- a/configure.cmake
-+++ b/configure.cmake
+--- mariadb-10.1.orig/configure.cmake
++++ mariadb-10.1/configure.cmake
 @@ -128,7 +128,7 @@ IF(UNIX)
    ENDIF()
    FIND_PACKAGE(Threads)
@@ -42,8 +42,8 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  ELSE()
    MESSAGE(FATAL_ERROR "${WITH_ATOMIC_OPS} is not a valid value for WITH_ATOMIC_OPS!")
  ENDIF()
---- a/include/atomic/gcc_builtins.h
-+++ b/include/atomic/gcc_builtins.h
+--- mariadb-10.1.orig/include/atomic/gcc_builtins.h
++++ mariadb-10.1/include/atomic/gcc_builtins.h
 @@ -16,6 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
@@ -73,8 +73,8 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  #ifdef MY_ATOMIC_MODE_DUMMY
  #define make_atomic_load_body(S)   ret= *a
  #define make_atomic_store_body(S)  *a= v
---- a/include/atomic/nolock.h
-+++ b/include/atomic/nolock.h
+--- mariadb-10.1.orig/include/atomic/nolock.h
++++ mariadb-10.1/include/atomic/nolock.h
 @@ -17,7 +17,7 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
  
@@ -93,8 +93,8 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  #      include "gcc_builtins.h"
  #    elif defined(__i386__) || defined(__x86_64__)
  #      include "x86-gcc.h"
---- a/mysys/CMakeLists.txt
-+++ b/mysys/CMakeLists.txt
+--- mariadb-10.1.orig/mysys/CMakeLists.txt
++++ mariadb-10.1/mysys/CMakeLists.txt
 @@ -78,6 +78,10 @@ IF(HAVE_BFD_H)
    TARGET_LINK_LIBRARIES(mysys bfd)  
  ENDIF(HAVE_BFD_H)
@@ -106,9 +106,9 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  IF (WIN32)
    TARGET_LINK_LIBRARIES(mysys IPHLPAPI)  
  ENDIF(WIN32)
---- a/sql/CMakeLists.txt
-+++ b/sql/CMakeLists.txt
-@@ -171,6 +171,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
+--- mariadb-10.1.orig/sql/CMakeLists.txt
++++ mariadb-10.1/sql/CMakeLists.txt
+@@ -170,6 +170,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  
@@ -117,5 +117,5 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
 +ENDIF()
 +
  IF(WIN32)
-   SET(MYSQLD_SOURCE main.cc nt_servc.cc nt_servc.h message.rc)
+   SET(MYSQLD_SOURCE main.cc nt_servc.cc message.rc)
    TARGET_LINK_LIBRARIES(sql psapi)

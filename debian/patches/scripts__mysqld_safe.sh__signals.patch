@@ -4,8 +4,8 @@
 ## DP: Executes /etc/init.d/mysql on signals
 ## DP: Reported as http://bugs.mysql.com/bug.php?id=31361
 
---- a/scripts/mysqld_safe.sh
-+++ b/scripts/mysqld_safe.sh
+--- mariadb-10.1.orig/scripts/mysqld_safe.sh
++++ mariadb-10.1/scripts/mysqld_safe.sh
 @@ -37,7 +37,6 @@ skip_err_log=0
  syslog_tag_mysqld=mysqld
  syslog_tag_mysqld_safe=mysqld_safe

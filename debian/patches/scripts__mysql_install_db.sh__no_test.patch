@@ -4,8 +4,8 @@
 ## DP: scripts__mysql_install_db.sh__no_test
 ## DP: http://bugs.mysql.com/bug.php?id=6901
 
---- a/scripts/mysql_install_db.sh
-+++ b/scripts/mysql_install_db.sh
+--- mariadb-10.1.orig/scripts/mysql_install_db.sh
++++ mariadb-10.1/scripts/mysql_install_db.sh
 @@ -406,7 +406,7 @@ then
  fi
  

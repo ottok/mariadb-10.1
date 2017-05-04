@@ -6,8 +6,8 @@
 ## DP: circumstances as it is checked first. See #301741.
 ## DP: http://bugs.mysql.com/bug.php?id=6901
 
---- a/scripts/mysql_system_tables_data.sql
-+++ b/scripts/mysql_system_tables_data.sql
+--- mariadb-10.1.orig/scripts/mysql_system_tables_data.sql
++++ mariadb-10.1/scripts/mysql_system_tables_data.sql
 @@ -26,16 +26,6 @@
  -- a plain character
  SELECT LOWER( REPLACE((SELECT REPLACE(@@hostname,'_','\_')),'%','\%') )INTO @current_hostname;
