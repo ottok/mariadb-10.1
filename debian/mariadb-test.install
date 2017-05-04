@@ -16,6 +16,12 @@ usr/lib/*/mariadb18/plugin/mypluglib.so
 usr/lib/*/mariadb18/plugin/qa_auth_client.so
 usr/lib/*/mariadb18/plugin/qa_auth_interface.so
 usr/lib/*/mariadb18/plugin/qa_auth_server.so
+usr/share/man/man1/mysql-stress-test.pl.1
+usr/share/man/man1/mysql-test-run.pl.1
+usr/share/man/man1/mysql_client_test.1
+usr/share/man/man1/mysql_client_test_embedded.1
+usr/share/man/man1/mysqltest.1
+usr/share/man/man1/mysqltest_embedded.1
 usr/share/mysql/mysql-test/README
 usr/share/mysql/mysql-test/README.gcov
 usr/share/mysql/mysql-test/README.stress

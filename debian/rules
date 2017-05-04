@@ -148,6 +148,6 @@ get-orig-source:
 	uscan --force-download --verbose
 
 %:
-	dh $@ --parallel --with systemd
+	dh $@ --parallel --with systemd --fail-missing
 
 # vim: ts=8
