@@ -2,7 +2,9 @@ Source: mariadb-10.1
 Section: database
 Priority: optional
 Maintainer: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
-Uploaders: Otto Kekäläinen <otto@debian.org>, Arnaud Fontaine <arnau@debian.org>, Ondřej Surý <ondrej@debian.org>
+Uploaders: Otto Kekäläinen <otto@debian.org>,
+           Arnaud Fontaine <arnau@debian.org>,
+           Ondřej Surý <ondrej@debian.org>
 Build-Depends: bison,
                chrpath,
                cmake,
@@ -12,7 +14,7 @@ Build-Depends: bison,
                dh-systemd,
                gdb,
                libaio-dev [linux-any],
-	       libarchive-dev,
+               libarchive-dev,
                libboost-dev,
                libcrack2-dev (>= 2.9.0),
                libjemalloc-dev [linux-any],
@@ -38,7 +40,9 @@ Vcs-Browser: https://anonscm.debian.org/git/pkg-mysql/mariadb-10.1.git
 Package: libmariadbclient18
 Section: libs
 Architecture: any
-Depends: mysql-common, ${misc:Depends}, ${shlibs:Depends}
+Depends: mysql-common,
+         ${misc:Depends},
+         ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 Description: MariaDB database client library
@@ -71,7 +75,9 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Pre-Depends: ${misc:Pre-Depends}
-Depends: libmariadbclient-dev, ${misc:Depends}, ${shlibs:Depends}
+Depends: libmariadbclient-dev,
+         ${misc:Depends},
+         ${shlibs:Depends}
 Conflicts: libmariadb-client-lgpl-dev-compat,
            libmariadb-dev-compat,
            libmysqlclient-dev
@@ -90,10 +96,13 @@ Description: MariaDB database development files (libmysqlclient compatibility)
 Package: libmariadbd18
 Architecture: any
 Section: libs
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
 Multi-Arch: same
-Breaks: libmariadbd-dev (<< ${source:Version}), libmysqld-dev
-Replaces: libmariadbd-dev (<< ${source:Version}), libmysqld-dev
+Breaks: libmariadbd-dev (<< ${source:Version}),
+        libmysqld-dev
+Replaces: libmariadbd-dev (<< ${source:Version}),
+          libmysqld-dev
 Description: MariaDB embedded database, shared library
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
@@ -123,7 +132,8 @@ Description: MariaDB embedded database, development files
 
 Package: mariadb-common
 Architecture: all
-Depends: mysql-common (>= 5.6.25), ${misc:Depends}
+Depends: mysql-common (>= 5.6.25),
+         ${misc:Depends}
 Multi-Arch: foreign
 Description: MariaDB common metapackage
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
@@ -136,7 +146,9 @@ Architecture: any
 Depends: mariadb-common (>= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Conflicts: mysql-client-5.5, mysql-client-5.6, mysql-client-5.7
+Conflicts: mysql-client-5.5,
+           mysql-client-5.6,
+           mysql-client-5.7
 Breaks: mariadb-client-10.0 (<< 10.0.24-6~),
         mariadb-client-core-10.0,
         mariadb-client-core-5.5,
@@ -167,7 +179,9 @@ Depends: debianutils (>=1.6),
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
-Conflicts: mysql-client-core-5.5, mysql-client-core-5.6, mysql-client-core-5.7
+Conflicts: mysql-client-core-5.5,
+           mysql-client-core-5.6,
+           mysql-client-core-5.7
 Breaks: mariadb-client-10.0,
         mariadb-client-5.5,
         mariadb-server-10.0 (<< 10.0.13-1~),
@@ -185,7 +199,9 @@ Replaces: mariadb-client-10.0,
           mysql-client-5.7,
           virtual-mysql-client
 Provides: virtual-mysql-client
-Recommends: libdbd-mysql-perl (>= 1.2202), libdbi-perl, libterm-readkey-perl
+Recommends: libdbd-mysql-perl (>= 1.2202),
+            libdbi-perl,
+            libterm-readkey-perl
 Description: MariaDB database client binaries
  MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
  server. SQL (Structured Query Language) is the most popular database query
@@ -236,9 +252,14 @@ Description: MariaDB database core server files
 
 Package: mariadb-server-10.1
 Architecture: any
-Suggests: mailx, mariadb-test, netcat-openbsd, tinyca
+Suggests: mailx,
+          mariadb-test,
+          netcat-openbsd,
+          tinyca
 Recommends: libhtml-template-perl
-Pre-Depends: adduser (>= 3.40), debconf, mariadb-common (>= ${source:Version})
+Pre-Depends: adduser (>= 3.40),
+             debconf,
+             mariadb-common (>= ${source:Version})
 Depends: galera-3 (>=25.3),
          gawk,
          iproute2 [linux-any],
@@ -299,7 +320,8 @@ Description: MariaDB database server binaries
 
 Package: mariadb-server
 Architecture: all
-Depends: mariadb-server-10.1 (>= ${source:Version}), ${misc:Depends}
+Depends: mariadb-server-10.1 (>= ${source:Version}),
+         ${misc:Depends}
 Description: MariaDB database server (metapackage depending on the latest version)
  This is an empty package that depends on the current "best" version of
  mariadb-server (currently mariadb-server-10.0), as determined by the MariaDB
@@ -314,7 +336,8 @@ Description: MariaDB database server (metapackage depending on the latest versio
 
 Package: mariadb-client
 Architecture: all
-Depends: mariadb-client-10.1 (>= ${source:Version}), ${misc:Depends}
+Depends: mariadb-client-10.1 (>= ${source:Version}),
+         ${misc:Depends}
 Description: MariaDB database client (metapackage depending on the latest version)
  This is an empty package that depends on the current "best" version of
  mariadb-client (currently mariadb-client-10.0), as determined by the MariaDB
@@ -328,7 +351,8 @@ Depends: libxml2,
          unixodbc,
          ${misc:Depends},
          ${shlibs:Depends}
-Conflicts: mariadb-connect-engine-10.0, mariadb-connect-engine-10.1
+Conflicts: mariadb-connect-engine-10.0,
+           mariadb-connect-engine-10.1
 Breaks: mariadb-connect-engine-10.0,
         mariadb-connect-engine-10.1,
         mariadb-server-10.0,
@@ -345,8 +369,12 @@ Description: Connect storage engine for MariaDB
 
 Package: mariadb-plugin-oqgraph
 Architecture: any
-Depends: libjudydebian1, mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
-Conflicts: mariadb-oqgraph-engine-10.0, mariadb-oqgraph-engine-10.1
+Depends: libjudydebian1,
+         mariadb-server-10.1,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Conflicts: mariadb-oqgraph-engine-10.0,
+           mariadb-oqgraph-engine-10.1
 Breaks: mariadb-oqgraph-engine-10.0,
         mariadb-oqgraph-engine-10.1,
         mariadb-server-10.0,
@@ -362,9 +390,13 @@ Description: OQGraph storage engine for MariaDB
 
 Package: mariadb-plugin-tokudb
 Architecture: amd64
-Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
-Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
-Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
+Depends: mariadb-server-10.1,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: mariadb-server-10.0,
+        mariadb-server-10.1 (<< ${source:Version})
+Replaces: mariadb-server-10.0,
+          mariadb-server-10.1 (<< ${source:Version})
 Description: TokuDB storage engine for MariaDB
  The TokuDB storage engine is for use in high-performance and write-intensive
  environments, offering increased compression and better performance based
@@ -372,11 +404,14 @@ Description: TokuDB storage engine for MariaDB
  This package contains the TokuDB plugin for MariaDB.
 
 Package: mariadb-plugin-mroonga
-# Supports little-endian architectures only
-Architecture: any-i386 any-ia64 any-alpha any-amd64 any-arm any-arm64 any-mipsel any-mipsr6el any-mips64el any-mips64r6el any-nios2 any-powerpcel any-ppc64el any-sh3 any-sh4 any-tilegx
-Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
-Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
-Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
+Architecture: any-alpha any-amd64 any-arm any-arm64 any-i386 any-ia64 any-mips64el any-mips64r6el any-mipsel any-mipsr6el any-nios2 any-powerpcel any-ppc64el any-sh3 any-sh4 any-tilegx
+Depends: mariadb-server-10.1,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: mariadb-server-10.0,
+        mariadb-server-10.1 (<< ${source:Version})
+Replaces: mariadb-server-10.0,
+          mariadb-server-10.1 (<< ${source:Version})
 Description: Mroonga storage engine for MariaDB
  Mroonga (formerly named Groonga Storage Engine) is a storage engine that
  provides fast CJK-ready full text searching using column store.
@@ -384,9 +419,13 @@ Description: Mroonga storage engine for MariaDB
 
 Package: mariadb-plugin-spider
 Architecture: any
-Depends: mariadb-server-10.1, ${misc:Depends}, ${shlibs:Depends}
-Breaks: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
-Replaces: mariadb-server-10.0, mariadb-server-10.1 (<< ${source:Version})
+Depends: mariadb-server-10.1,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Breaks: mariadb-server-10.0,
+        mariadb-server-10.1 (<< ${source:Version})
+Replaces: mariadb-server-10.0,
+          mariadb-server-10.1 (<< ${source:Version})
 Description: Spider storage engine for MariaDB
  The Spider storage engine with built-in sharding features. It supports
  partitioning and xa transactions, and allows tables of different MariaDB
@@ -399,8 +438,10 @@ Depends: libgssapi-krb5-2,
          mariadb-server-10.1,
          ${misc:Depends},
          ${shlibs:Depends}
-Breaks: mariadb-gssapi-server-10.1, mariadb-gssapi-server-10.2
-Replaces: mariadb-gssapi-server-10.1, mariadb-gssapi-server-10.2
+Breaks: mariadb-gssapi-server-10.1,
+        mariadb-gssapi-server-10.2
+Replaces: mariadb-gssapi-server-10.1,
+          mariadb-gssapi-server-10.2
 Description: GSSAPI authentication plugin for MariaDB server
  This plugin includes support for Kerberos on Unix, but can also be used for
  Windows authentication with or without domain environment.
@@ -413,8 +454,10 @@ Depends: libgssapi-krb5-2,
          mariadb-client-10.1,
          ${misc:Depends},
          ${shlibs:Depends}
-Breaks: mariadb-gssapi-client-10.1, mariadb-gssapi-client-10.2
-Replaces: mariadb-gssapi-client-10.1, mariadb-gssapi-client-10.2
+Breaks: mariadb-gssapi-client-10.1,
+        mariadb-gssapi-client-10.2
+Replaces: mariadb-gssapi-client-10.1,
+          mariadb-gssapi-client-10.2
 Description: GSSAPI authentication plugin for MariaDB client
  This plugin includes support for Kerberos on Unix, but can also be used for
  Windows authentication with or without domain environment.
