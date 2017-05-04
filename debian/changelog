@@ -1,6 +1,20 @@
 mariadb-10.1 (10.1.23-1) unstable; urgency=medium
 
-  * New upstream version 10.1.23
+  * New upstream version 10.1.23, includes fixes for the following
+    security vulnerabilities:
+   - [CVE-2017-3302]: use-after-free in C client library for MySQL
+   - [CVE-2017-3313]: unauthorized (local) access to critical data or
+     complete access to all MySQL Server accessible data
+   - [CVE-2017-3308]: unauthorized (network) ability to cause a hang or
+     frequently repeatable crash
+   - [CVE-2017-3309]: unauthorized (network) ability to cause a hang or
+     frequently repeatable crash
+   - [CVE-2017-3453]: unauthorized (network) ability to cause a hang or
+     frequently repeatable crash
+   - [CVE-2017-3456]: unauthorized (network) ability to cause a hang or
+     frequently repeatable crash
+   - [CVE-2017-3464]: unauthorized update, insert or delete access to some
+     of MySQL Server accessible data
   * Refresh debian/patches on top of MariaDB 10.1.23 release
   * debian/gbp.conf: Filter most common cruft in the orig tarball
   * debian/rules: Use --fail-missing to catch extra upstream files
