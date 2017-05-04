@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.23-3) unstable; urgency=medium
+
+  * Remove two internal symbols (ll2str and longlong2str) from
+    kfrebsd-amd64 symbols file
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 04 May 2017 13:19:00 +0200
+
 mariadb-10.1 (10.1.23-2) unstable; urgency=medium
 
   * Add CVE list for 10.1.23 release
