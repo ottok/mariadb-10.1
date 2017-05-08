@@ -1,3 +1,9 @@
+mariadb-10.1 (10.1.23-6) unstable; urgency=medium
+
+  * Also fix the same assertion failure in xtradb (Closes: #862103)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 08 May 2017 19:51:47 +0200
+
 mariadb-10.1 (10.1.23-5) unstable; urgency=medium
 
   * Add upstream patch to fix assertion failure in InnoDB storage engine
