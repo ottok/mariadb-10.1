@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.23-5) unstable; urgency=medium
+
+  * Add upstream patch to fix assertion failure in InnoDB storage engine
+    (Closes: #862103)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 08 May 2017 17:21:55 +0200
+
 mariadb-10.1 (10.1.23-4) unstable; urgency=medium
 
   * Properly declare conflict on mytop (Closes: #861913)
