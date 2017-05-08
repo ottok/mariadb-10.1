@@ -1,3 +1,9 @@
+mariadb-10.1 (10.1.23-4) unstable; urgency=medium
+
+  * Properly declare conflict on mytop (Closes: #861913)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 08 May 2017 11:31:13 +0200
+
 mariadb-10.1 (10.1.23-3) unstable; urgency=medium
 
   * Remove two internal symbols (ll2str and longlong2str) from
