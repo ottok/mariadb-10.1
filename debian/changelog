@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.23-7) unstable; urgency=medium
+
+  * Remove hard Breaks/Replaces with mysql-server and mysql-client
+  * Move virtual packages from Breaks to Conflicts (Debian Policy 7.6.2)
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 12 May 2017 12:21:33 +0200
+
 mariadb-10.1 (10.1.23-6) unstable; urgency=medium
 
   * Also fix the same assertion failure in xtradb (Closes: #862103)
