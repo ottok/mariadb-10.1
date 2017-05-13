@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.23-8) unstable; urgency=medium
+
+  * Use /etc/insserv.conf.d/mariadb to provide $database system facility
+    (Closes: #862447)
+
+ -- Ondřej Surý <ondrej@debian.org>  Sat, 13 May 2017 11:08:43 +0200
+
 mariadb-10.1 (10.1.23-7) unstable; urgency=medium
 
   * Remove hard Breaks/Replaces with mysql-server and mysql-client
