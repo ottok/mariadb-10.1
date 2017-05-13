@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 ### BEGIN INIT INFO
-# Provides:          $database mysql
+# Provides:          mysql
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Should-Start:      $network $named $time
