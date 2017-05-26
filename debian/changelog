@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.23-9) unstable; urgency=medium
+
+  * Fix the invalid location of insserv configuration snippet
+    (Thanks Michael Biebl for catching that)
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 26 May 2017 09:26:33 +0200
+
 mariadb-10.1 (10.1.23-8) unstable; urgency=medium
 
   * Use /etc/insserv.conf.d/mariadb to provide $database system facility
