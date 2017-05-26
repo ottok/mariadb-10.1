@@ -9,7 +9,7 @@ debian/additions/echo_stderr usr/share/mysql
 debian/additions/mariadb.conf.d/50-mysqld_safe.cnf etc/mysql/mariadb.conf.d
 debian/additions/mariadb.conf.d/50-server.cnf etc/mysql/mariadb.conf.d
 debian/additions/source_mariadb-10.1.py usr/share/apport/package-hooks
-debian/mariadb-server-10.1.insserv.conf etc/insserv.conf.d/mariadb
+debian/mariadb-server-10.1.insserv.conf => etc/insserv.conf.d/mariadb
 etc/apparmor.d/usr.sbin.mysqld
 [linux-any] lib/systemd/system/mariadb@.service
 [linux-any] lib/systemd/system/mariadb.service
