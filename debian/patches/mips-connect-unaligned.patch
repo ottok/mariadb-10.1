@@ -22,7 +22,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  /***********************************************************************/
  /*  Class TYPBLK: represents a block of typed values.                  */
  /***********************************************************************/
-@@ -151,40 +152,40 @@ class TYPBLK : public VALBLK {
+@@ -151,40 +152,41 @@ class TYPBLK : public VALBLK {
    // Implementation
    virtual bool   Init(PGLOBAL g, bool check);
    virtual int    GetVlen(void) {return sizeof(TYPE);}
@@ -35,6 +35,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 -  virtual longlong GetBigintValue(int n) {return (longlong)Typp[n];}
 -  virtual ulonglong GetUBigintValue(int n) {return (ulonglong)Typp[n];}
 -  virtual double GetFloatValue(int n) {return (double)Typp[n];}
++
 +  virtual char   GetTinyValue(int n) {return (char)UnalignedRead(n);}
 +  virtual uchar  GetUTinyValue(int n) {return (uchar)UnalignedRead(n);}
 +  virtual short  GetShortValue(int n) {return (short)UnalignedRead(n);}
@@ -50,8 +51,8 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
    // Methods
    using VALBLK::SetValue;
-   virtual void   SetValue(PSZ sp, int n);
-   virtual void   SetValue(char *sp, uint len, int n);
+   virtual void   SetValue(PCSZ sp, int n);
+   virtual void   SetValue(const char *sp, uint len, int n);
    virtual void   SetValue(short sval, int n)
 -                  {Typp[n] = (TYPE)sval; SetNull(n, false);}
 +                  {UnalignedWrite(n, (TYPE)sval); SetNull(n, false);}
@@ -82,7 +83,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    virtual void   SetValue(PVAL valp, int n);
    virtual void   SetValue(PVBLK pv, int n1, int n2);
    virtual void   SetMin(PVAL valp, int n);
-@@ -206,6 +207,17 @@ class TYPBLK : public VALBLK {
+@@ -206,6 +208,17 @@ class TYPBLK : public VALBLK {
    // Members
    TYPE* const &Typp;
    const char  *Fmt;
@@ -128,7 +129,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    else
      Reset(n);
  
-@@ -350,9 +350,9 @@ void TYPBLK<TYPE>::SetValue(PSZ p, int n
+@@ -350,9 +350,9 @@ void TYPBLK<TYPE>::SetValue(PCSZ p, int
    ulonglong val = CharToNumber(p, strlen(p), maxval, Unsigned, &minus); 
      
    if (minus && val < maxval)
@@ -140,9 +141,9 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
    SetNull(n, false);
    } // end of SetValue
-@@ -395,7 +395,7 @@ void TYPBLK<double>::SetValue(PSZ p, int
-     longjmp(g->jumper[g->jump_level], Type);
-     } // endif Check
+@@ -395,7 +395,7 @@ void TYPBLK<double>::SetValue(PCSZ p, in
+ 		throw Type;
+ 	} // endif Check
  
 -  Typp[n] = atof(p);
 +  UnalignedWrite(n, atof(p));
@@ -184,7 +185,17 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
    } // end of SetMax
  
-@@ -522,7 +522,7 @@ void TYPBLK<TYPE>::SetValues(PVBLK pv, i
+@@ -510,8 +510,7 @@ void TYPBLK<TYPE>::SetValues(PVBLK pv, i
+   CheckType(pv)
+   TYPE *lp = ((TYPBLK*)pv)->Typp;
+ 
+-  for (register int i = k; i < n; i++)          // TODO
+-    Typp[i] = lp[i];
++  memcpy(Typp + k, lp + k, sizeof(TYPE) * n);
+ 
+   } // end of SetValues
+ #endif // 0
+@@ -522,7 +521,7 @@ void TYPBLK<TYPE>::SetValues(PVBLK pv, i
  template <class TYPE>
  void TYPBLK<TYPE>::Move(int i, int j)
    {
@@ -193,7 +204,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    MoveNull(i, j);
    } // end of Move
  
-@@ -536,7 +536,7 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n
+@@ -536,7 +535,7 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n
    ChkIndx(n);
    ChkTyp(vp);
  #endif   // _DEBUG
@@ -202,7 +213,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
    TYPE vlv = GetTypedValue(vp);
  
    return (vlv > mlv) ? 1 : (vlv < mlv) ? (-1) : 0;
-@@ -548,8 +548,8 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n
+@@ -548,8 +547,8 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n
  template <class TYPE>
  int TYPBLK<TYPE>::CompVal(int i1, int i2)
    {
@@ -213,7 +224,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
    return (lv1 > lv2) ? 1 : (lv1 < lv2) ? (-1) : 0;
    } // end of CompVal
-@@ -586,7 +586,7 @@ int TYPBLK<TYPE>::Find(PVAL vp)
+@@ -586,7 +585,7 @@ int TYPBLK<TYPE>::Find(PVAL vp)
    TYPE n = GetTypedValue(vp);
  
    for (i = 0; i < Nval; i++)
@@ -222,7 +233,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
        break;
  
    return (i < Nval) ? i : (-1);
-@@ -602,7 +602,7 @@ int TYPBLK<TYPE>::GetMaxLength(void)
+@@ -602,7 +601,7 @@ int TYPBLK<TYPE>::GetMaxLength(void)
    int i, n, m;
  
    for (i = n = 0; i < Nval; i++) {
@@ -231,7 +242,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
      n = MY_MAX(n, m);
      } // endfor i
  
-@@ -1332,7 +1332,7 @@ char *DATBLK::GetCharString(char *p, int
+@@ -1332,7 +1331,7 @@ char *DATBLK::GetCharString(char *p, int
    char *vp;
  
    if (Dvalp) {
@@ -240,7 +251,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
      vp = Dvalp->GetCharString(p);
    } else
      vp = TYPBLK<int>::GetCharString(p, n);
-@@ -1348,7 +1348,7 @@ void DATBLK::SetValue(PSZ p, int n)
+@@ -1348,7 +1347,7 @@ void DATBLK::SetValue(PCSZ p, int n)
    if (Dvalp) {
      // Decode the string according to format
      Dvalp->SetValue_psz(p);
