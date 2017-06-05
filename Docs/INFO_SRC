@@ -1,8 +1,8 @@
-commit: acce1f37c2518278a31606c7f1b460ad0ac7347c
-date: 2017-05-02 08:09:16 +0300
-build-date: 2017-05-02 07:13:55 +0200 
-short: acce1f3
+commit: af4421e82d3d458ea8f19cda6376503be6c49143
+date: 2017-05-29 00:27:14 -0700
+build-date: 2017-05-29 18:48:37 +0200 
+short: af4421e
 branch: HEAD
 
 
-MariaDB source 10.1.23
+MariaDB source 10.1.24
