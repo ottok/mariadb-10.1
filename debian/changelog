@@ -1,3 +1,11 @@
+mariadb-10.1 (10.1.24-1) unstable; urgency=medium
+
+  * New upstream version 10.1.24
+  * Refresh patches on top of MariaDB 10.1.24
+  * Add cracklib-runtime to Build-Depends
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 06 Jun 2017 09:25:19 +0200
+
 mariadb-10.1 (10.1.23-9) unstable; urgency=medium
 
   * Fix the invalid location of insserv configuration snippet
