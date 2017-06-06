@@ -7,6 +7,7 @@ Uploaders: Otto Kekäläinen <otto@debian.org>, Arnaud Fontaine <arnau@debian.or
 Build-Depends: bison,
                chrpath,
                cmake,
+	       cracklib-runtime,
                debhelper (>= 9),
                dh-apparmor,
                dh-exec,
