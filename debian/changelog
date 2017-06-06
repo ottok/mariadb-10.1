@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.24-2) unstable; urgency=medium
+
+  * Add Breaks: cqrlog (<< 1.9.0-5~) to ensure correct upgrade order
+    (Closes: #864159)
+
+ -- Ondřej Surý <ondrej@debian.org>  Tue, 06 Jun 2017 14:29:52 +0200
+
 mariadb-10.1 (10.1.24-1) unstable; urgency=medium
 
   * New upstream version 10.1.24, includes fixes for the following
