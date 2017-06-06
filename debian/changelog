@@ -1,8 +1,12 @@
 mariadb-10.1 (10.1.24-1) unstable; urgency=medium
 
-  * New upstream version 10.1.24
+  * New upstream version 10.1.24, includes fixes for the following
+    high-priority regression fixes:
+    + MDEV-11842: Fail to insert on a table where a field has no default
+    + MDEV-12075: innodb_use_fallocate does not work in MariaDB
+      Server 10.1.21
   * Refresh patches on top of MariaDB 10.1.24
-  * Add cracklib-runtime to Build-Depends
+  * Fix FTBFS in tests: Add cracklib-runtime to Build-Depends
 
  -- Ondřej Surý <ondrej@debian.org>  Tue, 06 Jun 2017 09:25:19 +0200
 
