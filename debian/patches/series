@@ -18,3 +18,4 @@ armhf_mroonga_storage_fail.patch
 c11_atomics.patch
 remove-systemd-obsolete-target.patch
 kFreeBSD-gettid.patch
+mips-innobase-atomic.patch
