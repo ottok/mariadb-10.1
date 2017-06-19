@@ -2,8 +2,8 @@ Author: James Cowgill <jcowgill@debian.org>
 Description: fix FTBFS on 32-bit mips*
 Bug-Debian: #864298
 
---- a/storage/innobase/include/os0sync.h
-+++ b/storage/innobase/include/os0sync.h
+--- mariadb-10.1.orig/storage/innobase/include/os0sync.h
++++ mariadb-10.1/storage/innobase/include/os0sync.h
 @@ -37,6 +37,7 @@ Created 9/6/1995 Heikki Tuuri
  
  #include "univ.i"
