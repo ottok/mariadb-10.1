@@ -59,7 +59,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
 +#elif defined(HAVE_GCC_C11_ATOMICS)
 +
 +#define make_atomic_add_body(S)                     \
-+  __atomic_add_fetch(a, v, __ATOMIC_SEQ_CST)
++  v= __atomic_fetch_add(a, v, __ATOMIC_SEQ_CST)
 +#define make_atomic_fas_body(S)                     \
 +  v= __atomic_exchange_n(a, v, __ATOMIC_SEQ_CST)
 +#define make_atomic_cas_body(S)                     \
@@ -108,7 +108,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  ENDIF(WIN32)
 --- mariadb-10.1.orig/sql/CMakeLists.txt
 +++ mariadb-10.1/sql/CMakeLists.txt
-@@ -170,6 +170,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
+@@ -178,6 +178,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  
