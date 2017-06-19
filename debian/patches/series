@@ -19,3 +19,4 @@ c11_atomics.patch
 remove-systemd-obsolete-target.patch
 kFreeBSD-gettid.patch
 mips-innobase-atomic.patch
+fix-FTBFS-on-GNU-Hurd.patch
