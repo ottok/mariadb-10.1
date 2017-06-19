@@ -20,3 +20,4 @@ remove-systemd-obsolete-target.patch
 kFreeBSD-gettid.patch
 mips-innobase-atomic.patch
 fix-FTBFS-on-GNU-Hurd.patch
+mytop-merge_src:mytop_improvements.patch
