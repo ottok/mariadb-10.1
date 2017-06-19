@@ -19,3 +19,4 @@ c11_atomics.patch
 remove-systemd-obsolete-target.patch
 kFreeBSD-gettid.patch
 mips-innobase-atomic.patch
+mytop-merge_src:mytop_improvements.patch
