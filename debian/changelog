@@ -1,3 +1,20 @@
+mariadb-10.1 (10.1.24-4) unstable; urgency=medium
+
+  [ James Cowgill ]
+  * Disable jemalloc on mips*. (Closes: #864340)
+  * Update C11 atomics to have correct semantics (Closes: #864774)
+
+  [ Ondřej Surý ]
+  * Refresh patches after C11 atomics patch update
+  * Merge mytop script improvements from src:mytop package (Original
+    patches by Philipp Matthias Hahn, Werner Detter, Olaf van der Spek,
+    and Steffen Zieger) (Closes: #864762)
+
+  [ Svante Signell ]
+  * Fix FTBFS on Debian GNU/Hurd (Closes: #861166)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 19 Jun 2017 07:09:50 +0200
+
 mariadb-10.1 (10.1.24-3) unstable; urgency=medium
 
   * Team upload.
