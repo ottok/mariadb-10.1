@@ -1,3 +1,11 @@
+mariadb-10.1 (10.1.24-5) unstable; urgency=medium
+
+  * Add @SYSTEMD_EXECSTARTPOST@ replacement token to mariadb@.service, so
+    the /var/run/mysqld directory is created even for multi-server setup
+    (Closes: #865083)
+
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 19 Jun 2017 08:52:26 +0200
+
 mariadb-10.1 (10.1.24-4) unstable; urgency=medium
 
   [ James Cowgill ]
