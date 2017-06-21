@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.24-6) unstable; urgency=medium
+
+  * Run invoke-rc.d mysql maintscript snippets only when running under
+    sysvinit (Closes: #864593)
+
+ -- Ondřej Surý <ondrej@debian.org>  Wed, 21 Jun 2017 11:12:16 +0200
+
 mariadb-10.1 (10.1.24-5) unstable; urgency=medium
 
   * Add @SYSTEMD_EXECSTARTPOST@ replacement token to mariadb@.service, so
