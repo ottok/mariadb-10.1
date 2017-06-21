@@ -167,4 +167,11 @@ fi
 
 #DEBHELPER#
 
+# Modified dh_installinit snippet to only run with sysvinit
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ]; then
+	if [ ! -e /run/systemd/system ] && [ -x "/etc/init.d/mysql" ]; then
+		invoke-rc.d mysql start || exit $?
+	fi
+fi
+
 exit 0
