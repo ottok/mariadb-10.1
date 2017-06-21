@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.24-0+deb9u2) stretch; urgency=medium
+
+  * Run invoke-rc.d mysql maintscript snippets only when running under
+    sysvinit (Closes: #864593)
+
+ -- Ondřej Surý <ondrej@debian.org>  Wed, 21 Jun 2017 11:11:53 +0200
+
 mariadb-10.1 (10.1.24-0+deb9u1) stretch; urgency=medium
 
   [ Ondřej Surý ]
