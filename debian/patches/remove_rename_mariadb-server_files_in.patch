@@ -4,7 +4,7 @@ Author: Otto Kekäläinen <otto@seravo.fi>
 
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -445,12 +445,6 @@ CONFIGURE_FILE(
+@@ -443,12 +443,6 @@ CONFIGURE_FILE(
      ${CMAKE_SOURCE_DIR}/cmake/info_macros.cmake.in
      ${CMAKE_BINARY_DIR}/info_macros.cmake @ONLY)
  

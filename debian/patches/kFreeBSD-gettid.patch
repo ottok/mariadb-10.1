@@ -1,5 +1,5 @@
---- mariadb-10.1.orig/storage/tokudb/PerconaFT/portability/portability.cc
-+++ mariadb-10.1/storage/tokudb/PerconaFT/portability/portability.cc
+--- a/storage/tokudb/PerconaFT/portability/portability.cc
++++ b/storage/tokudb/PerconaFT/portability/portability.cc
 @@ -115,6 +115,10 @@ toku_os_gettid(void) {
      return syscall(SYS_gettid);
  #elif defined(HAVE_PTHREAD_GETTHREADID_NP)

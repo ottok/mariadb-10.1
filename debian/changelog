@@ -1,3 +1,22 @@
+mariadb-10.1 (10.1.25-0ubuntu0.17.04.1) zesty-security; urgency=high
+
+  * SECURITY UPDATE: New upstream release 10.1.25 (LP: #1698689)
+    - Drop wsrep patches already applied upstream
+    - Drop MIPS patches that no longer apply cleanly and which
+       are not relevant for Ubuntu anyway
+  * Previous release 10.1.23 included included fixes for
+    the following security vulnerabilities:
+    - CVE-2017-3464
+    - CVE-2017-3456
+    - CVE-2017-3453
+    - CVE-2017-3309
+    - CVE-2017-3308
+  * Previous release 10.1.22 included included fixes for
+    - CVE-2017-3313
+    - CVE-2017-3302
+
+ -- Otto Kekäläinen <otto@debian.org>  Wed, 05 Jul 2017 23:40:08 +0300
+
 mariadb-10.1 (10.1.22-3) unstable; urgency=medium
 
   * Use pidof instead of pgrep, so we don't have to depend on procps

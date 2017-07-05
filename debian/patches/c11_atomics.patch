@@ -108,7 +108,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  ENDIF(WIN32)
 --- a/sql/CMakeLists.txt
 +++ b/sql/CMakeLists.txt
-@@ -171,6 +171,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
+@@ -178,6 +178,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  
@@ -117,5 +117,5 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
 +ENDIF()
 +
  IF(WIN32)
-   SET(MYSQLD_SOURCE main.cc nt_servc.cc nt_servc.h message.rc)
+   SET(MYSQLD_SOURCE main.cc nt_servc.cc message.rc)
    TARGET_LINK_LIBRARIES(sql psapi)
