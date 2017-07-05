@@ -1,6 +1,6 @@
 /*
    Copyright (c) 2000, 2015, Oracle and/or its affiliates.
-   Copyright (c) 2008, 2016, MariaDB
+   Copyright (c) 2008, 2017, MariaDB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -367,16 +367,6 @@ void thd_close_connection(THD *thd)
 {
   if (thd->net.vio)
     vio_close(thd->net.vio);
-}
-
-/**
-  Get current THD object from thread local data
-
-  @retval     The THD object for the thread, NULL if not connection thread
-*/
-THD *thd_get_current_thd()
-{
-  return current_thd;
 }
 
 /**
@@ -889,6 +879,7 @@ THD::THD(bool is_wsrep_applier)
    debug_sync_control(0),
 #endif /* defined(ENABLED_DEBUG_SYNC) */
    wait_for_commit_ptr(0),
+   m_internal_handler(0),
    main_da(0, false, false),
    m_stmt_da(&main_da),
    tdc_hash_pins(0),
@@ -1083,7 +1074,6 @@ THD::THD(bool is_wsrep_applier)
                                               MYF(MY_WME|MY_THREAD_SPECIFIC));
   }
 
-  m_internal_handler= NULL;
   m_binlog_invoker= INVOKER_NONE;
   memset(&invoker_user, 0, sizeof(invoker_user));
   memset(&invoker_host, 0, sizeof(invoker_host));
@@ -1410,6 +1400,8 @@ void THD::init(void)
   server_status= SERVER_STATUS_AUTOCOMMIT;
   if (variables.sql_mode & MODE_NO_BACKSLASH_ESCAPES)
     server_status|= SERVER_STATUS_NO_BACKSLASH_ESCAPES;
+  if (variables.sql_mode & MODE_ANSI_QUOTES)
+    server_status|= SERVER_STATUS_ANSI_QUOTES;
 
   transaction.all.modified_non_trans_table=
     transaction.stmt.modified_non_trans_table= FALSE;
@@ -2021,7 +2013,7 @@ bool THD::notify_shared_lock(MDL_context_owner *ctx_in_use,
         if (!thd_table->needs_reopen())
         {
           signalled|= mysql_lock_abort_for_thread(this, thd_table);
-          if (this && WSREP(this) && wsrep_thd_is_BF(this, FALSE))
+          if (WSREP(this) && wsrep_thd_is_BF(this, FALSE))
           {
             WSREP_DEBUG("remove_table_from_cache: %llu",
                         (unsigned long long) this->real_id);
@@ -4074,16 +4066,12 @@ my_bool thd_net_is_killed()
 
 void thd_increment_bytes_received(void *thd, ulong length)
 {
-  if (unlikely(!thd))                           // Called from federatedx
-    thd= current_thd;
   ((THD*) thd)->status_var.bytes_received+= length;
 }
 
 
 void thd_increment_net_big_packet_count(void *thd, ulong length)
 {
-  if (unlikely(!thd))                           // Called from federatedx
-    thd= current_thd;
   ((THD*) thd)->status_var.net_big_packet_count+= length;
 }
 
@@ -4533,6 +4521,15 @@ extern "C" int thd_rpl_is_parallel(const MYSQL_THD thd)
 {
   return thd->rgi_slave && thd->rgi_slave->is_parallel_exec;
 }
+
+
+/* Returns high resolution timestamp for the start
+  of the current query. */
+extern "C" unsigned long long thd_start_utime(const MYSQL_THD thd)
+{
+  return thd->start_utime;
+}
+
 
 /*
   This function can optionally be called to check if thd_report_wait_for()
@@ -5537,6 +5534,7 @@ bool xid_cache_insert(THD *thd, XID_STATE *xid_state)
     break;
   case 1:
     my_error(ER_XAER_DUPID, MYF(0));
+    /* fall through */
   default:
     xid_state->xid_cache_element= 0;
   }

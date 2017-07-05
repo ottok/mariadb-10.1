@@ -519,16 +519,14 @@ fsp_header_init_fields(
 	ulint	space_id,	/*!< in: space id */
 	ulint	flags);		/*!< in: tablespace flags (FSP_SPACE_FLAGS):
 				0, or table->flags if newer than COMPACT */
-/**********************************************************************//**
-Initializes the space header of a new created space and creates also the
-insert buffer tree root if space == 0. */
+/** Initialize a tablespace header.
+@param[in]	space_id	space id
+@param[in]	size		current size in blocks
+@param[in,out]	mtr		mini-transaction */
 UNIV_INTERN
 void
-fsp_header_init(
-/*============*/
-	ulint	space,		/*!< in: space id */
-	ulint	size,		/*!< in: current size in blocks */
-	mtr_t*	mtr);		/*!< in/out: mini-transaction */
+fsp_header_init(ulint space_id, ulint size, mtr_t* mtr);
+
 /**********************************************************************//**
 Increases the space size field of a space. */
 UNIV_INTERN
@@ -1037,14 +1035,15 @@ fsp_flags_get_page_size(
 /*====================*/
 	ulint	flags);		/*!< in: tablespace flags */
 
-/*********************************************************************/
-/* @return offset into fsp header where crypt data is stored */
+/*********************************************************************
+Compute offset after xdes where crypt data can be stored
+@param[in]	zip_size	Compressed size or 0
+@return	offset */
 UNIV_INTERN
 ulint
 fsp_header_get_crypt_offset(
-/*========================*/
-	ulint zip_size,		/*!< in: zip_size */
-	ulint* max_size);	/*!< out: free space after offset */
+	const ulint zip_size)
+	MY_ATTRIBUTE((warn_unused_result));
 
 #define fsp_page_is_free(space,page,mtr) \
 	fsp_page_is_free_func(space,page,mtr, __FILE__, __LINE__)

@@ -127,18 +127,6 @@ thd_is_replication_slave_thread(
 	THD*	thd);	/*!< in: thread handle */
 
 /******************************************************************//**
-Gets information on the durability property requested by thread.
-Used when writing either a prepare or commit record to the log
-buffer.
-@return the durability property. */
-UNIV_INTERN
-enum durability_properties
-thd_requested_durability(
-/*=====================*/
-	const THD* thd)	/*!< in: thread handle */
-	MY_ATTRIBUTE((nonnull, warn_unused_result));
-
-/******************************************************************//**
 Returns true if the transaction this thread is processing has edited
 non-transactional tables. Used by the deadlock detector when deciding
 which transaction to rollback in case of a deadlock - we try to avoid
@@ -149,6 +137,13 @@ ibool
 thd_has_edited_nontrans_tables(
 /*===========================*/
 	THD*	thd);	/*!< in: thread handle */
+
+/**
+Get high resolution timestamp for the current query start time.
+
+@retval timestamp in microseconds precision
+*/
+unsigned long long thd_query_start_micro(const MYSQL_THD thd);
 
 /*************************************************************//**
 Prints info of a THD object (== user session thread) to the given file. */

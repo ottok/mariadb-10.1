@@ -1,7 +1,7 @@
 /*****************************************************************************
 
 Copyright (c) 1997, 2016, Oracle and/or its affiliates. All Rights Reserved.
-Copyright (c) 2016, MariaDB Corporation.
+Copyright (c) 2016, 2017, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -2963,8 +2963,7 @@ ibuf_get_volume_buffered_hash(
 	fold = ut_fold_binary(data, len);
 
 	hash += (fold / (CHAR_BIT * sizeof *hash)) % size;
-	bitmask = static_cast<ulint>(
-		1 << (fold % (CHAR_BIT * sizeof(*hash))));
+	bitmask = static_cast<ulint>(1) << (fold % (CHAR_BIT * sizeof(*hash)));
 
 	if (*hash & bitmask) {
 
@@ -3733,7 +3732,7 @@ fail_exit:
 
 	if (mode == BTR_MODIFY_PREV) {
 		err = btr_cur_optimistic_insert(
-			BTR_NO_LOCKING_FLAG,
+			BTR_NO_LOCKING_FLAG | BTR_NO_UNDO_LOG_FLAG,
 			cursor, &offsets, &offsets_heap,
 			ibuf_entry, &ins_rec,
 			&dummy_big_rec, 0, thr, &mtr);
@@ -4596,7 +4595,7 @@ ibuf_merge_or_delete_for_page(
 	buf_block_t*	block,	/*!< in: if page has been read from
 				disk, pointer to the page x-latched,
 				else NULL */
-	ulint		space,	/*!< in: space id of the index page */
+	ulint		space_id,/*!< in: space id of the index page */
 	ulint		page_no,/*!< in: page number of the index page */
 	ulint		zip_size,/*!< in: compressed page size in bytes,
 				or 0 */
@@ -4613,21 +4612,21 @@ ibuf_merge_or_delete_for_page(
 	ulint		volume			= 0;
 #endif
 	page_zip_des_t*	page_zip		= NULL;
-	ibool		tablespace_being_deleted = FALSE;
 	ibool		corruption_noticed	= FALSE;
 	mtr_t		mtr;
+	fil_space_t*	space			= NULL;
 
 	/* Counts for merged & discarded operations. */
 	ulint		mops[IBUF_OP_COUNT];
 	ulint		dops[IBUF_OP_COUNT];
 
-	ut_ad(!block || buf_block_get_space(block) == space);
+	ut_ad(!block || buf_block_get_space(block) == space_id);
 	ut_ad(!block || buf_block_get_page_no(block) == page_no);
 	ut_ad(!block || buf_block_get_zip_size(block) == zip_size);
 	ut_ad(!block || buf_block_get_io_fix_unlocked(block) == BUF_IO_READ);
 
 	if (srv_force_recovery >= SRV_FORCE_NO_IBUF_MERGE
-	    || trx_sys_hdr_page(space, page_no)) {
+	    || trx_sys_hdr_page(space_id, page_no)) {
 		return;
 	}
 
@@ -4641,7 +4640,7 @@ ibuf_merge_or_delete_for_page(
 	uncompressed page size always is a power-of-2 multiple of the
 	compressed page size. */
 
-	if (ibuf_fixed_addr_page(space, 0, page_no)
+	if (ibuf_fixed_addr_page(space_id, 0, page_no)
 	    || fsp_descr_page(0, page_no)) {
 		return;
 	}
@@ -4649,19 +4648,19 @@ ibuf_merge_or_delete_for_page(
 	if (UNIV_LIKELY(update_ibuf_bitmap)) {
 		ut_a(ut_is_2pow(zip_size));
 
-		if (ibuf_fixed_addr_page(space, zip_size, page_no)
+		if (ibuf_fixed_addr_page(space_id, zip_size, page_no)
 		    || fsp_descr_page(zip_size, page_no)) {
 			return;
 		}
 
-		/* If the following returns FALSE, we get the counter
+		/* If the following returns space, we get the counter
 		incremented, and must decrement it when we leave this
 		function. When the counter is > 0, that prevents tablespace
 		from being dropped. */
 
-		tablespace_being_deleted = fil_inc_pending_ops(space, true);
+		space = fil_space_acquire(space_id);
 
-		if (UNIV_UNLIKELY(tablespace_being_deleted)) {
+		if (UNIV_UNLIKELY(!space)) {
 			/* Do not try to read the bitmap page from space;
 			just delete the ibuf records for the page */
 
@@ -4674,7 +4673,7 @@ ibuf_merge_or_delete_for_page(
 			ibuf_mtr_start(&mtr);
 
 			bitmap_page = ibuf_bitmap_get_map_page(
-				space, page_no, zip_size, &mtr);
+				space_id, page_no, zip_size, &mtr);
 
 			if (bitmap_page &&
 			    fil_page_get_type(bitmap_page) != FIL_PAGE_TYPE_ALLOCATED) {
@@ -4688,15 +4687,15 @@ ibuf_merge_or_delete_for_page(
 			if (!bitmap_bits) {
 				/* No inserts buffered for this page */
 
-				if (!tablespace_being_deleted) {
-					fil_decr_pending_ops(space);
+				if (space) {
+					fil_space_release(space);
 				}
 
 				return;
 			}
 		}
 	} else if (block
-		   && (ibuf_fixed_addr_page(space, zip_size, page_no)
+		   && (ibuf_fixed_addr_page(space_id, zip_size, page_no)
 		      || fsp_descr_page(zip_size, page_no))) {
 
 		return;
@@ -4704,7 +4703,7 @@ ibuf_merge_or_delete_for_page(
 
 	heap = mem_heap_create(512);
 
-	search_tuple = ibuf_search_tuple_build(space, page_no, heap);
+	search_tuple = ibuf_search_tuple_build(space_id, page_no, heap);
 
 	if (block) {
 		/* Move the ownership of the x-latch on the page to this OS
@@ -4730,7 +4729,7 @@ ibuf_merge_or_delete_for_page(
 			fputs("  InnoDB: Dump of the ibuf bitmap page:\n",
 			      stderr);
 
-			bitmap_page = ibuf_bitmap_get_map_page(space, page_no,
+			bitmap_page = ibuf_bitmap_get_map_page(space_id, page_no,
 							       zip_size, &mtr);
 			if (bitmap_page == NULL)
 			{
@@ -4814,7 +4813,7 @@ loop:
 
 		/* Check if the entry is for this index page */
 		if (ibuf_rec_get_page_no(&mtr, rec) != page_no
-		    || ibuf_rec_get_space(&mtr, rec) != space) {
+		    || ibuf_rec_get_space(&mtr, rec) != space_id) {
 
 			if (block) {
 				page_header_reset_last_insert(
@@ -4881,7 +4880,7 @@ loop:
 				ut_ad(page_rec_is_user_rec(rec));
 				ut_ad(ibuf_rec_get_page_no(&mtr, rec)
 				      == page_no);
-				ut_ad(ibuf_rec_get_space(&mtr, rec) == space);
+				ut_ad(ibuf_rec_get_space(&mtr, rec) == space_id);
 
 				/* Mark the change buffer record processed,
 				so that it will not be merged again in case
@@ -4911,7 +4910,7 @@ loop:
 				buf_block_dbg_add_level(
 					block, SYNC_IBUF_TREE_NODE);
 
-				if (!ibuf_restore_pos(space, page_no,
+				if (!ibuf_restore_pos(space_id, page_no,
 						      search_tuple,
 						      BTR_MODIFY_LEAF,
 						      &pcur, &mtr)) {
@@ -4935,7 +4934,7 @@ loop:
 		}
 
 		/* Delete the record from ibuf */
-		if (ibuf_delete_rec(space, page_no, &pcur, search_tuple,
+		if (ibuf_delete_rec(space_id, page_no, &pcur, search_tuple,
 				    &mtr)) {
 			/* Deletion was pessimistic and mtr was committed:
 			we start from the beginning again */
@@ -4955,7 +4954,7 @@ reset_bit:
 		page_t*	bitmap_page;
 
 		bitmap_page = ibuf_bitmap_get_map_page(
-			space, page_no, zip_size, &mtr);
+			space_id, page_no, zip_size, &mtr);
 
 		ibuf_bitmap_page_set_bits(
 			bitmap_page, page_no, zip_size,
@@ -4996,13 +4995,12 @@ reset_bit:
 	mutex_exit(&ibuf_mutex);
 #endif /* HAVE_ATOMIC_BUILTINS */
 
-	if (update_ibuf_bitmap && !tablespace_being_deleted) {
-
-		fil_decr_pending_ops(space);
+	if (space) {
+		fil_space_release(space);
 	}
 
 #ifdef UNIV_IBUF_COUNT_DEBUG
-	ut_a(ibuf_count_get(space, page_no) == 0);
+	ut_a(ibuf_count_get(space_id, page_no) == 0);
 #endif
 }
 
