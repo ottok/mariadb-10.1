@@ -57,7 +57,7 @@
  #endif
 @@ -128,8 +132,8 @@ const char *my_open_parent_dir_nosymlink
    return res;
- #elif defined(HAVE_REALPATH)
+ #elif defined(HAVE_REALPATH) && defined(PATH_MAX)
  #define NOSYMLINK_FUNCTION_BODY(AT,NOAT)                                \
 -  char buf[PATH_MAX+1];                                                 \
 -  if (realpath(pathname, buf) == NULL) return -1;                       \
@@ -65,7 +65,7 @@
 +  if (buf == NULL) return -1;                                           \
    if (strcmp(pathname, buf)) { errno= ENOTDIR; return -1; }             \
    return NOAT;
- #else
+ #elif defined(HAVE_REALPATH)
 --- mariadb-10.1.orig/storage/mroonga/vendor/groonga/lib/grn_com.h
 +++ mariadb-10.1/storage/mroonga/vendor/groonga/lib/grn_com.h
 @@ -66,13 +66,22 @@ GRN_API grn_com_queue_entry *grn_com_que
