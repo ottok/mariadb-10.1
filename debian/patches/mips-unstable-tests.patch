@@ -4,7 +4,7 @@ Author: James Cowgill <jcowgill@debian.org>
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- mariadb-10.1.orig/mysql-test/unstable-tests
 +++ mariadb-10.1/mysql-test/unstable-tests
-@@ -151,7 +151,6 @@ engines/funcs.*                  : Not m
+@@ -143,7 +143,6 @@ engines/funcs.*                  : Not m
  federated.assisted_discovery     : Modified in 10.1.24
  federated.federated_bug_585688   : MDEV-12907 - Valgrind
  federated.federated_innodb       : MDEV-10617, MDEV-10417 - Wrong checksum, timeouts, fails on Mips
@@ -12,19 +12,20 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  federated.federated_transactions : MDEV-10617, MDEV-10417 - Wrong checksum, timeouts, fails on Mips
  federated.federatedx             : MDEV-10617 - Wrong checksum, timeouts
  
-@@ -258,10 +257,9 @@ mroonga/storage.repair_table_no_index_fi
+@@ -231,11 +230,10 @@ mroonga/storage.repair_table_no_index_fi
  
  #----------------------------------------------------------------
  
 -multi_source.gtid        : MDEV-10417 - Fails on Mips
  multi_source.info_logs   : MDEV-10042 - Wrong result, MDEV-12629 - Valgrind warnings
+ multi_source.mdev-9544   : Added in 10.1.25
 -multi_source.multisource : MDEV-10417 - Fails on Mips
  multi_source.reset_slave : MDEV-10690 - wrong result
 +multi_source.gtid        : MDEV-10620 - Timeout in wait condition
  multi_source.simple      : MDEV-4633 - Wrong slave status output
  multi_source.status_vars : MDEV-4632 - failed while waiting for Slave_received_heartbeats
  
-@@ -294,31 +292,25 @@ plugins.thread_pool_server_audit : MDEV-
+@@ -271,31 +269,25 @@ roles.show_create_database-10463      :
  #----------------------------------------------------------------
  
  rpl.last_insert_id                    : MDEV-10625 - warnings in error log
@@ -45,11 +46,11 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  rpl.rpl_insert_delayed                : MDEV-9329 - Fails on Ubuntu/s390x
 -rpl.rpl_invoked_features              : MDEV-10417 - Fails on Mips
  rpl.rpl_mariadb_slave_capability      : MDEV-11018 - sporadic wrong events in binlog
- rpl.rpl_mdev-11092                    : Added in 10.1.24
+ rpl.rpl_mdev-11092                    : MDEV-13065 - Wrong value in include; added in 10.1.24
 -rpl.rpl_mdev6020                      : MDEV-10630, MDEV-10417 - Timeouts, fails on Mips
 +rpl.rpl_mdev6020                      : MDEV-10630, MDEV-10417 - Timeouts
- rpl.rpl_mysql_upgrade                 : Modified in 10.1.23
  rpl.rpl_parallel                      : MDEV-10653 - Timeouts
+ rpl.rpl_parallel_mdev6589             : MDEV-12979 - Assertion failure
  rpl.rpl_parallel_optimistic           : MDEV-10511 - timeout
  rpl.rpl_parallel_retry                : MDEV-11119 - Server crash
  rpl.rpl_parallel_temptable            : MDEV-10356 - Crash in close_thread_tables
