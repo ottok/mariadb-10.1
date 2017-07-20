@@ -1,3 +1,10 @@
+mariadb-10.1 (10.1.25-0+deb9u1) stretch; urgency=medium
+
+  * New upstream version 10.1.25
+  * Update quilt patches on top of mariadb-10.1.25 release
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 20 Jul 2017 09:35:41 +0200
+
 mariadb-10.1 (10.1.24-0+deb9u2) stretch; urgency=medium
 
   * Run invoke-rc.d mysql maintscript snippets only when running under
