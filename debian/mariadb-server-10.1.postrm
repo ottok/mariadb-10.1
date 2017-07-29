@@ -47,4 +47,9 @@ if [ "$1" = "purge" ] && [ -f "/var/lib/mysql/debian-10.1.flag" ]; then
 
 fi
 
+# Modified dh_systemd_start snippet that's not added automatically due /etc/init.d/mysql
+if [ -d /run/systemd/system ]; then
+	systemctl --system daemon-reload >/dev/null || true
+fi
+
 exit 0
