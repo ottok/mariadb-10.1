@@ -167,9 +167,13 @@ fi
 
 #DEBHELPER#
 
+# Modified dh_systemd_start snippet that's not added automatically due /etc/init.d/mysql
+if [ -d /run/systemd/system ]; then
+	systemctl --system daemon-reload >/dev/null || true
+	deb-systemd-invoke start mariadb.service >/dev/null || true
 # Modified dh_installinit snippet to only run with sysvinit
-if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ]; then
-	if [ ! -e /run/systemd/system ] && [ -x "/etc/init.d/mysql" ]; then
+elif [ -x "/etc/init.d/mysql" ]; then
+	if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ]; then
 		invoke-rc.d mysql start || exit $?
 	fi
 fi
