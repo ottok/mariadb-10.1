@@ -2,8 +2,13 @@ mariadb-10.1 (10.1.25-1) unstable; urgency=medium
 
   * New upstream version 10.1.25
   * Update quilt patches on top of mariadb-10.1.25 release
+  * Explicitly add dh_systemd_start snippets to mariadb-server-10.1
+    because it's all messed up with different name for sysvinit ('mysql')
+    and systemd ('mariadb') (Closes: #865870)
+  * Don't disable PIE, it's enabled by upstream anyway (Closes: #865737)
+  * Add default socket location for client (Closes: #864662)
 
- -- Ondřej Surý <ondrej@debian.org>  Wed, 12 Jul 2017 09:39:19 +0200
+ -- Ondřej Surý <ondrej@debian.org>  Sun, 30 Jul 2017 14:15:48 +0200
 
 mariadb-10.1 (10.1.24-6) unstable; urgency=medium
 
