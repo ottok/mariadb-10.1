@@ -4,15 +4,15 @@ Author: James Cowgill <jcowgill@debian.org>
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- mariadb-10.1.orig/mysql-test/unstable-tests
 +++ mariadb-10.1/mysql-test/unstable-tests
-@@ -143,7 +143,6 @@ engines/funcs.*                  : Not m
- federated.assisted_discovery     : Modified in 10.1.24
+@@ -149,7 +149,6 @@ engines/funcs.*                  : Not m
+ 
  federated.federated_bug_585688   : MDEV-12907 - Valgrind
  federated.federated_innodb       : MDEV-10617, MDEV-10417 - Wrong checksum, timeouts, fails on Mips
 -federated.federated_partition    : MDEV-10417 - Fails on Mips
  federated.federated_transactions : MDEV-10617, MDEV-10417 - Wrong checksum, timeouts, fails on Mips
  federated.federatedx             : MDEV-10617 - Wrong checksum, timeouts
- 
-@@ -231,11 +230,10 @@ mroonga/storage.repair_table_no_index_fi
+ federated.net_thd_crash-12725    : Added in 10.1.26
+@@ -235,11 +234,10 @@ mroonga/storage.repair_table_no_index_fi
  
  #----------------------------------------------------------------
  
@@ -25,9 +25,9 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  multi_source.simple      : MDEV-4633 - Wrong slave status output
  multi_source.status_vars : MDEV-4632 - failed while waiting for Slave_received_heartbeats
  
-@@ -271,31 +269,25 @@ roles.show_create_database-10463      :
- #----------------------------------------------------------------
+@@ -276,12 +274,9 @@ roles.show_create_database-10463      :
  
+ rpl.circular_serverid0                : Added in 10.1.26
  rpl.last_insert_id                    : MDEV-10625 - warnings in error log
 -rpl.rpl_auto_increment                : MDEV-10417 - Fails on Mips
 -rpl.rpl_auto_increment_bug45679       : MDEV-10417 - Fails on Mips
@@ -36,8 +36,9 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  rpl.rpl_checksum_cache                : MDEV-12173 - Unexpected error
 -rpl.rpl_ddl                           : MDEV-10417 - Fails on Mips
  rpl.rpl_domain_id_filter_restart      : MDEV-10684 - Wrong result
- rpl.rpl_gtid_basic                    : MDEV-10681 - server startup problem
- rpl.rpl_gtid_crash                    : MDEV-9501 - Warning: failed registering on master
+ rpl.rpl_extra_col_master_innodb       : Include file modified in 10.1.26
+ rpl.rpl_extra_col_master_myisam       : Include file modified in 10.1.26
+@@ -294,14 +289,12 @@ rpl.rpl_gtid_crash                    :
  rpl.rpl_gtid_mdev9033                 : MDEV-10680 - warnings
  rpl.rpl_gtid_stop_start               : MDEV-10629 - Crash on shutdown, MDEV-12629 - Valgrind warnings
  rpl.rpl_gtid_until                    : MDEV-10625 - warnings in error log
@@ -45,16 +46,19 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  rpl.rpl_insert                        : MDEV-9329 - Fails on Ubuntu/s390x
  rpl.rpl_insert_delayed                : MDEV-9329 - Fails on Ubuntu/s390x
 -rpl.rpl_invoked_features              : MDEV-10417 - Fails on Mips
+ rpl.rpl_loaddata                      : Include file modified in 10.1.26
+ rpl.rpl_loaddata_fatal                : Include file modified in 10.1.26
  rpl.rpl_mariadb_slave_capability      : MDEV-11018 - sporadic wrong events in binlog
- rpl.rpl_mdev-11092                    : MDEV-13065 - Wrong value in include; added in 10.1.24
 -rpl.rpl_mdev6020                      : MDEV-10630, MDEV-10417 - Timeouts, fails on Mips
 +rpl.rpl_mdev6020                      : MDEV-10630, MDEV-10417 - Timeouts
- rpl.rpl_parallel                      : MDEV-10653 - Timeouts
- rpl.rpl_parallel_mdev6589             : MDEV-12979 - Assertion failure
- rpl.rpl_parallel_optimistic           : MDEV-10511 - timeout
+ rpl.rpl_mdev-11092                    : Include file modified in 10.1.26
+ rpl.rpl_mixed_binlog_max_cache_size   : Include file modified in 10.1.26
+ rpl.rpl_old_decimal                   : Include file modified in 10.1.26
+@@ -310,7 +303,6 @@ rpl.rpl_parallel_mdev6589             :
+ rpl.rpl_parallel_optimistic           : MDEV-10511 - timeout; modified in 10.1.26
  rpl.rpl_parallel_retry                : MDEV-11119 - Server crash
  rpl.rpl_parallel_temptable            : MDEV-10356 - Crash in close_thread_tables
 -rpl.rpl_partition_innodb              : MDEV-10417 - Fails on Mips
  rpl.rpl_password_boundaries           : MDEV-11534 - Slave IO warnings
- rpl.rpl_row_log_innodb                : MDEV-10688 - Wrong result
- rpl.rpl_row_sp001                     : MDEV-9329 - Fails on Ubuntu/s390x
+ rpl.rpl_reset_slave_fail              : Added in 10.1.26
+ rpl.rpl_rotate_logs                   : Include file modified in 10.1.26

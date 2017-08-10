@@ -6,7 +6,7 @@
 ## DP: suite depends on them.
 --- mariadb-10.1.orig/mysql-test/mysql-test-run.pl
 +++ mariadb-10.1/mysql-test/mysql-test-run.pl
-@@ -3203,6 +3203,11 @@ sub mysql_install_db {
+@@ -3199,6 +3199,11 @@ sub mysql_install_db {
      mtr_appendfile_to_file("$sql_dir/mysql_system_tables_data.sql",
  			   $bootstrap_sql_file);
  
