@@ -1,3 +1,19 @@
+mariadb-10.1 (10.1.26-0+deb9u1) stretch-security; urgency=medium
+
+  * New upstream version 10.1.26.  Includes fixes for the following
+    security vulnerabilities:
+    - CVE-2017-3636
+    - CVE-2017-3641
+    - CVE-2017-3653
+  * Explicitly add dh_systemd_start snippets to mariadb-server-10.1
+    because it's all messed up with different name for sysvinit ('mysql')
+    and systemd ('mariadb') (Closes: #865870)
+  * gbp.conf: Ignore upstream debian/ directory when importing upstream
+    tarball
+  * Refresh patches on top of MariaDB 10.1.26
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 10 Aug 2017 21:07:44 +0200
+
 mariadb-10.1 (10.1.25-0+deb9u1) stretch; urgency=medium
 
   * New upstream version 10.1.25
