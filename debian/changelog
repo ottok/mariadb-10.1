@@ -1,3 +1,13 @@
+mariadb-10.1 (10.1.26-1) unstable; urgency=medium
+
+  * Ignore upstream debian/ directory when importing upstream tarball
+  * New upstream version 10.1.26
+  * Refresh patches for MariaDB 10.1.26
+  * Remove unstable tests patches for unstable build, so we see what is
+    really failing and what is not
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 10 Aug 2017 20:41:46 +0200
+
 mariadb-10.1 (10.1.25-1) unstable; urgency=medium
 
   * New upstream version 10.1.25
