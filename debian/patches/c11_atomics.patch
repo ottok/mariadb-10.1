@@ -1,10 +1,19 @@
-Description: Fix mips missing atomics primitives
- On mips we don't have native support for 64bit atomic operations. Make use
- of libatomic to emulate them.
-Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:29 +0200
+Subject: c11_atomics
 
---- mariadb-10.1.orig/configure.cmake
-+++ mariadb-10.1/configure.cmake
+---
+ configure.cmake               | 23 +++++++++++++++++++++--
+ include/atomic/gcc_builtins.h | 15 +++++++++++++++
+ include/atomic/nolock.h       |  4 ++--
+ mysys/CMakeLists.txt          |  4 ++++
+ sql/CMakeLists.txt            |  4 ++++
+ 5 files changed, 46 insertions(+), 4 deletions(-)
+
+diff --git a/configure.cmake b/configure.cmake
+index 0057c7f..43ad114 100644
+--- a/configure.cmake
++++ b/configure.cmake
 @@ -128,7 +128,7 @@ IF(UNIX)
    ENDIF()
    FIND_PACKAGE(Threads)
@@ -42,8 +51,10 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  ELSE()
    MESSAGE(FATAL_ERROR "${WITH_ATOMIC_OPS} is not a valid value for WITH_ATOMIC_OPS!")
  ENDIF()
---- mariadb-10.1.orig/include/atomic/gcc_builtins.h
-+++ mariadb-10.1/include/atomic/gcc_builtins.h
+diff --git a/include/atomic/gcc_builtins.h b/include/atomic/gcc_builtins.h
+index 56a0323..044be2e 100644
+--- a/include/atomic/gcc_builtins.h
++++ b/include/atomic/gcc_builtins.h
 @@ -16,6 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
@@ -73,8 +84,10 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  #ifdef MY_ATOMIC_MODE_DUMMY
  #define make_atomic_load_body(S)   ret= *a
  #define make_atomic_store_body(S)  *a= v
---- mariadb-10.1.orig/include/atomic/nolock.h
-+++ mariadb-10.1/include/atomic/nolock.h
+diff --git a/include/atomic/nolock.h b/include/atomic/nolock.h
+index 2137445..2ad7d98 100644
+--- a/include/atomic/nolock.h
++++ b/include/atomic/nolock.h
 @@ -17,7 +17,7 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
  
@@ -93,8 +106,10 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  #      include "gcc_builtins.h"
  #    elif defined(__i386__) || defined(__x86_64__)
  #      include "x86-gcc.h"
---- mariadb-10.1.orig/mysys/CMakeLists.txt
-+++ mariadb-10.1/mysys/CMakeLists.txt
+diff --git a/mysys/CMakeLists.txt b/mysys/CMakeLists.txt
+index eb7f75e..a9221d7 100644
+--- a/mysys/CMakeLists.txt
++++ b/mysys/CMakeLists.txt
 @@ -78,6 +78,10 @@ IF(HAVE_BFD_H)
    TARGET_LINK_LIBRARIES(mysys bfd)  
  ENDIF(HAVE_BFD_H)
@@ -106,9 +121,11 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  IF (WIN32)
    TARGET_LINK_LIBRARIES(mysys IPHLPAPI)  
  ENDIF(WIN32)
---- mariadb-10.1.orig/sql/CMakeLists.txt
-+++ mariadb-10.1/sql/CMakeLists.txt
-@@ -178,6 +178,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
+diff --git a/sql/CMakeLists.txt b/sql/CMakeLists.txt
+index c34b22c..32feaa7 100644
+--- a/sql/CMakeLists.txt
++++ b/sql/CMakeLists.txt
+@@ -178,6 +178,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATIC_PLUGIN_LIBS}
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  

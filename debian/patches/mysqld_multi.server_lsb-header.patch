@@ -1,7 +1,15 @@
-Description: Provides LSB headers for example initscript (Closes: #778762)
-Author: Jan Wagner <waja@cyconet.org>
---- mariadb-10.1.orig/support-files/mysqld_multi.server.sh
-+++ mariadb-10.1/support-files/mysqld_multi.server.sh
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:28 +0200
+Subject: mysqld_multi.server_lsb-header
+
+---
+ support-files/mysqld_multi.server.sh | 20 ++++++++++++++++++--
+ 1 file changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/support-files/mysqld_multi.server.sh b/support-files/mysqld_multi.server.sh
+index 75908a5..9e0dd79 100644
+--- a/support-files/mysqld_multi.server.sh
++++ b/support-files/mysqld_multi.server.sh
 @@ -14,8 +14,24 @@
  # Version 1.0
  #

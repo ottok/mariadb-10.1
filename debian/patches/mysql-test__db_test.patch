@@ -1,12 +1,22 @@
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:28 +0200
+Subject: mysql-test__db_test
+
 ## 50_mysql-test__db_test.dpatch by Christian Hammers <ch@debian.org>
 ##
 ## All lines beginning with `## DP:' are a description of the patch.
 ## DP: Patch 33_scripts__mysql_create_system_tables__no_test removes the
 ## DP: rights for anybody to connect to the test database but the test
 ## DP: suite depends on them.
---- mariadb-10.1.orig/mysql-test/mysql-test-run.pl
-+++ mariadb-10.1/mysql-test/mysql-test-run.pl
-@@ -3203,6 +3203,11 @@ sub mysql_install_db {
+---
+ mysql-test/mysql-test-run.pl | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/mysql-test/mysql-test-run.pl b/mysql-test/mysql-test-run.pl
+index 2cd5d2a..8049d45 100755
+--- a/mysql-test/mysql-test-run.pl
++++ b/mysql-test/mysql-test-run.pl
+@@ -3199,6 +3199,11 @@ sub mysql_install_db {
      mtr_appendfile_to_file("$sql_dir/mysql_system_tables_data.sql",
  			   $bootstrap_sql_file);
  

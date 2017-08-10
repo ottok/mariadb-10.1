@@ -1,12 +1,16 @@
-Description: Ensure groonga is built with libatomic
- MIPS (and possibly other) platforms require linking against libatomic to
- support 64-bit atomic integers. Groonga was failing to do so and all related
- tests were failing with an atomics relocation error on MIPS.
-Author: James Cowgill <jcowgill@debian.org>
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:28 +0200
+Subject: mips-groonga-atomic
+
 ---
-This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
---- mariadb-10.1.orig/storage/mroonga/vendor/groonga/CMakeLists.txt
-+++ mariadb-10.1/storage/mroonga/vendor/groonga/CMakeLists.txt
+ storage/mroonga/vendor/groonga/CMakeLists.txt     | 2 ++
+ storage/mroonga/vendor/groonga/lib/CMakeLists.txt | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/storage/mroonga/vendor/groonga/CMakeLists.txt b/storage/mroonga/vendor/groonga/CMakeLists.txt
+index 2d8a59f..c1805a3 100644
+--- a/storage/mroonga/vendor/groonga/CMakeLists.txt
++++ b/storage/mroonga/vendor/groonga/CMakeLists.txt
 @@ -234,6 +234,8 @@ endmacro()
  include(build/ac_macros/check_headers.m4)
  include(build/ac_macros/check_functions.m4)
@@ -16,8 +20,10 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  ac_check_symbols(fpclassify math.h)
  ac_check_lib(m fpclassify)
  
---- mariadb-10.1.orig/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
-+++ mariadb-10.1/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
+diff --git a/storage/mroonga/vendor/groonga/lib/CMakeLists.txt b/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
+index 7825878..975bdd5 100644
+--- a/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
++++ b/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
 @@ -62,6 +62,7 @@ endif()
  set_target_properties(libgroonga PROPERTIES OUTPUT_NAME "groonga")
  
