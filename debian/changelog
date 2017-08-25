@@ -1,4 +1,4 @@
-mariadb-10.1 (10.1.26-0+deb9u1) stretch-security; urgency=medium
+mariadb-10.1 (10.1.26-0+deb9u1) stretch-security; urgency=high
 
   * New upstream version 10.1.26.  Includes fixes for the following
     security vulnerabilities:
