@@ -2,8 +2,9 @@ mariadb-10.1 (10.1.28-1) unstable; urgency=medium
 
   * New upstream version 10.1.28
   * Rebase patches on top of MariaDB 10.1.28
+  * Add extra symbols aliases for libmariadbclient_16
 
- -- Ondřej Surý <ondrej@debian.org>  Mon, 09 Oct 2017 19:15:47 +0000
+ -- Ondřej Surý <ondrej@debian.org>  Mon, 09 Oct 2017 22:07:43 +0000
 
 mariadb-10.1 (10.1.26-1) unstable; urgency=medium
 
