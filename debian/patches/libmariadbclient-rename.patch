@@ -5,13 +5,13 @@ Subject: libmariadbclient-rename
 ---
  client/CMakeLists.txt         | 24 ++++++++++++------------
  cmake/for_clients.cmake       |  8 ++++----
- libmysql/CMakeLists.txt       | 22 +++++++++++-----------
+ libmysql/CMakeLists.txt       | 27 ++++++++++++++++-----------
  man/mysql_config.1            |  6 +++---
  scripts/make_win_bin_dist     |  8 ++++----
  scripts/mysql_config.pl.in    |  6 +++---
  tests/CMakeLists.txt          |  6 +++---
  unittest/mysys/CMakeLists.txt |  2 +-
- 8 files changed, 41 insertions(+), 41 deletions(-)
+ 8 files changed, 46 insertions(+), 41 deletions(-)
 
 diff --git a/client/CMakeLists.txt b/client/CMakeLists.txt
 index e4643ad..523912e 100644
@@ -114,10 +114,29 @@ index dd79ea1..879da78 100644
  
  MACRO(REPLACE_FOR_CLIENTS VAR)
 diff --git a/libmysql/CMakeLists.txt b/libmysql/CMakeLists.txt
-index acbd80b..6399b15 100644
+index acbd80b..5819d79 100644
 --- a/libmysql/CMakeLists.txt
 +++ b/libmysql/CMakeLists.txt
-@@ -457,13 +457,13 @@ ADD_DEPENDENCIES(clientlib GenError)
+@@ -398,6 +398,10 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+   libmysqlclient_16 {
+     /* empty here. aliases are added above */
+   };
++
++  libmariadbclient_16 {
++    /* empty here. aliases are added above */
++  };
+ }
+ ")
+ 
+@@ -407,6 +411,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+   FOREACH (f ${CLIENT_API_FUNCTIONS_5_1} ${CLIENT_API_5_1_EXTRA})
+     SET(CLIENT_API_5_1_LIST "${CLIENT_API_5_1_LIST}\t${f};\n")
+     SET(CLIENT_API_5_1_ALIASES "${CLIENT_API_5_1_ALIASES}\"${f}@libmysqlclient_16\" = ${f};\n")
++    SET(DEBIAN9_ALIASES "${DEBIAN9_ALIASES}\"${f}@libmariadbclient_16\" = ${f};\n")
+     SET(DEBIAN9_ALIASES "${DEBIAN9_ALIASES}\"${f}@libmariadbclient_18\" = ${f};\n")
+   ENDFOREACH()
+       
+@@ -457,13 +462,13 @@ ADD_DEPENDENCIES(clientlib GenError)
  
  SET(LIBS clientlib dbug strings vio mysys mysys_ssl ${ZLIB_LIBRARY} ${SSL_LIBRARIES} ${LIBDL})
  
@@ -134,7 +153,7 @@ index acbd80b..6399b15 100644
   INSTALL_DEBUG_TARGET(clientlib DESTINATION ${INSTALL_LIBDIR}/debug)
  ENDIF()
  
-@@ -479,7 +479,7 @@ IF(UNIX)
+@@ -479,7 +484,7 @@ IF(UNIX)
        SET(${OUTNAME} ${LIBNAME}${EXTENSION}${DOT_VERSION})
      ENDIF() 
    ENDMACRO()
@@ -143,7 +162,7 @@ index acbd80b..6399b15 100644
  ENDIF()
  
  IF(NOT DISABLE_SHARED)
-@@ -495,9 +495,9 @@ IF(NOT DISABLE_SHARED)
+@@ -495,9 +500,9 @@ IF(NOT DISABLE_SHARED)
      ELSE()
        SET(OS_SHARED_LIB_VERSION "${SHARED_LIB_MAJOR_VERSION}.0.0")
      ENDIF()
@@ -155,7 +174,7 @@ index acbd80b..6399b15 100644
        VERSION "${OS_SHARED_LIB_VERSION}" 
        SOVERSION "${SHARED_LIB_MAJOR_VERSION}")
      IF(LINK_FLAG_NO_UNDEFINED OR VERSION_SCRIPT_LINK_FLAGS)
-@@ -510,13 +510,13 @@ IF(NOT DISABLE_SHARED)
+@@ -510,13 +515,13 @@ IF(NOT DISABLE_SHARED)
          "${libmysql_link_flags} ${LINK_FLAG_NO_UNDEFINED} ${VERSION_SCRIPT_LINK_FLAGS}")
      ENDIF() 
      # clean direct output needs to be set several targets have the same name
@@ -173,7 +192,7 @@ index acbd80b..6399b15 100644
        "${CMAKE_SHARED_LIBRARY_SUFFIX}"
        ""
        linkname)
-@@ -525,7 +525,7 @@ IF(NOT DISABLE_SHARED)
+@@ -525,7 +530,7 @@ IF(NOT DISABLE_SHARED)
      LIST(REMOVE_DUPLICATES OS_SHARED_LIB_SYMLINKS)
      FOREACH(ver ${OS_SHARED_LIB_SYMLINKS})
        GET_VERSIONED_LIBNAME(
