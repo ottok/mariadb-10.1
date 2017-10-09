@@ -122,10 +122,10 @@ index eb7f75e..a9221d7 100644
    TARGET_LINK_LIBRARIES(mysys IPHLPAPI)  
  ENDIF(WIN32)
 diff --git a/sql/CMakeLists.txt b/sql/CMakeLists.txt
-index c34b22c..32feaa7 100644
+index b4acac5..8247714 100644
 --- a/sql/CMakeLists.txt
 +++ b/sql/CMakeLists.txt
-@@ -178,6 +178,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATIC_PLUGIN_LIBS}
+@@ -165,6 +165,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATIC_PLUGIN_LIBS}
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  

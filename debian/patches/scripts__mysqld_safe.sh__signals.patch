@@ -12,7 +12,7 @@ Subject: scripts__mysqld_safe.sh__signals
  1 file changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/scripts/mysqld_safe.sh b/scripts/mysqld_safe.sh
-index e5708b5..027d062 100644
+index 5564f92..c726b3e 100644
 --- a/scripts/mysqld_safe.sh
 +++ b/scripts/mysqld_safe.sh
 @@ -37,7 +37,6 @@ skip_err_log=0

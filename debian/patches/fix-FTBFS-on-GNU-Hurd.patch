@@ -4,14 +4,14 @@ Subject: fix-FTBFS-on-GNU-Hurd
 
 ---
  cmake/dtrace.cmake                            |  4 +++
- cmake/package_name.cmake                      |  3 +++
- extra/mariabackup/backup_copy.cc              | 29 ++++++++++++++------
- mysys/mysys_priv.h                            | 10 ++++---
- sql/wsrep_binlog.cc                           | 38 +++++++++++++++++++++------
+ cmake/package_name.cmake                      |  3 ++
+ extra/mariabackup/backup_copy.cc              | 29 +++++++++++++-----
+ mysys/mysys_priv.h                            | 10 +++++--
+ sql/wsrep_binlog.cc                           | 42 ++++++++++++++++++++-------
  storage/mroonga/vendor/groonga/config.h.cmake |  1 +
  storage/mroonga/vendor/groonga/lib/com.c      | 10 +++----
- storage/mroonga/vendor/groonga/lib/grn_com.h  | 24 +++++++++--------
- 8 files changed, 84 insertions(+), 35 deletions(-)
+ storage/mroonga/vendor/groonga/lib/grn_com.h  | 24 ++++++++-------
+ 8 files changed, 86 insertions(+), 37 deletions(-)
 
 diff --git a/cmake/dtrace.cmake b/cmake/dtrace.cmake
 index 3edcdc4..c090d65 100644
@@ -153,7 +153,7 @@ index 892e091..9bf44e0 100644
    return NOAT;
  #elif defined(HAVE_REALPATH)
 diff --git a/sql/wsrep_binlog.cc b/sql/wsrep_binlog.cc
-index b6aee3a..df41594 100644
+index 998f4e7..784b235 100644
 --- a/sql/wsrep_binlog.cc
 +++ b/sql/wsrep_binlog.cc
 @@ -318,13 +318,23 @@ int wsrep_write_cache(wsrep_t*  const wsrep,
@@ -200,28 +200,30 @@ index b6aee3a..df41594 100644
    File file;
    IO_CACHE cache;
    Log_event_writer writer(&cache);
-   Format_description_log_event *ev;
+   Format_description_log_event *ev=NULL;
  
 -  int len= my_snprintf(filename, PATH_MAX, "%s/GRA_%ld_%lld_v2.log",
-+  int len= snprintf(NULL, 0, "%s/GRA_%ld_%lld_v2.log",
-+                    wsrep_data_home_dir, thd->thread_id,
-+                    (long long) wsrep_thd_trx_seqno(thd));
-+
+-                       wsrep_data_home_dir, thd->thread_id,
+-                       (long long) wsrep_thd_trx_seqno(thd));
++  int len = snprintf(NULL, 0, "%s/GRA_%ld_%lld_v2.log",
++		     wsrep_data_home_dir, thd->thread_id,
++		     (long long) wsrep_thd_trx_seqno(thd));
+ 
+-  if (len >= PATH_MAX)
 +  if (len < 0)
-+  {
+   {
+-    WSREP_ERROR("RBR dump path too long: %d, skipping dump.", len);
 +    WSREP_ERROR("snprintf error: %d, skipping dump.", len);
 +    DBUG_VOID_RETURN;
 +  }
 +
-+  char *filename= (char*)malloc(len++);
-+  int len1= my_snprintf(filename, len, "%s/GRA_%ld_%lld_v2.log",
-                        wsrep_data_home_dir, thd->thread_id,
-                        (long long) wsrep_thd_trx_seqno(thd));
- 
--  if (len >= PATH_MAX)
++  char *filename = (char *)malloc(len++);
++  int len1 = my_snprintf(filename, len, "%s/GRA_%ld_%lld_v2.log",
++			 wsrep_data_home_dir, thd->thread_id,
++			 (long long) wsrep_thd_trx_seqno(thd));
++  
 +  if (len >= len1)
-   {
--    WSREP_ERROR("RBR dump path too long: %d, skipping dump.", len);
++  {
 +    WSREP_ERROR("RBR dump path truncated: %d, skipping dump.", len);
      DBUG_VOID_RETURN;
    }

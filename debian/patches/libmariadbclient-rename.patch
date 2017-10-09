@@ -5,13 +5,13 @@ Subject: libmariadbclient-rename
 ---
  client/CMakeLists.txt         | 24 ++++++++++++------------
  cmake/for_clients.cmake       |  8 ++++----
- libmysql/CMakeLists.txt       | 32 ++++++++++++++++----------------
+ libmysql/CMakeLists.txt       | 22 +++++++++++-----------
  man/mysql_config.1            |  6 +++---
  scripts/make_win_bin_dist     |  8 ++++----
  scripts/mysql_config.pl.in    |  6 +++---
  tests/CMakeLists.txt          |  6 +++---
  unittest/mysys/CMakeLists.txt |  2 +-
- 8 files changed, 46 insertions(+), 46 deletions(-)
+ 8 files changed, 41 insertions(+), 41 deletions(-)
 
 diff --git a/client/CMakeLists.txt b/client/CMakeLists.txt
 index e4643ad..523912e 100644
@@ -114,50 +114,10 @@ index dd79ea1..879da78 100644
  
  MACRO(REPLACE_FOR_CLIENTS VAR)
 diff --git a/libmysql/CMakeLists.txt b/libmysql/CMakeLists.txt
-index 8e60d26..6d29073 100644
+index acbd80b..6399b15 100644
 --- a/libmysql/CMakeLists.txt
 +++ b/libmysql/CMakeLists.txt
-@@ -278,7 +278,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
- 
-     INCLUDE (CheckCSourceCompiles)
-     FILE(WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.ld"
--      "VERSION {\nlibmysqlclient_18 {\nglobal: *;\n};\n}\n")
-+      "VERSION {\nlibmariadbclient_18 {\nglobal: *;\n};\n}\n")
-     SET(CMAKE_REQUIRED_LIBRARIES "-Wl,src.ld")
-     CHECK_C_SOURCE_COMPILES("int main() { return 0; }"
-       SUPPORTS_VERSION_IN_LINK_SCRIPT)
-@@ -380,18 +380,18 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
-   # Generate version script.  
-   # Create semicolon separated lists of functions to export from 
-   # Since RPM packages use separate versioning for 5.1 API
--  # and 5.5 API (libmysqlclient_16 vs libmysqlclient_18), 
-+  # and 5.5 API (libmariadbclient_16 vs libmariadbclient_18), 
-   # we need 2 lists.
-   SET (VERSION_HEADER
- "VERSION {
--  libmysqlclient_18 {
-+  libmariadbclient_18 {
-     global:")
-   SET (VERSION_FOOTER
- "    local:
-       *;
-   };
- 
--  libmysqlclient_16 {
-+  libmariadbclient_16 {
-     /* empty here. aliases are added above */
-   };
- }
-@@ -401,7 +401,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
-   SET (CLIENT_API_5_1_ALIASES)
-   FOREACH (f ${CLIENT_API_FUNCTIONS_5_1} ${CLIENT_API_5_1_EXTRA})
-     SET(CLIENT_API_5_1_LIST "${CLIENT_API_5_1_LIST}\t${f};\n")
--    SET(CLIENT_API_5_1_ALIASES "${CLIENT_API_5_1_ALIASES}\"${f}@libmysqlclient_16\" = ${f};\n")
-+    SET(CLIENT_API_5_1_ALIASES "${CLIENT_API_5_1_ALIASES}\"${f}@libmariadbclient_16\" = ${f};\n")
-   ENDFOREACH()
-       
-   SET (CLIENT_API_5_5_LIST)
-@@ -446,13 +446,13 @@ ADD_DEPENDENCIES(clientlib GenError)
+@@ -457,13 +457,13 @@ ADD_DEPENDENCIES(clientlib GenError)
  
  SET(LIBS clientlib dbug strings vio mysys mysys_ssl ${ZLIB_LIBRARY} ${SSL_LIBRARIES} ${LIBDL})
  
@@ -174,7 +134,7 @@ index 8e60d26..6d29073 100644
   INSTALL_DEBUG_TARGET(clientlib DESTINATION ${INSTALL_LIBDIR}/debug)
  ENDIF()
  
-@@ -468,7 +468,7 @@ IF(UNIX)
+@@ -479,7 +479,7 @@ IF(UNIX)
        SET(${OUTNAME} ${LIBNAME}${EXTENSION}${DOT_VERSION})
      ENDIF() 
    ENDMACRO()
@@ -183,7 +143,7 @@ index 8e60d26..6d29073 100644
  ENDIF()
  
  IF(NOT DISABLE_SHARED)
-@@ -484,9 +484,9 @@ IF(NOT DISABLE_SHARED)
+@@ -495,9 +495,9 @@ IF(NOT DISABLE_SHARED)
      ELSE()
        SET(OS_SHARED_LIB_VERSION "${SHARED_LIB_MAJOR_VERSION}.0.0")
      ENDIF()
@@ -195,7 +155,7 @@ index 8e60d26..6d29073 100644
        VERSION "${OS_SHARED_LIB_VERSION}" 
        SOVERSION "${SHARED_LIB_MAJOR_VERSION}")
      IF(LINK_FLAG_NO_UNDEFINED OR VERSION_SCRIPT_LINK_FLAGS)
-@@ -499,13 +499,13 @@ IF(NOT DISABLE_SHARED)
+@@ -510,13 +510,13 @@ IF(NOT DISABLE_SHARED)
          "${libmysql_link_flags} ${LINK_FLAG_NO_UNDEFINED} ${VERSION_SCRIPT_LINK_FLAGS}")
      ENDIF() 
      # clean direct output needs to be set several targets have the same name
@@ -213,7 +173,7 @@ index 8e60d26..6d29073 100644
        "${CMAKE_SHARED_LIBRARY_SUFFIX}"
        ""
        linkname)
-@@ -514,7 +514,7 @@ IF(NOT DISABLE_SHARED)
+@@ -525,7 +525,7 @@ IF(NOT DISABLE_SHARED)
      LIST(REMOVE_DUPLICATES OS_SHARED_LIB_SYMLINKS)
      FOREACH(ver ${OS_SHARED_LIB_SYMLINKS})
        GET_VERSIONED_LIBNAME(
