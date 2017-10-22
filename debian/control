@@ -177,6 +177,7 @@ Package: mariadb-client-10.1
 Architecture: any
 Depends: debianutils (>=1.6),
          mariadb-client-core-10.1 (>= ${source:Version}),
+         libconfig-inifiles-perl,
          ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
