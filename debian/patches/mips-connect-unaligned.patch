@@ -169,7 +169,7 @@ index 018c7ee..d32f804 100644
      TYPBLK<int>::SetValue(p, n);
  
 diff --git a/storage/connect/valblk.h b/storage/connect/valblk.h
-index a3d7bf3..521dd7f 100644
+index ad97010..3912868 100644
 --- a/storage/connect/valblk.h
 +++ b/storage/connect/valblk.h
 @@ -139,6 +139,7 @@ class VALBLK : public BLOCK {

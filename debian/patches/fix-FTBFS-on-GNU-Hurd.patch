@@ -9,9 +9,7 @@ Subject: fix-FTBFS-on-GNU-Hurd
  mysys/mysys_priv.h                            | 10 +++++--
  sql/wsrep_binlog.cc                           | 42 ++++++++++++++++++++-------
  storage/mroonga/vendor/groonga/config.h.cmake |  1 +
- storage/mroonga/vendor/groonga/lib/com.c      | 10 +++----
- storage/mroonga/vendor/groonga/lib/grn_com.h  | 24 ++++++++-------
- 8 files changed, 86 insertions(+), 37 deletions(-)
+ 6 files changed, 68 insertions(+), 21 deletions(-)
 
 diff --git a/cmake/dtrace.cmake b/cmake/dtrace.cmake
 index 3edcdc4..c090d65 100644
@@ -43,7 +41,7 @@ index 7681f78..2a9b1e1 100644
        IF(CMAKE_OSX_DEPLOYMENT_TARGET)
          SET(DEFAULT_PLATFORM "osx${CMAKE_OSX_DEPLOYMENT_TARGET}")
 diff --git a/extra/mariabackup/backup_copy.cc b/extra/mariabackup/backup_copy.cc
-index 156e0b2..bb9c79c 100644
+index c019209..632faad 100644
 --- a/extra/mariabackup/backup_copy.cc
 +++ b/extra/mariabackup/backup_copy.cc
 @@ -623,11 +623,13 @@ static
@@ -237,121 +235,14 @@ index 998f4e7..784b235 100644
  
  cleanup1:
 diff --git a/storage/mroonga/vendor/groonga/config.h.cmake b/storage/mroonga/vendor/groonga/config.h.cmake
-index 8e3bdaf..bb2aa43 100644
+index bfd0cbd..ec67c5e 100644
 --- a/storage/mroonga/vendor/groonga/config.h.cmake
 +++ b/storage/mroonga/vendor/groonga/config.h.cmake
-@@ -109,6 +109,7 @@
- #cmakedefine HAVE_STRING_H
+@@ -107,6 +107,7 @@
+ #cmakedefine HAVE_SIGNAL_H
  #cmakedefine HAVE_SYS_MMAN_H
  #cmakedefine HAVE_SYS_PARAM_H
 +#cmakedefine HAVE_SYS_POLL_H
  #cmakedefine HAVE_SYS_RESOURCE_H
  #cmakedefine HAVE_SYS_SELECT_H
  #cmakedefine HAVE_SYS_SOCKET_H
-diff --git a/storage/mroonga/vendor/groonga/lib/com.c b/storage/mroonga/vendor/groonga/lib/com.c
-index a16a446..c796599 100644
---- a/storage/mroonga/vendor/groonga/lib/com.c
-+++ b/storage/mroonga/vendor/groonga/lib/com.c
-@@ -277,7 +277,7 @@ grn_com_event_init(grn_ctx *ctx, grn_com_event *ev, int max_nevents, int data_si
-     MUTEX_INIT(ev->mutex);
-     COND_INIT(ev->cond);
-     GRN_COM_QUEUE_INIT(&ev->recv_old);
--#ifndef USE_SELECT
-+#if !defined(USE_SELECT) && !defined(USE_POLL)
- # ifdef USE_EPOLL
-     if ((ev->events = GRN_MALLOC(sizeof(struct epoll_event) * max_nevents))) {
-       if ((ev->epfd = epoll_create(max_nevents)) != -1) {
-@@ -306,9 +306,9 @@ grn_com_event_init(grn_ctx *ctx, grn_com_event *ev, int max_nevents, int data_si
-     grn_hash_close(ctx, ev->hash);
-     ev->hash = NULL;
-     ev->events = NULL;
--#else /* USE_SELECT */
-+#else /* USE_SELECT && USE_POLL */
-     goto exit;
--#endif /* USE_SELECT */
-+#endif /* USE_SELECT && USE_POLL */
-   }
- exit :
-   return ctx->rc;
-@@ -322,7 +322,7 @@ grn_com_event_fin(grn_ctx *ctx, grn_com_event *ev)
-     grn_msg_close(ctx, msg);
-   }
-   if (ev->hash) { grn_hash_close(ctx, ev->hash); }
--#ifndef USE_SELECT
-+#if !defined(USE_SELECT) && !defined(USE_POLL)
-   if (ev->events) { GRN_FREE(ev->events); }
- # ifdef USE_EPOLL
-   grn_close(ev->epfd);
-@@ -330,7 +330,7 @@ grn_com_event_fin(grn_ctx *ctx, grn_com_event *ev)
- # ifdef USE_KQUEUE
-   grn_close(ev->kqfd);
- # endif /* USE_KQUEUE*/
--#endif /* USE_SELECT */
-+#endif /* USE_SELECT && USE_POLL */
-   return GRN_SUCCESS;
- }
- 
-diff --git a/storage/mroonga/vendor/groonga/lib/grn_com.h b/storage/mroonga/vendor/groonga/lib/grn_com.h
-index e5ad589..63d50e7 100644
---- a/storage/mroonga/vendor/groonga/lib/grn_com.h
-+++ b/storage/mroonga/vendor/groonga/lib/grn_com.h
-@@ -66,13 +66,22 @@ GRN_API grn_com_queue_entry *grn_com_queue_deque(grn_ctx *ctx, grn_com_queue *q)
- 
- /******* grn_com ********/
- 
--#ifdef USE_SELECT
-+#if defined(USE_SELECT)
- # ifdef HAVE_SYS_SELECT_H
- #  include <sys/select.h>
- # endif /* HAVE_SYS_SELECT_H */
- # define GRN_COM_POLLIN  1
- # define GRN_COM_POLLOUT 2
- #else /* USE_SELECT */
-+# ifdef USE_POLL
-+#  if defined(HAVE_POLL_H)
-+#    include <poll.h>
-+#  elif defined(HAVE_SYS_POLL_H)
-+#    include <sys/poll.h>
-+#  endif /* defined(HAVE_POLL_H) */
-+#  define GRN_COM_POLLIN  POLLIN
-+#  define GRN_COM_POLLOUT POLLOUT
-+#else /* USE_POLL */
- # ifdef USE_EPOLL
- #  include <sys/epoll.h>
- #  define GRN_COM_POLLIN  EPOLLIN
-@@ -82,16 +91,9 @@ GRN_API grn_com_queue_entry *grn_com_queue_deque(grn_ctx *ctx, grn_com_queue *q)
- #   include <sys/event.h>
- #   define GRN_COM_POLLIN  EVFILT_READ
- #   define GRN_COM_POLLOUT EVFILT_WRITE
--#  else /* USE_KQUEUE */
--#    if defined(HAVE_POLL_H)
--#      include <poll.h>
--#    elif defined(HAVE_SYS_POLL_H)
--#      include <sys/poll.h>
--#    endif /* defined(HAVE_POLL_H) */
--#   define GRN_COM_POLLIN  POLLIN
--#   define GRN_COM_POLLOUT POLLOUT
- #  endif /* USE_KQUEUE */
- # endif /* USE_EPOLL */
-+#endif /* USE_POLL */
- #endif /* USE_SELECT */
- 
- typedef struct _grn_com grn_com;
-@@ -137,7 +139,7 @@ struct _grn_com_event {
-   grn_com_addr curr_edge_id;
-   grn_com *acceptor;
-   void *opaque;
--#ifndef USE_SELECT
-+#if !defined(USE_SELECT) || !defined(USE_POLL)
- #ifdef USE_EPOLL
-   int epfd;
-   struct epoll_event *events;
-@@ -150,7 +152,7 @@ struct _grn_com_event {
-   struct pollfd *events;
- #endif /* USE_KQUEUE */
- #endif /* USE_EPOLL */
--#endif /* USE_SELECT */
-+#endif /* USE_SELECT || USE_POLL */
- };
- 
- grn_rc grn_com_init(void);
