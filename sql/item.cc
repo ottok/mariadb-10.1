@@ -2133,6 +2133,9 @@ bool Item_func_or_sum::agg_item_set_converter(const DTCollation &coll,
                                               Item **args, uint nargs,
                                               uint flags, int item_sep)
 {
+  THD *thd= current_thd;
+  if (thd->lex->is_ps_or_view_context_analysis())
+    return false;
   Item **arg, *safe_args[2]= {NULL, NULL};
 
   /*
@@ -2148,7 +2151,6 @@ bool Item_func_or_sum::agg_item_set_converter(const DTCollation &coll,
     safe_args[1]= args[item_sep];
   }
 
-  THD *thd= current_thd;
   bool res= FALSE;
   uint i;
 
@@ -2679,7 +2681,8 @@ table_map Item_field::all_used_tables() const
   return (get_depended_from() ? OUTER_REF_TABLE_BIT : field->table->map);
 }
 
-void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **ref)
+void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **ref,
+                                   bool merge)
 {
   if (new_parent == get_depended_from())
     depended_from= NULL;
@@ -2722,6 +2725,19 @@ void Item_field::fix_after_pullout(st_select_lex *new_parent, Item **ref)
     }
     if (!need_change)
       return;
+
+    if (!merge)
+    {
+      /*
+        It is transformation without merge.
+        This field was "outer" for the inner SELECT where it was taken and
+        moved up.
+        "Outer" fields uses normal SELECT_LEX context of upper SELECTs for
+        name resolution, so we can switch everything to it safely.
+      */
+      this->context= &new_parent->context;
+      return;
+    }
 
     Name_resolution_context *ctx= new Name_resolution_context();
     if (context->select_lex == new_parent)
@@ -5835,7 +5851,7 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table,
         Field_string(max_length, maybe_null, name, collation.collation);
       break;
     }
-    /* Fall through */
+    /* fall through */
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_SET:
   case MYSQL_TYPE_VAR_STRING:
@@ -6640,6 +6656,7 @@ bool Item::cache_const_expr_analyzer(uchar **arg)
     */
     if (const_item() &&
         !(basic_const_item() || item->basic_const_item() ||
+          item->type() == Item::NULL_ITEM || /* Item_name_const hack */
           item->type() == Item::FIELD_ITEM ||
           item->type() == SUBSELECT_ITEM ||
           item->type() == CACHE_ITEM ||
@@ -6821,7 +6838,11 @@ public:
     // Find which select the field is in. This is achieved by walking up 
     // the select tree and looking for the table of interest.
     st_select_lex *sel;
-    for (sel= current_select; sel; sel= sel->outer_select())
+    for (sel= current_select;
+         sel ;
+         sel= (sel->context.outer_context ?
+               sel->context.outer_context->select_lex:
+               NULL))
     {
       List_iterator<TABLE_LIST> li(sel->leaf_tables);
       TABLE_LIST *tbl;
@@ -7994,7 +8015,6 @@ bool Item_direct_view_ref::send(Protocol *protocol, String *buffer)
 
 bool Item_direct_view_ref::fix_fields(THD *thd, Item **reference)
 {
-  DBUG_ASSERT(1);
   /* view fild reference must be defined */
   DBUG_ASSERT(*ref);
   /* (*ref)->check_cols() will be made in Item_direct_ref::fix_fields */
@@ -8055,18 +8075,19 @@ bool Item_outer_ref::fix_fields(THD *thd, Item **reference)
 
 
 void Item_outer_ref::fix_after_pullout(st_select_lex *new_parent,
-                                       Item **ref_arg)
+                                       Item **ref_arg, bool merge)
 {
   if (get_depended_from() == new_parent)
   {
     *ref_arg= outer_ref;
-    (*ref_arg)->fix_after_pullout(new_parent, ref_arg);
+    (*ref_arg)->fix_after_pullout(new_parent, ref_arg, merge);
   }
 }
 
-void Item_ref::fix_after_pullout(st_select_lex *new_parent, Item **refptr)
+void Item_ref::fix_after_pullout(st_select_lex *new_parent, Item **refptr,
+                                 bool merge)
 {
-  (*ref)->fix_after_pullout(new_parent, ref);
+  (*ref)->fix_after_pullout(new_parent, ref, merge);
   if (get_depended_from() == new_parent)
     depended_from= NULL;
 }
@@ -9847,7 +9868,7 @@ void Item_direct_view_ref::update_used_tables()
 
 table_map Item_direct_view_ref::used_tables() const
 {
-  DBUG_ASSERT(null_ref_table);
+  DBUG_ASSERT(fixed);
 
   if (get_depended_from())
     return OUTER_REF_TABLE_BIT;
