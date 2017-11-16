@@ -1,3 +1,12 @@
+mariadb-10.1 (10.1.29-1) unstable; urgency=medium
+
+  * New upstream version 10.1.29
+  * Remove the mariadb-test-* packages as they are now provided by
+    mariadb-10.2 (Closes: #881898)
+  * Rebase patches for new upstream version.
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 16 Nov 2017 15:24:36 +0000
+
 mariadb-10.1 (10.1.28-2) unstable; urgency=high
 
   * Add libconfig-inifiles-perl to mariadb-client-10.1 depends to fix
