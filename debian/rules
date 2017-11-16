@@ -128,6 +128,22 @@ endif
 	rm -rf $(TMP)/usr/share/mysql/mysql-test/plugin/tokudb/tokudb/*.py
 	rm -rf $(TMP)/usr/share/mysql/mysql-test/plugin/tokudb/tokudb/t/*.py
 
+	# Remove test plugins
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/adt_null.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/auth_0x0100.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/auth_test_plugin.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/daemon_example.ini
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/debug_key_management.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/dialog_examples.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/example_key_management.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/ha_example.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/ha_test_sql_discovery.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/libdaemon_example.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/mypluglib.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/qa_auth_client.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/qa_auth_interface.so
+	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/qa_auth_server.so
+
 	# nm numeric soft is not enough, therefore extra sort in command
 	# to satisfy Debian reproducible build requirements
 	nm --defined-only $(BUILDDIR)/sql/mysqld | LC_ALL=C sort | gzip -n -9 > $(TMP)/usr/share/doc/mariadb-server-10.1/mysqld.sym.gz

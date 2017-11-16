@@ -1,6 +1,7 @@
 #!/usr/bin/dh-exec
 usr/bin/mysql_config
 usr/include/mysql/*.h
+usr/include/mysql/private/*.h
 usr/include/mysql/psi/*.h
 usr/lib/*/libmariadbclient.a
 usr/lib/*/libmariadbclient.so
