@@ -255,7 +255,6 @@ Description: MariaDB database core server files
 Package: mariadb-server-10.1
 Architecture: any
 Suggests: mailx,
-          mariadb-test,
           netcat-openbsd,
           tinyca
 Recommends: libhtml-template-perl
@@ -474,65 +473,3 @@ Depends: libcrack2 (>= 2.9.0),
 Description: CrackLib Password Validation Plugin for MariaDB
  This password validation plugin uses cracklib to allow only
  sufficiently secure (as defined by cracklib) user passwords in MariaDB.
-
-Package: mariadb-test
-Architecture: any
-Depends: libmariadbclient18 (= ${binary:Version}),
-         mariadb-client-10.1 (= ${binary:Version}),
-         mariadb-server-10.1 (= ${binary:Version}),
-         mariadb-test-data (= ${source:Version}),
-         virtual-mysql-testsuite,
-         ${misc:Depends},
-         ${shlibs:Depends}
-Breaks: mariadb-test-10.0,
-        mariadb-test-10.1,
-        mariadb-test-5.5,
-        mysql-testsuite,
-        mysql-testsuite-5.5,
-        mysql-testsuite-5.6,
-        mysql-testsuite-5.7
-Replaces: mariadb-test-10.0,
-          mariadb-test-10.1,
-          mariadb-test-5.5,
-          mysql-testsuite,
-          mysql-testsuite-5.5,
-          mysql-testsuite-5.6,
-          mysql-testsuite-5.7,
-          virtual-mysql-testsuite
-Provides: virtual-mysql-testsuite
-Suggests: patch
-Description: MariaDB database regression test suite
- MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
- server. SQL (Structured Query Language) is the most popular database query
- language in the world. The main goals of MariaDB are speed, robustness and
- ease of use.
- .
- This package includes the regression test suite.
-
-Package: mariadb-test-data
-Architecture: all
-Multi-Arch: foreign
-Depends: ${misc:Depends}
-Breaks: mariadb-test-10.0,
-        mariadb-test-10.1,
-        mariadb-test-5.5,
-        mariadb-test-data-10.0,
-        mysql-testsuite,
-        mysql-testsuite-5.5,
-        mysql-testsuite-5.6,
-        mysql-testsuite-5.7
-Replaces: mariadb-test-10.0,
-          mariadb-test-10.1,
-          mariadb-test-5.5,
-          mariadb-test-data-10.0,
-          mysql-testsuite,
-          mysql-testsuite-5.5,
-          mysql-testsuite-5.6,
-          mysql-testsuite-5.7
-Description: MariaDB database regression test suite - data files
- MariaDB is a fast, stable and true multi-user, multi-threaded SQL database
- server. SQL (Structured Query Language) is the most popular database query
- language in the world. The main goals of MariaDB are speed, robustness and
- ease of use.
- .
- This package has the architecture independent data files for the test suite.
