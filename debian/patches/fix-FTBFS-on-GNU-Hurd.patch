@@ -13,8 +13,6 @@ Subject: fix-FTBFS-on-GNU-Hurd
  storage/mroonga/vendor/groonga/lib/grn_com.h  | 24 ++++++++-------
  8 files changed, 86 insertions(+), 37 deletions(-)
 
-diff --git a/cmake/dtrace.cmake b/cmake/dtrace.cmake
-index 3edcdc4..c090d65 100644
 --- a/cmake/dtrace.cmake
 +++ b/cmake/dtrace.cmake
 @@ -45,6 +45,10 @@ MACRO(CHECK_DTRACE)
@@ -28,8 +26,6 @@ index 3edcdc4..c090d65 100644
   SET(HAVE_DTRACE ${ENABLE_DTRACE})
   IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
     IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-diff --git a/cmake/package_name.cmake b/cmake/package_name.cmake
-index 7681f78..2a9b1e1 100644
 --- a/cmake/package_name.cmake
 +++ b/cmake/package_name.cmake
 @@ -81,6 +81,9 @@ IF(NOT VERSION)
@@ -42,8 +38,6 @@ index 7681f78..2a9b1e1 100644
      ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
        IF(CMAKE_OSX_DEPLOYMENT_TARGET)
          SET(DEFAULT_PLATFORM "osx${CMAKE_OSX_DEPLOYMENT_TARGET}")
-diff --git a/extra/mariabackup/backup_copy.cc b/extra/mariabackup/backup_copy.cc
-index 156e0b2..bb9c79c 100644
 --- a/extra/mariabackup/backup_copy.cc
 +++ b/extra/mariabackup/backup_copy.cc
 @@ -623,11 +623,13 @@ static
@@ -63,7 +57,7 @@ index 156e0b2..bb9c79c 100644
  
  	for (p = parent + strlen(parent);
  	    !is_path_separator(*p) && p != parent; p--);
-@@ -636,19 +638,23 @@ mkdirp(const char *pathname, int Flags, myf MyFlags)
+@@ -636,19 +638,23 @@ mkdirp(const char *pathname, int Flags,
  
  	/* try to make parent directory */
  	if (p != parent && mkdirp(parent, Flags, MyFlags) != 0) {
@@ -117,8 +111,6 @@ index 156e0b2..bb9c79c 100644
  #else
  	return strcmp(first, second) == 0;
  #endif
-diff --git a/mysys/mysys_priv.h b/mysys/mysys_priv.h
-index 892e091..9bf44e0 100644
 --- a/mysys/mysys_priv.h
 +++ b/mysys/mysys_priv.h
 @@ -16,6 +16,10 @@
@@ -141,7 +133,7 @@ index 892e091..9bf44e0 100644
  #define O_PATH O_EXEC
  #endif
  #endif
-@@ -128,8 +132,8 @@ const char *my_open_parent_dir_nosymlinks(const char *pathname, int *pdfd);
+@@ -128,8 +132,8 @@ const char *my_open_parent_dir_nosymlink
    return res;
  #elif defined(HAVE_REALPATH) && defined(PATH_MAX)
  #define NOSYMLINK_FUNCTION_BODY(AT,NOAT)                                \
@@ -152,11 +144,9 @@ index 892e091..9bf44e0 100644
    if (strcmp(pathname, buf)) { errno= ENOTDIR; return -1; }             \
    return NOAT;
  #elif defined(HAVE_REALPATH)
-diff --git a/sql/wsrep_binlog.cc b/sql/wsrep_binlog.cc
-index 998f4e7..784b235 100644
 --- a/sql/wsrep_binlog.cc
 +++ b/sql/wsrep_binlog.cc
-@@ -318,13 +318,23 @@ int wsrep_write_cache(wsrep_t*  const wsrep,
+@@ -318,13 +318,23 @@ int wsrep_write_cache(wsrep_t*  const ws
  
  void wsrep_dump_rbr_buf(THD *thd, const void* rbr_buf, size_t buf_len)
  {
@@ -184,7 +174,7 @@ index 998f4e7..784b235 100644
      return;
    }
  
-@@ -343,6 +353,7 @@ void wsrep_dump_rbr_buf(THD *thd, const void* rbr_buf, size_t buf_len)
+@@ -343,6 +353,7 @@ void wsrep_dump_rbr_buf(THD *thd, const
      WSREP_ERROR("Failed to open file '%s': %d (%s)",
                  filename, errno, strerror(errno));
    }
@@ -192,7 +182,7 @@ index 998f4e7..784b235 100644
  }
  
  /*
-@@ -448,19 +459,29 @@ void wsrep_dump_rbr_buf_with_header(THD *thd, const void *rbr_buf,
+@@ -448,19 +459,29 @@ void wsrep_dump_rbr_buf_with_header(THD
  {
    DBUG_ENTER("wsrep_dump_rbr_buf_with_header");
  
@@ -228,7 +218,7 @@ index 998f4e7..784b235 100644
      DBUG_VOID_RETURN;
    }
  
-@@ -498,6 +519,7 @@ void wsrep_dump_rbr_buf_with_header(THD *thd, const void *rbr_buf,
+@@ -498,6 +519,7 @@ void wsrep_dump_rbr_buf_with_header(THD
    }
  
  cleanup2:
@@ -236,32 +226,28 @@ index 998f4e7..784b235 100644
    end_io_cache(&cache);
  
  cleanup1:
-diff --git a/storage/mroonga/vendor/groonga/config.h.cmake b/storage/mroonga/vendor/groonga/config.h.cmake
-index 8e3bdaf..bb2aa43 100644
 --- a/storage/mroonga/vendor/groonga/config.h.cmake
 +++ b/storage/mroonga/vendor/groonga/config.h.cmake
-@@ -109,6 +109,7 @@
- #cmakedefine HAVE_STRING_H
+@@ -107,6 +107,7 @@
+ #cmakedefine HAVE_SIGNAL_H
  #cmakedefine HAVE_SYS_MMAN_H
  #cmakedefine HAVE_SYS_PARAM_H
 +#cmakedefine HAVE_SYS_POLL_H
  #cmakedefine HAVE_SYS_RESOURCE_H
  #cmakedefine HAVE_SYS_SELECT_H
  #cmakedefine HAVE_SYS_SOCKET_H
-diff --git a/storage/mroonga/vendor/groonga/lib/com.c b/storage/mroonga/vendor/groonga/lib/com.c
-index a16a446..c796599 100644
 --- a/storage/mroonga/vendor/groonga/lib/com.c
 +++ b/storage/mroonga/vendor/groonga/lib/com.c
-@@ -277,7 +277,7 @@ grn_com_event_init(grn_ctx *ctx, grn_com_event *ev, int max_nevents, int data_si
-     MUTEX_INIT(ev->mutex);
-     COND_INIT(ev->cond);
-     GRN_COM_QUEUE_INIT(&ev->recv_old);
+@@ -281,7 +281,7 @@ grn_com_event_init(grn_ctx *ctx, grn_com
+     memset(&(ev->curr_edge_id), 0, sizeof(grn_com_addr));
+     ev->acceptor = NULL;
+     ev->opaque = NULL;
 -#ifndef USE_SELECT
 +#if !defined(USE_SELECT) && !defined(USE_POLL)
  # ifdef USE_EPOLL
      if ((ev->events = GRN_MALLOC(sizeof(struct epoll_event) * max_nevents))) {
        if ((ev->epfd = epoll_create(max_nevents)) != -1) {
-@@ -306,9 +306,9 @@ grn_com_event_init(grn_ctx *ctx, grn_com_event *ev, int max_nevents, int data_si
+@@ -310,9 +310,9 @@ grn_com_event_init(grn_ctx *ctx, grn_com
      grn_hash_close(ctx, ev->hash);
      ev->hash = NULL;
      ev->events = NULL;
@@ -273,7 +259,7 @@ index a16a446..c796599 100644
    }
  exit :
    return ctx->rc;
-@@ -322,7 +322,7 @@ grn_com_event_fin(grn_ctx *ctx, grn_com_event *ev)
+@@ -326,7 +326,7 @@ grn_com_event_fin(grn_ctx *ctx, grn_com_
      grn_msg_close(ctx, msg);
    }
    if (ev->hash) { grn_hash_close(ctx, ev->hash); }
@@ -282,7 +268,7 @@ index a16a446..c796599 100644
    if (ev->events) { GRN_FREE(ev->events); }
  # ifdef USE_EPOLL
    grn_close(ev->epfd);
-@@ -330,7 +330,7 @@ grn_com_event_fin(grn_ctx *ctx, grn_com_event *ev)
+@@ -334,7 +334,7 @@ grn_com_event_fin(grn_ctx *ctx, grn_com_
  # ifdef USE_KQUEUE
    grn_close(ev->kqfd);
  # endif /* USE_KQUEUE*/
@@ -291,11 +277,9 @@ index a16a446..c796599 100644
    return GRN_SUCCESS;
  }
  
-diff --git a/storage/mroonga/vendor/groonga/lib/grn_com.h b/storage/mroonga/vendor/groonga/lib/grn_com.h
-index e5ad589..63d50e7 100644
 --- a/storage/mroonga/vendor/groonga/lib/grn_com.h
 +++ b/storage/mroonga/vendor/groonga/lib/grn_com.h
-@@ -66,13 +66,22 @@ GRN_API grn_com_queue_entry *grn_com_queue_deque(grn_ctx *ctx, grn_com_queue *q)
+@@ -66,13 +66,22 @@ GRN_API grn_com_queue_entry *grn_com_que
  
  /******* grn_com ********/
  
@@ -319,16 +303,12 @@ index e5ad589..63d50e7 100644
  # ifdef USE_EPOLL
  #  include <sys/epoll.h>
  #  define GRN_COM_POLLIN  EPOLLIN
-@@ -82,16 +91,9 @@ GRN_API grn_com_queue_entry *grn_com_queue_deque(grn_ctx *ctx, grn_com_queue *q)
+@@ -82,12 +91,9 @@ GRN_API grn_com_queue_entry *grn_com_que
  #   include <sys/event.h>
  #   define GRN_COM_POLLIN  EVFILT_READ
  #   define GRN_COM_POLLOUT EVFILT_WRITE
 -#  else /* USE_KQUEUE */
--#    if defined(HAVE_POLL_H)
--#      include <poll.h>
--#    elif defined(HAVE_SYS_POLL_H)
--#      include <sys/poll.h>
--#    endif /* defined(HAVE_POLL_H) */
+-#   include <poll.h>
 -#   define GRN_COM_POLLIN  POLLIN
 -#   define GRN_COM_POLLOUT POLLOUT
  #  endif /* USE_KQUEUE */
@@ -337,7 +317,7 @@ index e5ad589..63d50e7 100644
  #endif /* USE_SELECT */
  
  typedef struct _grn_com grn_com;
-@@ -137,7 +139,7 @@ struct _grn_com_event {
+@@ -133,7 +139,7 @@ struct _grn_com_event {
    grn_com_addr curr_edge_id;
    grn_com *acceptor;
    void *opaque;
@@ -346,7 +326,7 @@ index e5ad589..63d50e7 100644
  #ifdef USE_EPOLL
    int epfd;
    struct epoll_event *events;
-@@ -150,7 +152,7 @@ struct _grn_com_event {
+@@ -146,7 +152,7 @@ struct _grn_com_event {
    struct pollfd *events;
  #endif /* USE_KQUEUE */
  #endif /* USE_EPOLL */

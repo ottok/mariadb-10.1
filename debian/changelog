@@ -1,3 +1,16 @@
+mariadb-10.1 (10.1.29-1) unstable; urgency=medium
+
+  * New upstream version 10.1.29, includes fixes for the following
+    security vulnerabilities:
+    - [CVE-2017-10378]: Optimizer component to cause denial of service
+      conditions
+    - [CVE-2017-10268]: Replication component to access data
+    - [MDEV-13819]: Server crashes in Item_func_in::val_int or Assertion
+      `in_item' failed in virtual longlong Item_func_in::val_int
+  * Refresh debian/patches on top of MariaDB 10.1.29 release
+
+ -- Otto Kekäläinen <otto@debian.org>  Sat, 18 Nov 2017 16:42:25 +0800
+
 mariadb-10.1 (10.1.28-1) unstable; urgency=medium
 
   * New upstream version 10.1.28
@@ -280,7 +293,7 @@ mariadb-10.1 (10.1.21-3) unstable; urgency=low
   * Extend WSREP and Galera man pages patch to cover all commands
 
   [ Dieter Adriaenssens ]
-  * Specify Architecture for mariadb-plugin-mroonga and mariadb-plugin-tokudb 
+  * Specify Architecture for mariadb-plugin-mroonga and mariadb-plugin-tokudb
     (Closes: #852709)
 
   [ James Clarke ]

@@ -13,8 +13,6 @@ Subject: libmariadbclient-rename
  unittest/mysys/CMakeLists.txt |  2 +-
  8 files changed, 46 insertions(+), 41 deletions(-)
 
-diff --git a/client/CMakeLists.txt b/client/CMakeLists.txt
-index e4643ad..523912e 100644
 --- a/client/CMakeLists.txt
 +++ b/client/CMakeLists.txt
 @@ -32,7 +32,7 @@ COPY_OPENSSL_DLLS(copy_openssl_client)
@@ -85,8 +83,6 @@ index e4643ad..523912e 100644
  
  SET_TARGET_PROPERTIES (mysqlcheck mysqldump mysqlimport mysql_upgrade mysqlshow mysqlslap mysql_plugin async_example
  PROPERTIES HAS_CXX TRUE)
-diff --git a/cmake/for_clients.cmake b/cmake/for_clients.cmake
-index dd79ea1..879da78 100644
 --- a/cmake/for_clients.cmake
 +++ b/cmake/for_clients.cmake
 @@ -2,8 +2,8 @@
@@ -113,8 +109,6 @@ index dd79ea1..879da78 100644
  SET(EMB_LIBS "-lmysqld ${ZLIB_DEPS} ${EMB_LIBS} ${openssl_libs}")
  
  MACRO(REPLACE_FOR_CLIENTS VAR)
-diff --git a/libmysql/CMakeLists.txt b/libmysql/CMakeLists.txt
-index acbd80b..5819d79 100644
 --- a/libmysql/CMakeLists.txt
 +++ b/libmysql/CMakeLists.txt
 @@ -398,6 +398,10 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -201,8 +195,6 @@ index acbd80b..5819d79 100644
          "${CMAKE_SHARED_LIBRARY_SUFFIX}"
          "${ver}"
          linkname)
-diff --git a/man/mysql_config.1 b/man/mysql_config.1
-index 47e8a3a..c699974 100644
 --- a/man/mysql_config.1
 +++ b/man/mysql_config.1
 @@ -38,7 +38,7 @@ supports the following options\&.
@@ -214,7 +206,7 @@ index 47e8a3a..c699974 100644
  library\&. The options returned are tied to the specific compiler that was used when the library was created and might clash with the settings for your own compiler\&. Use
  \fB\-\-include\fR
  for more portable options that contain only include paths\&.
-@@ -196,9 +196,9 @@ Usage: /usr/local/mysql/bin/mysql_config [options]
+@@ -196,9 +196,9 @@ Usage: /usr/local/mysql/bin/mysql_config
  Options:
    \-\-cflags         [\-I/usr/local/mysql/include/mysql \-mcpu=pentiumpro]
    \-\-include        [\-I/usr/local/mysql/include/mysql]
@@ -226,8 +218,6 @@ index 47e8a3a..c699974 100644
                      \-lpthread \-lz \-lcrypt \-lnsl \-lm \-lpthread]
    \-\-socket         [/tmp/mysql\&.sock]
    \-\-port           [3306]
-diff --git a/scripts/make_win_bin_dist b/scripts/make_win_bin_dist
-index 2415d40..bfff308 100755
 --- a/scripts/make_win_bin_dist
 +++ b/scripts/make_win_bin_dist
 @@ -293,7 +293,7 @@ mkdir -p $DESTDIR/lib/plugin
@@ -239,7 +229,7 @@ index 2415d40..bfff308 100755
     mysys/$TARGET/mysys.lib \
     regex/$TARGET/regex.lib \
     strings/$TARGET/strings.lib \
-@@ -302,7 +302,7 @@ cp storage/*/$TARGET/ha_*.dll $DESTDIR/lib/plugin/
+@@ -302,7 +302,7 @@ cp storage/*/$TARGET/ha_*.dll $DESTDIR/l
  
  if [ x"$TARGET" != x"release" ] ; then
    cp libmysql/$TARGET/libmysql.pdb \
@@ -248,7 +238,7 @@ index 2415d40..bfff308 100755
       mysys/$TARGET/mysys.pdb \
       regex/$TARGET/regex.pdb \
       strings/$TARGET/strings.pdb \
-@@ -318,8 +318,8 @@ if [ x"$PACK_DEBUG" = x"" -a -f "libmysql/debug/libmysql.lib" -o \
+@@ -318,8 +318,8 @@ if [ x"$PACK_DEBUG" = x"" -a -f "libmysq
    cp libmysql/debug/libmysql.dll \
       libmysql/debug/libmysql.lib \
       libmysql/debug/libmysql.pdb \
@@ -259,8 +249,6 @@ index 2415d40..bfff308 100755
       mysys/debug/mysys.lib \
       mysys/debug/mysys.pdb \
       regex/debug/regex.lib \
-diff --git a/scripts/mysql_config.pl.in b/scripts/mysql_config.pl.in
-index f2c27bc..9cf718b 100644
 --- a/scripts/mysql_config.pl.in
 +++ b/scripts/mysql_config.pl.in
 @@ -183,15 +183,15 @@ if ( $^O eq "MSWin32" )
@@ -282,8 +270,6 @@ index f2c27bc..9cf718b 100644
    @lib_e_opts = ($linkpath,"-lmysqld");
  }
  
-diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
-index f32e027..cb7e31c 100644
 --- a/tests/CMakeLists.txt
 +++ b/tests/CMakeLists.txt
 @@ -18,12 +18,12 @@ ADD_DEFINITIONS("-DMYSQL_CLIENT")
@@ -310,11 +296,9 @@ index f32e027..cb7e31c 100644
    SET_TARGET_PROPERTIES(async_queries PROPERTIES LINKER_LANGUAGE CXX)
  
  ENDIF()
-diff --git a/unittest/mysys/CMakeLists.txt b/unittest/mysys/CMakeLists.txt
-index ad5195a..965df3c 100644
 --- a/unittest/mysys/CMakeLists.txt
 +++ b/unittest/mysys/CMakeLists.txt
-@@ -21,7 +21,7 @@ MY_ADD_TESTS(my_vsnprintf LINK_LIBRARIES strings mysys)
+@@ -21,7 +21,7 @@ MY_ADD_TESTS(my_vsnprintf LINK_LIBRARIES
  ADD_DEFINITIONS(${SSL_DEFINES})
  
  MY_ADD_TESTS(ma_dyncol

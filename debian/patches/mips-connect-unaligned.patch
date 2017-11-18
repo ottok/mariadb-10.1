@@ -7,11 +7,9 @@ Subject: mips-connect-unaligned
  storage/connect/valblk.h   | 51 +++++++++++++++++++++++++++++-----------------
  2 files changed, 52 insertions(+), 40 deletions(-)
 
-diff --git a/storage/connect/valblk.cpp b/storage/connect/valblk.cpp
-index 018c7ee..d32f804 100644
 --- a/storage/connect/valblk.cpp
 +++ b/storage/connect/valblk.cpp
-@@ -266,14 +266,14 @@ bool TYPBLK<TYPE>::Init(PGLOBAL g, bool check)
+@@ -266,14 +266,14 @@ bool TYPBLK<TYPE>::Init(PGLOBAL g, bool
  template <class TYPE>
  char *TYPBLK<TYPE>::GetCharString(char *p, int n)
    {
@@ -28,7 +26,7 @@ index 018c7ee..d32f804 100644
    return p;
    } // end of GetCharString
  
-@@ -289,7 +289,7 @@ void TYPBLK<TYPE>::SetValue(PVAL valp, int n)
+@@ -289,7 +289,7 @@ void TYPBLK<TYPE>::SetValue(PVAL valp, i
    ChkTyp(valp);
  
    if (!(b = valp->IsNull()))
@@ -37,7 +35,7 @@ index 018c7ee..d32f804 100644
    else
      Reset(n);
  
-@@ -351,9 +351,9 @@ void TYPBLK<TYPE>::SetValue(PCSZ p, int n)
+@@ -351,9 +351,9 @@ void TYPBLK<TYPE>::SetValue(PCSZ p, int
    ulonglong val = CharToNumber(p, strlen(p), maxval, Unsigned, &minus); 
      
    if (minus && val < maxval)
@@ -49,7 +47,7 @@ index 018c7ee..d32f804 100644
  
    SetNull(n, false);
    } // end of SetValue
-@@ -396,7 +396,7 @@ void TYPBLK<double>::SetValue(PCSZ p, int n)
+@@ -396,7 +396,7 @@ void TYPBLK<double>::SetValue(PCSZ p, in
  		throw Type;
  	} // endif Check
  
@@ -58,7 +56,7 @@ index 018c7ee..d32f804 100644
    SetNull(n, false);
    } // end of SetValue
  
-@@ -428,7 +428,7 @@ void TYPBLK<TYPE>::SetValue(PVBLK pv, int n1, int n2)
+@@ -428,7 +428,7 @@ void TYPBLK<TYPE>::SetValue(PVBLK pv, in
    ChkTyp(pv);
  
    if (!(b = pv->IsNull(n2) && Nullable))
@@ -67,7 +65,7 @@ index 018c7ee..d32f804 100644
    else
      Reset(n1);
  
-@@ -479,10 +479,10 @@ void TYPBLK<TYPE>::SetMin(PVAL valp, int n)
+@@ -479,10 +479,10 @@ void TYPBLK<TYPE>::SetMin(PVAL valp, int
    {
    CheckParms(valp, n)
    TYPE  tval = GetTypedValue(valp);
@@ -80,7 +78,7 @@ index 018c7ee..d32f804 100644
  
    } // end of SetMin
  
-@@ -494,10 +494,10 @@ void TYPBLK<TYPE>::SetMax(PVAL valp, int n)
+@@ -494,10 +494,10 @@ void TYPBLK<TYPE>::SetMax(PVAL valp, int
    {
    CheckParms(valp, n)
    TYPE  tval = GetTypedValue(valp);
@@ -93,7 +91,7 @@ index 018c7ee..d32f804 100644
  
    } // end of SetMax
  
-@@ -511,8 +511,7 @@ void TYPBLK<TYPE>::SetValues(PVBLK pv, int k, int n)
+@@ -511,8 +511,7 @@ void TYPBLK<TYPE>::SetValues(PVBLK pv, i
    CheckType(pv)
    TYPE *lp = ((TYPBLK*)pv)->Typp;
  
@@ -103,7 +101,7 @@ index 018c7ee..d32f804 100644
  
    } // end of SetValues
  #endif // 0
-@@ -523,7 +522,7 @@ void TYPBLK<TYPE>::SetValues(PVBLK pv, int k, int n)
+@@ -523,7 +522,7 @@ void TYPBLK<TYPE>::SetValues(PVBLK pv, i
  template <class TYPE>
  void TYPBLK<TYPE>::Move(int i, int j)
    {
@@ -112,7 +110,7 @@ index 018c7ee..d32f804 100644
    MoveNull(i, j);
    } // end of Move
  
-@@ -537,7 +536,7 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n)
+@@ -537,7 +536,7 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n
    ChkIndx(n);
    ChkTyp(vp);
  #endif   // _DEBUG
@@ -121,7 +119,7 @@ index 018c7ee..d32f804 100644
    TYPE vlv = GetTypedValue(vp);
  
    return (vlv > mlv) ? 1 : (vlv < mlv) ? (-1) : 0;
-@@ -549,8 +548,8 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n)
+@@ -549,8 +548,8 @@ int TYPBLK<TYPE>::CompVal(PVAL vp, int n
  template <class TYPE>
  int TYPBLK<TYPE>::CompVal(int i1, int i2)
    {
@@ -150,7 +148,7 @@ index 018c7ee..d32f804 100644
      n = MY_MAX(n, m);
      } // endfor i
  
-@@ -1333,7 +1332,7 @@ char *DATBLK::GetCharString(char *p, int n)
+@@ -1333,7 +1332,7 @@ char *DATBLK::GetCharString(char *p, int
    char *vp;
  
    if (Dvalp) {
@@ -168,8 +166,6 @@ index 018c7ee..d32f804 100644
    } else
      TYPBLK<int>::SetValue(p, n);
  
-diff --git a/storage/connect/valblk.h b/storage/connect/valblk.h
-index a3d7bf3..521dd7f 100644
 --- a/storage/connect/valblk.h
 +++ b/storage/connect/valblk.h
 @@ -139,6 +139,7 @@ class VALBLK : public BLOCK {
