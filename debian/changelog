@@ -1,3 +1,9 @@
+mariadb-10.1 (1:10.1.29-3) unstable; urgency=medium
+
+  * Change the default optimization level to -O2 to fix arm64 build
+
+ -- Ondřej Surý <ondrej@debian.org>  Wed, 22 Nov 2017 15:33:21 +0000
+
 mariadb-10.1 (1:10.1.29-2) unstable; urgency=medium
 
   [ Otto Kekäläinen ]
