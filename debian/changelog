@@ -1,3 +1,9 @@
+mariadb-10.1 (1:10.1.29-5) unstable; urgency=high
+
+  * Update the -O3 -> -O2 patch to include more cmake files
+
+ -- Ondřej Surý <ondrej@debian.org>  Wed, 22 Nov 2017 22:48:13 +0000
+
 mariadb-10.1 (1:10.1.29-4) unstable; urgency=high
 
   * Change the default optimization from -O3 to -O2 in mysql_release.cmake
