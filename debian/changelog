@@ -1,3 +1,10 @@
+mariadb-10.1 (1:10.1.29-4) unstable; urgency=high
+
+  * Change the default optimization from -O3 to -O2 in mysql_release.cmake
+    BUILD_CONFIG profile
+
+ -- Ondřej Surý <ondrej@debian.org>  Wed, 22 Nov 2017 20:33:17 +0000
+
 mariadb-10.1 (1:10.1.29-3) unstable; urgency=medium
 
   * Change the default optimization level to -O2 to fix arm64 build
