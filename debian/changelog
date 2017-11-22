@@ -1,6 +1,12 @@
 mariadb-10.1 (10.1.29-1) unstable; urgency=medium
 
-  * New upstream version 10.1.29
+  * New upstream version 10.1.29, includes fixes for the following
+    security vulnerabilities:
+    - [CVE-2017-10378]: Optimizer component to cause denial of service
+      conditions
+    - [CVE-2017-10268]: Replication component to access data
+    - [MDEV-13819]: Server crashes in Item_func_in::val_int or Assertion
+      `in_item' failed in virtual longlong Item_func_in::val_int
   * Remove the mariadb-test-* packages as they are now provided by
     mariadb-10.2 (Closes: #881898)
   * Rebase patches for new upstream version.
