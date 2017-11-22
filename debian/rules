@@ -89,6 +89,8 @@ override_dh_auto_configure:
 	    -DINSTALL_PLUGINDIR=lib/$(DEB_HOST_MULTIARCH)/mariadb18/plugin \
 	    -DINSTALL_MYSQLTESTDIR=share/mysql/mysql-test \
 	    -DPLUGIN_AUTH_SOCKET=STATIC \
+	    -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG" \
+	    -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG" \
 	    -DDEB=$(DEB_VENDOR) ..'
 
 # This is needed, otherwise 'make test' will run before binaries have been built
