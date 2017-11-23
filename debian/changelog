@@ -1,3 +1,10 @@
+mariadb-10.1 (1:10.1.29-6) unstable; urgency=high
+
+  * Ignore failed tests on more non-release platforms (kfreebsd-i386,
+    kfreebsd-amd64 and sparc64)
+
+ -- Ondřej Surý <ondrej@debian.org>  Thu, 23 Nov 2017 07:03:47 +0000
+
 mariadb-10.1 (1:10.1.29-5) unstable; urgency=high
 
   * Update the -O3 -> -O2 patch to include more cmake files
