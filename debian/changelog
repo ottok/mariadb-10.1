@@ -1,3 +1,22 @@
+mariadb-10.1 (10.1.29-0+deb9u1) stretch; urgency=medium
+
+  [ Ondřej Surý ]
+  * New upstream version 10.1.29
+  * Add libconfig-inifiles-perl to mariadb-client-10.1 depends to fix
+    mytop
+  * Add mips64el to the list of platforms that are allowed to fail test
+    suite
+  * Handle new and/or missing files
+  * Revert to using system pcre library
+  * Ignore failed tests on more non-release platforms (kfreebsd-i386,
+    kfreebsd-amd64 and sparc64)
+  * Rebase patches for MariaDB 10.1.29
+
+  [ Christian Ehrhardt ]
+  * d/t/upstream: skip func_regexp_pcre on s390x
+
+ -- Ondřej Surý <ondrej@debian.org>  Fri, 08 Dec 2017 19:40:38 +0000
+
 mariadb-10.1 (10.1.26-0+deb9u1) stretch-security; urgency=high
 
   * New upstream version 10.1.26.  Includes fixes for the following
