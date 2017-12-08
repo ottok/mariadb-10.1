@@ -804,8 +804,10 @@ the first page of a first data file at database startup.
 @param[out]	space_id		tablepspace ID
 @param[out]	flushed_lsn		flushed lsn value
 @param[out]	crypt_data		encryption crypt data
-@retval NULL on success, or if innodb_force_recovery is set
-@return pointer to an error message string */
+@param[in]	check_first_page	true if first page contents
+					should be checked
+@return NULL on success, or if innodb_force_recovery is set
+@retval pointer to an error message string */
 UNIV_INTERN
 const char*
 fil_read_first_page(
@@ -814,7 +816,8 @@ fil_read_first_page(
 	ulint*		flags,
 	ulint*		space_id,
 	lsn_t*		flushed_lsn,
-	fil_space_crypt_t**   crypt_data)
+	fil_space_crypt_t**   crypt_data,
+	bool		check_first_page=true)
 	MY_ATTRIBUTE((warn_unused_result));
 
 #endif /* !UNIV_HOTBACKUP */
@@ -846,18 +849,13 @@ fil_op_log_parse_or_replay(
 				only be parsed but not replayed */
 	ulint	log_flags);	/*!< in: redo log flags
 				(stored in the page number parameter) */
-/*******************************************************************//**
-Deletes a single-table tablespace. The tablespace must be cached in the
-memory cache.
-@return	TRUE if success */
+/** Delete a tablespace and associated .ibd file.
+@param[in]	id		tablespace identifier
+@param[in]	drop_ahi	whether to drop the adaptive hash index
+@return	DB_SUCCESS or error */
 UNIV_INTERN
 dberr_t
-fil_delete_tablespace(
-/*==================*/
-	ulint		id,		/*!< in: space id */
-	buf_remove_t	buf_remove);	/*!< in: specify the action to take
-					on the tables pages in the buffer
-					pool */
+fil_delete_tablespace(ulint id, bool drop_ahi = false);
 /*******************************************************************//**
 Closes a single-table tablespace. The tablespace must be cached in the
 memory cache. Free all pages used by the tablespace.

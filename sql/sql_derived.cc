@@ -466,7 +466,8 @@ bool mysql_derived_merge(THD *thd, LEX *lex, TABLE_LIST *derived)
     // Update used tables cache according to new table map
     if (derived->on_expr)
     {
-      derived->on_expr->fix_after_pullout(parent_lex, &derived->on_expr);
+      derived->on_expr->fix_after_pullout(parent_lex, &derived->on_expr,
+                                          TRUE);
       fix_list_after_tbl_changes(parent_lex, &derived->nested_join->join_list);
     }
   }
@@ -520,6 +521,8 @@ bool mysql_derived_merge_for_insert(THD *thd, LEX *lex, TABLE_LIST *derived)
                       derived->merge_underlying_list != 0));
   if (derived->merged_for_insert)
     DBUG_RETURN(FALSE);
+  if (derived->init_derived(thd, FALSE))
+    DBUG_RETURN(TRUE);
   if (derived->is_materialized_derived())
     DBUG_RETURN(mysql_derived_prepare(thd, lex, derived));
   if ((thd->lex->sql_command == SQLCOM_UPDATE_MULTI ||
@@ -537,8 +540,6 @@ bool mysql_derived_merge_for_insert(THD *thd, LEX *lex, TABLE_LIST *derived)
       DBUG_ASSERT(derived->table);
     }
   }
-  else
-    derived->table= derived->merge_underlying_list->table;
   DBUG_RETURN(FALSE);
 }
 
@@ -636,7 +637,8 @@ bool mysql_derived_prepare(THD *thd, LEX *lex, TABLE_LIST *derived)
   SELECT_LEX_UNIT *unit= derived->get_unit();
   DBUG_ENTER("mysql_derived_prepare");
   bool res= FALSE;
-  DBUG_PRINT("enter", ("unit 0x%lx", (ulong) unit));
+  DBUG_PRINT("enter", ("unit: %p  table_list: %p  Alias '%s'",
+                       unit, derived, derived->alias));
 
   // Skip already prepared views/DT
   if (!unit || unit->prepared ||

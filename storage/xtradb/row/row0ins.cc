@@ -38,6 +38,7 @@ Created 4/20/1996 Heikki Tuuri
 #include "btr0btr.h"
 #include "btr0cur.h"
 #include "mach0data.h"
+#include "ibuf0ibuf.h"
 #include "que0que.h"
 #include "row0upd.h"
 #include "row0sel.h"
@@ -936,7 +937,7 @@ row_ins_invalidate_query_cache(
 	mem_free(buf);
 }
 #ifdef WITH_WSREP
-dberr_t wsrep_append_foreign_key(trx_t *trx,  
+dberr_t wsrep_append_foreign_key(trx_t *trx,
 			       dict_foreign_t*	foreign,
 			       const rec_t*	clust_rec,
 			       dict_index_t*	clust_index,
@@ -1142,7 +1143,7 @@ row_ins_foreign_check_on_constraint(
 			rec_print(stderr, clust_rec, clust_index);
 			fputs("\n"
 			      "InnoDB: Submit a detailed bug report to"
-			      " http://bugs.mysql.com\n", stderr);
+			      " https://jira.mariadb.org/\n", stderr);
 			ut_ad(0);
 			err = DB_SUCCESS;
 
@@ -1296,12 +1297,11 @@ row_ins_foreign_check_on_constraint(
 
 #ifdef WITH_WSREP
 	err = wsrep_append_foreign_key(
-					thr_get_trx(thr),
-					foreign,
-					clust_rec,
-					clust_index,
-					FALSE,
-					(node) ? TRUE : FALSE);
+				       thr_get_trx(thr),
+				       foreign,
+				       clust_rec,
+				       clust_index,
+				       FALSE, FALSE);
 	if (err != DB_SUCCESS) {
 		fprintf(stderr,
 			"WSREP: foreign key append failed: %d\n", err);
@@ -1463,7 +1463,7 @@ row_ins_check_foreign_constraint(
 	rec_offs_init(offsets_);
 
 #ifdef WITH_WSREP
-       upd_node= NULL;
+	upd_node= NULL;
 #endif /* WITH_WSREP */
 run_again:
 #ifdef UNIV_SYNC_DEBUG
@@ -1654,7 +1654,7 @@ run_again:
 					err = wsrep_append_foreign_key(
 						thr_get_trx(thr),
 						foreign,
-						rec, 
+						rec,
 						check_index,
 						check_ref,
 						(upd_node) ? TRUE : FALSE);
@@ -3063,6 +3063,11 @@ row_ins_sec_index_entry(
 		0, BTR_MODIFY_LEAF, index, offsets_heap, heap, entry, 0, thr);
 	if (err == DB_FAIL) {
 		mem_heap_empty(heap);
+
+		if (index->space == IBUF_SPACE_ID
+		    && !dict_index_is_unique(index)) {
+			ibuf_free_excess_pages();
+		}
 
 		/* Try then pessimistic descent to the B-tree */
 

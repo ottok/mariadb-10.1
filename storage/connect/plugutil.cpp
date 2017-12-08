@@ -162,7 +162,7 @@ PGLOBAL PlugInit(LPCSTR Language, uint worksize)
 	/*******************************************************************/
 	if (worksize && !(g->Sarea = PlugAllocMem(g, worksize))) {
 		char errmsg[MAX_STR];
-		sprintf(errmsg, MSG(WORK_AREA), g->Message);
+		snprintf(errmsg, sizeof(errmsg) - 1, MSG(WORK_AREA), g->Message);
 		strcpy(g->Message, errmsg);
 		g->Sarea_Size = 0;
 	} else
@@ -184,8 +184,10 @@ int PlugExit(PGLOBAL g)
 			free(dup);
 
 		if (g->Sarea) {
+#if !defined(DEVELOPMENT)
 			if (trace)
-				htrc("Freeing Sarea size=%d\n", g->Sarea_Size);
+#endif
+				htrc("Freeing Sarea at %p size=%d\n", g->Sarea, g->Sarea_Size);
 
 			free(g->Sarea);
 		}	// endif Sarea
@@ -467,7 +469,11 @@ void *PlugAllocMem(PGLOBAL g, uint size)
   if (!(areap = malloc(size)))
     sprintf(g->Message, MSG(MALLOC_ERROR), "malloc");
 
+#if defined(DEVELOPMENT)
+	if (true) {
+#else
 	if (trace) {
+#endif
     if (areap)
       htrc("Memory of %u allocated at %p\n", size, areap);
     else

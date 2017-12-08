@@ -1,4 +1,4 @@
-SET(TOKUDB_VERSION 5.6.36-82.1)
+SET(TOKUDB_VERSION 5.6.37-82.2)
 # PerconaFT only supports x86-64 and cmake-2.8.9+
 IF(CMAKE_VERSION VERSION_LESS "2.8.9")
   MESSAGE(STATUS "CMake 2.8.9 or higher is required by TokuDB")
@@ -34,6 +34,7 @@ IF(NOT LIBJEMALLOC)
 ENDIF()
 
 MY_CHECK_AND_SET_COMPILER_FLAG("-Wno-vla" DEBUG)
+MY_CHECK_AND_SET_COMPILER_FLAG("-Wno-implicit-fallthrough")
 
 ############################################
 SET(TOKUDB_DEB_FILES "usr/lib/mysql/plugin/ha_tokudb.so\netc/mysql/conf.d/tokudb.cnf\nusr/bin/tokuftdump" PARENT_SCOPE)

@@ -236,7 +236,7 @@ bool Foreign_key::validate(List<Create_field> &table_fields)
                          sql_field->field_name)) {}
     if (!sql_field)
     {
-      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name);
+      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
       DBUG_RETURN(TRUE);
     }
     if (type == Key::FOREIGN_KEY && sql_field->vcol_info)
@@ -1023,6 +1023,8 @@ THD::THD(bool is_wsrep_applier)
   wsrep_info[sizeof(wsrep_info) - 1] = '\0'; /* make sure it is 0-terminated */
   wsrep_sync_wait_gtid    = WSREP_GTID_UNDEFINED;
   wsrep_affected_rows     = 0;
+  wsrep_replicate_GTID    = false;
+  wsrep_skip_wsrep_GTID   = false;
 #endif
   /* Call to init() below requires fully initialized Open_tables_state. */
   reset_open_tables_state(this);
@@ -1439,6 +1441,8 @@ void THD::init(void)
   wsrep_TOI_pre_query_len = 0;
   wsrep_sync_wait_gtid    = WSREP_GTID_UNDEFINED;
   wsrep_affected_rows     = 0;
+  wsrep_replicate_GTID    = false;
+  wsrep_skip_wsrep_GTID   = false;
 #endif /* WITH_WSREP */
 
   if (variables.sql_log_bin)
@@ -4854,11 +4858,14 @@ extern "C" int thd_non_transactional_update(const MYSQL_THD thd)
 
 extern "C" int thd_binlog_format(const MYSQL_THD thd)
 {
-  if (((WSREP(thd) &&  wsrep_emulate_bin_log) || mysql_bin_log.is_open()) &&
-      thd->variables.option_bits & OPTION_BIN_LOG)
+  if (WSREP(thd))
+  {
+    /* for wsrep binlog format is meaningful also when binlogging is off */
     return (int) thd->wsrep_binlog_format();
-  else
-    return BINLOG_FORMAT_UNSPEC;
+  }
+  if (mysql_bin_log.is_open() && (thd->variables.option_bits & OPTION_BIN_LOG))
+    return (int) thd->variables.binlog_format;
+  return BINLOG_FORMAT_UNSPEC;
 }
 
 extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all)

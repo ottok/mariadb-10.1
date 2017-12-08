@@ -141,7 +141,6 @@ sp_get_item_value(THD *thd, Item *item, String *str)
   case DECIMAL_RESULT:
     if (item->field_type() != MYSQL_TYPE_BIT)
       return item->val_str(str);
-    else {/* Bit type is handled as binary string */}
     /* fall through */
   case STRING_RESULT:
     {
@@ -598,7 +597,7 @@ sp_head::sp_head()
    m_flags(0),
    m_sp_cache_version(0),
    m_creation_ctx(0),
-   unsafe_flags(0),
+   unsafe_flags(0), m_select_number(1),
    m_recursion_level(0),
    m_next_cached_sp(0),
    m_cont_level(0)
@@ -2100,8 +2099,26 @@ sp_head::execute_procedure(THD *thd, List<Item> *args)
 
   if (!err_status)
   {
+    /*
+      Normally the counter is not reset between parsing and first execution,
+      but it is possible in case of error to have parsing on one CALL and
+      first execution (where VIEW will be parsed and added). So we store the
+      counter after parsing and restore it before execution just to avoid
+      repeating SELECT numbers.
+    */
+    thd->select_number= m_select_number;
+
     err_status= execute(thd, TRUE);
     DBUG_PRINT("info", ("execute returned %d", (int) err_status));
+    /*
+      This execution of the SP was aborted with an error (e.g. "Table not
+      found").  However it might still have consumed some numbers from the
+      thd->select_number counter.  The next sp->exec() call must not use the
+      consumed numbers, so we remember the first free number (We know that
+      nobody will use it as this execution has stopped with an error).
+    */
+    if (err_status)
+      set_select_number(thd->select_number);
   }
 
   if (save_log_general)
@@ -2519,10 +2536,18 @@ bool check_show_routine_access(THD *thd, sp_head *sp, bool *full_access)
   *full_access= ((!check_table_access(thd, SELECT_ACL, &tables, FALSE,
                                      1, TRUE) &&
                   (tables.grant.privilege & SELECT_ACL) != 0) ||
+                 /* Check if user owns the routine. */
                  (!strcmp(sp->m_definer_user.str,
                           thd->security_ctx->priv_user) &&
                   !strcmp(sp->m_definer_host.str,
-                          thd->security_ctx->priv_host)));
+                          thd->security_ctx->priv_host)) ||
+                 /* Check if current role or any of the sub-granted roles
+                    own the routine. */
+                 (sp->m_definer_host.length == 0 &&
+                  (!strcmp(sp->m_definer_user.str,
+                           thd->security_ctx->priv_role) ||
+                   check_role_is_granted(thd->security_ctx->priv_role, NULL,
+                                         sp->m_definer_user.str))));
   if (!*full_access)
     return check_some_routine_access(thd, sp->m_db.str, sp->m_name.str,
                                      sp->m_type == TYPE_ENUM_PROCEDURE);
@@ -4307,4 +4332,3 @@ sp_add_to_query_tables(THD *thd, LEX *lex,
   lex->add_to_query_tables(table);
   return table;
 }
-

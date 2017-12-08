@@ -1309,6 +1309,18 @@ static SHOW_VAR innodb_status_variables[]= {
   {"encryption_key_rotation_list_length",
   (char*)&export_vars.innodb_key_rotation_list_length,
    SHOW_LONGLONG},
+  {"encryption_n_merge_blocks_encrypted",
+  (char*)&export_vars.innodb_n_merge_blocks_encrypted,
+   SHOW_LONGLONG},
+  {"encryption_n_merge_blocks_decrypted",
+  (char*)&export_vars.innodb_n_merge_blocks_decrypted,
+   SHOW_LONGLONG},
+  {"encryption_n_rowlog_blocks_encrypted",
+  (char*)&export_vars.innodb_n_rowlog_blocks_encrypted,
+   SHOW_LONGLONG},
+  {"encryption_n_rowlog_blocks_decrypted",
+  (char*)&export_vars.innodb_n_rowlog_blocks_decrypted,
+   SHOW_LONGLONG},
 
   /* Scrubing feature */
   {"scrub_background_page_reorganizations",
@@ -4621,7 +4633,7 @@ innobase_commit_low(
 		trx_commit_for_mysql(trx);
 	}
 #ifdef WITH_WSREP
-	if (wsrep_on(thd)) { thd_proc_info(thd, tmp); }
+	if (thd && wsrep_on(thd)) { thd_proc_info(thd, tmp); }
 #endif /* WITH_WSREP */
 }
 
@@ -5971,8 +5983,6 @@ innobase_match_index_columns(
 			if (innodb_idx_fld >= innodb_idx_fld_end) {
 				DBUG_RETURN(FALSE);
 			}
-
-			mtype = innodb_idx_fld->col->mtype;
 		}
 
 		if (col_type != mtype) {
@@ -10586,6 +10596,27 @@ ha_innobase::ft_init_ext(
 }
 
 /*****************************************************************//**
+Copy a cached MySQL row.
+If requested, also avoids overwriting non-read columns.
+@param[out]     buf             Row in MySQL format.
+@param[in]      cached_row      Which row to copy.
+@param[in]	rec_len		Record length. */
+void
+ha_innobase::copy_cached_row(
+	uchar*		buf,
+	const uchar*    cached_row,
+	uint		rec_len)
+{
+	if (prebuilt->keep_other_fields_on_keyread) {
+                row_sel_copy_cached_fields_for_mysql(buf, cached_row,
+                        prebuilt);
+        } else {
+                memcpy(buf, cached_row, rec_len);
+        }
+}
+
+
+/*****************************************************************//**
 Set up search tuple for a query through FTS_DOC_ID_INDEX on
 supplied Doc ID. This is used by MySQL to retrieve the documents
 once the search result (Doc IDs) is available */
@@ -10953,7 +10984,7 @@ wsrep_append_foreign_key(
 		shared ? WSREP_KEY_SHARED : WSREP_KEY_EXCLUSIVE,
                 copy);
 	if (rcode) {
-		DBUG_PRINT("wsrep", ("row key failed: %lu", rcode));
+		DBUG_PRINT("wsrep", ("row key failed: %zu", rcode));
 		WSREP_ERROR("Appending cascaded fk row key failed: %s, %lu",
 			    (wsrep_thd_query(thd)) ?
 			    wsrep_thd_query(thd) : "void", rcode);
@@ -17144,6 +17175,10 @@ innobase_commit_by_xid(
 
 	DBUG_ASSERT(hton == innodb_hton_ptr);
 
+	if (high_level_read_only) {
+		return(XAER_RMFAIL);
+	}
+
 	trx = trx_get_trx_by_xid(xid);
 
 	if (trx) {
@@ -17171,8 +17206,11 @@ innobase_rollback_by_xid(
 
 	DBUG_ASSERT(hton == innodb_hton_ptr);
 
-	trx = trx_get_trx_by_xid(xid);
+	if (high_level_read_only) {
+		return(XAER_RMFAIL);
+	}
 
+	trx = trx_get_trx_by_xid(xid);
 	if (trx) {
 		int	ret = innobase_rollback_trx(trx);
 		trx_free_for_background(trx);
@@ -19418,7 +19456,7 @@ buffer_pool_load_now(
 	const void*			save)	/*!< in: immediate result from
 						check function */
 {
-	if (*(my_bool*) save) {
+	if (*(my_bool*) save && !srv_read_only_mode) {
 		buf_load_start();
 	}
 }
@@ -19441,7 +19479,7 @@ buffer_pool_load_abort(
 	const void*			save)	/*!< in: immediate result from
 						check function */
 {
-	if (*(my_bool*) save) {
+	if (*(my_bool*) save && !srv_read_only_mode) {
 		buf_load_abort();
 	}
 }
@@ -19713,7 +19751,7 @@ wsrep_innobase_kill_one_trx(
 			wsrep_thd_awake(thd, signal);
 		} else {
 			/* abort currently executing query */
-			DBUG_PRINT("wsrep",("sending KILL_QUERY to: %ld",
+			DBUG_PRINT("wsrep",("sending KILL_QUERY to: %lu",
                                             thd_get_thread_id(thd)));
 			WSREP_DEBUG("kill query for: %ld",
 				thd_get_thread_id(thd));
@@ -19840,7 +19878,8 @@ wsrep_fake_trx_id(
 	mutex_enter(&trx_sys->mutex);
 	trx_id_t trx_id = trx_sys_get_new_trx_id();
 	mutex_exit(&trx_sys->mutex);
-
+	WSREP_DEBUG("innodb fake trx id: " TRX_ID_FMT " thd: %s",
+		    trx_id, wsrep_thd_query(thd));
 	wsrep_ws_handle_for_trx(wsrep_thd_ws_handle(thd), trx_id);
 }
 
@@ -21930,27 +21969,21 @@ ib_logf(
 	str = static_cast<char*>(malloc(BUFSIZ));
 	my_vsnprintf(str, BUFSIZ, format, args);
 #endif /* __WIN__ */
-	if (!IS_XTRABACKUP()) {
-		switch (level) {
-		case IB_LOG_LEVEL_INFO:
-			sql_print_information("InnoDB: %s", str);
-			break;
-		case IB_LOG_LEVEL_WARN:
-			sql_print_warning("InnoDB: %s", str);
-			break;
-		case IB_LOG_LEVEL_ERROR:
-			sql_print_error("InnoDB: %s", str);
-			sd_notifyf(0, "STATUS=InnoDB: Error: %s", str);
-			break;
-		case IB_LOG_LEVEL_FATAL:
-			sql_print_error("InnoDB: %s", str);
-			sd_notifyf(0, "STATUS=InnoDB: Fatal: %s", str);
-			break;
-		}
-	}
-	else {
-		/* Don't use server logger for XtraBackup, just print to stderr. */
-		fprintf(stderr, "InnoDB: %s\n", str);
+	switch (level) {
+	case IB_LOG_LEVEL_INFO:
+		sql_print_information("InnoDB: %s", str);
+		break;
+	case IB_LOG_LEVEL_WARN:
+		sql_print_warning("InnoDB: %s", str);
+		break;
+	case IB_LOG_LEVEL_ERROR:
+		sql_print_error("InnoDB: %s", str);
+		sd_notifyf(0, "STATUS=InnoDB: Error: %s", str);
+		break;
+	case IB_LOG_LEVEL_FATAL:
+		sql_print_error("InnoDB: %s", str);
+		sd_notifyf(0, "STATUS=InnoDB: Fatal: %s", str);
+		break;
 	}
 
 	va_end(args);
