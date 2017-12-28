@@ -1,7 +1,19 @@
-mariadb-10.1 (10.1.29-0+deb9u1) stretch; urgency=medium
+mariadb-10.1 (10.1.30-0+deb9u1) stretch-security; urgency=high
+
+  [ Otto Kekäläinen ]
+  * Revert "Update d/gbp.conf to track stretch branches"
+  * New upstream version 10.1.30. Includes fixes for the following
+    security vulnerabilities (Closes: #885345):
+    - CVE-2017-15365
+  * Amend previous Debian changelog entries to contain new CVE identifiers
+  * Refresh patches for MariaDB 10.1.30
 
   [ Ondřej Surý ]
-  * New upstream version 10.1.29
+  * New upstream version 10.1.29. Includes fixes for the following
+    security vulnerabilities:
+    - CVE-2017-10378
+    - CVE-2017-10268
+    - MDEV-13819
   * Add libconfig-inifiles-perl to mariadb-client-10.1 depends to fix
     mytop
   * Add mips64el to the list of platforms that are allowed to fail test
@@ -15,12 +27,15 @@ mariadb-10.1 (10.1.29-0+deb9u1) stretch; urgency=medium
   [ Christian Ehrhardt ]
   * d/t/upstream: skip func_regexp_pcre on s390x
 
- -- Ondřej Surý <ondrej@debian.org>  Fri, 08 Dec 2017 19:40:38 +0000
+ -- Otto Kekäläinen <otto@debian.org>  Thu, 28 Dec 2017 23:27:25 +0200
 
 mariadb-10.1 (10.1.26-0+deb9u1) stretch-security; urgency=high
 
   * New upstream version 10.1.26.  Includes fixes for the following
     security vulnerabilities:
+    - CVE-2017-10384
+    - CVE-2017-10379
+    - CVE-2017-10286
     - CVE-2017-3636
     - CVE-2017-3641
     - CVE-2017-3653
