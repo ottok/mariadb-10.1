@@ -125,7 +125,7 @@ diff --git a/sql/CMakeLists.txt b/sql/CMakeLists.txt
 index b4acac5..8247714 100644
 --- a/sql/CMakeLists.txt
 +++ b/sql/CMakeLists.txt
-@@ -165,6 +165,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATIC_PLUGIN_LIBS}
+@@ -165,6 +165,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  
