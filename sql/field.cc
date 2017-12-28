@@ -4729,7 +4729,7 @@ double Field_double::val_real(void)
   return j;
 }
 
-longlong Field_double::val_int(void)
+longlong Field_double::val_int_from_real(bool want_unsigned_result)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   double j;
@@ -4737,8 +4737,15 @@ longlong Field_double::val_int(void)
   bool error;
   float8get(j,ptr);
 
-  res= double_to_longlong(j, 0, &error);
-  if (error)
+  res= double_to_longlong(j, want_unsigned_result, &error);
+  /*
+    Note, val_uint() is currently used for auto_increment purposes only,
+    and we want to suppress all warnings in such cases.
+    If we ever start using val_uint() for other purposes,
+    val_int_from_real() will need a new separate parameter to
+    suppress warnings.
+  */
+  if (error && !want_unsigned_result)
   {
     THD *thd= get_thd();
     ErrConvDouble err(j);
