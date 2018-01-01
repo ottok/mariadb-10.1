@@ -1,9 +1,13 @@
-Description: Do not check socket path truncation on hurd either
- On GNU/Hurd perl's $sock->hostpath() can't work since the path is not recorded
- in the socket internals. GNU/Hurd doesn't have any socket path limitation
- anyway, so the attached proposed patch just skips the check.
-Author: Samuel Thibault <samuel.thibault@ens-lyon.org>
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:29 +0200
+Subject: hurd_socket
 
+---
+ mysql-test/lib/My/Platform.pm | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/mysql-test/lib/My/Platform.pm b/mysql-test/lib/My/Platform.pm
+index 110cf8a..c49450b 100644
 --- a/mysql-test/lib/My/Platform.pm
 +++ b/mysql-test/lib/My/Platform.pm
 @@ -112,6 +112,8 @@ sub check_socket_path_length {

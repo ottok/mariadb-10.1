@@ -1,11 +1,20 @@
-Author: Otto Kekäläinen <otto@debian.org>
-Date:   Fri Jul 8 23:52:23 2016 +0300
-  Rename libmysqlclient to libmariadbclient in order to ship a
-  libmariadbclient.so.18 in libmariadbclient18 and
-  libmariadbclient.so in libmariadbclient-dev. There is a separate
-  libmariadbclient-dev-compat package that links libmysqlclient.so
-  to libmariadbclient.so.
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:27 +0200
+Subject: libmariadbclient-rename
 
+---
+ client/CMakeLists.txt         | 24 ++++++++++++------------
+ cmake/for_clients.cmake       |  8 ++++----
+ libmysql/CMakeLists.txt       | 27 ++++++++++++++++-----------
+ man/mysql_config.1            |  6 +++---
+ scripts/make_win_bin_dist     |  8 ++++----
+ scripts/mysql_config.pl.in    |  6 +++---
+ tests/CMakeLists.txt          |  6 +++---
+ unittest/mysys/CMakeLists.txt |  2 +-
+ 8 files changed, 46 insertions(+), 41 deletions(-)
+
+diff --git a/client/CMakeLists.txt b/client/CMakeLists.txt
+index e4643ad..523912e 100644
 --- a/client/CMakeLists.txt
 +++ b/client/CMakeLists.txt
 @@ -32,7 +32,7 @@ COPY_OPENSSL_DLLS(copy_openssl_client)
@@ -76,136 +85,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
  
  SET_TARGET_PROPERTIES (mysqlcheck mysqldump mysqlimport mysql_upgrade mysqlshow mysqlslap mysql_plugin async_example
  PROPERTIES HAS_CXX TRUE)
---- a/libmysql/CMakeLists.txt
-+++ b/libmysql/CMakeLists.txt
-@@ -278,7 +278,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
- 
-     INCLUDE (CheckCSourceCompiles)
-     FILE(WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.ld"
--      "VERSION {\nlibmysqlclient_18 {\nglobal: *;\n};\n}\n")
-+      "VERSION {\nlibmariadbclient_18 {\nglobal: *;\n};\n}\n")
-     SET(CMAKE_REQUIRED_LIBRARIES "-Wl,src.ld")
-     CHECK_C_SOURCE_COMPILES("int main() { return 0; }"
-       SUPPORTS_VERSION_IN_LINK_SCRIPT)
-@@ -380,18 +380,18 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
-   # Generate version script.  
-   # Create semicolon separated lists of functions to export from 
-   # Since RPM packages use separate versioning for 5.1 API
--  # and 5.5 API (libmysqlclient_16 vs libmysqlclient_18), 
-+  # and 5.5 API (libmariadbclient_16 vs libmariadbclient_18), 
-   # we need 2 lists.
-   SET (VERSION_HEADER
- "VERSION {
--  libmysqlclient_18 {
-+  libmariadbclient_18 {
-     global:")
-   SET (VERSION_FOOTER
- "    local:
-       *;
-   };
- 
--  libmysqlclient_16 {
-+  libmariadbclient_16 {
-     /* empty here. aliases are added above */
-   };
- }
-@@ -401,7 +401,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
-   SET (CLIENT_API_5_1_ALIASES)
-   FOREACH (f ${CLIENT_API_FUNCTIONS_5_1} ${CLIENT_API_5_1_EXTRA})
-     SET(CLIENT_API_5_1_LIST "${CLIENT_API_5_1_LIST}\t${f};\n")
--    SET(CLIENT_API_5_1_ALIASES "${CLIENT_API_5_1_ALIASES}\"${f}@libmysqlclient_16\" = ${f};\n")
-+    SET(CLIENT_API_5_1_ALIASES "${CLIENT_API_5_1_ALIASES}\"${f}@libmariadbclient_16\" = ${f};\n")
-   ENDFOREACH()
-       
-   SET (CLIENT_API_5_5_LIST)
-@@ -446,13 +446,13 @@ ADD_DEPENDENCIES(clientlib GenError)
- 
- SET(LIBS clientlib dbug strings vio mysys mysys_ssl ${ZLIB_LIBRARY} ${SSL_LIBRARIES} ${LIBDL})
- 
--# Merge several convenience libraries into one big mysqlclient
-+# Merge several convenience libraries into one big mariadbclient
- # and link them together into shared library.
--MERGE_LIBRARIES(mysqlclient STATIC ${LIBS} COMPONENT Development)
-+MERGE_LIBRARIES(mariadbclient STATIC ${LIBS} COMPONENT Development)
- 
- # Visual Studio users need debug  static library for debug projects
- IF(MSVC)
-- INSTALL_DEBUG_TARGET(mysqlclient DESTINATION ${INSTALL_LIBDIR}/debug)
-+ INSTALL_DEBUG_TARGET(mariadbclient DESTINATION ${INSTALL_LIBDIR}/debug)
-  INSTALL_DEBUG_TARGET(clientlib DESTINATION ${INSTALL_LIBDIR}/debug)
- ENDIF()
- 
-@@ -468,7 +468,7 @@ IF(UNIX)
-       SET(${OUTNAME} ${LIBNAME}${EXTENSION}${DOT_VERSION})
-     ENDIF() 
-   ENDMACRO()
--  INSTALL_SYMLINK(${CMAKE_STATIC_LIBRARY_PREFIX}mysqlclient_r.a mysqlclient ${INSTALL_LIBDIR} Development)
-+  INSTALL_SYMLINK(${CMAKE_STATIC_LIBRARY_PREFIX}mariadbclient_r.a mariadbclient ${INSTALL_LIBDIR} Development)
- ENDIF()
- 
- IF(NOT DISABLE_SHARED)
-@@ -484,9 +484,9 @@ IF(NOT DISABLE_SHARED)
-     ELSE()
-       SET(OS_SHARED_LIB_VERSION "${SHARED_LIB_MAJOR_VERSION}.0.0")
-     ENDIF()
--    # Name of shared library is mysqlclient on Unix
-+    # Name of shared library is mariadbclient on Unix
-     SET_TARGET_PROPERTIES(libmysql PROPERTIES 
--      OUTPUT_NAME mysqlclient 
-+      OUTPUT_NAME mariadbclient 
-       VERSION "${OS_SHARED_LIB_VERSION}" 
-       SOVERSION "${SHARED_LIB_MAJOR_VERSION}")
-     IF(LINK_FLAG_NO_UNDEFINED OR VERSION_SCRIPT_LINK_FLAGS)
-@@ -499,13 +499,13 @@ IF(NOT DISABLE_SHARED)
-         "${libmysql_link_flags} ${LINK_FLAG_NO_UNDEFINED} ${VERSION_SCRIPT_LINK_FLAGS}")
-     ENDIF() 
-     # clean direct output needs to be set several targets have the same name
--    #(mysqlclient in this case)
--    SET_TARGET_PROPERTIES(mysqlclient PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-+    #(mariadbclient in this case)
-+    SET_TARGET_PROPERTIES(mariadbclient PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-     SET_TARGET_PROPERTIES(libmysql PROPERTIES CLEAN_DIRECT_OUTPUT 1)
- 
--    # Install links to libmysqlclient.so (client_r)
-+    # Install links to libmariadbclient.so (client_r)
-     GET_VERSIONED_LIBNAME(
--      "${CMAKE_SHARED_LIBRARY_PREFIX}mysqlclient_r"
-+      "${CMAKE_SHARED_LIBRARY_PREFIX}mariadbclient_r"
-       "${CMAKE_SHARED_LIBRARY_SUFFIX}"
-       ""
-       linkname)
-@@ -514,7 +514,7 @@ IF(NOT DISABLE_SHARED)
-     LIST(REMOVE_DUPLICATES OS_SHARED_LIB_SYMLINKS)
-     FOREACH(ver ${OS_SHARED_LIB_SYMLINKS})
-       GET_VERSIONED_LIBNAME(
--        "${CMAKE_SHARED_LIBRARY_PREFIX}mysqlclient_r"
-+        "${CMAKE_SHARED_LIBRARY_PREFIX}mariadbclient_r"
-         "${CMAKE_SHARED_LIBRARY_SUFFIX}"
-         "${ver}"
-         linkname)
---- a/man/mysql_config.1
-+++ b/man/mysql_config.1
-@@ -38,7 +38,7 @@ supports the following options\&.
- \fB\-\-cflags\fR
- .sp
- Compiler flags to find include files and critical compiler flags and defines used when compiling the
--libmysqlclient
-+libmariadbclient
- library\&. The options returned are tied to the specific compiler that was used when the library was created and might clash with the settings for your own compiler\&. Use
- \fB\-\-include\fR
- for more portable options that contain only include paths\&.
-@@ -196,9 +196,9 @@ Usage: /usr/local/mysql/bin/mysql_config
- Options:
-   \-\-cflags         [\-I/usr/local/mysql/include/mysql \-mcpu=pentiumpro]
-   \-\-include        [\-I/usr/local/mysql/include/mysql]
--  \-\-libs           [\-L/usr/local/mysql/lib/mysql \-lmysqlclient \-lz
-+  \-\-libs           [\-L/usr/local/mysql/lib/mysql \-lmariadbclient \-lz
-                     \-lcrypt \-lnsl \-lm \-L/usr/lib \-lssl \-lcrypto]
--  \-\-libs_r         [\-L/usr/local/mysql/lib/mysql \-lmysqlclient_r
-+  \-\-libs_r         [\-L/usr/local/mysql/lib/mysql \-lmariadbclient_r
-                     \-lpthread \-lz \-lcrypt \-lnsl \-lm \-lpthread]
-   \-\-socket         [/tmp/mysql\&.sock]
-   \-\-port           [3306]
+diff --git a/cmake/for_clients.cmake b/cmake/for_clients.cmake
+index dd79ea1..879da78 100644
 --- a/cmake/for_clients.cmake
 +++ b/cmake/for_clients.cmake
 @@ -2,8 +2,8 @@
@@ -232,6 +113,121 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
  SET(EMB_LIBS "-lmysqld ${ZLIB_DEPS} ${EMB_LIBS} ${openssl_libs}")
  
  MACRO(REPLACE_FOR_CLIENTS VAR)
+diff --git a/libmysql/CMakeLists.txt b/libmysql/CMakeLists.txt
+index acbd80b..5819d79 100644
+--- a/libmysql/CMakeLists.txt
++++ b/libmysql/CMakeLists.txt
+@@ -398,6 +398,10 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+   libmysqlclient_16 {
+     /* empty here. aliases are added above */
+   };
++
++  libmariadbclient_16 {
++    /* empty here. aliases are added above */
++  };
+ }
+ ")
+ 
+@@ -407,6 +411,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+   FOREACH (f ${CLIENT_API_FUNCTIONS_5_1} ${CLIENT_API_5_1_EXTRA})
+     SET(CLIENT_API_5_1_LIST "${CLIENT_API_5_1_LIST}\t${f};\n")
+     SET(CLIENT_API_5_1_ALIASES "${CLIENT_API_5_1_ALIASES}\"${f}@libmysqlclient_16\" = ${f};\n")
++    SET(DEBIAN9_ALIASES "${DEBIAN9_ALIASES}\"${f}@libmariadbclient_16\" = ${f};\n")
+     SET(DEBIAN9_ALIASES "${DEBIAN9_ALIASES}\"${f}@libmariadbclient_18\" = ${f};\n")
+   ENDFOREACH()
+       
+@@ -457,13 +462,13 @@ ADD_DEPENDENCIES(clientlib GenError)
+ 
+ SET(LIBS clientlib dbug strings vio mysys mysys_ssl ${ZLIB_LIBRARY} ${SSL_LIBRARIES} ${LIBDL})
+ 
+-# Merge several convenience libraries into one big mysqlclient
++# Merge several convenience libraries into one big mariadbclient
+ # and link them together into shared library.
+-MERGE_LIBRARIES(mysqlclient STATIC ${LIBS} COMPONENT Development)
++MERGE_LIBRARIES(mariadbclient STATIC ${LIBS} COMPONENT Development)
+ 
+ # Visual Studio users need debug  static library for debug projects
+ IF(MSVC)
+- INSTALL_DEBUG_TARGET(mysqlclient DESTINATION ${INSTALL_LIBDIR}/debug)
++ INSTALL_DEBUG_TARGET(mariadbclient DESTINATION ${INSTALL_LIBDIR}/debug)
+  INSTALL_DEBUG_TARGET(clientlib DESTINATION ${INSTALL_LIBDIR}/debug)
+ ENDIF()
+ 
+@@ -479,7 +484,7 @@ IF(UNIX)
+       SET(${OUTNAME} ${LIBNAME}${EXTENSION}${DOT_VERSION})
+     ENDIF() 
+   ENDMACRO()
+-  INSTALL_SYMLINK(${CMAKE_STATIC_LIBRARY_PREFIX}mysqlclient_r.a mysqlclient ${INSTALL_LIBDIR} Development)
++  INSTALL_SYMLINK(${CMAKE_STATIC_LIBRARY_PREFIX}mariadbclient_r.a mariadbclient ${INSTALL_LIBDIR} Development)
+ ENDIF()
+ 
+ IF(NOT DISABLE_SHARED)
+@@ -495,9 +500,9 @@ IF(NOT DISABLE_SHARED)
+     ELSE()
+       SET(OS_SHARED_LIB_VERSION "${SHARED_LIB_MAJOR_VERSION}.0.0")
+     ENDIF()
+-    # Name of shared library is mysqlclient on Unix
++    # Name of shared library is mariadbclient on Unix
+     SET_TARGET_PROPERTIES(libmysql PROPERTIES 
+-      OUTPUT_NAME mysqlclient 
++      OUTPUT_NAME mariadbclient 
+       VERSION "${OS_SHARED_LIB_VERSION}" 
+       SOVERSION "${SHARED_LIB_MAJOR_VERSION}")
+     IF(LINK_FLAG_NO_UNDEFINED OR VERSION_SCRIPT_LINK_FLAGS)
+@@ -510,13 +515,13 @@ IF(NOT DISABLE_SHARED)
+         "${libmysql_link_flags} ${LINK_FLAG_NO_UNDEFINED} ${VERSION_SCRIPT_LINK_FLAGS}")
+     ENDIF() 
+     # clean direct output needs to be set several targets have the same name
+-    #(mysqlclient in this case)
+-    SET_TARGET_PROPERTIES(mysqlclient PROPERTIES CLEAN_DIRECT_OUTPUT 1)
++    #(mariadbclient in this case)
++    SET_TARGET_PROPERTIES(mariadbclient PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+     SET_TARGET_PROPERTIES(libmysql PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+ 
+-    # Install links to libmysqlclient.so (client_r)
++    # Install links to libmariadbclient.so (client_r)
+     GET_VERSIONED_LIBNAME(
+-      "${CMAKE_SHARED_LIBRARY_PREFIX}mysqlclient_r"
++      "${CMAKE_SHARED_LIBRARY_PREFIX}mariadbclient_r"
+       "${CMAKE_SHARED_LIBRARY_SUFFIX}"
+       ""
+       linkname)
+@@ -525,7 +530,7 @@ IF(NOT DISABLE_SHARED)
+     LIST(REMOVE_DUPLICATES OS_SHARED_LIB_SYMLINKS)
+     FOREACH(ver ${OS_SHARED_LIB_SYMLINKS})
+       GET_VERSIONED_LIBNAME(
+-        "${CMAKE_SHARED_LIBRARY_PREFIX}mysqlclient_r"
++        "${CMAKE_SHARED_LIBRARY_PREFIX}mariadbclient_r"
+         "${CMAKE_SHARED_LIBRARY_SUFFIX}"
+         "${ver}"
+         linkname)
+diff --git a/man/mysql_config.1 b/man/mysql_config.1
+index 47e8a3a..c699974 100644
+--- a/man/mysql_config.1
++++ b/man/mysql_config.1
+@@ -38,7 +38,7 @@ supports the following options\&.
+ \fB\-\-cflags\fR
+ .sp
+ Compiler flags to find include files and critical compiler flags and defines used when compiling the
+-libmysqlclient
++libmariadbclient
+ library\&. The options returned are tied to the specific compiler that was used when the library was created and might clash with the settings for your own compiler\&. Use
+ \fB\-\-include\fR
+ for more portable options that contain only include paths\&.
+@@ -196,9 +196,9 @@ Usage: /usr/local/mysql/bin/mysql_config
+ Options:
+   \-\-cflags         [\-I/usr/local/mysql/include/mysql \-mcpu=pentiumpro]
+   \-\-include        [\-I/usr/local/mysql/include/mysql]
+-  \-\-libs           [\-L/usr/local/mysql/lib/mysql \-lmysqlclient \-lz
++  \-\-libs           [\-L/usr/local/mysql/lib/mysql \-lmariadbclient \-lz
+                     \-lcrypt \-lnsl \-lm \-L/usr/lib \-lssl \-lcrypto]
+-  \-\-libs_r         [\-L/usr/local/mysql/lib/mysql \-lmysqlclient_r
++  \-\-libs_r         [\-L/usr/local/mysql/lib/mysql \-lmariadbclient_r
+                     \-lpthread \-lz \-lcrypt \-lnsl \-lm \-lpthread]
+   \-\-socket         [/tmp/mysql\&.sock]
+   \-\-port           [3306]
+diff --git a/scripts/make_win_bin_dist b/scripts/make_win_bin_dist
+index 2415d40..bfff308 100755
 --- a/scripts/make_win_bin_dist
 +++ b/scripts/make_win_bin_dist
 @@ -293,7 +293,7 @@ mkdir -p $DESTDIR/lib/plugin
@@ -263,6 +259,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
       mysys/debug/mysys.lib \
       mysys/debug/mysys.pdb \
       regex/debug/regex.lib \
+diff --git a/scripts/mysql_config.pl.in b/scripts/mysql_config.pl.in
+index f2c27bc..9cf718b 100644
 --- a/scripts/mysql_config.pl.in
 +++ b/scripts/mysql_config.pl.in
 @@ -183,15 +183,15 @@ if ( $^O eq "MSWin32" )
@@ -284,6 +282,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
    @lib_e_opts = ($linkpath,"-lmysqld");
  }
  
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+index f32e027..cb7e31c 100644
 --- a/tests/CMakeLists.txt
 +++ b/tests/CMakeLists.txt
 @@ -18,12 +18,12 @@ ADD_DEFINITIONS("-DMYSQL_CLIENT")
@@ -310,6 +310,8 @@ Date:   Fri Jul 8 23:52:23 2016 +0300
    SET_TARGET_PROPERTIES(async_queries PROPERTIES LINKER_LANGUAGE CXX)
  
  ENDIF()
+diff --git a/unittest/mysys/CMakeLists.txt b/unittest/mysys/CMakeLists.txt
+index ad5195a..965df3c 100644
 --- a/unittest/mysys/CMakeLists.txt
 +++ b/unittest/mysys/CMakeLists.txt
 @@ -21,7 +21,7 @@ MY_ADD_TESTS(my_vsnprintf LINK_LIBRARIES

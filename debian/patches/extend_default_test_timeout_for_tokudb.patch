@@ -1,8 +1,13 @@
-Description: Extend timeout
- Some Debian pbuilder/sbuilder chroots can be very slow and would timeout in
- vain as given enough time the build result is fully correct.
-Forwarded: not-needed
-Author: Otto Kekäläinen <otto@seravo.fi>
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:28 +0200
+Subject: extend_default_test_timeout_for_tokudb
+
+---
+ mysql-test/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mysql-test/CMakeLists.txt b/mysql-test/CMakeLists.txt
+index 1c7cfaf..bc45177 100644
 --- a/mysql-test/CMakeLists.txt
 +++ b/mysql-test/CMakeLists.txt
 @@ -64,7 +64,7 @@ ELSE()

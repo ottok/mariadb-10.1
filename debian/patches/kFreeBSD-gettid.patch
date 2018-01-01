@@ -1,3 +1,13 @@
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:29 +0200
+Subject: kFreeBSD-gettid
+
+---
+ storage/tokudb/PerconaFT/portability/portability.cc | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/storage/tokudb/PerconaFT/portability/portability.cc b/storage/tokudb/PerconaFT/portability/portability.cc
+index 19f445a..73dce92 100644
 --- a/storage/tokudb/PerconaFT/portability/portability.cc
 +++ b/storage/tokudb/PerconaFT/portability/portability.cc
 @@ -115,6 +115,10 @@ toku_os_gettid(void) {
