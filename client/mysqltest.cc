@@ -600,7 +600,7 @@ void do_eval(DYNAMIC_STRING *query_eval, const char *query,
 void str_to_file(const char *fname, char *str, int size);
 void str_to_file2(const char *fname, char *str, int size, my_bool append);
 
-void fix_win_paths(const char *val, int len);
+void fix_win_paths(const char *val, size_t len);
 const char *get_errname_from_code (uint error_code);
 int multi_reg_replace(struct st_replace_regex* r,char* val);
 
@@ -814,8 +814,7 @@ public:
 LogFile log_file;
 LogFile progress_file;
 
-void replace_dynstr_append_mem(DYNAMIC_STRING *ds, const char *val,
-                               int len);
+void replace_dynstr_append_mem(DYNAMIC_STRING *ds, const char *val, size_t len);
 void replace_dynstr_append(DYNAMIC_STRING *ds, const char *val);
 void replace_dynstr_append_uint(DYNAMIC_STRING *ds, uint val);
 void dynstr_append_sorted(DYNAMIC_STRING* ds, DYNAMIC_STRING* ds_input,
@@ -2653,6 +2652,7 @@ void var_query_set(VAR *var, const char *query, const char** query_end)
   if (!mysql)
   {
     struct st_command command;
+    DBUG_ASSERT(query_end);
     memset(&command, 0, sizeof(command));
     command.query= (char*)query;
     command.first_word_len= (*query_end - query);
@@ -4024,7 +4024,25 @@ static int rmtree(const char *dir)
     strxnmov(path, sizeof(path), dir, sep, file->name, NULL);
 
     if (!MY_S_ISDIR(file->mystat->st_mode))
+    {
       err= my_delete(path, 0);
+#ifdef _WIN32
+      /*
+        On Windows, check and possible reset readonly attribute.
+        my_delete(), or DeleteFile does not remove theses files.
+      */
+      if (err)
+      {
+        DWORD attr= GetFileAttributes(path);
+        if (attr != INVALID_FILE_ATTRIBUTES &&
+           (attr & FILE_ATTRIBUTE_READONLY))
+        {
+          SetFileAttributes(path, attr &~ FILE_ATTRIBUTE_READONLY);
+          err= my_delete(path, 0);
+        }
+      }
+#endif
+    }
     else
       err= rmtree(path);
 
@@ -7274,8 +7292,12 @@ get_one_option(int optid, const struct my_option *opt, char *argument)
     exit(0);
   case OPT_MYSQL_PROTOCOL:
 #ifndef EMBEDDED_LIBRARY
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
+    if ((opt_protocol= find_type_with_warning(argument, &sql_protocol_typelib,
+                                              opt->name)) <= 0)
+    {
+      sf_leaking_memory= 1; /* no memory leak reports here */
+      exit(1);
+    }
 #endif
     break;
   case '?':
@@ -7488,7 +7510,7 @@ void free_win_path_patterns()
   => all \ from c:\mysql\m... until next space is converted into /
 */
 
-void fix_win_paths(const char *val, int len)
+void fix_win_paths(const char *val, size_t len)
 {
   uint i;
   char *p;
@@ -11013,7 +11035,7 @@ void free_pointer_array(POINTER_ARRAY *pa)
 
 /* Append the string to ds, with optional replace */
 void replace_dynstr_append_mem(DYNAMIC_STRING *ds,
-                               const char *val, int len)
+                               const char *val, size_t len)
 {
   char lower[512];
 #ifdef __WIN__

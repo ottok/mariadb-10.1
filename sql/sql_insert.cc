@@ -258,7 +258,7 @@ static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
     if (table_list->is_view())
       unfix_fields(fields);
 
-    res= setup_fields(thd, 0, fields, MARK_COLUMNS_WRITE, 0, 0);
+    res= setup_fields(thd, 0, fields, MARK_COLUMNS_WRITE, 0, NULL, 0);
 
     /* Restore the current context. */
     ctx_state.restore_state(context, table_list);
@@ -372,7 +372,7 @@ static int check_update_fields(THD *thd, TABLE_LIST *insert_table_list,
   }
 
   /* Check the fields we are going to modify */
-  if (setup_fields(thd, 0, update_fields, MARK_COLUMNS_WRITE, 0, 0))
+  if (setup_fields(thd, 0, update_fields, MARK_COLUMNS_WRITE, 0, NULL, 0))
     return -1;
 
   if (insert_table_list->is_view() &&
@@ -794,7 +794,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), counter);
       goto abort;
     }
-    if (setup_fields(thd, 0, *values, MARK_COLUMNS_READ, 0, 0))
+    if (setup_fields(thd, 0, *values, MARK_COLUMNS_READ, 0, NULL, 0))
       goto abort;
     switch_to_nullable_trigger_fields(*values, table);
   }
@@ -1509,12 +1509,12 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
     table_list->next_local= 0;
     context->resolve_in_table_list_only(table_list);
 
-    res= (setup_fields(thd, 0, *values, MARK_COLUMNS_READ, 0, 0) ||
+    res= (setup_fields(thd, 0, *values, MARK_COLUMNS_READ, 0, NULL, 0) ||
           check_insert_fields(thd, context->table_list, fields, *values,
                               !insert_into_view, 0, &map));
 
     if (!res)
-      res= setup_fields(thd, 0, update_values, MARK_COLUMNS_READ, 0, 0);
+      res= setup_fields(thd, 0, update_values, MARK_COLUMNS_READ, 0, NULL, 0);
 
     if (!res && duplic == DUP_UPDATE)
     {
@@ -2681,7 +2681,7 @@ void kill_delayed_threads(void)
   {
     mysql_mutex_lock(&di->thd.LOCK_thd_data);
     if (di->thd.killed < KILL_CONNECTION)
-      di->thd.killed= KILL_CONNECTION;
+      di->thd.set_killed(KILL_CONNECTION);
     if (di->thd.mysys_var)
     {
       mysql_mutex_lock(&di->thd.mysys_var->mutex);
@@ -2827,7 +2827,7 @@ pthread_handler_t handle_delayed_insert(void *arg)
   thd->set_current_time();
   threads.append(thd);
   if (abort_loop)
-    thd->killed= KILL_CONNECTION;
+    thd->set_killed(KILL_CONNECTION);
   else
     thd->reset_killed();
   mysql_mutex_unlock(&LOCK_thread_count);
@@ -2972,7 +2972,7 @@ pthread_handler_t handle_delayed_insert(void *arg)
           }
 #endif
           if (error == ETIMEDOUT || error == ETIME)
-            thd->killed= KILL_CONNECTION;
+            thd->set_killed(KILL_CONNECTION);
         }
         /* We can't lock di->mutex and mysys_var->mutex at the same time */
         mysql_mutex_unlock(&di->mutex);
@@ -3001,7 +3001,7 @@ pthread_handler_t handle_delayed_insert(void *arg)
         if (! (thd->lock= mysql_lock_tables(thd, &di->table, 1, 0)))
         {
           /* Fatal error */
-          thd->killed= KILL_CONNECTION;
+          thd->set_killed(KILL_CONNECTION);
         }
         mysql_cond_broadcast(&di->cond_client);
       }
@@ -3010,7 +3010,7 @@ pthread_handler_t handle_delayed_insert(void *arg)
         if (di->handle_inserts())
         {
           /* Some fatal error */
-          thd->killed= KILL_CONNECTION;
+          thd->set_killed(KILL_CONNECTION);
         }
       }
       di->status=0;
@@ -3054,7 +3054,7 @@ pthread_handler_t handle_delayed_insert(void *arg)
       this.
     */
     mysql_mutex_lock(&thd->LOCK_thd_data);
-    thd->killed= KILL_CONNECTION_HARD;	        // If error
+    thd->set_killed(KILL_CONNECTION_HARD);	        // If error
     thd->mdl_context.set_needs_thr_lock_abort(0);
     mysql_mutex_unlock(&thd->LOCK_thd_data);
 
@@ -3143,7 +3143,7 @@ bool Delayed_insert::handle_inserts(void)
   max_rows= delayed_insert_limit;
   if (thd.killed || table->s->tdc->flushed)
   {
-    thd.killed= KILL_SYSTEM_THREAD;
+    thd.set_killed(KILL_SYSTEM_THREAD);
     max_rows= ULONG_MAX;                     // Do as much as possible
   }
 
@@ -3478,7 +3478,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   */
   lex->current_select= &lex->select_lex;
 
-  res= (setup_fields(thd, 0, values, MARK_COLUMNS_READ, 0, 0) ||
+  res= (setup_fields(thd, 0, values, MARK_COLUMNS_READ, 0, NULL, 0) ||
         check_insert_fields(thd, table_list, *fields, values,
                             !insert_into_view, 1, &map));
 
@@ -3531,7 +3531,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
         ctx_state.get_first_name_resolution_table();
 
     res= res || setup_fields(thd, 0, *info.update_values,
-                             MARK_COLUMNS_READ, 0, 0);
+                             MARK_COLUMNS_READ, 0, NULL, 0);
     if (!res)
     {
       /*
@@ -4360,6 +4360,15 @@ void select_create::store_values(List<Item> &values)
 bool select_create::send_eof()
 {
   DBUG_ENTER("select_create::send_eof");
+
+  /*
+    The routine that writes the statement in the binary log
+    is in select_insert::prepare_eof(). For that reason, we
+    mark the flag at this point.
+  */
+  if (table->s->tmp_table)
+    thd->transaction.stmt.mark_created_temp_table();
+
   if (prepare_eof())
   {
     abort_result_set();

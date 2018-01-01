@@ -619,17 +619,6 @@ dict_table_get_col_name(
 	ulint			col_nr)	/*!< in: column number */
 	MY_ATTRIBUTE((nonnull, warn_unused_result));
 /**********************************************************************//**
-Returns a column's name.
-@return column name. NOTE: not guaranteed to stay valid if table is
-modified in any way (columns added, etc.). */
-UNIV_INTERN
-const char*
-dict_table_get_col_name_for_mysql(
-/*==============================*/
-	const dict_table_t*	table,	/*!< in: table */
-	const char*		col_name)/*!< in: MySQL table column name */
-	__attribute__((nonnull, warn_unused_result));
-/**********************************************************************//**
 Prints a table data. */
 UNIV_INTERN
 void
@@ -1653,9 +1642,6 @@ struct dict_sys_t{
 					on name */
 	hash_table_t*	table_id_hash;	/*!< hash table of the tables, based
 					on id */
-	ulint		size;		/*!< varying space in bytes occupied
-					by the data dictionary table and
-					index objects */
 	dict_table_t*	sys_tables;	/*!< SYS_TABLES table */
 	dict_table_t*	sys_columns;	/*!< SYS_COLUMNS table */
 	dict_table_t*	sys_indexes;	/*!< SYS_INDEXES table */
@@ -1897,6 +1883,13 @@ dict_table_get_index_on_first_col(
 	const dict_table_t*	table,		/*!< in: table */
 	ulint			col_index);	/*!< in: position of column
 						in table */
+
+/** Calculate the used memory occupied by the data dictionary
+table and index objects.
+@return number of bytes occupied. */
+UNIV_INTERN
+ulint
+dict_sys_get_size();
 
 #endif /* !UNIV_HOTBACKUP */
 

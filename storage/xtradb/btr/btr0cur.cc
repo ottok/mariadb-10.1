@@ -2466,6 +2466,15 @@ any_extern:
 		rec = page_cur_get_rec(page_cursor);
 	}
 
+	/* We limit max record size to 16k even for 64k page size. */
+	if (new_rec_size >= COMPRESSED_REC_MAX_DATA_SIZE ||
+	    (!dict_table_is_comp(index->table)
+	     && new_rec_size >= REDUNDANT_REC_MAX_DATA_SIZE)) {
+		err = DB_OVERFLOW;
+
+		goto func_exit;
+	}
+
 	if (UNIV_UNLIKELY(new_rec_size
 			  >= (page_get_free_space_of_empty(page_is_comp(page))
 			      / 2))) {
@@ -3615,7 +3624,6 @@ btr_cur_pessimistic_delete(
 	ulint		n_reserved	= 0;
 	ibool		success;
 	ibool		ret		= FALSE;
-	ulint		level;
 	mem_heap_t*	heap;
 	ulint*		offsets;
 
@@ -3668,6 +3676,10 @@ btr_cur_pessimistic_delete(
 #endif /* UNIV_ZIP_DEBUG */
 	}
 
+	if (flags == 0) {
+		lock_update_delete(block, rec);
+	}
+
 	if (UNIV_UNLIKELY(page_get_n_recs(page) < 2)
 	    && UNIV_UNLIKELY(dict_index_get_page(index)
 			     != buf_block_get_page_no(block))) {
@@ -3682,13 +3694,7 @@ btr_cur_pessimistic_delete(
 		goto return_after_reservations;
 	}
 
-	if (flags == 0) {
-		lock_update_delete(block, rec);
-	}
-
-	level = btr_page_get_level(page, mtr);
-
-	if (level > 0
+	if (!page_is_leaf(page)
 	    && UNIV_UNLIKELY(rec == page_rec_get_next(
 				     page_get_infimum_rec(page)))) {
 
@@ -3711,6 +3717,7 @@ btr_cur_pessimistic_delete(
 			on a page, we have to change the father node pointer
 			so that it is equal to the new leftmost node pointer
 			on the page */
+			ulint level = btr_page_get_level(page, mtr);
 
 			btr_node_ptr_delete(index, block, mtr);
 
@@ -4370,7 +4377,7 @@ btr_estimate_number_of_different_key_vals(
 		if (index->stat_index_size > 1) {
 			n_sample_pages = (srv_stats_transient_sample_pages < index->stat_index_size) ?
 				ut_min(index->stat_index_size,
-				       log2(index->stat_index_size)*srv_stats_transient_sample_pages)
+				       ulint(log2(index->stat_index_size)*srv_stats_transient_sample_pages))
 				: index->stat_index_size;
 
 		}

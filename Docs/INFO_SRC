@@ -1,8 +1,8 @@
-commit: da7604a2943f633df3b193e26ee20110bae9fa7a
-date: 2017-07-01 21:12:26 +0300
-build-date: 2017-07-01 20:20:31 +0200 
-short: da7604a
+commit: 461cf3e5a3c2d346d75b1407b285f8daf9d01f67
+date: 2017-12-21 17:40:01 +0200
+build-date: 2017-12-21 15:48:56 +0000 
+short: 461cf3e
 branch: HEAD
 
 
-MariaDB source 10.1.25
+MariaDB source 10.1.30

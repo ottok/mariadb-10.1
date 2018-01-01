@@ -236,7 +236,7 @@ bool Foreign_key::validate(List<Create_field> &table_fields)
                          sql_field->field_name)) {}
     if (!sql_field)
     {
-      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name);
+      my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
       DBUG_RETURN(TRUE);
     }
     if (type == Key::FOREIGN_KEY && sql_field->vcol_info)
@@ -333,7 +333,7 @@ void thd_set_psi(THD *thd, PSI_thread *psi)
 */
 void thd_set_killed(THD *thd)
 {
-  thd->killed= KILL_CONNECTION;
+  thd->set_killed(KILL_CONNECTION);
 }
 
 /**
@@ -691,12 +691,6 @@ extern "C"
   @param buffer pointer to preferred result buffer
   @param length length of buffer
   @param max_query_len how many chars of query to copy (0 for all)
-
-  @req LOCK_thread_count
-  
-  @note LOCK_thread_count mutex is not necessary when the function is invoked on
-   the currently running thread (current_thd) or if the caller in some other
-   way guarantees that access to thd->query is serialized.
  
   @return Pointer to string
 */
@@ -710,6 +704,9 @@ char *thd_get_error_context_description(THD *thd, char *buffer,
   const Security_context *sctx= &thd->main_security_ctx;
   char header[256];
   int len;
+
+  mysql_mutex_lock(&LOCK_thread_count);
+
   /*
     The pointers thd->query and thd->proc_info might change since they are
     being modified concurrently. This is acceptable for proc_info since its
@@ -765,6 +762,7 @@ char *thd_get_error_context_description(THD *thd, char *buffer,
     }
     mysql_mutex_unlock(&thd->LOCK_thd_data);
   }
+  mysql_mutex_unlock(&LOCK_thread_count);
 
   if (str.c_ptr_safe() == buffer)
     return buffer;
@@ -935,6 +933,7 @@ THD::THD(bool is_wsrep_applier)
   query_start_used= query_start_sec_part_used= 0;
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
+  killed_err= 0;
   col_access=0;
   is_slave_error= thread_specific_used= FALSE;
   my_hash_clear(&handler_tables_hash);
@@ -992,6 +991,7 @@ THD::THD(bool is_wsrep_applier)
 #endif
   mysql_mutex_init(key_LOCK_thd_data, &LOCK_thd_data, MY_MUTEX_INIT_FAST);
   mysql_mutex_init(key_LOCK_wakeup_ready, &LOCK_wakeup_ready, MY_MUTEX_INIT_FAST);
+  mysql_mutex_init(key_LOCK_thd_kill, &LOCK_thd_kill, MY_MUTEX_INIT_FAST);
   mysql_cond_init(key_COND_wakeup_ready, &COND_wakeup_ready, 0);
   /*
     LOCK_thread_count goes before LOCK_thd_data - the former is called around
@@ -1023,6 +1023,8 @@ THD::THD(bool is_wsrep_applier)
   wsrep_info[sizeof(wsrep_info) - 1] = '\0'; /* make sure it is 0-terminated */
   wsrep_sync_wait_gtid    = WSREP_GTID_UNDEFINED;
   wsrep_affected_rows     = 0;
+  wsrep_replicate_GTID    = false;
+  wsrep_skip_wsrep_GTID   = false;
 #endif
   /* Call to init() below requires fully initialized Open_tables_state. */
   reset_open_tables_state(this);
@@ -1256,7 +1258,7 @@ Sql_condition* THD::raise_condition(uint sql_errno,
       push_warning and strict SQL_MODE case.
     */
     level= Sql_condition::WARN_LEVEL_ERROR;
-    killed= KILL_BAD_DATA;
+    set_killed(KILL_BAD_DATA);
   }
 
   switch (level)
@@ -1439,6 +1441,8 @@ void THD::init(void)
   wsrep_TOI_pre_query_len = 0;
   wsrep_sync_wait_gtid    = WSREP_GTID_UNDEFINED;
   wsrep_affected_rows     = 0;
+  wsrep_replicate_GTID    = false;
+  wsrep_skip_wsrep_GTID   = false;
 #endif /* WITH_WSREP */
 
   if (variables.sql_log_bin)
@@ -1564,7 +1568,7 @@ void THD::cleanup(void)
   DBUG_ENTER("THD::cleanup");
   DBUG_ASSERT(cleanup_done == 0);
 
-  killed= KILL_CONNECTION;
+  set_killed(KILL_CONNECTION);
 #ifdef ENABLE_WHEN_BINLOG_WILL_BE_ABLE_TO_PREPARE
   if (transaction.xid_state.xa_state == XA_PREPARED)
   {
@@ -1667,6 +1671,7 @@ THD::~THD()
   mysql_cond_destroy(&COND_wakeup_ready);
   mysql_mutex_destroy(&LOCK_wakeup_ready);
   mysql_mutex_destroy(&LOCK_thd_data);
+  mysql_mutex_destroy(&LOCK_thd_kill);
 #ifndef DBUG_OFF
   dbug_sentry= THD_SENTRY_GONE;
 #endif  
@@ -1839,7 +1844,8 @@ void THD::awake(killed_state state_to_set)
     state_to_set= killed;
 
   /* Set the 'killed' flag of 'this', which is the target THD object. */
-  killed= state_to_set;
+  mysql_mutex_lock(&LOCK_thd_kill);
+  set_killed_no_mutex(state_to_set);
 
   if (state_to_set >= KILL_CONNECTION || state_to_set == NOT_KILLED)
   {
@@ -1925,6 +1931,7 @@ void THD::awake(killed_state state_to_set)
     }
     mysql_mutex_unlock(&mysys_var->mutex);
   }
+  mysql_mutex_unlock(&LOCK_thd_kill);
   DBUG_VOID_RETURN;
 }
 
@@ -1942,7 +1949,7 @@ void THD::disconnect()
 
   mysql_mutex_lock(&LOCK_thd_data);
 
-  killed= KILL_CONNECTION;
+  set_killed(KILL_CONNECTION);
 
 #ifdef SIGNAL_WITH_VIO_CLOSE
   /*
@@ -1978,7 +1985,7 @@ bool THD::notify_shared_lock(MDL_context_owner *ctx_in_use,
     DBUG_PRINT("info", ("kill delayed thread"));
     mysql_mutex_lock(&in_use->LOCK_thd_data);
     if (in_use->killed < KILL_CONNECTION)
-      in_use->killed= KILL_CONNECTION;
+      in_use->set_killed(KILL_CONNECTION);
     if (in_use->mysys_var)
     {
       mysql_mutex_lock(&in_use->mysys_var->mutex);
@@ -2031,13 +2038,21 @@ bool THD::notify_shared_lock(MDL_context_owner *ctx_in_use,
 /*
   Get error number for killed state
   Note that the error message can't have any parameters.
+  If one needs parameters, one should use THD::killed_err_msg
   See thd::kill_message()
 */
 
-int killed_errno(killed_state killed)
+int THD::killed_errno()
 {
   DBUG_ENTER("killed_errno");
-  DBUG_PRINT("enter", ("killed: %d", killed));
+  DBUG_PRINT("enter", ("killed: %d  killed_errno: %d",
+                       killed, killed_err ? killed_err->no: 0));
+
+  /* Ensure that killed_err is not set if we are not killed */
+  DBUG_ASSERT(!killed_err || killed != NOT_KILLED);
+
+  if (killed_err)
+    DBUG_RETURN(killed_err->no);
 
   switch (killed) {
   case NOT_KILLED:
@@ -2478,7 +2493,7 @@ CHANGED_TABLE_LIST* THD::changed_table_dup(const char *key, long key_length)
   {
     my_error(EE_OUTOFMEMORY, MYF(ME_BELL+ME_FATALERROR),
              ALIGN_SIZE(sizeof(TABLE_LIST)) + key_length + 1);
-    killed= KILL_CONNECTION;
+    set_killed(KILL_CONNECTION);
     return 0;
   }
 
@@ -4113,7 +4128,7 @@ void Security_context::destroy()
   if (external_user)
   {
     my_free(external_user);
-    user= NULL;
+    external_user= NULL;
   }
 
   my_free(ip);
@@ -4330,6 +4345,10 @@ extern "C" enum thd_kill_levels thd_kill_level(const MYSQL_THD thd)
    however not more often than global.progress_report_time.
    If global.progress_report_time is 0, then don't send progress reports, but
    check every second if the value has changed
+
+  We clear any errors that we get from sending the progress packet to
+  the client as we don't want to set an error without the caller knowing
+  about it.
 */
 
 static void thd_send_progress(THD *thd)
@@ -4346,8 +4365,12 @@ static void thd_send_progress(THD *thd)
     thd->progress.next_report_time= (report_time +
                                      seconds_to_next * 1000000000ULL);
     if (global_system_variables.progress_report_time &&
-        thd->variables.progress_report_time)
+        thd->variables.progress_report_time && !thd->is_error())
+    {
       net_send_progress_packet(thd);
+      if (thd->is_error())
+        thd->clear_error();
+    }
   }
 }
 
@@ -4835,11 +4858,14 @@ extern "C" int thd_non_transactional_update(const MYSQL_THD thd)
 
 extern "C" int thd_binlog_format(const MYSQL_THD thd)
 {
-  if (((WSREP(thd) &&  wsrep_emulate_bin_log) || mysql_bin_log.is_open()) &&
-      thd->variables.option_bits & OPTION_BIN_LOG)
+  if (WSREP(thd))
+  {
+    /* for wsrep binlog format is meaningful also when binlogging is off */
     return (int) thd->wsrep_binlog_format();
-  else
-    return BINLOG_FORMAT_UNSPEC;
+  }
+  if (mysql_bin_log.is_open() && (thd->variables.option_bits & OPTION_BIN_LOG))
+    return (int) thd->variables.binlog_format;
+  return BINLOG_FORMAT_UNSPEC;
 }
 
 extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all)

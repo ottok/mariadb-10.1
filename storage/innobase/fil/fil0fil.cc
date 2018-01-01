@@ -662,7 +662,7 @@ fil_node_open_file(
 		ut_free(buf2);
 		os_file_close(node->handle);
 
-		if (!fsp_flags_is_valid(flags)) {
+		if (!fsp_flags_is_valid(flags, space->id)) {
 			ulint cflags = fsp_flags_convert_from_101(flags);
 			if (cflags == ULINT_UNDEFINED) {
 				ib_logf(IB_LOG_LEVEL_ERROR,
@@ -1037,155 +1037,26 @@ fil_space_extend_must_retry(
 		page_size = UNIV_PAGE_SIZE;
 	}
 
-#ifdef _WIN32
-	const ulint	io_completion_type = OS_FILE_READ;
-	/* Logically or physically extend the file with zero bytes,
-	depending on whether it is sparse. */
+	/* fil_read_first_page() expects UNIV_PAGE_SIZE bytes.
+	fil_node_open_file() expects at least 4 * UNIV_PAGE_SIZE bytes.*/
 
-	/* FIXME: Call DeviceIoControl(node->handle, FSCTL_SET_SPARSE, ...)
-	when opening a file when FSP_FLAGS_HAS_PAGE_COMPRESSION(). */
-	{
-		FILE_END_OF_FILE_INFO feof;
-		/* fil_read_first_page() expects UNIV_PAGE_SIZE bytes.
-		fil_node_open_file() expects at least 4 * UNIV_PAGE_SIZE bytes.
-		Do not shrink short ROW_FORMAT=COMPRESSED files. */
-		feof.EndOfFile.QuadPart = std::max(
-			os_offset_t(size - file_start_page_no) * page_size,
-			os_offset_t(FIL_IBD_FILE_INITIAL_SIZE
-				    * UNIV_PAGE_SIZE));
-		*success = SetFileInformationByHandle(node->handle,
-						      FileEndOfFileInfo,
-						      &feof, sizeof feof);
-		if (!*success) {
-			ib_logf(IB_LOG_LEVEL_ERROR, "extending file %s"
-				" from " INT64PF
-				" to " INT64PF " bytes failed with %u",
-				node->name,
-				os_offset_t(node->size) * page_size,
-				feof.EndOfFile.QuadPart, GetLastError());
-		} else {
-			start_page_no = size;
-		}
+	os_offset_t new_size = std::max(
+		os_offset_t(size - file_start_page_no) * page_size,
+		os_offset_t(FIL_IBD_FILE_INITIAL_SIZE * UNIV_PAGE_SIZE));
+
+	*success = os_file_set_size(node->name, node->handle, new_size,
+		FSP_FLAGS_HAS_PAGE_COMPRESSION(space->flags));
+
+
+	DBUG_EXECUTE_IF("ib_os_aio_func_io_failure_28",
+		*success = FALSE;
+		os_has_said_disk_full = TRUE;);
+
+	if (*success) {
+		os_has_said_disk_full = FALSE;
+		start_page_no = size;
 	}
-#else
-	/* We will logically extend the file with ftruncate() if
-	page_compression is enabled, because the file is expected to
-	be sparse in that case. Make sure that ftruncate() can deal
-	with large files. */
-	const bool is_sparse	= sizeof(off_t) >= 8
-		&& FSP_FLAGS_HAS_PAGE_COMPRESSION(space->flags);
 
-# ifdef HAVE_POSIX_FALLOCATE
-	/* We must complete the I/O request after invoking
-	posix_fallocate() to avoid an assertion failure at shutdown.
-	Because no actual writes were dispatched, a read operation
-	will suffice. */
-	const ulint	io_completion_type = srv_use_posix_fallocate
-		|| is_sparse ? OS_FILE_READ : OS_FILE_WRITE;
-
-	if (srv_use_posix_fallocate && !is_sparse) {
-		const os_offset_t	start_offset
-			= os_offset_t(start_page_no - file_start_page_no)
-			* page_size;
-		const ulint		n_pages = size - start_page_no;
-		const os_offset_t	len = os_offset_t(n_pages) * page_size;
-
-		int err;
-		do {
-			err = posix_fallocate(node->handle, start_offset, len);
-		} while (err == EINTR
-			 && srv_shutdown_state == SRV_SHUTDOWN_NONE);
-
-		*success = !err;
-		if (!*success) {
-			ib_logf(IB_LOG_LEVEL_ERROR, "extending file %s"
-				" from " INT64PF " to " INT64PF " bytes"
-				" failed with error %d",
-				node->name, start_offset, len + start_offset,
-				err);
-		}
-
-		DBUG_EXECUTE_IF("ib_os_aio_func_io_failure_28",
-				*success = FALSE;
-				os_has_said_disk_full = TRUE;);
-
-		if (*success) {
-			os_has_said_disk_full = FALSE;
-			start_page_no = size;
-		}
-	} else
-# else
-	const ulint io_completion_type = is_sparse
-		? OS_FILE_READ : OS_FILE_WRITE;
-# endif
-	if (is_sparse) {
-		/* fil_read_first_page() expects UNIV_PAGE_SIZE bytes.
-		fil_node_open_file() expects at least 4 * UNIV_PAGE_SIZE bytes.
-		Do not shrink short ROW_FORMAT=COMPRESSED files. */
-		off_t	s = std::max(off_t(size - file_start_page_no)
-				     * off_t(page_size),
-				     off_t(FIL_IBD_FILE_INITIAL_SIZE
-					   * UNIV_PAGE_SIZE));
-		*success = !ftruncate(node->handle, s);
-		if (!*success) {
-			ib_logf(IB_LOG_LEVEL_ERROR, "ftruncate of file %s"
-				" from " INT64PF " to " INT64PF " bytes"
-				" failed with error %d",
-				node->name,
-				os_offset_t(start_page_no - file_start_page_no)
-				* page_size, os_offset_t(s), errno);
-		} else {
-			start_page_no = size;
-		}
-	} else {
-		/* Extend at most 64 pages at a time */
-		ulint	buf_size = ut_min(64, size - start_page_no)
-			* page_size;
-		byte*	buf2 = static_cast<byte*>(
-			calloc(1, buf_size + page_size));
-		*success = buf2 != NULL;
-		if (!buf2) {
-			ib_logf(IB_LOG_LEVEL_ERROR, "Cannot allocate " ULINTPF
-				" bytes to extend file",
-				buf_size + page_size);
-		}
-		byte* const	buf = static_cast<byte*>(
-			ut_align(buf2, page_size));
-
-		while (*success && start_page_no < size) {
-			ulint		n_pages
-				= ut_min(buf_size / page_size,
-					 size - start_page_no);
-
-			os_offset_t	offset = static_cast<os_offset_t>(
-				start_page_no - file_start_page_no)
-				* page_size;
-
-			*success = os_aio(OS_FILE_WRITE, 0, OS_AIO_SYNC,
-					  node->name, node->handle, buf,
-					  offset, page_size * n_pages,
-					  page_size, node, NULL, 0);
-
-			DBUG_EXECUTE_IF("ib_os_aio_func_io_failure_28",
-					*success = FALSE;
-					os_has_said_disk_full = TRUE;);
-
-			if (*success) {
-				os_has_said_disk_full = FALSE;
-			}
-			/* Let us measure the size of the file
-			to determine how much we were able to
-			extend it */
-			os_offset_t	fsize = os_file_get_size(node->handle);
-			ut_a(fsize != os_offset_t(-1));
-
-			start_page_no = ulint(fsize / page_size)
-				+ file_start_page_no;
-		}
-
-		free(buf2);
-	}
-#endif
 	mutex_enter(&fil_system->mutex);
 
 	ut_a(node->being_extended);
@@ -1195,7 +1066,7 @@ fil_space_extend_must_retry(
 	space->size += file_size - node->size;
 	node->size = file_size;
 
-	fil_node_complete_io(node, fil_system, io_completion_type);
+	fil_node_complete_io(node, fil_system, OS_FILE_READ);
 
 	node->being_extended = FALSE;
 
@@ -2214,7 +2085,9 @@ fil_write_flushed_lsn(
 	/* If tablespace is not encrypted, stamp flush_lsn to
 	first page of all system tablespace datafiles to avoid
 	unnecessary error messages on possible downgrade. */
-	if (space->crypt_data->min_key_version == 0) {
+	if (!space->crypt_data
+	    || !space->crypt_data->should_encrypt()) {
+
 		fil_node_t*     node;
 		ulint   sum_of_sizes = 0;
 
@@ -2322,8 +2195,10 @@ the first page of a first data file at database startup.
 					data files
 @param[out]	flushed_lsn		flushed lsn value
 @param[out]	crypt_data		encryption crypt data
-@retval NULL on success, or if innodb_force_recovery is set
-@return pointer to an error message string */
+@param[in]	check_first_page	true if first page contents
+					should be checked
+@return NULL on success, or if innodb_force_recovery is set
+@retval pointer to an error message string */
 UNIV_INTERN
 const char*
 fil_read_first_page(
@@ -2336,7 +2211,8 @@ fil_read_first_page(
 	ulint*		max_arch_log_no,
 #endif /* UNIV_LOG_ARCHIVE */
 	lsn_t*		flushed_lsn,
-	fil_space_crypt_t**   crypt_data)
+	fil_space_crypt_t**   crypt_data,
+	bool		check_first_page)
 {
 	byte*		buf;
 	byte*		page;
@@ -2358,27 +2234,31 @@ fil_read_first_page(
 	*flags and *space_id as they were read from the first file and
 	do not validate the first page. */
 	if (!one_read_already) {
-		*space_id = fsp_header_get_space_id(page);
-		*flags = fsp_header_get_flags(page);
+		/* Undo tablespace does not contain correct FSP_HEADER,
+		and actually we really need to read only crypt_data. */
+		if (check_first_page) {
+			*space_id = fsp_header_get_space_id(page);
+			*flags = fsp_header_get_flags(page);
 
-		if (flushed_lsn) {
-			*flushed_lsn = mach_read_from_8(page +
-				       FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION);
-		}
-
-		if (!fsp_flags_is_valid(*flags)) {
-			ulint cflags = fsp_flags_convert_from_101(*flags);
-			if (cflags == ULINT_UNDEFINED) {
-				ib_logf(IB_LOG_LEVEL_ERROR,
-					"Invalid flags 0x%x in tablespace %u",
-					unsigned(*flags), unsigned(*space_id));
-				return "invalid tablespace flags";
-			} else {
-				*flags = cflags;
+			if (flushed_lsn) {
+				*flushed_lsn = mach_read_from_8(page +
+					FIL_PAGE_FILE_FLUSH_LSN_OR_KEY_VERSION);
 			}
-		}
 
-		check_msg = fil_check_first_page(page, *space_id, *flags);
+			if (!fsp_flags_is_valid(*flags, *space_id)) {
+				ulint cflags = fsp_flags_convert_from_101(*flags);
+				if (cflags == ULINT_UNDEFINED) {
+					ib_logf(IB_LOG_LEVEL_ERROR,
+						"Invalid flags 0x%x in tablespace %u",
+						unsigned(*flags), unsigned(*space_id));
+					return "invalid tablespace flags";
+				} else {
+					*flags = cflags;
+				}
+			}
+
+			check_msg = fil_check_first_page(page, *space_id, *flags);
+		}
 
 		/* Possible encryption crypt data is also stored only to first page
 		of the first datafile. */
@@ -2497,7 +2377,7 @@ fil_op_write_log(
 	ulint	len;
 
 	log_ptr = mlog_open(mtr, 11 + 2 + 1);
-	ut_ad(fsp_flags_is_valid(flags));
+	ut_ad(fsp_flags_is_valid(flags, space_id));
 
 	if (!log_ptr) {
 		/* Logging in mtr is switched off during crash recovery:
@@ -2648,8 +2528,7 @@ fil_op_log_parse_or_replay(
 	switch (type) {
 	case MLOG_FILE_DELETE:
 		if (fil_tablespace_exists_in_mem(space_id)) {
-			dberr_t	err = fil_delete_tablespace(
-				space_id, BUF_REMOVE_FLUSH_NO_WRITE);
+			dberr_t	err = fil_delete_tablespace(space_id);
 			ut_a(err == DB_SUCCESS);
 		}
 
@@ -2927,7 +2806,7 @@ fil_close_tablespace(
 	completely and permanently. The flag stop_new_ops also prevents
 	fil_flush() from being applied to this tablespace. */
 
-	buf_LRU_flush_or_remove_pages(id, BUF_REMOVE_FLUSH_WRITE, trx);
+	buf_LRU_flush_or_remove_pages(id, trx);
 #endif
 	mutex_enter(&fil_system->mutex);
 
@@ -2954,18 +2833,13 @@ fil_close_tablespace(
 	return(err);
 }
 
-/*******************************************************************//**
-Deletes a single-table tablespace. The tablespace must be cached in the
-memory cache.
+/** Delete a tablespace and associated .ibd file.
+@param[in]	id		tablespace identifier
+@param[in]	drop_ahi	whether to drop the adaptive hash index
 @return	DB_SUCCESS or error */
 UNIV_INTERN
 dberr_t
-fil_delete_tablespace(
-/*==================*/
-	ulint		id,		/*!< in: space id */
-	buf_remove_t	buf_remove)	/*!< in: specify the action to take
-					on the tables pages in the buffer
-					pool */
+fil_delete_tablespace(ulint id, bool drop_ahi)
 {
 	char*		path = 0;
 	fil_space_t*	space = 0;
@@ -3021,7 +2895,7 @@ fil_delete_tablespace(
 	To deal with potential read requests by checking the
 	::stop_new_ops flag in fil_io() */
 
-	buf_LRU_flush_or_remove_pages(id, buf_remove, 0);
+	buf_LRU_flush_or_remove_pages(id, NULL, drop_ahi);
 
 #endif /* !UNIV_HOTBACKUP */
 
@@ -3132,7 +3006,7 @@ fil_discard_tablespace(
 {
 	dberr_t	err;
 
-	switch (err = fil_delete_tablespace(id, BUF_REMOVE_ALL_NO_WRITE)) {
+	switch (err = fil_delete_tablespace(id, true)) {
 	case DB_SUCCESS:
 		break;
 
@@ -3718,7 +3592,7 @@ fil_create_new_single_table_tablespace(
 	ut_ad(!srv_read_only_mode);
 	ut_a(space_id < SRV_LOG_SPACE_FIRST_ID);
 	ut_a(size >= FIL_IBD_FILE_INITIAL_SIZE);
-	ut_a(fsp_flags_is_valid(flags & ~FSP_FLAGS_MEM_MASK));
+	ut_a(fsp_flags_is_valid(flags & ~FSP_FLAGS_MEM_MASK, space_id));
 
 	if (is_temp) {
 		/* Temporary table filepath */
@@ -3979,7 +3853,7 @@ void
 fsp_flags_try_adjust(ulint space_id, ulint flags)
 {
 	ut_ad(!srv_read_only_mode);
-	ut_ad(fsp_flags_is_valid(flags));
+	ut_ad(fsp_flags_is_valid(flags, space_id));
 
 	mtr_t	mtr;
 	mtr_start(&mtr);
@@ -4061,7 +3935,7 @@ fil_open_single_table_tablespace(
 		return(DB_CORRUPTION);
 	}
 
-	ut_ad(fsp_flags_is_valid(flags & ~FSP_FLAGS_MEM_MASK));
+	ut_ad(fsp_flags_is_valid(flags & ~FSP_FLAGS_MEM_MASK, id));
 	atomic_writes = fsp_flags_get_atomic_writes(flags);
 
 	memset(&def, 0, sizeof(def));
@@ -4601,7 +4475,7 @@ fil_user_tablespace_restore_page(
 
 	flags = mach_read_from_4(FSP_HEADER_OFFSET + FSP_SPACE_FLAGS + page);
 
-	if (!fsp_flags_is_valid(flags)) {
+	if (!fsp_flags_is_valid(flags, fsp->id)) {
 		ulint cflags = fsp_flags_convert_from_101(flags);
 		if (cflags == ULINT_UNDEFINED) {
 			ib_logf(IB_LOG_LEVEL_WARN,

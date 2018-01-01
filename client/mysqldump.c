@@ -92,8 +92,7 @@
 
 static void add_load_option(DYNAMIC_STRING *str, const char *option,
                              const char *option_value);
-static ulong find_set(TYPELIB *lib, const char *x, size_t length,
-                      char **err_pos, uint *err_len);
+static ulong find_set(TYPELIB *, const char *, size_t, char **, uint *);
 static char *alloc_query_str(ulong size);
 
 static void field_escape(DYNAMIC_STRING* in, const char *from);
@@ -957,8 +956,12 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       break;
     }
   case (int) OPT_MYSQL_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
+    if ((opt_protocol= find_type_with_warning(argument, &sql_protocol_typelib,
+                                              opt->name)) <= 0)
+    {
+      sf_leaking_memory= 1; /* no memory leak reports here */
+      exit(1);
+    }
     break;
   }
   return 0;
@@ -5471,7 +5474,7 @@ static ulong find_set(TYPELIB *lib, const char *x, size_t length,
       var_len= (uint) (pos - start);
       strmake(buff, start, MY_MIN(sizeof(buff) - 1, var_len));
       find= find_type(buff, lib, FIND_TYPE_BASIC);
-      if (!find)
+      if (find <= 0)
       {
         *err_pos= (char*) start;
         *err_len= var_len;
