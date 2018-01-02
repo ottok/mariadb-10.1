@@ -27,7 +27,10 @@ mariadb-10.1 (10.1.30-0+deb9u1) stretch-security; urgency=high
   [ Christian Ehrhardt ]
   * d/t/upstream: skip func_regexp_pcre on s390x
 
- -- Otto Kekäläinen <otto@debian.org>  Thu, 28 Dec 2017 23:27:25 +0200
+  [ Vicentiu Ciorbaru ]
+  * Fix Mroonga compilation failure on arm64
+
+ -- Otto Kekäläinen <otto@debian.org>  Tue, 02 Jan 2018 11:30:15 +0200
 
 mariadb-10.1 (10.1.26-0+deb9u1) stretch-security; urgency=high
 
