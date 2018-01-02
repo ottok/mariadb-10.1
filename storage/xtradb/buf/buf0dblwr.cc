@@ -616,7 +616,7 @@ buf_dblwr_process()
 		if (page_no == 0) {
 			/* Check the FSP_SPACE_FLAGS. */
 			ulint flags = fsp_header_get_flags(page);
-			if (!fsp_flags_is_valid(flags)
+			if (!fsp_flags_is_valid(flags, space_id)
 			    && fsp_flags_convert_from_101(flags)
 			    == ULINT_UNDEFINED) {
 				ib_logf(IB_LOG_LEVEL_WARN,
@@ -800,7 +800,7 @@ buf_dblwr_assert_on_corrupt_block(
 /*==============================*/
 	const buf_block_t*	block)	/*!< in: block to check */
 {
-	buf_page_print(block->frame, 0, BUF_PAGE_PRINT_NO_CRASH);
+	buf_page_print(block->frame, 0);
 
 	ut_print_timestamp(stderr);
 	fprintf(stderr,

@@ -1,6 +1,7 @@
 /*****************************************************************************
 
 Copyright (c) 1995, 2016, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 2017, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -661,7 +662,7 @@ fsp_header_init_fields(
 	ulint	flags)		/*!< in: tablespace flags (FSP_SPACE_FLAGS) */
 {
 	flags &= ~FSP_FLAGS_MEM_MASK;
-	ut_a(fsp_flags_is_valid(flags));
+	ut_a(fsp_flags_is_valid(flags, space_id));
 
 	mach_write_to_4(FSP_HEADER_OFFSET + FSP_SPACE_ID + page,
 			space_id);
@@ -725,7 +726,11 @@ fsp_header_init(ulint space_id, ulint size, mtr_t* mtr)
 	fil_space_t* space = fil_space_acquire(space_id);
 	ut_ad(space);
 
-	if (space->crypt_data) {
+	/* Write encryption metadata to page 0 if tablespace is
+	encrypted or encryption is disabled by table option. */
+	if (space->crypt_data &&
+	    (space->crypt_data->should_encrypt() ||
+	     space->crypt_data->not_encrypted())) {
 		space->crypt_data->write_page0(page, mtr);
 	}
 
@@ -2035,15 +2040,6 @@ fseg_create_general(
 
 	mtr_x_lock(latch, mtr);
 
-	if (rw_lock_get_x_lock_count(latch) == 1) {
-		/* This thread did not own the latch before this call: free
-		excess pages from the insert buffer free list */
-
-		if (space == IBUF_SPACE_ID) {
-			ibuf_free_excess_pages();
-		}
-	}
-
 	if (!has_done_reservation) {
 		success = fsp_reserve_free_extents(&n_reserved, space, 2,
 						   FSP_NORMAL, mtr);
@@ -2613,15 +2609,6 @@ fseg_alloc_free_page_general(
 	zip_size = fsp_flags_get_zip_size(flags);
 
 	mtr_x_lock(latch, mtr);
-
-	if (rw_lock_get_x_lock_count(latch) == 1) {
-		/* This thread did not own the latch before this call: free
-		excess pages from the insert buffer free list */
-
-		if (space == IBUF_SPACE_ID) {
-			ibuf_free_excess_pages();
-		}
-	}
 
 	inode = fseg_inode_get(seg_header, space, zip_size, mtr);
 

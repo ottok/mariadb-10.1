@@ -183,8 +183,6 @@ extern fil_addr_t	fil_addr_null;
 #define FIL_LOG			502	/*!< redo log */
 /* @} */
 
-#ifndef UNIV_INNOCHECKSUM
-
 /** Structure containing encryption specification */
 struct fil_space_crypt_t;
 
@@ -209,6 +207,10 @@ extern ulint	fil_n_pending_tablespace_flushes;
 /** Number of files currently open */
 extern ulint	fil_n_file_opened;
 
+#ifndef UNIV_INNOCHECKSUM
+
+struct fil_space_t;
+
 struct fsp_open_info {
 	ibool		success;	/*!< Has the tablespace been opened? */
 	const char*	check_msg;	/*!< fil_check_first_page() message */
@@ -224,8 +226,6 @@ struct fsp_open_info {
 	fil_space_crypt_t* crypt_data;	/*!< crypt data */
 	dict_table_t*	table;		/*!< table */
 };
-
-struct fil_space_t;
 
 /** File node of a tablespace or the log data space */
 struct fil_node_t {
@@ -802,6 +802,8 @@ the first page of a first data file at database startup.
 					data files
 @param[out]	flushed_lsn		flushed lsn value
 @param[out]	crypt_data		encryption crypt data
+@param[in]	check_first_page	true if first page contents
+					should be checked
 @retval NULL on success, or if innodb_force_recovery is set
 @return pointer to an error message string */
 UNIV_INTERN
@@ -816,7 +818,8 @@ fil_read_first_page(
 	ulint*		max_arch_log_no,
 #endif /* UNIV_LOG_ARCHIVE */
 	lsn_t*		flushed_lsn,
-	fil_space_crypt_t**   crypt_data)
+	fil_space_crypt_t**   crypt_data,
+	bool		check_first_page=true)
 	MY_ATTRIBUTE((warn_unused_result));
 #endif /* !UNIV_HOTBACKUP */
 
@@ -848,18 +851,13 @@ fil_op_log_parse_or_replay(
 				only be parsed but not replayed */
 	ulint	log_flags);	/*!< in: redo log flags
 				(stored in the page number parameter) */
-/*******************************************************************//**
-Deletes a single-table tablespace. The tablespace must be cached in the
-memory cache.
-@return	TRUE if success */
+/** Delete a tablespace and associated .ibd file.
+@param[in]	id		tablespace identifier
+@param[in]	drop_ahi	whether to drop the adaptive hash index
+@return	DB_SUCCESS or error */
 UNIV_INTERN
 dberr_t
-fil_delete_tablespace(
-/*==================*/
-	ulint		id,		/*!< in: space id */
-	buf_remove_t	buf_remove);	/*!< in: specify the action to take
-					on the tables pages in the buffer
-					pool */
+fil_delete_tablespace(ulint id, bool drop_ahi = false);
 /*******************************************************************//**
 Closes a single-table tablespace. The tablespace must be cached in the
 memory cache. Free all pages used by the tablespace.

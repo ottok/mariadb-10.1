@@ -31,6 +31,7 @@ Created 11/5/1995 Heikki Tuuri
 #include "fil0fil.h"
 #include "mtr0types.h"
 #include "buf0types.h"
+#ifndef UNIV_INNOCHECKSUM
 #include "hash0hash.h"
 #include "ut0byte.h"
 #include "page0types.h"
@@ -58,6 +59,7 @@ Created 11/5/1995 Heikki Tuuri
 #define BUF_GET_POSSIBLY_FREED		16
 					/*!< Like BUF_GET, but do not mind
 					if the file page has been freed. */
+#define BUF_EVICT_IF_IN_POOL	20	/*!< evict a clean block if found */
 /* @} */
 /** @name Modes for buf_page_get_known_nowait */
 /* @{ */
@@ -643,6 +645,8 @@ buf_block_unfix(
 # define buf_block_modify_clock_inc(block) ((void) 0)
 #endif /* !UNIV_HOTBACKUP */
 
+#endif /* !UNIV_INNOCHECKSUM */
+
 /** Checks if the page is in crc32 checksum format.
 @param[in]	read_buf	database page
 @param[in]	checksum_field1	new checksum field
@@ -691,8 +695,13 @@ buf_page_is_corrupted(
 	bool			check_lsn,
 	const byte*		read_buf,
 	ulint			zip_size,
+#ifndef UNIV_INNOCHECKSUM
 	const fil_space_t* 	space)
+#else
+	const void* 	 	space = NULL)
+#endif
 	MY_ATTRIBUTE((warn_unused_result));
+
 /** Check if a page is all zeroes.
 @param[in]	read_buf	database page
 @param[in]	zip_size	ROW_FORMAT=COMPRESSED page size, or 0
@@ -700,6 +709,9 @@ buf_page_is_corrupted(
 UNIV_INTERN
 bool
 buf_page_is_zeroes(const byte* read_buf, ulint zip_size);
+
+#ifndef UNIV_INNOCHECKSUM
+
 #ifndef UNIV_HOTBACKUP
 /**********************************************************************//**
 Gets the space id, page offset, and byte offset within page of a
@@ -762,25 +774,13 @@ buf_print(void);
 /*============*/
 #endif /* UNIV_DEBUG_PRINT || UNIV_DEBUG || UNIV_BUF_DEBUG */
 #endif /* !UNIV_HOTBACKUP */
-enum buf_page_print_flags {
-	/** Do not crash at the end of buf_page_print(). */
-	BUF_PAGE_PRINT_NO_CRASH	= 1,
-	/** Do not print the full page dump. */
-	BUF_PAGE_PRINT_NO_FULL = 2
-};
 
-/********************************************************************//**
-Prints a page to stderr. */
+/** Dump a page to stderr.
+@param[in]	read_buf	database page
+@param[in]	zip_size	compressed page size, or 0 for uncompressed */
 UNIV_INTERN
 void
-buf_page_print(
-/*===========*/
-	const byte*	read_buf,	/*!< in: a database page */
-	ulint		zip_size,	/*!< in: compressed page size, or
-					0 for uncompressed pages */
-	ulint		flags)		/*!< in: 0 or
-					BUF_PAGE_PRINT_NO_CRASH or
-					BUF_PAGE_PRINT_NO_FULL */
+buf_page_print(const byte* read_buf, ulint zip_size)
 	UNIV_COLD MY_ATTRIBUTE((nonnull));
 /********************************************************************//**
 Decompress a block.
@@ -2470,4 +2470,5 @@ struct	CheckUnzipLRUAndLRUList {
 #include "buf0buf.ic"
 #endif
 
+#endif /*! UNIV_INNOCHECKSUM */
 #endif

@@ -1,6 +1,6 @@
 /*
-   Copyright (c) 2000, 2013, Oracle and/or its affiliates.
-   Copyright (c) 2008, 2013, Monty Program Ab.
+   Copyright (c) 2000, 2017, Oracle and/or its affiliates.
+   Copyright (c) 2008, 2017, MariaDB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -4729,7 +4729,7 @@ double Field_double::val_real(void)
   return j;
 }
 
-longlong Field_double::val_int(void)
+longlong Field_double::val_int_from_real(bool want_unsigned_result)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
   double j;
@@ -4737,8 +4737,15 @@ longlong Field_double::val_int(void)
   bool error;
   float8get(j,ptr);
 
-  res= double_to_longlong(j, 0, &error);
-  if (error)
+  res= double_to_longlong(j, want_unsigned_result, &error);
+  /*
+    Note, val_uint() is currently used for auto_increment purposes only,
+    and we want to suppress all warnings in such cases.
+    If we ever start using val_uint() for other purposes,
+    val_int_from_real() will need a new separate parameter to
+    suppress warnings.
+  */
+  if (error && !want_unsigned_result)
   {
     THD *thd= get_thd();
     ErrConvDouble err(j);
@@ -5061,6 +5068,23 @@ int Field_timestamp::store(longlong nr, bool unsigned_val)
                                                  MODE_NO_ZERO_DATE) |
                                    MODE_NO_ZERO_IN_DATE, &error);
   return store_TIME_with_warning(thd, &l_time, &str, error, tmp != -1);
+}
+
+
+int Field_timestamp::store_timestamp(Field_timestamp *from)
+{
+  ulong sec_part;
+  my_time_t ts= from->get_timestamp(&sec_part);
+  store_TIME(ts, sec_part);
+  if (!ts && !sec_part && get_thd()->variables.sql_mode & MODE_NO_ZERO_DATE)
+  {
+    ErrConvString s(
+      STRING_WITH_LEN("0000-00-00 00:00:00.000000") - (decimals() ? 6 - decimals() : 7),
+      system_charset_info);
+    set_datetime_warning(WARN_DATA_TRUNCATED, &s, MYSQL_TIMESTAMP_DATETIME, 1);
+    return 1;
+  }
+  return 0;
 }
 
 
@@ -8885,13 +8909,13 @@ String *Field_set::val_str(String *val_buffer,
   ulonglong tmp=(ulonglong) Field_enum::val_int();
   uint bitnr=0;
 
+  /*
+    Some callers expect *val_buffer to contain the result,
+    so we assign to it, rather than doing 'return &empty_set_string.
+  */
+  *val_buffer= empty_set_string;
   if (tmp == 0)
   {
-    /*
-      Some callers expect *val_buffer to contain the result,
-      so we assign to it, rather than doing 'return &empty_set_string.
-     */
-    *val_buffer= empty_set_string;
     return val_buffer;
   }
 

@@ -31,12 +31,16 @@ The database buffer buf_pool
 Created 11/5/1995 Heikki Tuuri
 *******************************************************/
 
+#include "univ.i"
+#include "mach0data.h"
 #include "buf0buf.h"
+#include <string.h>
 
 #ifdef UNIV_NONINL
 #include "buf0buf.ic"
 #endif
 
+#ifndef UNIV_INNOCHECKSUM
 #include "mem0mem.h"
 #include "btr0btr.h"
 #include "fil0fil.h"
@@ -52,13 +56,15 @@ Created 11/5/1995 Heikki Tuuri
 #include "srv0srv.h"
 #include "dict0dict.h"
 #include "log0recv.h"
-#include "page0zip.h"
 #include "srv0mon.h"
-#include "buf0checksum.h"
 #ifdef HAVE_LIBNUMA
 #include <numa.h>
 #include <numaif.h>
 #endif // HAVE_LIBNUMA
+#endif /* !UNIV_INNOCHECKSUM */
+#include "page0zip.h"
+#include "buf0checksum.h"
+#ifndef UNIV_INNOCHECKSUM
 #include "fil0pagecompress.h"
 #include "ha_prototypes.h"
 #include "ut0byte.h"
@@ -80,10 +86,13 @@ inline void* aligned_malloc(size_t size, size_t align) {
     void *result;
 #ifdef _MSC_VER
     result = _aligned_malloc(size, align);
-#else
+#elif defined (HAVE_POSIX_MEMALIGN)
     if(posix_memalign(&result, align, size)) {
 	    result = 0;
     }
+#else
+    /* Use unaligned malloc as fallback */
+    result = malloc(size);
 #endif
     return result;
 }
@@ -528,6 +537,7 @@ buf_block_alloc(
 	return(block);
 }
 #endif /* !UNIV_HOTBACKUP */
+#endif /* !UNIV_INNOCHECKSUM */
 
 /** Check if a page is all zeroes.
 @param[in]	read_buf	database page
@@ -560,6 +570,17 @@ buf_page_is_checksum_valid_crc32(
 	ulint		checksum_field2)
 {
 	ib_uint32_t	crc32 = buf_calc_page_crc32(read_buf);
+
+#ifdef UNIV_INNOCHECKSUM
+	if (log_file
+	    && srv_checksum_algorithm == SRV_CHECKSUM_ALGORITHM_STRICT_CRC32) {
+		fprintf(log_file, "page::%llu;"
+			" crc32 calculated = %u;"
+			" recorded checksum field1 = " ULINTPF " recorded"
+			" checksum field2 =" ULINTPF "\n", cur_page_num,
+			crc32, checksum_field1, checksum_field2);
+	}
+#endif /* UNIV_INNOCHECKSUM */
 
 	if (!(checksum_field1 == crc32 && checksum_field2 == crc32)) {
 		DBUG_PRINT("buf_checksum",
@@ -595,12 +616,45 @@ buf_page_is_checksum_valid_innodb(
 	2. Newer InnoDB versions store the old formula checksum
 	(buf_calc_page_old_checksum()). */
 
+	ulint	old_checksum = buf_calc_page_old_checksum(read_buf);
+	ulint	new_checksum = buf_calc_page_new_checksum(read_buf);
+
+#ifdef UNIV_INNOCHECKSUM
+	if (log_file
+	    && srv_checksum_algorithm == SRV_CHECKSUM_ALGORITHM_INNODB) {
+		fprintf(log_file, "page::%llu;"
+			" old style: calculated ="
+			" " ULINTPF "; recorded = " ULINTPF "\n",
+			cur_page_num, old_checksum,
+			checksum_field2);
+		fprintf(log_file, "page::%llu;"
+			" new style: calculated ="
+			" " ULINTPF "; crc32 = %u; recorded = " ULINTPF "\n",
+			cur_page_num, new_checksum,
+			buf_calc_page_crc32(read_buf), checksum_field1);
+	}
+
+	if (log_file
+	    && srv_checksum_algorithm == SRV_CHECKSUM_ALGORITHM_STRICT_INNODB) {
+		fprintf(log_file, "page::%llu;"
+			" old style: calculated ="
+			" " ULINTPF "; recorded checksum = " ULINTPF "\n",
+			cur_page_num, old_checksum,
+			checksum_field2);
+		fprintf(log_file, "page::%llu;"
+			" new style: calculated ="
+			" " ULINTPF "; recorded checksum  = " ULINTPF "\n",
+			cur_page_num, new_checksum,
+			checksum_field1);
+	}
+#endif /* UNIV_INNOCHECKSUM */
+
 	if (checksum_field2 != mach_read_from_4(read_buf + FIL_PAGE_LSN)
-	    && checksum_field2 != buf_calc_page_old_checksum(read_buf)) {
+	    && checksum_field2 != old_checksum) {
 		DBUG_PRINT("buf_checksum",
 			("Page checksum innodb not valid field1 " ULINTPF
 				" field2 " ULINTPF "crc32 " ULINTPF " lsn " ULINTPF ".",
-			checksum_field1, checksum_field2, buf_calc_page_old_checksum(read_buf),
+			checksum_field1, checksum_field2, old_checksum,
 				mach_read_from_4(read_buf + FIL_PAGE_LSN)));
 
 		return(false);
@@ -612,11 +666,11 @@ buf_page_is_checksum_valid_innodb(
 	(always equal to 0), to FIL_PAGE_SPACE_OR_CHKSUM */
 
 	if (checksum_field1 != 0
-	    && checksum_field1 != buf_calc_page_new_checksum(read_buf)) {
+	    && checksum_field1 != new_checksum) {
 		DBUG_PRINT("buf_checksum",
 			("Page checksum innodb not valid field1 " ULINTPF
 				" field2 " ULINTPF "crc32 " ULINTPF " lsn " ULINTPF ".",
-			checksum_field1, checksum_field2, buf_calc_page_new_checksum(read_buf),
+			checksum_field1, checksum_field2, new_checksum,
 				mach_read_from_4(read_buf + FIL_PAGE_LSN)));
 
 		return(false);
@@ -646,6 +700,18 @@ buf_page_is_checksum_valid_none(
 				mach_read_from_4(read_buf + FIL_PAGE_LSN)));
 	}
 
+#ifdef UNIV_INNOCHECKSUM
+	if (log_file
+	    && srv_checksum_algorithm == SRV_CHECKSUM_ALGORITHM_STRICT_NONE) {
+		fprintf(log_file,
+			"page::%llu; none checksum: calculated"
+			" = " ULINTPF "; recorded checksum_field1 = " ULINTPF
+			" recorded checksum_field2 = " ULINTPF "\n",
+			cur_page_num, BUF_NO_CHECKSUM_MAGIC,
+			checksum_field1, checksum_field2);
+	}
+#endif /* UNIV_INNOCHECKSUM */
+
 	return(checksum_field1 == checksum_field2
 	       && checksum_field1 == BUF_NO_CHECKSUM_MAGIC);
 }
@@ -662,14 +728,19 @@ buf_page_is_corrupted(
 	bool			check_lsn,
 	const byte*		read_buf,
 	ulint			zip_size,
+#ifndef UNIV_INNOCHECKSUM
 	const fil_space_t* 	space)
+#else
+	const void* 	 	space)
+#endif
 {
-	ulint		checksum_field1;
-	ulint		checksum_field2;
-	ulint 		space_id = mach_read_from_4(
-		read_buf + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
-	ulint page_type = mach_read_from_2(
-		read_buf + FIL_PAGE_TYPE);
+	DBUG_EXECUTE_IF("buf_page_import_corrupt_failure", return(TRUE); );
+	ulint checksum_field1 = 0;
+	ulint checksum_field2 = 0;
+#ifndef UNIV_INNOCHECKSUM
+	ulint space_id = mach_read_from_4(read_buf + FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID);
+#endif
+	ulint page_type = mach_read_from_2(read_buf + FIL_PAGE_TYPE);
 
 	/* We can trust page type if page compression is set on tablespace
 	flags because page compression flag means file must have been
@@ -682,7 +753,10 @@ buf_page_is_corrupted(
 	decompressed at this stage). */
 	if ((page_type == FIL_PAGE_PAGE_COMPRESSED ||
 	     page_type == FIL_PAGE_PAGE_COMPRESSED_ENCRYPTED)
-	    && space && FSP_FLAGS_HAS_PAGE_COMPRESSION(space->flags)) {
+#ifndef UNIV_INNOCHECKSUM
+	    && space && FSP_FLAGS_HAS_PAGE_COMPRESSION(space->flags)
+#endif
+	) {
 		return (false);
 	}
 
@@ -693,16 +767,17 @@ buf_page_is_corrupted(
 
 		/* Stored log sequence numbers at the start and the end
 		of page do not match */
-
+#ifndef UNIV_INNOCHECKSUM
 		ib_logf(IB_LOG_LEVEL_INFO,
-			"Log sequence number at the start %lu and the end %lu do not match.",
+			"Log sequence number at the start " ULINTPF " and the end " ULINTPF " do not match.",
 			mach_read_from_4(read_buf + FIL_PAGE_LSN + 4),
 			mach_read_from_4(read_buf + UNIV_PAGE_SIZE - FIL_PAGE_END_LSN_OLD_CHKSUM + 4));
+#endif /* UNIV_INNOCHECKSUM */
 
 		return(true);
 	}
 
-#ifndef UNIV_HOTBACKUP
+#if !defined(UNIV_HOTBACKUP) && !defined(UNIV_INNOCHECKSUM)
 	if (check_lsn && recv_lsn_checks_on) {
 		lsn_t	current_lsn;
 
@@ -715,7 +790,7 @@ buf_page_is_corrupted(
 			ut_print_timestamp(stderr);
 
 			fprintf(stderr,
-				" InnoDB: Error: page %lu log sequence number"
+				" InnoDB: Error: page " ULINTPF " log sequence number"
 				" " LSN_PF "\n"
 				"InnoDB: is in the future! Current system "
 				"log sequence number " LSN_PF ".\n"
@@ -742,7 +817,7 @@ buf_page_is_corrupted(
 	}
 
 	if (zip_size) {
-		return(!page_zip_verify_checksum(read_buf, zip_size));
+		return(!page_zip_verify_checksum((const void *)read_buf, zip_size));
 	}
 
 	checksum_field1 = mach_read_from_4(
@@ -762,9 +837,10 @@ buf_page_is_corrupted(
 		/* make sure that the page is really empty */
 		for (ulint i = 0; i < UNIV_PAGE_SIZE; i++) {
 			if (read_buf[i] != 0) {
+#ifndef UNIV_INNOCHECKSUM
 				ib_logf(IB_LOG_LEVEL_INFO,
 					"Checksum fields zero but page is not empty.");
-
+#endif
 				return(true);
 			}
 		}
@@ -772,9 +848,9 @@ buf_page_is_corrupted(
 		return(false);
 	}
 
-	DBUG_EXECUTE_IF("buf_page_is_corrupt_failure", return(true); );
-
+#ifndef UNIV_INNOCHECKSUM
 	ulint	page_no = mach_read_from_4(read_buf + FIL_PAGE_OFFSET);
+#endif
 
 	const srv_checksum_algorithm_t	curr_algo =
 		static_cast<srv_checksum_algorithm_t>(srv_checksum_algorithm);
@@ -792,11 +868,31 @@ buf_page_is_corrupted(
 			checksum_field1, checksum_field2)) {
 			if (curr_algo
 			    == SRV_CHECKSUM_ALGORITHM_STRICT_CRC32) {
+#ifndef UNIV_INNOCHECKSUM
 				page_warn_strict_checksum(
 					curr_algo,
 					SRV_CHECKSUM_ALGORITHM_NONE,
 					space_id, page_no);
+#endif /* !UNIV_INNOCHECKSUM */
 			}
+
+#ifdef UNIV_INNOCHECKSUM
+			if (log_file) {
+				fprintf(log_file, "page::%llu;"
+					" old style: calculated = " ULINTPF ";"
+					" recorded = " ULINTPF "\n",
+					cur_page_num,
+					buf_calc_page_old_checksum(read_buf),
+					checksum_field2);
+				fprintf(log_file, "page::%llu;"
+					" new style: calculated = " ULINTPF ";"
+					" crc32 = %u; recorded = " ULINTPF "\n",
+					cur_page_num,
+					buf_calc_page_new_checksum(read_buf),
+					buf_calc_page_crc32(read_buf),
+					checksum_field1);
+			}
+#endif /* UNIV_INNOCHECKSUM */
 
 			return(false);
 		}
@@ -805,15 +901,24 @@ buf_page_is_corrupted(
 			checksum_field1, checksum_field2)) {
 			if (curr_algo
 			    == SRV_CHECKSUM_ALGORITHM_STRICT_CRC32) {
+#ifndef UNIV_INNOCHECKSUM
 				page_warn_strict_checksum(
 					curr_algo,
 					SRV_CHECKSUM_ALGORITHM_INNODB,
 					space_id, page_no);
+#endif
 			}
 
 			return(false);
 		}
 
+#ifdef UNIV_INNOCHECKSUM
+		if (log_file) {
+			fprintf(log_file, "Fail; page::%llu;"
+				" invalid (fails crc32 checksum)\n",
+				cur_page_num);
+		}
+#endif /* UNIV_INNOCHECKSUM */
 		return(true);
 
 	case SRV_CHECKSUM_ALGORITHM_INNODB:
@@ -828,11 +933,29 @@ buf_page_is_corrupted(
 			checksum_field1, checksum_field2)) {
 			if (curr_algo
 			    == SRV_CHECKSUM_ALGORITHM_STRICT_INNODB) {
+#ifndef UNIV_INNOCHECKSUM
 				page_warn_strict_checksum(
 					curr_algo,
 					SRV_CHECKSUM_ALGORITHM_NONE,
 					space_id, page_no);
+#endif
 			}
+#ifdef UNIV_INNOCHECKSUM
+			if (log_file) {
+				fprintf(log_file, "page::%llu;"
+					" old style: calculated = " ULINTPF ";"
+					" recorded = " ULINTPF "\n", cur_page_num,
+					buf_calc_page_old_checksum(read_buf),
+					checksum_field2);
+				fprintf(log_file, "page::%llu;"
+					" new style: calculated = " ULINTPF ";"
+					" crc32 = %u; recorded = " ULINTPF "\n",
+					cur_page_num,
+					buf_calc_page_new_checksum(read_buf),
+					buf_calc_page_crc32(read_buf),
+					checksum_field1);
+			}
+#endif /* UNIV_INNOCHECKSUM */
 
 			return(false);
 		}
@@ -841,14 +964,24 @@ buf_page_is_corrupted(
 			checksum_field1, checksum_field2)) {
 			if (curr_algo
 			    == SRV_CHECKSUM_ALGORITHM_STRICT_INNODB) {
+#ifndef UNIV_INNOCHECKSUM
 				page_warn_strict_checksum(
 					curr_algo,
 					SRV_CHECKSUM_ALGORITHM_CRC32,
 					space_id, page_no);
+#endif
 			}
 
 			return(false);
 		}
+
+#ifdef UNIV_INNOCHECKSUM
+		if (log_file) {
+			fprintf(log_file, "Fail; page::%llu;"
+				" invalid (fails innodb checksum)\n",
+				cur_page_num);
+		}
+#endif /* UNIV_INNOCHECKSUM */
 
 		return(true);
 
@@ -861,21 +994,33 @@ buf_page_is_corrupted(
 
 		if (buf_page_is_checksum_valid_crc32(read_buf,
 			checksum_field1, checksum_field2)) {
+#ifndef UNIV_INNOCHECKSUM
 			page_warn_strict_checksum(
 				curr_algo,
 				SRV_CHECKSUM_ALGORITHM_CRC32,
 				space_id, page_no);
+#endif
 			return(false);
 		}
 
 		if (buf_page_is_checksum_valid_innodb(read_buf,
 			checksum_field1, checksum_field2)) {
+#ifndef UNIV_INNOCHECKSUM
 			page_warn_strict_checksum(
 				curr_algo,
 				SRV_CHECKSUM_ALGORITHM_INNODB,
 				space_id, page_no);
+#endif
 			return(false);
 		}
+
+#ifdef UNIV_INNOCHECKSUM
+		if (log_file) {
+			fprintf(log_file, "Fail; page::%llu;"
+				" invalid (fails none checksum)\n",
+				cur_page_num);
+		}
+#endif /* UNIV_INNOCHECKSUM */
 
 		return(true);
 
@@ -890,19 +1035,13 @@ buf_page_is_corrupted(
 	return(false);
 }
 
-/********************************************************************//**
-Prints a page to stderr. */
+#ifndef UNIV_INNOCHECKSUM
+/** Dump a page to stderr.
+@param[in]	read_buf	database page
+@param[in]	zip_size	compressed page size, or 0 for uncompressed */
 UNIV_INTERN
 void
-buf_page_print(
-/*===========*/
-	const byte*	read_buf,	/*!< in: a database page */
-	ulint		zip_size,	/*!< in: compressed page size, or
-					0 for uncompressed pages */
-	ulint		flags)		/*!< in: 0 or
-					BUF_PAGE_PRINT_NO_CRASH or
-					BUF_PAGE_PRINT_NO_FULL */
-
+buf_page_print(const byte* read_buf, ulint zip_size)
 {
 #ifndef UNIV_HOTBACKUP
 	dict_index_t*	index;
@@ -913,14 +1052,12 @@ buf_page_print(
 		size = UNIV_PAGE_SIZE;
 	}
 
-	if (!(flags & BUF_PAGE_PRINT_NO_FULL)) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			" InnoDB: Page dump in ascii and hex (%lu bytes):\n",
-			size);
-		ut_print_buf(stderr, read_buf, size);
-		fputs("\nInnoDB: End of page dump\n", stderr);
-	}
+	ut_print_timestamp(stderr);
+	fprintf(stderr,
+		" InnoDB: Page dump in ascii and hex (" ULINTPF " bytes):\n",
+		size);
+	ut_print_buf(stderr, read_buf, size);
+	fputs("\nInnoDB: End of page dump\n", stderr);
 
 	if (zip_size) {
 		/* Print compressed page. */
@@ -972,7 +1109,7 @@ buf_page_print(
 			"low 4 bytes of LSN at page end " ULINTPF ", "
 			"page number (if stored to page already) " ULINTPF ", "
 			"space id (if created with >= MySQL-4.1.1 "
-			"and stored already) %lu\n",
+			"and stored already) " ULINTPF "\n",
 			mach_read_from_4(read_buf + FIL_PAGE_SPACE_OR_CHKSUM),
 			buf_checksum_algorithm_name(SRV_CHECKSUM_ALGORITHM_CRC32),
 			buf_calc_page_crc32(read_buf),
@@ -1075,8 +1212,6 @@ buf_page_print(
 		      stderr);
 		break;
 	}
-
-	ut_ad(flags & BUF_PAGE_PRINT_NO_CRASH);
 }
 
 #ifndef UNIV_HOTBACKUP
@@ -2709,8 +2844,8 @@ buf_block_align_instance(
 				if (block->page.space != space ||
 					block->page.offset != offset) {
 					ib_logf(IB_LOG_LEVEL_ERROR,
-						"Corruption: Block space_id %lu != page space_id %lu or "
-						"Block offset %lu != page offset %lu",
+						"Corruption: Block space_id " ULINTPF " != page space_id " ULINTPF " or "
+						"Block offset " ULINTPF " != page offset " ULINTPF " ",
 						(ulint)block->page.space, space,
 						(ulint)block->page.offset, offset);
 				}
@@ -2927,8 +3062,8 @@ buf_page_get_gen(
 	ib_mutex_t*	fix_mutex = NULL;
 	buf_pool_t*	buf_pool = buf_pool_get(space, offset);
 
-	ut_ad(mtr);
-	ut_ad(mtr->state == MTR_ACTIVE);
+	ut_ad((mtr == NULL) == (mode == BUF_EVICT_IF_IN_POOL));
+	ut_ad(!mtr || mtr->state == MTR_ACTIVE);
 	ut_ad((rw_latch == RW_S_LATCH)
 	      || (rw_latch == RW_X_LATCH)
 	      || (rw_latch == RW_NO_LATCH));
@@ -2939,23 +3074,29 @@ buf_page_get_gen(
 
 #ifdef UNIV_DEBUG
 	switch (mode) {
+	case BUF_EVICT_IF_IN_POOL:
+		/* After DISCARD TABLESPACE, the tablespace would not exist,
+		but in IMPORT TABLESPACE, PageConverter::operator() must
+		replace any old pages, which were not evicted during DISCARD.
+		Skip the assertion on zip_size. */
+		break;
 	case BUF_GET_NO_LATCH:
 		ut_ad(rw_latch == RW_NO_LATCH);
-		break;
+		/* fall through */
 	case BUF_GET:
 	case BUF_GET_IF_IN_POOL:
 	case BUF_PEEK_IF_IN_POOL:
 	case BUF_GET_IF_IN_POOL_OR_WATCH:
 	case BUF_GET_POSSIBLY_FREED:
+		ut_ad(zip_size == fil_space_get_zip_size(space));
 		break;
 	default:
 		ut_error;
 	}
 #endif /* UNIV_DEBUG */
-	ut_ad(zip_size == fil_space_get_zip_size(space));
 	ut_ad(ut_is_2pow(zip_size));
 #ifndef UNIV_LOG_DEBUG
-	ut_ad(!ibuf_inside(mtr)
+	ut_ad(!mtr || !ibuf_inside(mtr)
 	      || ibuf_page_low(space, zip_size, offset,
 			       FALSE, file, line, NULL));
 #endif
@@ -3020,9 +3161,11 @@ loop:
 			rw_lock_x_unlock(hash_lock);
 		}
 
-		if (mode == BUF_GET_IF_IN_POOL
-		    || mode == BUF_PEEK_IF_IN_POOL
-		    || mode == BUF_GET_IF_IN_POOL_OR_WATCH) {
+		switch (mode) {
+		case BUF_GET_IF_IN_POOL:
+		case BUF_GET_IF_IN_POOL_OR_WATCH:
+		case BUF_PEEK_IF_IN_POOL:
+		case BUF_EVICT_IF_IN_POOL:
 #ifdef UNIV_SYNC_DEBUG
 			ut_ad(!rw_lock_own(hash_lock, RW_LOCK_EX));
 			ut_ad(!rw_lock_own(hash_lock, RW_LOCK_SHARED));
@@ -3111,8 +3254,10 @@ got_block:
 
 	ut_ad(page_zip_get_size(&block->page.zip) == zip_size);
 
-	if (mode == BUF_GET_IF_IN_POOL || mode == BUF_PEEK_IF_IN_POOL) {
-
+	switch (mode) {
+	case BUF_GET_IF_IN_POOL:
+	case BUF_PEEK_IF_IN_POOL:
+	case BUF_EVICT_IF_IN_POOL:
 		bool	must_read;
 
 		{
@@ -3141,6 +3286,19 @@ got_block:
 		buf_page_t*	bpage;
 
 	case BUF_BLOCK_FILE_PAGE:
+		if (UNIV_UNLIKELY(mode == BUF_EVICT_IF_IN_POOL)) {
+evict_from_pool:
+			ut_ad(!fix_block->page.oldest_modification);
+			buf_pool_mutex_enter(buf_pool);
+			buf_block_unfix(fix_block);
+
+			if (!buf_LRU_free_page(&fix_block->page, true)) {
+				ut_ad(0);
+			}
+
+			buf_pool_mutex_exit(buf_pool);
+			return(NULL);
+		}
 		break;
 
 	case BUF_BLOCK_ZIP_PAGE:
@@ -3171,6 +3329,10 @@ got_block:
 			os_thread_sleep(WAIT_FOR_READ);
 
 			goto loop;
+		}
+
+		if (UNIV_UNLIKELY(mode == BUF_EVICT_IF_IN_POOL)) {
+			goto evict_from_pool;
 		}
 
 		/* Buffer-fix the block so that it cannot be evicted
@@ -4716,7 +4878,7 @@ database_corrupted:
 		if (err != DB_SUCCESS) {
 			/* Not a real corruption if it was triggered by
 			error injection */
-			DBUG_EXECUTE_IF("buf_page_is_corrupt_failure",
+			DBUG_EXECUTE_IF("buf_page_import_corrupt_failure",
 				if (bpage->space > TRX_SYS_SPACE) {
 					buf_mark_space_corrupt(bpage);
 					ib_logf(IB_LOG_LEVEL_INFO,
@@ -4739,8 +4901,8 @@ database_corrupted:
 					space->name,
 					bpage->space, bpage->offset);
 
-				buf_page_print(frame, buf_page_get_zip_size(bpage),
-					BUF_PAGE_PRINT_NO_CRASH);
+				buf_page_print(frame,
+					       buf_page_get_zip_size(bpage));
 
 				ib_logf(IB_LOG_LEVEL_INFO,
 					"It is also possible that your"
@@ -4772,7 +4934,7 @@ database_corrupted:
 			}
 		}
 
-		DBUG_EXECUTE_IF("buf_page_is_corrupt_failure",
+		DBUG_EXECUTE_IF("buf_page_import_corrupt_failure",
 				page_not_corrupt:  bpage = bpage; );
 
 		if (recv_recovery_is_on()) {
@@ -6352,3 +6514,4 @@ buf_page_decrypt_after_read(buf_page_t* bpage, fil_space_t* space)
 	ut_ad(space->n_pending_ios > 0);
 	return (success);
 }
+#endif /* !UNIV_INNOCHECKSUM */

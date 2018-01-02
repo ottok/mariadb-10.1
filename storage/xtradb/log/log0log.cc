@@ -2599,7 +2599,7 @@ loop:
 	start_lsn += len;
 	buf += len;
 
-	if (recv_sys && recv_sys->report(ut_time())) {
+	if (recv_recovery_is_on() && recv_sys && recv_sys->report(ut_time())) {
 		ib_logf(IB_LOG_LEVEL_INFO, "Read redo log up to LSN=" LSN_PF,
 			start_lsn);
 		sd_notifyf(0, "STATUS=Read redo log up to LSN=" LSN_PF,
@@ -3635,6 +3635,7 @@ wait_suspend_loop:
 	before proceeding further. */
 
 	count = 0;
+	os_rmb;
 	while (buf_page_cleaner_is_active || buf_lru_manager_is_active) {
 		if (srv_print_verbose_log && count == 0) {
 			ib_logf(IB_LOG_LEVEL_INFO,
@@ -3646,6 +3647,7 @@ wait_suspend_loop:
 		if (count > 600) {
 			count = 0;
 		}
+		os_rmb;
 	}
 
 	if (log_scrub_thread_active) {

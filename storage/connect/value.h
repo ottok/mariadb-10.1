@@ -90,8 +90,8 @@ class DllExport VALUE : public BLOCK {
   virtual double GetFloatValue(void) = 0;
   virtual void  *GetTo_Val(void) = 0;
   virtual void   SetPrec(int prec) {Prec = prec;}
-          bool   IsNull(void) {return Null;}
-          void   SetNull(bool b) {Null = b;}
+          bool   IsNull(void) {return (Nullable && Null);}
+          void   SetNull(bool b) {Null = (Nullable ? b : false);}
           bool   GetNullable(void) {return Nullable;}
           void   SetNullable(bool b) {Nullable = b;}
           int    GetType(void) {return Type;}
@@ -102,7 +102,7 @@ class DllExport VALUE : public BLOCK {
   virtual bool   SetValue_pval(PVAL valp, bool chktype = false) = 0;
   virtual bool   SetValue_char(const char *p, int n) = 0;
   virtual void   SetValue_psz(PCSZ s) = 0;
-  virtual void   SetValue_bool(bool) {assert(FALSE);}
+  virtual void   SetValue_bool(bool) {assert(false);}
   virtual int    CompareValue(PVAL vp) = 0;
   virtual BYTE   TestValue(PVAL vp);
   virtual void   SetValue(char) {assert(false);}

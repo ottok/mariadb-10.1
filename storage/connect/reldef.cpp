@@ -228,10 +228,10 @@ bool TABDEF::Define(PGLOBAL g, PCATLG cat,
   {
   int   poff = 0;
 
-  Name = (PSZ)name;
-	Schema = (PSZ)schema;
+	Hc = ((MYCAT*)cat)->GetHandler();
+	Name = (PSZ)name;
+	Schema = (PSZ)Hc->GetDBName(schema);
   Cat = cat;
-  Hc = ((MYCAT*)cat)->GetHandler();
   Catfunc = GetFuncID(GetStringCatInfo(g, "Catfunc", NULL));
   Elemt = GetIntCatInfo("Elements", 0);
   Multiple = GetIntCatInfo("Multiple", 0);
@@ -547,14 +547,12 @@ PTABDEF OEMDEF::GetXdef(PGLOBAL g)
   } // endif dladdr
 #endif // 0
 
-  // Is the library already loaded?
-  if (!Hdll && !(Hdll = dlopen(soname, RTLD_NOLOAD)))
-    // Load the desired shared library
-    if (!(Hdll = dlopen(soname, RTLD_LAZY))) {
-      error = dlerror();
-      sprintf(g->Message, MSG(SHARED_LIB_ERR), soname, SVP(error));
-      return NULL;
-      } // endif Hdll
+  // Load the desired shared library
+  if (!Hdll && !(Hdll = dlopen(soname, RTLD_LAZY))) {
+    error = dlerror();
+    sprintf(g->Message, MSG(SHARED_LIB_ERR), soname, SVP(error));
+    return NULL;
+    } // endif Hdll
 
   // The exported name is always in uppercase
   for (int i = 0; ; i++) {
@@ -789,7 +787,7 @@ int COLDEF::Define(PGLOBAL g, void *, PCOLINFO cfp, int poff)
     Poff = poff;
     Buf_Type = cfp->Type;
 
-    if ((Clen = GetTypeSize(Buf_Type, cfp->Length)) <= 0) {
+    if ((Clen = GetTypeSize(Buf_Type, cfp->Length)) < 0) {
       sprintf(g->Message, MSG(BAD_COL_TYPE), GetTypeName(Buf_Type), Name);
       return -1;
       } // endswitch

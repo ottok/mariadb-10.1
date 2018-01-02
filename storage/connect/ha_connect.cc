@@ -1,4 +1,4 @@
-/* Copyright (C) Olivier Bertrand 2004 - 2017
+/* Copyright (C) MariaDB Corporation Ab
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -98,8 +98,7 @@
   rnd_next signals that it has reached the end of its data. Calls to
   ha_connect::extra() are hints as to what will be occuring to the request.
 
-  Happy use!<br>
-    -Olivier
+  Author  Olivier Bertrand
 */
 
 #ifdef USE_PRAGMA_IMPLEMENTATION
@@ -130,10 +129,13 @@
 #if defined(ODBC_SUPPORT)
 #include "odbccat.h"
 #endif   // ODBC_SUPPORT
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 #include "tabjdbc.h"
 #include "jdbconn.h"
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
+#if defined(CMGO_SUPPORT)
+#include "cmgoconn.h"
+#endif   // CMGO_SUPPORT
 #include "tabmysql.h"
 #include "filamdbf.h"
 #include "tabxcl.h"
@@ -172,14 +174,18 @@
 #define JSONMAX      10             // JSON Default max grp size
 
 extern "C" {
-       char version[]= "Version 1.06.0001 April 17, 2017";
+       char version[]= "Version 1.06.0005 October 14, 2017";
 #if defined(__WIN__)
-       char compver[]= "Version 1.06.0001 " __DATE__ " "  __TIME__;
+       char compver[]= "Version 1.06.0005 " __DATE__ " "  __TIME__;
        char slash= '\\';
 #else   // !__WIN__
        char slash= '/';
 #endif  // !__WIN__
 } // extern "C"
+
+#if MYSQL_VERSION_ID > 100200
+#define stored_in_db stored_in_db()
+#endif   // MYSQL_VERSION_ID
 
 #if defined(XMAP)
        my_bool xmap= false;
@@ -193,39 +199,45 @@ extern "C" {
 } // extern "C"
 #endif   // XMSG
 
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 	     char *JvmPath;
 			 char *ClassPath;
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
 
-#if defined(__WIN__)
-CRITICAL_SECTION parsec;      // Used calling the Flex parser
-#else   // !__WIN__
-pthread_mutex_t parmut = PTHREAD_MUTEX_INITIALIZER;
-#endif  // !__WIN__
+pthread_mutex_t parmut;
+pthread_mutex_t usrmut;
+pthread_mutex_t tblmut;
 
 /***********************************************************************/
 /*  Utility functions.                                                 */
 /***********************************************************************/
 PQRYRES OEMColumns(PGLOBAL g, PTOS topt, char *tab, char *db, bool info);
 PQRYRES VirColumns(PGLOBAL g, bool info);
-PQRYRES JSONColumns(PGLOBAL g, char *db, PTOS topt, bool info);
+PQRYRES JSONColumns(PGLOBAL g, PCSZ db, PCSZ dsn, PTOS topt, bool info);
 PQRYRES XMLColumns(PGLOBAL g, char *db, char *tab, PTOS topt, bool info);
+#if defined(MONGO_SUPPORT)
+PQRYRES MGOColumns(PGLOBAL g, PCSZ db, PCSZ url, PTOS topt, bool info);
+#endif   // MONGO_SUPPORT
 int     TranslateJDBCType(int stp, char *tn, int prec, int& len, char& v);
 void    PushWarning(PGLOBAL g, THD *thd, int level);
 bool    CheckSelf(PGLOBAL g, TABLE_SHARE *s, PCSZ host, PCSZ db,
 	                                           PCSZ tab, PCSZ src, int port);
 bool    ZipLoadFile(PGLOBAL, PCSZ, PCSZ, PCSZ, bool, bool);
 bool    ExactInfo(void);
-void    mongo_init(bool);
+#if defined(CMGO_SUPPORT)
+//void    mongo_init(bool);
+#endif   // CMGO_SUPPORT
 USETEMP UseTemp(void);
 int     GetConvSize(void);
 TYPCONV GetTypeConv(void);
+char   *GetJsonNull(void);
 uint    GetJsonGrpSize(void);
 char   *GetJavaWrapper(void);
 uint    GetWorkSize(void);
 void    SetWorkSize(uint);
 extern "C" const char *msglang(void);
+
+static char *strz(PGLOBAL g, LEX_STRING &ls);
 
 static void PopUser(PCONNECT xp);
 static PCONNECT GetUser(THD *thd, PCONNECT xp);
@@ -330,20 +342,41 @@ static MYSQL_THDVAR_ENUM(
   0,                               // def (no)
   &xconv_typelib);                 // typelib
 
+// Null representation for JSON values
+static MYSQL_THDVAR_STR(json_null,
+	PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_MEMALLOC,
+	"Representation of Json null values",
+	//     check_json_null, update_json_null,
+	NULL, NULL, "<null>");
+
 // Estimate max number of rows for JSON aggregate functions
 static MYSQL_THDVAR_UINT(json_grp_size,
        PLUGIN_VAR_RQCMDARG,             // opt
        "max number of rows for JSON aggregate functions.",
        NULL, NULL, JSONMAX, 1, INT_MAX, 1);
 
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 // Default java wrapper to use with JDBC tables
 static MYSQL_THDVAR_STR(java_wrapper,
 	PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_MEMALLOC,
 	"Java wrapper class name",
-	//     check_class_path, update_class_path,
+	//     check_java_wrapper, update_java_wrapper,
 	NULL, NULL, "wrappers/JdbcInterface");
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
+
+#if 0 // This is apparently not acceptable for a plugin
+// Enabling MONGO table type
+static MYSQL_THDVAR_BOOL(enable_mongo, PLUGIN_VAR_RQCMDARG,
+	"Enabling the MongoDB access",
+	NULL, NULL, MONGO_ENABLED);
+#endif   // 0
+
+#if defined(MONGO_SUPPORT)
+// Enabling MONGO table type
+static MYSQL_THDVAR_BOOL(enable_mongo, PLUGIN_VAR_RQCMDARG,
+	"Enabling the MongoDB access",
+	NULL, NULL, MONGO_ENABLED);
+#endif   // MONGO_SUPPORT
 
 #if defined(XMSG) || defined(NEWMSG)
 const char *language_names[]=
@@ -381,6 +414,8 @@ bool ExactInfo(void) {return THDVAR(current_thd, exact_info);}
 USETEMP UseTemp(void) {return (USETEMP)THDVAR(current_thd, use_tempfile);}
 int GetConvSize(void) {return THDVAR(current_thd, conv_size);}
 TYPCONV GetTypeConv(void) {return (TYPCONV)THDVAR(current_thd, type_conv);}
+char *GetJsonNull(void)
+	{return connect_hton ? THDVAR(current_thd, json_null) : NULL;}
 uint GetJsonGrpSize(void)
   {return connect_hton ? THDVAR(current_thd, json_grp_size) : 10;}
 uint GetWorkSize(void) {return THDVAR(current_thd, work_size);}
@@ -398,10 +433,18 @@ extern "C" const char *msglang(void)
 } // end of msglang
 #else   // !XMSG && !NEWMSG
 
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 char *GetJavaWrapper(void)
 {return connect_hton ? THDVAR(current_thd, java_wrapper) : (char*)"wrappers/JdbcInterface";}
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
+
+#if defined(JAVA_SUPPORT)
+//bool MongoEnabled(void) { return THDVAR(current_thd, enable_mongo); }
+#endif   // JAVA_SUPPORT
+
+#if defined(MONGO_SUPPORT)
+bool MongoEnabled(void) { return THDVAR(current_thd, enable_mongo); }
+#endif   // MONGO_SUPPORT
 
 extern "C" const char *msglang(void)
 {
@@ -505,7 +548,8 @@ ha_create_table_option connect_table_option_list[]=
   HA_TOPTION_STRING("CATFUNC", catfunc),
   HA_TOPTION_STRING("SRCDEF", srcdef),
   HA_TOPTION_STRING("COLIST", colist),
-  HA_TOPTION_STRING("OPTION_LIST", oplist),
+	HA_TOPTION_STRING("FILTER", filter),
+	HA_TOPTION_STRING("OPTION_LIST", oplist),
   HA_TOPTION_STRING("DATA_CHARSET", data_charset),
   HA_TOPTION_NUMBER("LRECL", lrecl, 0, 0, INT_MAX32, 1),
   HA_TOPTION_NUMBER("BLOCK_SIZE", elements, 0, 0, INT_MAX32, 1),
@@ -666,14 +710,20 @@ static int connect_init_func(void *p)
 
 #if defined(__WIN__)
   sql_print_information("CONNECT: %s", compver);
-	InitializeCriticalSection((LPCRITICAL_SECTION)&parsec);
 #else   // !__WIN__
   sql_print_information("CONNECT: %s", version);
 #endif  // !__WIN__
+	pthread_mutex_init(&parmut, NULL);
+	pthread_mutex_init(&usrmut, NULL);
+	pthread_mutex_init(&tblmut, NULL);
 
 #if defined(LIBXML2_SUPPORT)
   XmlInitParserLib();
 #endif   // LIBXML2_SUPPORT
+
+#if 0  //defined(CMGO_SUPPORT)
+	mongo_init(true);
+#endif   // CMGO_SUPPORT
 
   init_connect_psi_keys();
 
@@ -692,9 +742,9 @@ static int connect_init_func(void *p)
 
   DTVAL::SetTimeShift();      // Initialize time zone shift once for all
   BINCOL::SetEndian();        // Initialize host endian setting
-#if defined(JDBC_SUPPORT)
-	JDBConn::SetJVM();
-#endif   // JDBC_SUPPORT
+#if defined(JAVA_SUPPORT)
+	JAVAConn::SetJVM();
+#endif   // JAVA_SUPPORT
   DBUG_RETURN(0);
 } // end of connect_init_func
 
@@ -713,17 +763,20 @@ static int connect_done_func(void *)
   XmlCleanupParserLib();
 #endif // LIBXML2_SUPPORT
 
-#ifdef JDBC_SUPPORT
-	JDBConn::ResetJVM();
-#endif // JDBC_SUPPORT
+#if defined(CMGO_SUPPORT)
+	CMgoConn::mongo_init(false);
+#endif   // CMGO_SUPPORT
 
-#if	defined(__WIN__)
-	DeleteCriticalSection((LPCRITICAL_SECTION)&parsec);
-#else   // !__WIN__
+#ifdef JAVA_SUPPORT
+	JAVAConn::ResetJVM();
+#endif // JAVA_SUPPORT
+
+#if	!defined(__WIN__)
 	PROFILE_End();
 #endif  // !__WIN__
 
-  for (pc= user_connect::to_users; pc; pc= pn) {
+	pthread_mutex_lock(&usrmut);
+	for (pc= user_connect::to_users; pc; pc= pn) {
     if (pc->g)
       PlugCleanup(pc->g, true);
 
@@ -731,6 +784,11 @@ static int connect_done_func(void *)
     delete pc;
     } // endfor pc
 
+	pthread_mutex_unlock(&usrmut);
+
+	pthread_mutex_destroy(&usrmut);
+	pthread_mutex_destroy(&parmut);
+	pthread_mutex_destroy(&tblmut);
 	connect_hton= NULL;
   DBUG_RETURN(error);
 } // end of connect_done_func
@@ -843,6 +901,7 @@ ha_connect::~ha_connect(void)
 static void PopUser(PCONNECT xp)
 {
 	if (xp) {
+		pthread_mutex_lock(&usrmut);
 		xp->count--;
 
 		if (!xp->count) {
@@ -867,6 +926,7 @@ static void PopUser(PCONNECT xp)
 			delete xp;
 		} // endif count
 
+		pthread_mutex_unlock(&usrmut);
 	} // endif xp
 
 } // end of PopUser
@@ -880,23 +940,36 @@ static PCONNECT GetUser(THD *thd, PCONNECT xp)
 	if (!thd)
     return NULL;
 
-  if (xp && thd == xp->thdp)
-    return xp;
+	if (xp) {
+		if (thd == xp->thdp)
+			return xp;
 
-  for (xp= user_connect::to_users; xp; xp= xp->next)
+		PopUser(xp);		// Avoid memory leak
+	} // endif xp
+
+	pthread_mutex_lock(&usrmut);
+
+	for (xp= user_connect::to_users; xp; xp= xp->next)
     if (thd == xp->thdp)
       break;
 
-  if (!xp) {
-    xp= new user_connect(thd);
+	if (xp)
+		xp->count++;
 
-    if (xp->user_init()) {
-      delete xp;
-      xp= NULL;
-      } // endif user_init
+	pthread_mutex_unlock(&usrmut);
 
-  } else
-    xp->count++;
+	if (!xp) {
+		xp = new user_connect(thd);
+
+		if (xp->user_init()) {
+			delete xp;
+			xp = NULL;
+		} // endif user_init
+
+	}	// endif xp
+
+  //} else
+  //  xp->count++;
 
   return xp;
 } // end of GetUser
@@ -1025,26 +1098,43 @@ PCSZ GetListOption(PGLOBAL g, PCSZ opname, PCSZ oplist, PCSZ def)
     return (char*)def;
 
   char  key[16], val[256];
-  char *pk, *pv, *pn;
+  char *pv, *pn, *pk= (char*)oplist;
 	PCSZ  opval= def;
   int   n;
 
-  for (pk= (char*)oplist; pk; pk= ++pn) {
+	while (*pk == ' ')
+		pk++;
+
+  for (; pk; pk= pn) {
     pn= strchr(pk, ',');
     pv= strchr(pk, '=');
 
     if (pv && (!pn || pv < pn)) {
-      n= MY_MIN(static_cast<size_t>(pv - pk), sizeof(key) - 1);
-      memcpy(key, pk, n);
+			n = MY_MIN(static_cast<size_t>(pv - pk), sizeof(key) - 1);
+			memcpy(key, pk, n);
+
+			while (n && key[n - 1] == ' ')
+				n--;
+
       key[n]= 0;
-      pv++;
-      n= MY_MIN((pn ? pn - pv : strlen(pv)), sizeof(val) - 1);
+
+      while(*(++pv) == ' ') ;
+
+			n= MY_MIN((pn ? pn - pv : strlen(pv)), sizeof(val) - 1);
       memcpy(val, pv, n);
-      val[n]= 0;
+
+			while (n && val[n - 1] == ' ')
+				n--;
+
+			val[n]= 0;
     } else {
-      n= MY_MIN((pn ? pn - pk : strlen(pk)), sizeof(key) - 1);
+			n= MY_MIN((pn ? pn - pk : strlen(pk)), sizeof(key) - 1);
       memcpy(key, pk, n);
-      key[n]= 0;
+
+			while (n && key[n - 1] == ' ')
+				n--;
+
+			key[n]= 0;
       val[0]= 0;
     } // endif pv
 
@@ -1054,6 +1144,7 @@ PCSZ GetListOption(PGLOBAL g, PCSZ opname, PCSZ oplist, PCSZ def)
     } else if (!pn)
       break;
 
+		while (*(++pn) == ' ') ;
     } // endfor pk
 
   return opval;
@@ -1095,7 +1186,9 @@ PCSZ GetStringTableOption(PGLOBAL g, PTOS options, PCSZ opname, PCSZ sdef)
     opval= options->srcdef;
   else if (!stricmp(opname, "Colist"))
     opval= options->colist;
-  else if (!stricmp(opname, "Data_charset"))
+	else if (!stricmp(opname, "Filter"))
+		opval = options->filter;
+	else if (!stricmp(opname, "Data_charset"))
     opval= options->data_charset;
 
   if (!opval && options->oplist)
@@ -1219,9 +1312,14 @@ PCSZ ha_connect::GetStringOption(PCSZ opname, PCSZ sdef)
 		else
 			opval= GetListOption(xp->g, opname, options->oplist);
 
-  } else if (!stricmp(opname, "Query_String"))
-    opval= thd_query_string(table->in_use)->str;
-  else if (!stricmp(opname, "Partname"))
+	} else if (!stricmp(opname, "Query_String")) {
+//  This escapes everything and returns a wrong query 
+//	opval = thd_query_string(table->in_use)->str;
+		opval = (PCSZ)PlugSubAlloc(xp->g, NULL, 
+			thd_query_string(table->in_use)->length + 1);
+		strcpy((char*)opval, thd_query_string(table->in_use)->str);
+//	sprintf((char*)opval, "%s", thd_query_string(table->in_use)->str);
+	} else if (!stricmp(opname, "Partname"))
     opval= partname;
   else if (!stricmp(opname, "Table_charset")) {
     const CHARSET_INFO *chif= (tshp) ? tshp->table_charset 
@@ -1367,7 +1465,7 @@ PFOS ha_connect::GetFieldOptionStruct(Field *fdp)
 void *ha_connect::GetColumnOption(PGLOBAL g, void *field, PCOLINFO pcf)
 {
   const char *cp;
-  char   *chset, v;
+  char   *chset, v = 0;
   ha_field_option_struct *fop;
   Field*  fp;
   Field* *fldp;
@@ -1420,14 +1518,13 @@ void *ha_connect::GetColumnOption(PGLOBAL g, void *field, PCOLINFO pcf)
   } // endif fop
 
   chset = (char *)fp->charset()->name;
-  v = (!strcmp(chset, "binary")) ? 'B' : 0;
 
   switch (fp->type()) {
     case MYSQL_TYPE_BLOB:
     case MYSQL_TYPE_VARCHAR:
     case MYSQL_TYPE_VAR_STRING:
       pcf->Flags |= U_VAR;
-      /* fall through */
+			// fall through
     default:
       pcf->Type= MYSQLtoPLG(fp->type(), &v);
       break;
@@ -1435,8 +1532,9 @@ void *ha_connect::GetColumnOption(PGLOBAL g, void *field, PCOLINFO pcf)
 
   switch (pcf->Type) {
     case TYPE_STRING:
-      // Do something for case
-      cp= fp->charset()->name;
+		case TYPE_BIN:
+			// Do something for case
+      cp= chset;
 
       // Find if collation name ends by _ci
       if (!strcmp(cp + strlen(cp) - 3, "_ci")) {
@@ -1676,7 +1774,7 @@ bool ha_connect::IsPartitioned(void)
 
 } // end of IsPartitioned
 
-const char *ha_connect::GetDBName(const char* name)
+PCSZ ha_connect::GetDBName(PCSZ name)
 {
   return (name) ? name : table->s->db.str;
 } // end of GetDBName
@@ -1739,7 +1837,7 @@ void ha_connect::AddColName(char *cp, Field *fp)
 /***********************************************************************/
 /*  This function sets the current database path.                      */
 /***********************************************************************/
-bool ha_connect::SetDataPath(PGLOBAL g, const char *path) 
+bool ha_connect::SetDataPath(PGLOBAL g, PCSZ path) 
 {
   return (!(datapath= SetPath(g, path)));
 } // end of SetDataPath
@@ -2048,6 +2146,11 @@ int ha_connect::MakeRecord(char *buf)
             charset= tdbp->data_charset();
             rc= fp->store(p, strlen(p), charset, CHECK_FIELD_WARN);
             break;
+					case TYPE_BIN:
+						p = value->GetCharValue();
+						charset = &my_charset_bin;
+						rc = fp->store(p, strlen(p), charset, CHECK_FIELD_WARN);
+						break;
           case TYPE_DOUBLE:
             rc= fp->store(value->GetFloatValue());
             break;
@@ -2094,7 +2197,7 @@ int ha_connect::MakeRecord(char *buf)
 /***********************************************************************/
 /*  Set row values from a MySQL pseudo record. Specific to MySQL.      */
 /***********************************************************************/
-int ha_connect::ScanRecord(PGLOBAL g, uchar *)
+int ha_connect::ScanRecord(PGLOBAL g, const uchar *)
 {
   char    attr_buffer[1024];
   char    data_buffer[1024];
@@ -2237,7 +2340,7 @@ int ha_connect::ScanRecord(PGLOBAL g, uchar *)
 /*  Check change in index column. Specific to MySQL.                   */
 /*  Should be elaborated to check for real changes.                    */
 /***********************************************************************/
-int ha_connect::CheckRecord(PGLOBAL g, const uchar *, uchar *newbuf)
+int ha_connect::CheckRecord(PGLOBAL g, const uchar *, const uchar *newbuf)
 {
 	return ScanRecord(g, newbuf);
 } // end of dummy CheckRecord
@@ -2430,7 +2533,7 @@ const char *ha_connect::GetValStr(OPVAL vop, bool neg)
       val= (neg) ? " IS NOT NULL" : " IS NULL";
       break;
     case OP_LIKE:
-      val= " LIKE ";
+      val= (neg) ? " NOT LIKE " : " LIKE ";
       break;
     case OP_XX:
       val= (neg) ? " NOT BETWEEN " : " BETWEEN ";
@@ -2546,7 +2649,7 @@ PFIL ha_connect::CondFilter(PGLOBAL g, Item *cond)
       case Item_func::LE_FUNC: vop= OP_LE;  break;
       case Item_func::GE_FUNC: vop= OP_GE;  break;
       case Item_func::GT_FUNC: vop= OP_GT;  break;
-      case Item_func::IN_FUNC: vop= OP_IN;
+      case Item_func::IN_FUNC: vop= OP_IN;	/* fall through */
       case Item_func::BETWEEN:
         ismul= true;
         neg= ((Item_func_opt_neg *)condf)->negated;
@@ -2799,12 +2902,15 @@ PCFIL ha_connect::CheckCond(PGLOBAL g, PCFIL filp, const Item *cond)
 			case Item_func::LE_FUNC:     vop= OP_LE;   break;
 			case Item_func::GE_FUNC:     vop= OP_GE;   break;
 			case Item_func::GT_FUNC:     vop= OP_GT;   break;
-			case Item_func::LIKE_FUNC:   vop= OP_LIKE; break;
+			case Item_func::LIKE_FUNC:
+				vop= OP_LIKE; 
+				neg = ((Item_func_opt_neg *)condf)->negated;
+				break;
 			case Item_func::ISNOTNULL_FUNC:
-				neg = true;
-				/* fall through */
+				neg = true;	
+				// fall through
 			case Item_func::ISNULL_FUNC: vop= OP_NULL; break;
-			case Item_func::IN_FUNC:     vop= OP_IN;
+			case Item_func::IN_FUNC:     vop= OP_IN; /* fall through */
       case Item_func::BETWEEN:
         ismul= true;
         neg= ((Item_func_opt_neg *)condf)->negated;
@@ -2931,6 +3037,7 @@ PCFIL ha_connect::CheckCond(PGLOBAL g, PCFIL filp, const Item *cond)
                 break;
                 } // endif ODBC
 
+							// fall through
             case MYSQL_TYPE_DATE:
               if (tty == TYPE_AM_ODBC) {
                 strcat(s, "{d '");
@@ -4052,7 +4159,12 @@ int ha_connect::info(uint flag)
 
   DBUG_ENTER("ha_connect::info");
 
-  if (trace)
+	if (!g) {
+		my_message(ER_UNKNOWN_ERROR, "Cannot get g pointer", MYF(0));
+		DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
+	}	// endif g
+
+	if (trace)
     htrc("%p In info: flag=%u valid_info=%d\n", this, flag, valid_info);
 
   // tdbp must be available to get updated info
@@ -4063,7 +4175,7 @@ int ha_connect::info(uint flag)
     if (xmod == MODE_ANY || xmod == MODE_ALTER) {
       // Pure info, not a query
       pure= true;
-      xp->CheckCleanup();
+      xp->CheckCleanup(xmod == MODE_ANY && valid_query_id == 0);
       } // endif xmod
 
     // This is necessary for getting file length
@@ -4076,8 +4188,10 @@ int ha_connect::info(uint flag)
 		} else
       DBUG_RETURN(HA_ERR_INTERNAL_ERROR);       // Should never happen
 
-    if (!(tdbp= GetTDB(g)))
-      DBUG_RETURN(HA_ERR_INTERNAL_ERROR);       // Should never happen
+		if (!(tdbp = GetTDB(g))) {
+			my_message(ER_UNKNOWN_ERROR, g->Message, MYF(0));
+			DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
+		} // endif tdbp
 
     valid_info = false;
     } // endif tdbp
@@ -4247,11 +4361,12 @@ bool ha_connect::check_privileges(THD *thd, PTOS options, char *dbn, bool quick)
 			} else
         return false;
 
-      /* check FILE_ACL */
-      /* fall through */
+      // check FILE_ACL
+      // fall through
     case TAB_ODBC:
 		case TAB_JDBC:
 		case TAB_MYSQL:
+		case TAB_MONGO:
 		case TAB_DIR:
     case TAB_MAC:
     case TAB_WMI:
@@ -4321,10 +4436,14 @@ bool ha_connect::IsSameIndex(PIXDEF xp1, PIXDEF xp2)
   return b;
 } // end of IsSameIndex
 
-MODE ha_connect::CheckMode(PGLOBAL g, THD *thd,
-                           MODE newmode, bool *chk, bool *cras)
+MODE ha_connect::CheckMode(PGLOBAL g, THD *thd, 
+	                         MODE newmode, bool *chk, bool *cras)
 {
+#if defined(DEVELOPMENT)
+	if (true) {
+#else
   if (trace) {
+#endif
     LEX_STRING *query_string= thd_query_string(thd);
     htrc("%p check_mode: cmdtype=%d\n", this, thd_sql_command(thd));
     htrc("Cmd=%.*s\n", (int) query_string->length, query_string->str);
@@ -4336,7 +4455,7 @@ MODE ha_connect::CheckMode(PGLOBAL g, THD *thd,
   if (newmode == MODE_WRITE) {
     switch (thd_sql_command(thd)) {
       case SQLCOM_LOCK_TABLES:
-        locked= 2;
+        locked= 2; // fall through
       case SQLCOM_CREATE_TABLE:
       case SQLCOM_INSERT:
       case SQLCOM_LOAD:
@@ -4430,9 +4549,9 @@ MODE ha_connect::CheckMode(PGLOBAL g, THD *thd,
           break;
 //        } // endif partitioned
 
-      case SQLCOM_END:
-        // Met in procedures: IF(EXISTS(SELECT...
-        newmode= MODE_READ;
+			case SQLCOM_CHECK: // TODO implement it
+			case SQLCOM_END:	 // Met in procedures: IF(EXISTS(SELECT...
+				newmode= MODE_READ;
         break;
       default:
         htrc("Unsupported sql_command=%d\n", thd_sql_command(thd));
@@ -5084,7 +5203,8 @@ static bool add_field(String *sql, const char *field_name, int typ, int len,
   error|= sql->append("` ");
   error|= sql->append(type);
 
-	if (len && typ != TYPE_DATE && (typ != TYPE_DOUBLE || dec >= 0)) {
+	if (typ == TYPE_STRING || 
+		 (len && typ != TYPE_DATE && (typ != TYPE_DOUBLE || dec >= 0))) {
     error|= sql->append('(');
     error|= sql->append_ulonglong(len);
 
@@ -5278,19 +5398,18 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 #endif   // __WIN__
 //int      hdr, mxe;
 	int      port = 0, mxr = 0, rc = 0, mul = 0, lrecl = 0;
+	PCSZ     tabtyp = NULL;
 #if defined(ODBC_SUPPORT)
   POPARM   sop= NULL;
 	PCSZ     ucnc= NULL;
-  bool     cnc= false;
+	bool     cnc= false;
   int      cto= -1, qto= -1;
 #endif   // ODBC_SUPPORT
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 	PJPARM   sjp= NULL;
 	PCSZ     driver= NULL;
 	char    *url= NULL;
-//char    *prop= NULL;
-	PCSZ     tabtyp= NULL;
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
   uint     tm, fnc= FNC_NO, supfnc= (FNC_NO | FNC_COL);
   bool     bif, ok= false, dbf= false;
   TABTYPE  ttp= TAB_UNDEF;
@@ -5298,6 +5417,10 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
   PCOLRES  crp;
   PCONNECT xp= NULL;
   PGLOBAL  g= GetPlug(thd, xp);
+
+  if (!g)
+    return HA_ERR_INTERNAL_ERROR;
+
   PDBUSER  dup= PlgGetUser(g);
   PCATLG   cat= (dup) ? dup->Catalog : NULL;
   PTOS     topt= table_s->option_struct;
@@ -5305,10 +5428,6 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
   String   sql(buf, sizeof(buf), system_charset_info);
 
   sql.copy(STRING_WITH_LEN("CREATE TABLE whatever ("), system_charset_info);
-
-  if (!g)
-    return HA_ERR_INTERNAL_ERROR;
-
   user= host= pwd= tbl= src= col= ocl= pic= fcl= skc= rnk= zfn= dsn= NULL;
 
   // Get the useful create options
@@ -5343,19 +5462,17 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 #endif   // __WIN__
     port= atoi(GetListOption(g, "port", topt->oplist, "0"));
 #if defined(ODBC_SUPPORT)
-    mxr= atoi(GetListOption(g,"maxres", topt->oplist, "0"));
+		tabtyp = GetListOption(g, "Tabtype", topt->oplist, NULL);
+		mxr= atoi(GetListOption(g,"maxres", topt->oplist, "0"));
     cto= atoi(GetListOption(g,"ConnectTimeout", topt->oplist, "-1"));
     qto= atoi(GetListOption(g,"QueryTimeout", topt->oplist, "-1"));
     
     if ((ucnc= GetListOption(g, "UseDSN", topt->oplist)))
       cnc= (!*ucnc || *ucnc == 'y' || *ucnc == 'Y' || atoi(ucnc) != 0);
 #endif
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 		driver= GetListOption(g, "Driver", topt->oplist, NULL);
-//	url= GetListOption(g, "URL", topt->oplist, NULL);
-//	prop = GetListOption(g, "Properties", topt->oplist, NULL);
-		tabtyp = GetListOption(g, "Tabtype", topt->oplist, NULL);
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
 #if defined(PROMPT_OK)
     cop= atoi(GetListOption(g, "checkdsn", topt->oplist, "0"));
 #endif   // PROMPT_OK
@@ -5442,7 +5559,7 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 				supfnc |= (FNC_TABLE | FNC_DSN | FNC_DRIVER);
 				break;
 #endif   // ODBC_SUPPORT
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 			case TAB_JDBC:
 				if (fnc & FNC_DRIVER) {
 					ok = true;
@@ -5476,17 +5593,17 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 
 				supfnc |= (FNC_DRIVER | FNC_TABLE);
 				break;
-#endif   // JDBC_SUPPORT
-		case TAB_DBF:
-      dbf= true;
-      // fall through
-    case TAB_CSV:
-      if (!fn && fnc != FNC_NO)
-        sprintf(g->Message, "Missing %s file name", topt->type);
-			else if (sep && strlen(sep) > 1)
-				sprintf(g->Message, "Invalid separator %s", sep);
-			else
-				ok= true;
+#endif   // JAVA_SUPPORT
+			case TAB_DBF:
+				dbf = true;
+				// Passthru
+			case TAB_CSV:
+				if (!fn && fnc != FNC_NO)
+					sprintf(g->Message, "Missing %s file name", topt->type);
+				else if (sep && strlen(sep) > 1)
+					sprintf(g->Message, "Invalid separator %s", sep);
+				else
+					ok = true;
 
 				break;
 			case TAB_MYSQL:
@@ -5533,10 +5650,8 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 				ok = true;
 				break;
 #endif   // __WIN__
-#if defined(PIVOT_SUPPORT)
 			case TAB_PIVOT:
 				supfnc = FNC_NO;
-#endif   // PIVOT_SUPPORT
 			case TAB_PRX:
 			case TAB_TBL:
 			case TAB_XCL:
@@ -5559,12 +5674,22 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 			case TAB_XML:
 #endif   // LIBXML2_SUPPORT  ||         DOMDOC_SUPPORT
 			case TAB_JSON:
-				if (!fn && !zfn && !mul)
+				dsn = strz(g, create_info->connect_string);
+
+				if (!fn && !zfn && !mul && !dsn)
 					sprintf(g->Message, "Missing %s file name", topt->type);
 				else
 					ok = true;
 
 				break;
+#if defined(JAVA_SUPPORT)
+			case TAB_MONGO:
+				if (!topt->tabname)
+					topt->tabname = tab;
+
+				ok = true;
+				break;
+#endif   // JAVA_SUPPORT
 			case TAB_VIR:
 				ok = true;
 				break;
@@ -5637,7 +5762,7 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 
 					break;
 #endif   // ODBC_SUPPORT
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 				case TAB_JDBC:
 					switch (fnc) {
 						case FNC_NO:
@@ -5666,7 +5791,7 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 					} // endswitch info
 
 					break;
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
 				case TAB_MYSQL:
 					qrp = MyColumns(g, thd, host, db, user, pwd, tab,
 						NULL, port, fnc == FNC_COL);
@@ -5696,17 +5821,21 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 						} // endif OcrColumns
 
 					break;
-#if defined(PIVOT_SUPPORT)
 				case TAB_PIVOT:
 					qrp = PivotColumns(g, tab, src, pic, fcl, skc, host, db, user, pwd, port);
 					break;
-#endif   // PIVOT_SUPPORT
 				case TAB_VIR:
 					qrp = VirColumns(g, fnc == FNC_COL);
 					break;
 				case TAB_JSON:
-					qrp = JSONColumns(g, (char*)db, topt, fnc == FNC_COL);
+					qrp = JSONColumns(g, db, dsn, topt, fnc == FNC_COL);
 					break;
+#if defined(MONGO_SUPPORT)
+				case TAB_MONGO:
+					url = strz(g, create_info->connect_string);
+					qrp = MGOColumns(g, db, url, topt, fnc == FNC_COL);
+					break;
+#endif   // MONGO_SUPPORT
 #if defined(LIBXML2_SUPPORT) || defined(DOMDOC_SUPPORT)
 				case TAB_XML:
 					qrp = XMLColumns(g, (char*)db, tab, topt, fnc == FNC_COL);
@@ -5831,7 +5960,7 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 
 								break;
 							case FLD_SCHEM:
-#if defined(ODBC_SUPPORT) || defined(JDBC_SUPPORT)
+#if defined(ODBC_SUPPORT) || defined(JAVA_SUPPORT)
 								if ((ttp == TAB_ODBC || ttp == TAB_JDBC) && crp->Kdata) {
 									if (schem && stricmp(schem, crp->Kdata->GetCharValue(i))) {
 										sprintf(g->Message,
@@ -5842,7 +5971,7 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 										schem = crp->Kdata->GetCharValue(i);
 
 								} // endif ttp
-#endif   // ODBC_SUPPORT	||				 JDBC_SUPPORT
+#endif   // ODBC_SUPPORT	||				 JAVA_SUPPORT
 							default:
 								break;                 // Ignore
 						} // endswitch Fld
@@ -5890,7 +6019,7 @@ static int connect_assisted_discovery(handlerton *, THD* thd,
 
 					} else
 #endif   // ODBC_SUPPORT
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 						if (ttp == TAB_JDBC) {
 							int  plgtyp;
 
@@ -6022,6 +6151,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
   TABTYPE type;
   TABLE  *st= table;                       // Probably unuseful
   THD    *thd= ha_thd();
+	LEX_STRING cnc = table_arg->s->connect_string;
 #if defined(WITH_PARTITION_STORAGE_ENGINE)
   partition_info *part_info= table_arg->part_info;
 #endif   // WITH_PARTITION_STORAGE_ENGINE
@@ -6069,7 +6199,8 @@ int ha_connect::create(const char *name, TABLE *table_arg,
   if (check_privileges(thd, options, GetDBfromName(name)))
     DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
 
-  inward= IsFileType(type) && !options->filename;
+  inward= IsFileType(type) && !options->filename &&
+		     (type != TAB_JSON || !cnc.length);
 
   if (options->data_charset) {
     const CHARSET_INFO *data_charset;
@@ -6122,6 +6253,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
           DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
         } // endif tabname
 
+				// fall through
       case TAB_MYSQL:
 #if defined(WITH_PARTITION_STORAGE_ENGINE)
         if (!part_info)
@@ -6166,7 +6298,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
           DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
           } // endif CheckSelf
 
-       }break;
+       } break;
       default: /* do nothing */;
         break;
      } // endswitch ttp
@@ -6177,7 +6309,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
 
     // Note that if no support is specified, the default is MS-DOM
     // on Windows and libxml2 otherwise
-    switch (*xsup) {
+    switch (toupper(*xsup)) {
       case '*':
 #if defined(__WIN__)
         dom= true;
@@ -6290,6 +6422,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
       case MYSQL_TYPE_VARCHAR:
       case MYSQL_TYPE_VAR_STRING:
       case MYSQL_TYPE_STRING:
+#if 0
         if (!fp->field_length) {
           sprintf(g->Message, "Unsupported 0 length for column %s",
                               fp->field_name);
@@ -6299,7 +6432,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
                           MYF(0), fp->field_name);
           DBUG_RETURN(rc);
           } // endif fp
-
+#endif // 0
         break;                     // To be checked
       case MYSQL_TYPE_BIT:
       case MYSQL_TYPE_NULL:
@@ -6612,7 +6745,7 @@ bool ha_connect::FileExists(const char *fn, bool bf)
 } // end of FileExists
 
 // Called by SameString and NoFieldOptionChange
-bool ha_connect::CheckString(const char *str1, const char *str2)
+bool ha_connect::CheckString(PCSZ str1, PCSZ str2)
 {
   bool  b1= (!str1 || !*str1), b2= (!str2 || !*str2);
 
@@ -7029,7 +7162,7 @@ static MYSQL_SYSVAR_STR(errmsg_dir_path, msg_path,
        "../../../../storage/connect/");     // for testing
 #endif   // XMSG
 
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 static MYSQL_SYSVAR_STR(jvm_path, JvmPath,
 	PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_MEMALLOC,
 	"Path to the directory where is the JVM lib",
@@ -7041,7 +7174,7 @@ static MYSQL_SYSVAR_STR(class_path, ClassPath,
 	"Java class path",
 	//     check_class_path, update_class_path,
 	NULL, NULL, NULL);
-#endif   // JDBC_SUPPORT
+#endif   // JAVA_SUPPORT
 
 
 static struct st_mysql_sys_var* connect_system_variables[]= {
@@ -7060,13 +7193,17 @@ static struct st_mysql_sys_var* connect_system_variables[]= {
 #if defined(XMSG)
   MYSQL_SYSVAR(errmsg_dir_path),
 #endif   // XMSG
+	MYSQL_SYSVAR(json_null),
   MYSQL_SYSVAR(json_grp_size),
-#if defined(JDBC_SUPPORT)
+#if defined(JAVA_SUPPORT)
 	MYSQL_SYSVAR(jvm_path),
 	MYSQL_SYSVAR(class_path),
 	MYSQL_SYSVAR(java_wrapper),
-#endif   // JDBC_SUPPORT
-	NULL
+#endif   // JAVA_SUPPORT
+#if defined(JAVA_SUPPORT)
+//MYSQL_SYSVAR(enable_mongo),
+#endif   // JAVA_SUPPORT
+NULL
 };
 
 maria_declare_plugin(connect)
@@ -7075,14 +7212,14 @@ maria_declare_plugin(connect)
   &connect_storage_engine,
   "CONNECT",
   "Olivier Bertrand",
-  "Management of External Data (SQL/MED), including many file formats",
+  "Management of External Data (SQL/NOSQL/MED), including many file formats",
   PLUGIN_LICENSE_GPL,
   connect_init_func,                            /* Plugin Init */
   connect_done_func,                            /* Plugin Deinit */
   0x0106,                                       /* version number (1.05) */
   NULL,                                         /* status variables */
   connect_system_variables,                     /* system variables */
-  "1.06.0001",                                  /* string version */
-  MariaDB_PLUGIN_MATURITY_BETA                  /* maturity */
+  "1.06.0005",                                  /* string version */
+	MariaDB_PLUGIN_MATURITY_STABLE                /* maturity */
 }
 maria_declare_plugin_end;
