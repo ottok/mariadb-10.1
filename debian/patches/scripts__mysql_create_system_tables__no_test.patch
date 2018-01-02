@@ -1,3 +1,7 @@
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:27 +0200
+Subject: scripts__mysql_create_system_tables__no_test
+
 ## 33_scripts__mysql_create_system_tables__no_test.dpatch by  <ch@debian.org>
 ##
 ## All lines beginning with `## DP:' are a description of the patch.
@@ -5,9 +9,14 @@
 ## DP: A user with no password prevents a normal user from login under certain
 ## DP: circumstances as it is checked first. See #301741.
 ## DP: http://bugs.mysql.com/bug.php?id=6901
+---
+ scripts/mysql_system_tables_data.sql | 10 ----------
+ 1 file changed, 10 deletions(-)
 
---- mariadb-10.1.orig/scripts/mysql_system_tables_data.sql
-+++ mariadb-10.1/scripts/mysql_system_tables_data.sql
+diff --git a/scripts/mysql_system_tables_data.sql b/scripts/mysql_system_tables_data.sql
+index 9556e7b..0783f3d 100644
+--- a/scripts/mysql_system_tables_data.sql
++++ b/scripts/mysql_system_tables_data.sql
 @@ -26,16 +26,6 @@
  -- a plain character
  SELECT LOWER( REPLACE((SELECT REPLACE(@@hostname,'_','\_')),'%','\%') )INTO @current_hostname;

@@ -1,24 +1,31 @@
-Description: Remove obsoleted systemd target
- In Debian 9 the syslog.target is socket activated and thus obsolete to define.
- For details see Lintian warning
- https://lintian.debian.org/tags/systemd-service-file-refers-to-obsolete-target.html
-Author: Otto Kekäläinen <otto@mariadb.org>
+From: Debian MySQL Maintainers <pkg-mysql-maint@lists.alioth.debian.org>
+Date: Thu, 10 Aug 2017 20:40:29 +0200
+Subject: remove-systemd-obsolete-target
 
---- mariadb-10.1.orig/support-files/mariadb.service.in
-+++ mariadb-10.1/support-files/mariadb.service.in
-@@ -15,7 +15,6 @@
- [Unit]
- Description=MariaDB database server
+---
+ support-files/mariadb.service.in  | 1 -
+ support-files/mariadb@.service.in | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/support-files/mariadb.service.in b/support-files/mariadb.service.in
+index 6a307b2..7f40583 100644
+--- a/support-files/mariadb.service.in
++++ b/support-files/mariadb.service.in
+@@ -17,7 +17,6 @@ Description=MariaDB @VERSION@ database s
+ Documentation=man:mysqld(8)
+ Documentation=https://mariadb.com/kb/en/library/systemd/
  After=network.target
 -After=syslog.target
  
  [Install]
  WantedBy=multi-user.target
---- mariadb-10.1.orig/support-files/mariadb@.service.in
-+++ mariadb-10.1/support-files/mariadb@.service.in
-@@ -20,7 +20,6 @@
- [Unit]
- Description=MariaDB database server
+diff --git a/support-files/mariadb@.service.in b/support-files/mariadb@.service.in
+index 410e743..02be006 100644
+--- a/support-files/mariadb@.service.in
++++ b/support-files/mariadb@.service.in
+@@ -22,7 +22,6 @@ Description=MariaDB @VERSION@ database s
+ Documentation=man:mysqld(8)
+ Documentation=https://mariadb.com/kb/en/library/systemd/
  After=network.target
 -After=syslog.target
  

@@ -12,13 +12,11 @@ mysqld_multi.server_lsb-header.patch
 mips-groonga-atomic.patch
 mips-connect-unaligned.patch
 mips-machine.patch
-mips-unstable-tests.patch
 hurd_socket.patch
 armhf_mroonga_storage_fail.patch
 c11_atomics.patch
 remove-systemd-obsolete-target.patch
 kFreeBSD-gettid.patch
 mips-innobase-atomic.patch
-fix-FTBFS-on-GNU-Hurd.patch
 mytop-merge_src:mytop_improvements.patch
 Add_default_ExecStartPre_to_mariadb@.service.patch
