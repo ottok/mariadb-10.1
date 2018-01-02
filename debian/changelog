@@ -1,3 +1,28 @@
+mariadb-10.1 (10.1.30-0ubuntu0.17.10.1) artful-security; urgency=high
+
+  [ Otto Kekäläinen ]
+  * SECURITY UPDATE: New upstream release 10.1.30. Includes fixes for
+    the following security vulnerabilities (LP: #1740768)
+    - CVE-2017-15365
+  * Previous release 10.1.29 included included fixes for
+    the following security vulnerabilities:
+    - CVE-2017-10378
+    - CVE-2017-10268
+    - MDEV-13819
+  * Previous release 10.1.26 included included fixes for
+    - CVE-2017-10384
+    - CVE-2017-10379
+    - CVE-2017-10286
+    - CVE-2017-3636
+    - CVE-2017-3641
+    - CVE-2017-3653
+  * Delete unnecessary systemd files introduced by upstream
+
+  [ Vicentiu Ciorbaru ]
+  * Fix Mroonga compilation failure on arm64
+
+ -- Otto Kekäläinen <otto@debian.org>  Tue, 02 Jan 2018 13:51:23 +0200
+
 mariadb-10.1 (10.1.25-1) unstable; urgency=medium
 
   * New upstream version 10.1.25
