@@ -10,7 +10,7 @@ diff --git a/mysql-test/CMakeLists.txt b/mysql-test/CMakeLists.txt
 index 1c7cfaf..bc45177 100644
 --- a/mysql-test/CMakeLists.txt
 +++ b/mysql-test/CMakeLists.txt
-@@ -64,7 +64,7 @@ ELSE()
+@@ -65,7 +65,7 @@ ELSE()
  ENDIF()
  
  

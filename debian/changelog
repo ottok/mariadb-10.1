@@ -1,3 +1,19 @@
+mariadb-10.1 (10.1.31-0ubuntu0.17.10.1) artful-security; urgency=high
+
+  * SECURITY UPDATE: New upstream release 10.1.31. Includes fixes for
+    the following security vulnerabilities (LP: #1751920):
+    - CVE-2018-2668
+    - CVE-2018-2665
+    - CVE-2018-2640
+    - CVE-2018-2622
+    - CVE-2018-2612
+    - CVE-2018-2562
+  * Update git-buildpackage Debian branch setting so gbp import-orig works
+  * Update git-buildpackage filters to match master branch
+  * Update VCS-* links to point to the new source repository
+
+ -- Otto Kekäläinen <otto@debian.org>  Mon, 26 Feb 2018 18:07:57 -0500
+
 mariadb-10.1 (10.1.30-0ubuntu0.17.10.1) artful-security; urgency=high
 
   [ Otto Kekäläinen ]

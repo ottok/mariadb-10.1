@@ -23,7 +23,7 @@ index 0057c7f..43ad114 100644
      ${LIBM} ${LIBNSL} ${LIBBIND} ${LIBCRYPT} ${LIBSOCKET} ${LIBDL} ${CMAKE_THREAD_LIBS_INIT} ${LIBRT} ${LIBEXECINFO})
    # Need explicit pthread for gcc -fsanitize=address
    IF(CMAKE_USE_PTHREADS_INIT AND CMAKE_C_FLAGS MATCHES "-fsanitize=")
-@@ -1028,7 +1028,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
+@@ -1038,7 +1038,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
      long long int *ptr= &var;
      return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
    }"
