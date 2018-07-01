@@ -8,11 +8,9 @@ Subject: Change the default optimization from -O3 to -O2 in
  .../PerconaFT/cmake_modules/TokuSetupCompiler.cmake      | 16 ++++++++--------
  2 files changed, 14 insertions(+), 14 deletions(-)
 
-diff --git a/cmake/build_configurations/mysql_release.cmake b/cmake/build_configurations/mysql_release.cmake
-index c07de46..69a70ff 100644
 --- a/cmake/build_configurations/mysql_release.cmake
 +++ b/cmake/build_configurations/mysql_release.cmake
-@@ -155,12 +155,12 @@ IF(UNIX)
+@@ -156,12 +156,12 @@ IF(UNIX)
    IF(CMAKE_COMPILER_IS_GNUCC)
      SET(COMMON_C_FLAGS               "-g -static-libgcc -fno-omit-frame-pointer -fno-strict-aliasing  -Wno-uninitialized")
      SET(CMAKE_C_FLAGS_DEBUG          "-O ${COMMON_C_FLAGS}")
@@ -27,7 +25,7 @@ index c07de46..69a70ff 100644
    ENDIF()
  
    # IBM Z flags
-@@ -209,8 +209,8 @@ IF(UNIX)
+@@ -210,8 +210,8 @@ IF(UNIX)
        ENDIF()
        SET(CMAKE_C_FLAGS_DEBUG            "${COMMON_C_FLAGS}")
        SET(CMAKE_CXX_FLAGS_DEBUG          "${COMMON_CXX_FLAGS}")
@@ -38,7 +36,7 @@ index c07de46..69a70ff 100644
        SET(WITH_SSL no)
      ENDIF()
    ENDIF()
-@@ -219,12 +219,12 @@ IF(UNIX)
+@@ -220,12 +220,12 @@ IF(UNIX)
    IF(CMAKE_C_COMPILER_ID MATCHES "Clang")
      SET(COMMON_C_FLAGS               "-g -fno-omit-frame-pointer -fno-strict-aliasing")
      SET(CMAKE_C_FLAGS_DEBUG          "${COMMON_C_FLAGS}")
@@ -53,11 +51,9 @@ index c07de46..69a70ff 100644
    ENDIF()
  
    # Solaris flags
-diff --git a/storage/tokudb/PerconaFT/cmake_modules/TokuSetupCompiler.cmake b/storage/tokudb/PerconaFT/cmake_modules/TokuSetupCompiler.cmake
-index 0cd9a9c..3b4b43c 100644
 --- a/storage/tokudb/PerconaFT/cmake_modules/TokuSetupCompiler.cmake
 +++ b/storage/tokudb/PerconaFT/cmake_modules/TokuSetupCompiler.cmake
-@@ -115,10 +115,10 @@ set(CMAKE_CXX_FLAGS_DRD "-g3 -O1 ${CMAKE_CXX_FLAGS_DRD}")
+@@ -121,10 +121,10 @@ set(CMAKE_CXX_FLAGS_DRD "-g3 -O1 ${CMAKE
  ## need to set flags for RelWithDebInfo as well because we want the MySQL/MariaDB builds to use them
  if (CMAKE_CXX_COMPILER_ID STREQUAL Clang)
    # have tried -flto and -O4, both make our statically linked executables break apple's linker
@@ -72,7 +68,7 @@ index 0cd9a9c..3b4b43c 100644
  else ()
    if (APPLE)
      set(FLTO_OPTS "-fwhole-program")
-@@ -126,10 +126,10 @@ else ()
+@@ -132,10 +132,10 @@ else ()
      set(FLTO_OPTS "-fuse-linker-plugin")
    endif()
    # we overwrite this because the default passes -DNDEBUG and we don't want that

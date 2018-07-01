@@ -1,3 +1,34 @@
+mariadb-10.1 (1:10.1.34-0ubuntu0.18.04.1) bionic-security; urgency=medium
+
+  * SECURITY UPDATE: New upstream release 10.1.34. Includes fixes for
+    the security vulnerabilities from previous releases (LP: #1779715).
+  * Previous upstream version 10.1.33 included fixes for the following
+    security vulnerabilities:
+    - CVE-2018-2819
+    - CVE-2018-2817
+    - CVE-2018-2813
+    - CVE-2018-2787
+    - CVE-2018-2784
+    - CVE-2018-2782
+    - CVE-2018-2781
+    - CVE-2018-2771
+    - CVE-2018-2766
+    - CVE-2018-2761
+    - CVE-2018-2755
+  * Previous upstream version 10.1.31 included fixes for the following
+    security vulnerabilities:
+    - CVE-2018-2668
+    - CVE-2018-2665
+    - CVE-2018-2640
+    - CVE-2018-2622
+    - CVE-2018-2612
+    - CVE-2018-2562
+  * Previous upstream version 10.1.30 included fixes for the following
+    security vulnerabilities:
+    - CVE-2017-15365
+
+ -- Otto Kekäläinen <otto@debian.org>  Mon, 02 Jul 2018 00:58:30 +0300
+
 mariadb-10.1 (1:10.1.29-6) unstable; urgency=high
 
   * Ignore failed tests on more non-release platforms (kfreebsd-i386,
