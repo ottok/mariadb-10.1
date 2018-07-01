@@ -56,9 +56,9 @@ ENDIF()
 SET(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
    "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel")
 
-# MAX_INDEXES - Set the maximum number of indexes per table, default 64U
+# MAX_INDEXES - Set the maximum number of indexes per table, default 64
 IF (NOT MAX_INDEXES)
-  SET(MAX_INDEXES 64U)
+  SET(MAX_INDEXES 64)
 ENDIF(NOT MAX_INDEXES)
 
 IF (${MAX_INDEXES} GREATER 128)
@@ -162,6 +162,7 @@ INCLUDE(plugin)
 INCLUDE(install_macros)
 INCLUDE(systemd)
 INCLUDE(mysql_add_executable)
+INCLUDE(compile_flags)
 
 # Handle options
 OPTION(DISABLE_SHARED 
@@ -361,6 +362,10 @@ INCLUDE(maintainer)
 
 IF(WITH_UNIT_TESTS)
  ENABLE_TESTING()
+ # This is the only instance where ADD_TEST should be used,
+ # to make sure that make test will run MTR,
+ # use MY_ADD_TEST macro to add other tests
+ ADD_TEST(NAME MTR COMMAND ./mysql-test-run WORKING_DIRECTORY "mysql-test")
  ADD_SUBDIRECTORY(unittest/mytap)
  ADD_SUBDIRECTORY(unittest/strings)
  ADD_SUBDIRECTORY(unittest/examples)

@@ -34,6 +34,7 @@ const  char* wsrep_node_name        = 0;
 const  char* wsrep_node_address     = 0;
 const  char* wsrep_node_incoming_address = 0;
 const  char* wsrep_start_position   = 0;
+ulong   wsrep_reject_queries;
 
 static long wsrep_prev_slave_threads = wsrep_slave_threads;
 
@@ -52,11 +53,30 @@ int wsrep_init_vars()
   return 0;
 }
 
+extern ulong innodb_lock_schedule_algorithm;
+
 bool wsrep_on_update (sys_var *self, THD* thd, enum_var_type var_type)
 {
   if (var_type == OPT_GLOBAL) {
     // FIXME: this variable probably should be changed only per session
     thd->variables.wsrep_on = global_system_variables.wsrep_on;
+  }
+
+  return false;
+}
+
+bool wsrep_on_check(sys_var *self, THD* thd, set_var* var)
+{
+  bool new_wsrep_on= (bool)var->save_result.ulonglong_value;
+
+  if (check_has_super(self, thd, var))
+    return true;
+
+  if (new_wsrep_on && innodb_lock_schedule_algorithm != 0) {
+    my_message(ER_WRONG_ARGUMENTS, " WSREP (galera) can't be enabled "
+	    "if innodb_lock_schedule_algorithm=VATS. Please configure"
+	    " innodb_lock_schedule_algorithm=FCFS and restart.", MYF(0));
+    return true;
   }
   return false;
 }
@@ -366,6 +386,27 @@ void wsrep_provider_options_init(const char* value)
   if (wsrep_provider_options && wsrep_provider_options != value) 
     my_free((void *)wsrep_provider_options);
   wsrep_provider_options = (value) ? my_strdup(value, MYF(0)) : NULL;
+}
+
+bool wsrep_reject_queries_update(sys_var *self, THD* thd, enum_var_type type)
+{
+    switch (wsrep_reject_queries) {
+        case WSREP_REJECT_NONE:
+            WSREP_INFO("Allowing client queries due to manual setting");
+            break;
+        case WSREP_REJECT_ALL:
+            WSREP_INFO("Rejecting client queries due to manual setting");
+            break;
+        case WSREP_REJECT_ALL_KILL:
+            wsrep_close_client_connections(FALSE);
+            WSREP_INFO("Rejecting client queries and killing connections due to manual setting");
+            break;
+        default:
+          WSREP_INFO("Unknown value for wsrep_reject_queries: %lu",
+                     wsrep_reject_queries);
+            return true;
+    }
+    return false;
 }
 
 static int wsrep_cluster_address_verify (const char* cluster_address_str)

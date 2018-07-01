@@ -164,20 +164,6 @@ public:
   uint param_count;
   uint last_errno;
   uint flags;
-  /*
-    The value of thd->select_number at the end of the PREPARE phase.
-
-    The issue is: each statement execution opens VIEWs, which may cause 
-    select_lex objects to be created, and select_number values to be assigned.
-
-    On the other hand, PREPARE assigns select_number values for triggers and
-    subqueries.
-
-    In order for select_number values from EXECUTE not to conflict with
-    select_number values from PREPARE, we keep the number and set it at each
-    execution.
-  */
-  uint select_number_after_prepare;
   char last_error[MYSQL_ERRMSG_SIZE];
 #ifndef EMBEDDED_LIBRARY
   bool (*set_params)(Prepared_statement *st, uchar *data, uchar *data_end,
@@ -2750,6 +2736,15 @@ void mysql_sql_stmt_prepare(THD *thd)
     DBUG_VOID_RETURN;
   }
 
+#if MYSQL_VERSION_ID < 100200
+  /*
+    Backpoiting MDEV-14603 from 10.2 to 10.1
+    Remove the code between #if..#endif when merging.
+  */
+  Item_change_list change_list_save_point;
+  thd->change_list.move_elements_to(&change_list_save_point);
+#endif
+
   if (stmt->prepare(query, query_len))
   {
     /* Statement map deletes the statement on erase */
@@ -2757,6 +2752,15 @@ void mysql_sql_stmt_prepare(THD *thd)
   }
   else
     my_ok(thd, 0L, 0L, "Statement prepared");
+
+#if MYSQL_VERSION_ID < 100200
+  /*
+    Backpoiting MDEV-14603 from 10.2 to 10.1
+    Remove the code between #if..#endif when merging.
+  */
+  thd->rollback_item_tree_changes();
+  change_list_save_point.move_elements_to(&thd->change_list);
+#endif
 
   DBUG_VOID_RETURN;
 }
@@ -3053,7 +3057,27 @@ void mysql_sql_stmt_execute(THD *thd)
   */
   Item *free_list_backup= thd->free_list;
   thd->free_list= NULL; // Hide the external (e.g. "SET STATEMENT") Items
+
+#if MYSQL_VERSION_ID < 100200
+  /*
+    Backpoiting MDEV-14603 from 10.2 to 10.1
+    Remove the code between #if..#endif when merging.
+  */
+  Item_change_list change_list_save_point;
+  thd->change_list.move_elements_to(&change_list_save_point);
+#endif
+
   (void) stmt->execute_loop(&expanded_query, FALSE, NULL, NULL);
+
+#if MYSQL_VERSION_ID < 100200
+  /*
+    Backpoiting MDEV-14603 from 10.2 to 10.1
+    Remove the code between #if..#endif when merging.
+  */
+  thd->rollback_item_tree_changes();
+  change_list_save_point.move_elements_to(&thd->change_list);
+#endif
+
   thd->free_items();    // Free items created by execute_loop()
   /*
     Now restore the "external" (e.g. "SET STATEMENT") Item list.
@@ -3563,9 +3587,9 @@ void Prepared_statement::cleanup_stmt()
   DBUG_ENTER("Prepared_statement::cleanup_stmt");
   DBUG_PRINT("enter",("stmt: 0x%lx", (long) this));
   thd->restore_set_statement_var();
+  thd->rollback_item_tree_changes();
   cleanup_items(free_list);
   thd->cleanup_after_query();
-  thd->rollback_item_tree_changes();
 
   DBUG_VOID_RETURN;
 }
@@ -3649,6 +3673,7 @@ bool Prepared_statement::prepare(const char *packet, uint packet_len)
 
   if (! (lex= new (mem_root) st_lex_local))
     DBUG_RETURN(TRUE);
+  lex->stmt_lex= lex;
 
   if (set_db(thd->db, thd->db_length))
     DBUG_RETURN(TRUE);
@@ -3754,8 +3779,6 @@ bool Prepared_statement::prepare(const char *packet, uint packet_len)
     trans_rollback_implicit(thd);
     thd->mdl_context.release_transactional_locks();
   }
-  
-  select_number_after_prepare= thd->select_number;
 
   /* Preserve CHANGE MASTER attributes */
   lex_end_stage1(lex);
@@ -3891,7 +3914,6 @@ Prepared_statement::execute_loop(String *expanded_query,
   */
   DBUG_ASSERT(thd->free_list == NULL);
 
-  thd->select_number= select_number_after_prepare;
   /* Check if we got an error when sending long data */
   if (state == Query_arena::STMT_ERROR)
   {
@@ -3936,7 +3958,7 @@ reexecute:
 
   if (WSREP_ON)
   {
-    mysql_mutex_lock(&thd->LOCK_wsrep_thd);
+    mysql_mutex_lock(&thd->LOCK_thd_data);
     switch (thd->wsrep_conflict_state)
     {
       case CERT_FAILURE:
@@ -3952,7 +3974,7 @@ reexecute:
       default:
         break;
     }
-    mysql_mutex_unlock(&thd->LOCK_wsrep_thd);
+    mysql_mutex_unlock(&thd->LOCK_thd_data);
   }
 #endif /* WITH_WSREP */
 
@@ -3973,7 +3995,6 @@ reexecute:
 
   return error;
 }
-
 
 bool
 Prepared_statement::execute_server_runnable(Server_runnable *server_runnable)
@@ -4184,6 +4205,7 @@ bool Prepared_statement::execute(String *expanded_query, bool open_cursor)
   Statement stmt_backup;
   Query_arena *old_stmt_arena;
   bool error= TRUE;
+  bool qc_executed= FALSE;
 
   char saved_cur_db_name_buf[SAFE_NAME_LEN+1];
   LEX_STRING saved_cur_db_name=
@@ -4306,6 +4328,7 @@ bool Prepared_statement::execute(String *expanded_query, bool open_cursor)
       thd->lex->sql_command= SQLCOM_SELECT;
       status_var_increment(thd->status_var.com_stat[SQLCOM_SELECT]);
       thd->update_stats();
+      qc_executed= TRUE;
     }
   }
 
@@ -4344,7 +4367,7 @@ bool Prepared_statement::execute(String *expanded_query, bool open_cursor)
   thd->set_statement(&stmt_backup);
   thd->stmt_arena= old_stmt_arena;
 
-  if (state == Query_arena::STMT_PREPARED)
+  if (state == Query_arena::STMT_PREPARED && !qc_executed)
     state= Query_arena::STMT_EXECUTED;
 
   if (error == 0 && this->lex->sql_command == SQLCOM_CALL)

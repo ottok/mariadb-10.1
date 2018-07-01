@@ -1,7 +1,7 @@
 /*****************************************************************************
 
 Copyright (c) 2005, 2016, Oracle and/or its affiliates. All Rights Reserved.
-Copyright (c) 2013, 2017, MariaDB Corporation. All Rights Reserved.
+Copyright (c) 2013, 2018, MariaDB Corporation. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -1200,8 +1200,7 @@ innobase_col_to_mysql(
 #ifdef UNIV_DEBUG
 	case DATA_MYSQL:
 		ut_ad(flen >= len);
-		ut_ad(DATA_MBMAXLEN(col->mbminmaxlen)
-		      >= DATA_MBMINLEN(col->mbminmaxlen));
+		ut_ad(col->mbmaxlen >= col->mbminlen);
 		memcpy(dest, data, len);
 		break;
 
@@ -1623,6 +1622,7 @@ innobase_create_index_def(
 
 	if (key_clustered) {
 		DBUG_ASSERT(!(key->flags & HA_FULLTEXT));
+		DBUG_ASSERT(key->flags & HA_NOSAME);
 		index->ind_type |= DICT_CLUSTERED;
 	} else if (key->flags & HA_FULLTEXT) {
 		DBUG_ASSERT(!(key->flags & HA_KEYFLAG_MASK
@@ -1938,14 +1938,9 @@ innobase_create_key_defs(
 		ulint	primary_key_number;
 
 		if (new_primary) {
-			if (n_add == 0) {
-				DBUG_ASSERT(got_default_clust);
-				DBUG_ASSERT(altered_table->s->primary_key
-					    == 0);
-				primary_key_number = 0;
-			} else {
-				primary_key_number = *add;
-			}
+			DBUG_ASSERT(n_add || got_default_clust);
+			DBUG_ASSERT(n_add || !altered_table->s->primary_key);
+			primary_key_number = altered_table->s->primary_key;
 		} else if (got_default_clust) {
 			/* Create the GEN_CLUST_INDEX */
 			index_def_t*	index = indexdef++;
@@ -4434,12 +4429,16 @@ rollback_inplace_alter_table(
 	row_mysql_lock_data_dictionary(ctx->trx);
 
 	if (ctx->need_rebuild()) {
-		dberr_t	err;
-		ulint	flags	= ctx->new_table->flags;
-
 		/* DML threads can access ctx->new_table via the
 		online rebuild log. Free it first. */
 		innobase_online_rebuild_log_free(prebuilt->table);
+	}
+
+	if (!ctx->new_table) {
+		ut_ad(ctx->need_rebuild());
+	} else if (ctx->need_rebuild()) {
+		dberr_t	err;
+		ulint	flags	= ctx->new_table->flags;
 
 		/* Since the FTS index specific auxiliary tables has
 		not yet registered with "table->fts" by fts_add_index(),
@@ -5801,21 +5800,6 @@ ha_innobase::commit_inplace_alter_table(
 	ut_ad(prebuilt->table == ctx0->old_table);
 	ha_alter_info->group_commit_ctx = NULL;
 
-	/* Free the ctx->trx of other partitions, if any. We will only
-	use the ctx0->trx here. Others may have been allocated in
-	the prepare stage. */
-
-	for (inplace_alter_handler_ctx** pctx = &ctx_array[1]; *pctx;
-	     pctx++) {
-		ha_innobase_inplace_ctx*	ctx
-			= static_cast<ha_innobase_inplace_ctx*>(*pctx);
-
-		if (ctx->trx) {
-			trx_free_for_mysql(ctx->trx);
-			ctx->trx = NULL;
-		}
-	}
-
 	trx_start_if_not_started_xa(prebuilt->trx);
 
 	for (inplace_alter_handler_ctx** pctx = ctx_array; *pctx; pctx++) {
@@ -5917,7 +5901,47 @@ ha_innobase::commit_inplace_alter_table(
 			break;
 		}
 
-		DICT_STATS_BG_YIELD(trx);
+		DICT_BG_YIELD(trx);
+	}
+
+	/* Make a concurrent Drop fts Index to wait until sync of that
+	fts index is happening in the background */
+	for (;;) {
+		bool    retry = false;
+
+		for (inplace_alter_handler_ctx** pctx = ctx_array;
+		    *pctx; pctx++) {
+			int count =0;
+			ha_innobase_inplace_ctx*        ctx
+				= static_cast<ha_innobase_inplace_ctx*>(*pctx);
+			DBUG_ASSERT(new_clustered == ctx->need_rebuild());
+
+			if (dict_fts_index_syncing(ctx->old_table)) {
+				count++;
+				if (count == 100) {
+					fprintf(stderr,
+					"Drop index waiting for background sync"
+					"to finish\n");
+				}
+				retry = true;
+			}
+
+			if (new_clustered && dict_fts_index_syncing(ctx->new_table)) {
+				count++;
+				if (count == 100) {
+					fprintf(stderr,
+                                        "Drop index waiting for background sync"
+                                        "to finish\n");
+				}
+				retry = true;
+			}
+		}
+
+		 if (!retry) {
+			 break;
+		}
+
+		DICT_BG_YIELD(trx);
 	}
 
 	/* Apply the changes to the data dictionary tables, for all
@@ -6154,10 +6178,6 @@ foreign_fail:
 	covering all partitions. */
 	share->idx_trans_tbl.index_count = 0;
 
-	if (trx == ctx0->trx) {
-		ctx0->trx = NULL;
-	}
-
 	/* Tell the InnoDB server that there might be work for
 	utility threads: */
 
@@ -6180,8 +6200,29 @@ foreign_fail:
 		}
 
 		row_mysql_unlock_data_dictionary(trx);
-		trx_free_for_mysql(trx);
+		if (trx != ctx0->trx) {
+			trx_free_for_mysql(trx);
+		}
 		DBUG_RETURN(true);
+	}
+
+	if (trx == ctx0->trx) {
+		ctx0->trx = NULL;
+	}
+
+	/* Free the ctx->trx of other partitions, if any. We will only
+	use the ctx0->trx here. Others may have been allocated in
+	the prepare stage. */
+
+	for (inplace_alter_handler_ctx** pctx = &ctx_array[1]; *pctx;
+	     pctx++) {
+		ha_innobase_inplace_ctx*	ctx
+			= static_cast<ha_innobase_inplace_ctx*>(*pctx);
+
+		if (ctx->trx) {
+			trx_free_for_mysql(ctx->trx);
+			ctx->trx = NULL;
+		}
 	}
 
 	/* Release the table locks. */
@@ -6233,8 +6274,13 @@ foreign_fail:
 
 		ut_d(dict_table_check_for_dup_indexes(
 			     ctx->new_table, CHECK_ABORTED_OK));
-		ut_a(fts_check_cached_index(ctx->new_table));
 
+#ifdef UNIV_DEBUG
+		if (!(ctx->new_table->fts != NULL
+			&& ctx->new_table->fts->cache->sync->in_progress)) {
+			ut_a(fts_check_cached_index(ctx->new_table));
+		}
+#endif
 		if (new_clustered) {
 			/* Since the table has been rebuilt, we remove
 			all persistent statistics corresponding to the

@@ -2982,6 +2982,9 @@ int ha_federated::reset(void)
   }
   reset_dynamic(&results);
 
+  if (mysql)
+    mysql->net.thd= NULL;
+
   return 0;
 }
 
@@ -3202,11 +3205,13 @@ int ha_federated::real_query(const char *query, size_t length)
   int rc= 0;
   DBUG_ENTER("ha_federated::real_query");
 
+  if (!query || !length)
+    goto end;
+
   if (!mysql && (rc= real_connect()))
     goto end;
 
-  if (!query || !length)
-    goto end;
+  mysql->net.thd= table->in_use;
 
   rc= mysql_real_query(mysql, query, (uint) length);
   
@@ -3467,7 +3472,7 @@ maria_declare_plugin(federated)
   &federated_storage_engine,
   "FEDERATED",
   "Patrick Galbraith and Brian Aker, MySQL AB",
-  "Federated MySQL storage engine",
+  "Allows to access tables on other MariaDB servers",
   PLUGIN_LICENSE_GPL,
   federated_db_init, /* Plugin Init */
   federated_done, /* Plugin Deinit */

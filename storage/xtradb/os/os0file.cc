@@ -2,7 +2,7 @@
 
 Copyright (c) 1995, 2017, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2009, Percona Inc.
-Copyright (c) 2013, 2017, MariaDB Corporation.
+Copyright (c) 2013, 2018, MariaDB Corporation.
 
 Portions of this file contain modifications contributed and copyrighted
 by Percona Inc.. Those modifications are
@@ -296,6 +296,16 @@ struct os_aio_array_t{
 				There is one such event for each
 				possible pending IO. The size of the
 				array is equal to n_slots. */
+	struct iocb**		pending;
+				/* Array to buffer the not-submitted aio
+				requests. The array length is n_slots.
+				It is divided into n_segments segments.
+				pending requests on each segment are buffered
+				separately.*/
+	ulint*			count;
+				/* Array of length n_segments. Each element
+				counts the number of not-submitted aio
+				request on that segment.*/
 #endif /* LINUX_NATIV_AIO */
 };
 
@@ -1427,7 +1437,8 @@ os_file_create_simple_func(
 		/* Use default security attributes and no template file. */
 
 		file = CreateFile(
-			(LPCTSTR) name, access, FILE_SHARE_READ, NULL,
+			(LPCTSTR) name, access,
+			FILE_SHARE_READ | FILE_SHARE_DELETE, NULL,
 			create_flag, attributes, NULL);
 
 		if (file == INVALID_HANDLE_VALUE) {
@@ -1498,7 +1509,7 @@ os_file_create_simple_func(
 	}
 
 	do {
-		file = ::open(name, create_flag, os_innodb_umask);
+		file = ::open(name, create_flag | O_CLOEXEC, os_innodb_umask);
 
 		if (file == -1) {
 			*success = FALSE;
@@ -1593,7 +1604,7 @@ os_file_create_simple_no_error_handling_func(
 	DWORD		access;
 	DWORD		create_flag;
 	DWORD		attributes	= 0;
-	DWORD		share_mode	= FILE_SHARE_READ;
+	DWORD		share_mode	= FILE_SHARE_READ | FILE_SHARE_DELETE;
 	ut_a(name);
 
 	ut_a(!(create_mode & OS_FILE_ON_ERROR_SILENT));
@@ -1720,7 +1731,7 @@ os_file_create_simple_no_error_handling_func(
 		return(file);
 	}
 
-	file = open(name, create_flag, os_innodb_umask);
+	file = ::open(name, create_flag | O_CLOEXEC , os_innodb_umask);
 
 	*success = file != -1;
 
@@ -1915,7 +1926,7 @@ os_file_create_func(
 
 #ifdef __WIN__
 	DWORD		create_flag;
-	DWORD		share_mode	= FILE_SHARE_READ;
+	DWORD		share_mode	= FILE_SHARE_READ | FILE_SHARE_DELETE;
 
 	on_error_no_exit = create_mode & OS_FILE_ON_ERROR_NO_EXIT
 		? TRUE : FALSE;
@@ -2135,7 +2146,7 @@ os_file_create_func(
 #endif /* O_SYNC */
 
 	do {
-		file = open(name, create_flag, os_innodb_umask);
+		file = ::open(name, create_flag | O_CLOEXEC, os_innodb_umask);
 
 		if (file == -1) {
 			const char*	operation;
@@ -2348,6 +2359,24 @@ loop:
 #endif
 }
 
+/** Handle RENAME error.
+@param name	old name of the file
+@param new_name	new name of the file */
+static void os_file_handle_rename_error(const char* name, const char* new_name)
+{
+	if (os_file_get_last_error(true) != OS_FILE_DISK_FULL) {
+		ib_logf(IB_LOG_LEVEL_ERROR, "Cannot rename file '%s' to '%s'",
+			name, new_name);
+	} else if (!os_has_said_disk_full) {
+		os_has_said_disk_full = true;
+		/* Disk full error is reported irrespective of the
+		on_error_silent setting. */
+		ib_logf(IB_LOG_LEVEL_ERROR,
+			"Full disk prevents renaming file '%s' to '%s'",
+			name, new_name);
+	}
+}
+
 /***********************************************************************//**
 NOTE! Use the corresponding macro os_file_rename(), not directly this function!
 Renames a file (can also move it to another directory). It is safest that the
@@ -2383,7 +2412,7 @@ os_file_rename_func(
 		return(TRUE);
 	}
 
-	os_file_handle_error_no_exit(oldpath, "rename", FALSE, __FILE__, __LINE__);
+	os_file_handle_rename_error(oldpath, newpath);
 
 	return(FALSE);
 #else
@@ -2393,7 +2422,7 @@ os_file_rename_func(
 	ret = rename(oldpath, newpath);
 
 	if (ret != 0) {
-		os_file_handle_error_no_exit(oldpath, "rename", FALSE, __FILE__, __LINE__);
+		os_file_handle_rename_error(oldpath, newpath);
 
 		return(FALSE);
 	}
@@ -3159,15 +3188,21 @@ try_again:
 	overlapped.hEvent = win_get_syncio_event();
 	ret = ReadFile(file, buf, n, NULL, &overlapped);
 	if (ret) {
-		ret = GetOverlappedResult(file, &overlapped, (DWORD *)&len, FALSE);
-	}
-	else if(GetLastError() == ERROR_IO_PENDING) {
-		ret = GetOverlappedResult(file, &overlapped, (DWORD *)&len, TRUE);
+		ret = GetOverlappedResult(file, &overlapped, &len, FALSE);
+	} else if (GetLastError() == ERROR_IO_PENDING) {
+		ret = GetOverlappedResult(file, &overlapped, &len, TRUE);
         }
 	MONITOR_ATOMIC_DEC_LOW(MONITOR_OS_PENDING_READS, monitor);
 
-	if (ret && len == n) {
+	if (!ret) {
+	} else if (len == n) {
 		return(TRUE);
+	} else {
+		ib_logf(IB_LOG_LEVEL_ERROR,
+			"Tried to read " ULINTPF " bytes at offset "
+			UINT64PF ". Was only able to read %lu.",
+			n, offset, ret);
+		return FALSE;
 	}
 #else /* __WIN__ */
 	ibool	retry;
@@ -3194,6 +3229,7 @@ try_again:
 			"Tried to read " ULINTPF " bytes at offset "
 			UINT64PF ". Was only able to read %ld.",
 			n, offset, (lint) ret);
+		return FALSE;
 	}
 #endif /* __WIN__ */
 	retry = os_file_handle_error(NULL, "read", __FILE__, __LINE__);
@@ -3262,15 +3298,21 @@ try_again:
 	overlapped.hEvent = win_get_syncio_event();
 	ret = ReadFile(file, buf, n, NULL, &overlapped);
 	if (ret) {
-		ret = GetOverlappedResult(file, &overlapped, (DWORD *)&len, FALSE);
-	}
-	else if(GetLastError() == ERROR_IO_PENDING) {
-		ret = GetOverlappedResult(file, &overlapped, (DWORD *)&len, TRUE);
+		ret = GetOverlappedResult(file, &overlapped, &len, FALSE);
+	} else if (GetLastError() == ERROR_IO_PENDING) {
+		ret = GetOverlappedResult(file, &overlapped, &len, TRUE);
 	}
 	MONITOR_ATOMIC_DEC_LOW(MONITOR_OS_PENDING_READS, monitor);
 
-	if (ret && len == n) {
+	if (!ret) {
+	} else if (len == n) {
 		return(TRUE);
+	} else {
+		ib_logf(IB_LOG_LEVEL_ERROR,
+			"Tried to read " ULINTPF " bytes at offset "
+			UINT64PF ". Was only able to read %lu.",
+			n, offset, len);
+		return FALSE;
 	}
 #else /* __WIN__ */
 	ibool	retry;
@@ -3293,6 +3335,7 @@ try_again:
 			"Tried to read " ULINTPF " bytes at offset "
 			UINT64PF ". Was only able to read %ld.",
 			n, offset, (lint) ret);
+		return FALSE;
 	}
 #endif /* __WIN__ */
 	retry = os_file_handle_error_no_exit(NULL, "read", FALSE, __FILE__, __LINE__);
@@ -3373,10 +3416,9 @@ retry:
 	overlapped.hEvent = win_get_syncio_event();
 	ret = WriteFile(file, buf, n, NULL, &overlapped);
 	if (ret) {
-		ret = GetOverlappedResult(file, &overlapped, (DWORD *)&len, FALSE);
-	}
-	else if ( GetLastError() == ERROR_IO_PENDING) {
-		ret = GetOverlappedResult(file, &overlapped, (DWORD *)&len, TRUE);
+		ret = GetOverlappedResult(file, &overlapped, &len, FALSE);
+	} else if (GetLastError() == ERROR_IO_PENDING) {
+		ret = GetOverlappedResult(file, &overlapped, &len, TRUE);
 	}
 
 	MONITOR_ATOMIC_DEC_LOW(MONITOR_OS_PENDING_WRITES, monitor);
@@ -3694,7 +3736,7 @@ os_file_get_status(
 
 		access = !srv_read_only_mode ? O_RDWR : O_RDONLY;
 
-		fh = ::open(path, access, os_innodb_umask);
+		fh = ::open(path, access | O_CLOEXEC, os_innodb_umask);
 
 		if (fh == -1) {
 			stat_info->rw_perm = false;
@@ -4123,7 +4165,7 @@ os_aio_native_aio_supported(void)
 
 		strcpy(name + dirnamelen, "ib_logfile0");
 
-		fd = ::open(name, O_RDONLY);
+		fd = ::open(name, O_RDONLY | O_CLOEXEC);
 
 		if (fd == -1) {
 
@@ -4276,6 +4318,13 @@ os_aio_array_create(
 	memset(io_event, 0x0, sizeof(*io_event) * n);
 	array->aio_events = io_event;
 
+	array->pending = static_cast<struct iocb**>(
+		ut_malloc(n * sizeof(struct iocb*)));
+	memset(array->pending, 0x0, sizeof(struct iocb*) * n);
+	array->count = static_cast<ulint*>(
+		ut_malloc(n_segments * sizeof(ulint)));
+	memset(array->count, 0x0, sizeof(ulint) * n_segments);
+
 skip_native_aio:
 #endif /* LINUX_NATIVE_AIO */
 	for (ulint i = 0; i < n; i++) {
@@ -4310,6 +4359,16 @@ os_aio_array_free(
 	if (srv_use_native_aio) {
 		ut_free(array->aio_events);
 		ut_free(array->aio_ctx);
+
+#ifdef UNIV_DEBUG
+		for (size_t idx = 0; idx < array->n_slots; ++idx)
+			ut_ad(array->pending[idx] == NULL);
+		for (size_t idx = 0; idx < array->n_segments; ++idx)
+			ut_ad(array->count[idx] == 0);
+#endif
+
+		ut_free(array->pending);
+		ut_free(array->count);
 	}
 #endif /* LINUX_NATIVE_AIO */
 
@@ -4957,6 +5016,83 @@ readahead requests. */
 }
 #endif /* _WIN32 */
 
+/** Submit buffered AIO requests on the given segment to the kernel
+(low level function).
+@param acquire_mutex specifies whether to lock array mutex
+*/
+static
+void
+os_aio_dispatch_read_array_submit_low(bool acquire_mutex MY_ATTRIBUTE((unused)))
+{
+	if (!srv_use_native_aio) {
+		return;
+	}
+#if defined(LINUX_NATIVE_AIO)
+	os_aio_array_t*	array = os_aio_read_array;
+	ulint		total_submitted = 0;
+	if (acquire_mutex)
+		os_mutex_enter(array->mutex);
+	/* Submit aio requests buffered on all segments. */
+	for (ulint i = 0; i < array->n_segments; i++) {
+		const int	count = array->count[i];
+		int	offset = 0;
+		while (offset != count) {
+			struct iocb** const	iocb_array = array->pending
+				+ i * array->n_slots / array->n_segments
+				+ offset;
+			const int	partial_count = count - offset;
+			/* io_submit() returns number of successfully queued
+			requests or (-errno).
+			It returns 0 only if the number of iocb blocks passed
+			is also 0. */
+			const int	submitted = io_submit(array->aio_ctx[i],
+						partial_count, iocb_array);
+
+			/* This assertion prevents infinite loop in both
+			debug and release modes. */
+			ut_a(submitted != 0);
+
+			if (submitted < 0) {
+				/* Terminating with fatal error */
+				const char*	errmsg =
+					strerror(-submitted);
+				ib_logf(IB_LOG_LEVEL_FATAL,
+					"Trying to sumbit %d aio requests, "
+					"io_submit() set errno to %d: %s",
+					partial_count, -submitted,
+					errmsg ? errmsg : "<unknown>");
+			}
+			ut_ad(submitted <= partial_count);
+			if (submitted < partial_count)
+			{
+				ib_logf(IB_LOG_LEVEL_WARN,
+					"Trying to sumbit %d aio requests, "
+					"io_submit() submitted only %d",
+					partial_count, submitted);
+			}
+			offset += submitted;
+		}
+		total_submitted += count;
+	}
+	/* Reset the aio request buffer. */
+	memset(array->pending, 0x0, sizeof(struct iocb*) * array->n_slots);
+	memset(array->count, 0x0, sizeof(ulint) * array->n_segments);
+
+	if (acquire_mutex)
+		os_mutex_exit(array->mutex);
+
+	srv_stats.n_aio_submitted.add(total_submitted);
+#endif
+}
+
+/** Submit buffered AIO requests on the given segment to the kernel. */
+UNIV_INTERN
+void
+os_aio_dispatch_read_array_submit()
+{
+	os_aio_dispatch_read_array_submit_low(true);
+}
+
 #if defined(LINUX_NATIVE_AIO)
 /*******************************************************************//**
 Dispatch an AIO request to the kernel.
@@ -4966,10 +5102,11 @@ ibool
 os_aio_linux_dispatch(
 /*==================*/
 	os_aio_array_t*	array,	/*!< in: io request array. */
-	os_aio_slot_t*	slot)	/*!< in: an already reserved slot. */
+	os_aio_slot_t*	slot,	/*!< in: an already reserved slot. */
+	bool		should_buffer)	/*!< in: should buffer the request
+					rather than submit. */
 {
 	int		ret;
-	ulint		io_ctx_index;
 	struct iocb*	iocb;
 
 	ut_ad(slot != NULL);
@@ -4981,9 +5118,31 @@ os_aio_linux_dispatch(
 	The iocb struct is directly in the slot.
 	The io_context is one per segment. */
 
+	ulint	slots_per_segment = array->n_slots / array->n_segments;
 	iocb = &slot->control;
-	io_ctx_index = (slot->pos * array->n_segments) / array->n_slots;
+	ulint	io_ctx_index = slot->pos / slots_per_segment;
+	if (should_buffer) {
+		ut_ad(array == os_aio_read_array);
 
+		os_mutex_enter(array->mutex);
+		/* There are array->n_slots elements in array->pending,
+		which is divided into array->n_segments area of equal size.
+		The iocb of each segment are buffered in its corresponding area
+		in the pending array consecutively as they come.
+		array->count[i] records the number of buffered aio requests
+		in the ith segment.*/
+		ulint&	count = array->count[io_ctx_index];
+		ut_ad(count != slots_per_segment);
+		ulint	n = io_ctx_index * slots_per_segment + count;
+		array->pending[n] = iocb;
+		++count;
+		if (count == slots_per_segment) {
+			os_aio_dispatch_read_array_submit_low(false);
+		}
+		os_mutex_exit(array->mutex);
+		return(TRUE);
+	}
+	/* Submit the given request. */
 	ret = io_submit(array->aio_ctx[io_ctx_index], 1, &iocb);
 
 #if defined(UNIV_AIO_DEBUG)
@@ -5046,11 +5205,17 @@ os_aio_func(
 				OS_AIO_SYNC */
 	ulint		space_id,
 	trx_t*		trx,
-	ulint*		write_size)/*!< in/out: Actual write size initialized
+	ulint*		write_size,/*!< in/out: Actual write size initialized
 			       after fist successfull trim
 			       operation for this page and if
 			       initialized we do not trim again if
 			       actual page size does not decrease. */
+	bool		should_buffer)
+				/*!< in: Whether to buffer an aio request.
+				AIO read ahead uses this. If you plan to
+				use this parameter, make sure you remember
+				to call os_aio_dispatch_read_array_submit()
+				when you're ready to commit all your requests.*/
 {
 	os_aio_array_t*	array;
 	os_aio_slot_t*	slot;
@@ -5168,7 +5333,8 @@ try_again:
 				goto err_exit;
 
 #elif defined(LINUX_NATIVE_AIO)
-			if (!os_aio_linux_dispatch(array, slot)) {
+			if (!os_aio_linux_dispatch(array, slot,
+						   should_buffer)) {
 				goto err_exit;
 			}
 #endif /* WIN_ASYNC_IO */
@@ -5192,7 +5358,7 @@ try_again:
 			if(!ret && GetLastError() != ERROR_IO_PENDING)
 				goto err_exit;
 #elif defined(LINUX_NATIVE_AIO)
-			if (!os_aio_linux_dispatch(array, slot)) {
+			if (!os_aio_linux_dispatch(array, slot, false)) {
 				goto err_exit;
 			}
 #endif /* WIN_ASYNC_IO */
@@ -6454,8 +6620,7 @@ os_file_trim(
 	DWORD tmp;
 	if (ret) {
 		ret = GetOverlappedResult(slot->file, &overlapped, &tmp, FALSE);
-	}
-	else if (GetLastError() == ERROR_IO_PENDING) {
+	} else if (GetLastError() == ERROR_IO_PENDING) {
 		ret = GetOverlappedResult(slot->file, &overlapped, &tmp, TRUE);
 	}
 	if (!ret) {

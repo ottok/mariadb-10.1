@@ -1764,6 +1764,13 @@ struct HA_CREATE_INFO: public Table_scope_and_contents_source_st,
     used_fields|= (HA_CREATE_USED_CHARSET | HA_CREATE_USED_DEFAULT_CHARSET);  
     return false;
   }
+  ulong table_options_with_row_type()
+  {
+    if (row_type == ROW_TYPE_DYNAMIC || row_type == ROW_TYPE_PAGE)
+      return table_options | HA_OPTION_PACK_RECORD;
+    else
+      return table_options;
+  }
 };
 
 
@@ -3844,7 +3851,7 @@ protected:
 
     @note No errors are allowed during notify_table_changed().
  */
- virtual void notify_table_changed();
+ virtual void notify_table_changed() { }
 
 public:
  /* End of On-line/in-place ALTER TABLE interface. */

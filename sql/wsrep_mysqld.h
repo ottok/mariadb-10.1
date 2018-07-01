@@ -80,6 +80,7 @@ extern const char* wsrep_notify_cmd;
 extern long        wsrep_max_protocol_version;
 extern ulong       wsrep_forced_binlog_format;
 extern my_bool     wsrep_desync;
+extern ulong       wsrep_reject_queries;
 extern my_bool     wsrep_replicate_myisam;
 extern ulong       wsrep_mysql_replication_bundle;
 extern my_bool     wsrep_restart_slave;
@@ -91,6 +92,12 @@ extern bool        wsrep_new_cluster;
 extern bool        wsrep_gtid_mode;
 extern uint32      wsrep_gtid_domain_id;
 extern bool        wsrep_dirty_reads;
+
+enum enum_wsrep_reject_types {
+  WSREP_REJECT_NONE,    /* nothing rejected */
+  WSREP_REJECT_ALL,     /* reject all queries, with UNKNOWN_COMMAND error */
+  WSREP_REJECT_ALL_KILL /* kill existing connections and reject all queries*/
+};
 
 enum enum_wsrep_OSU_method {
     WSREP_OSU_TOI,
@@ -227,6 +234,7 @@ extern wsrep_seqno_t wsrep_locked_seqno;
 
 #define WSREP_QUERY(thd) (thd->query())
 
+extern my_bool wsrep_ready_get();
 extern void wsrep_ready_wait();
 
 class Ha_trx_info;
@@ -265,8 +273,6 @@ extern my_bool       wsrep_preordered_opt;
 extern handlerton    *wsrep_hton;
 
 #ifdef HAVE_PSI_INTERFACE
-extern PSI_mutex_key key_LOCK_wsrep_thd;
-extern PSI_cond_key  key_COND_wsrep_thd;
 extern PSI_mutex_key key_LOCK_wsrep_ready;
 extern PSI_mutex_key key_COND_wsrep_ready;
 extern PSI_mutex_key key_LOCK_wsrep_sst;
@@ -321,6 +327,18 @@ bool wsrep_create_like_table(THD* thd, TABLE_LIST* table,
 bool wsrep_node_is_donor();
 bool wsrep_node_is_synced();
 
+typedef struct wsrep_key_arr
+{
+    wsrep_key_t* keys;
+    size_t       keys_len;
+} wsrep_key_arr_t;
+bool wsrep_prepare_keys_for_isolation(THD*              thd,
+                                      const char*       db,
+                                      const char*       table,
+                                      const TABLE_LIST* table_list,
+                                      wsrep_key_arr_t*  ka);
+void wsrep_keys_free(wsrep_key_arr_t* key_arr);
+
 #else /* WITH_WSREP */
 
 #define WSREP(T)  (0)
@@ -350,6 +368,5 @@ bool wsrep_node_is_synced();
 #define wsrep_thr_init() do {} while(0)
 #define wsrep_thr_deinit() do {} while(0)
 #define wsrep_running_threads (0)
-
 #endif /* WITH_WSREP */
 #endif /* WSREP_MYSQLD_H */

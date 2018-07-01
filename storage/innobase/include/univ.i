@@ -45,7 +45,7 @@ Created 1/20/1994 Heikki Tuuri
 
 #define INNODB_VERSION_MAJOR	5
 #define INNODB_VERSION_MINOR	6
-#define INNODB_VERSION_BUGFIX	37
+#define INNODB_VERSION_BUGFIX	40
 
 /* The following is the InnoDB version as shown in
 SELECT plugin_version FROM information_schema.plugins;
@@ -64,6 +64,10 @@ component, i.e. we show M.N.P as M.N */
 #define REFMAN "http://dev.mysql.com/doc/refman/"	\
 	IB_TO_STR(INNODB_VERSION_MAJOR) "."		\
 	IB_TO_STR(INNODB_VERSION_MINOR) "/en/"
+
+/** How far ahead should we tell the service manager the timeout
+(time in seconds) */
+#define INNODB_EXTEND_TIMEOUT_INTERVAL 30
 
 #ifdef MYSQL_DYNAMIC_PLUGIN
 /* In the dynamic plugin, redefine some externally visible symbols
@@ -677,14 +681,6 @@ typedef void* os_thread_ret_t;
 # define UNIV_MEM_ASSERT_W(addr, size) do {} while(0)
 # define UNIV_MEM_TRASH(addr, c, size) do {} while(0)
 #endif
-#define UNIV_MEM_ASSERT_AND_FREE(addr, size) do {	\
-	UNIV_MEM_ASSERT_W(addr, size);			\
-	UNIV_MEM_FREE(addr, size);			\
-} while (0)
-#define UNIV_MEM_ASSERT_AND_ALLOC(addr, size) do {	\
-	UNIV_MEM_ASSERT_W(addr, size);			\
-	UNIV_MEM_ALLOC(addr, size);			\
-} while (0)
 
 extern ulong	srv_page_size_shift;
 extern ulong	srv_page_size;

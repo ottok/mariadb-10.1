@@ -82,14 +82,16 @@ Created 10/8/1995 Heikki Tuuri
 /* prototypes for new functions added to ha_innodb.cc */
 ibool	innobase_get_slow_log();
 
-#ifdef WITH_WSREP
-extern int wsrep_debug;
-extern int wsrep_trx_is_aborting(void *thd_ptr);
-#endif
 /* The following counter is incremented whenever there is some user activity
 in the server */
 UNIV_INTERN ulint	srv_activity_count	= 0;
 
+#include <my_service_manager.h>
+
+#ifdef WITH_WSREP
+extern int wsrep_debug;
+extern int wsrep_trx_is_aborting(void *thd_ptr);
+#endif
 /* The following is the maximum allowed duration of a lock wait. */
 UNIV_INTERN ulong	srv_fatal_semaphore_wait_threshold =  DEFAULT_SRV_FATAL_SEMAPHORE_TIMEOUT;
 
@@ -479,6 +481,9 @@ UNIV_INTERN my_bool	srv_print_all_deadlocks = FALSE;
 /* Produce a stacktrace on long semaphore wait */
 UNIV_INTERN my_bool     srv_use_stacktrace = FALSE;
 
+/** Print lock wait timeout info to mysqld stderr */
+my_bool	srv_print_lock_wait_timeout_info = FALSE;
+
 /** Enable INFORMATION_SCHEMA.innodb_cmp_per_index */
 UNIV_INTERN my_bool	srv_cmp_per_index_enabled = FALSE;
 
@@ -565,16 +570,6 @@ static ulint		srv_n_system_rows_read_old	= 0;
 
 UNIV_INTERN ulint	srv_truncated_status_writes	= 0;
 UNIV_INTERN ulint	srv_available_undo_logs         = 0;
-
-UNIV_INTERN ib_uint64_t srv_page_compression_saved      = 0;
-UNIV_INTERN ib_uint64_t srv_page_compression_trim_sect512       = 0;
-UNIV_INTERN ib_uint64_t srv_page_compression_trim_sect4096      = 0;
-UNIV_INTERN ib_uint64_t srv_index_pages_written         = 0;
-UNIV_INTERN ib_uint64_t srv_non_index_pages_written     = 0;
-UNIV_INTERN ib_uint64_t srv_pages_page_compressed       = 0;
-UNIV_INTERN ib_uint64_t srv_page_compressed_trim_op     = 0;
-UNIV_INTERN ib_uint64_t srv_page_compressed_trim_op_saved     = 0;
-UNIV_INTERN ib_uint64_t srv_index_page_decompressed     = 0;
 
 /* Ensure status variables are on separate cache lines */
 
@@ -2137,6 +2132,9 @@ srv_export_innodb_status(void)
 		scrub_stat.page_split_failures_unknown;
 	}
 
+	export_vars.innodb_buffered_aio_submitted =
+		srv_stats.n_aio_submitted;
+
 	mutex_exit(&srv_innodb_monitor_mutex);
 }
 
@@ -3238,6 +3236,9 @@ srv_purge_should_exit(ulint n_purged)
 	}
 	/* Slow shutdown was requested. */
 	if (n_purged) {
+		service_manager_extend_timeout(
+			INNODB_EXTEND_TIMEOUT_INTERVAL,
+			"InnoDB " ULINTPF " pages purged", n_purged);
 		/* The previous round still did some work. */
 		return(false);
 	}
@@ -3442,7 +3443,6 @@ srv_do_purge(
 			(++count % TRX_SYS_N_RSEGS) == 0);
 
 		*n_total_purged += n_pages_purged;
-
 	} while (!srv_purge_should_exit(n_pages_purged)
 		 && n_pages_purged > 0
 		 && purge_sys->state == PURGE_STATE_RUN);

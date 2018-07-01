@@ -41,12 +41,19 @@ ELSE()
   SET(inst_location ${INSTALL_SUPPORTFILESDIR})
 ENDIF()
 
-FOREACH(inifile my-huge my-innodb-heavy-4G my-large my-medium my-small wsrep)
-  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${inifile}.cnf.sh 
+FOREACH(inifile my-huge my-innodb-heavy-4G my-large my-medium my-small)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${inifile}.cnf.sh
                  ${CMAKE_CURRENT_BINARY_DIR}/${inifile}.${ini_file_extension} @ONLY)
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${inifile}.${ini_file_extension}
           DESTINATION ${inst_location} COMPONENT IniFiles)
 ENDFOREACH()
+
+IF(WITH_WSREP)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wsrep.cnf.sh
+                 ${CMAKE_CURRENT_BINARY_DIR}/wsrep.${ini_file_extension} @ONLY)
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/wsrep.${ini_file_extension}
+          DESTINATION ${inst_location} COMPONENT IniFiles)
+ENDIF()
 
 IF(UNIX)
   SET(prefix ${CMAKE_INSTALL_PREFIX})
@@ -103,6 +110,21 @@ IF(UNIX)
     INSTALL(FILES use_galera_new_cluster.conf
             ${CMAKE_CURRENT_BINARY_DIR}/mariadb.service
             DESTINATION ${inst_location}/systemd COMPONENT SupportFiles)
+
+    IF(INSTALL_SYSTEMD_SYSUSERSDIR)
+      CONFIGURE_FILE(sysusers.conf.in
+              ${CMAKE_CURRENT_BINARY_DIR}/sysusers.conf @ONLY)
+      INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysusers.conf
+              DESTINATION ${INSTALL_SYSTEMD_SYSUSERSDIR} COMPONENT Server)
+    ENDIF()
+
+    IF(INSTALL_SYSTEMD_TMPFILESDIR)
+      get_filename_component(MYSQL_UNIX_DIR ${MYSQL_UNIX_ADDR} DIRECTORY)
+      CONFIGURE_FILE(tmpfiles.conf.in
+              ${CMAKE_CURRENT_BINARY_DIR}/tmpfiles.conf @ONLY)
+      INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/tmpfiles.conf
+              DESTINATION ${INSTALL_SYSTEMD_TMPFILESDIR} COMPONENT Server)
+    ENDIF()
 
     # @ in directory name broken between CMake version 2.8.12.2 and 3.3
     # http://public.kitware.com/Bug/view.php?id=14782

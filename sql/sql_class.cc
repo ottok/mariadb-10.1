@@ -683,103 +683,6 @@ extern "C"
 }
 
 
-/**
-  Dumps a text description of a thread, its security context
-  (user, host) and the current query.
-
-  @param thd thread context
-  @param buffer pointer to preferred result buffer
-  @param length length of buffer
-  @param max_query_len how many chars of query to copy (0 for all)
- 
-  @return Pointer to string
-*/
-
-extern "C"
-char *thd_get_error_context_description(THD *thd, char *buffer,
-                                        unsigned int length,
-                                        unsigned int max_query_len)
-{
-  String str(buffer, length, &my_charset_latin1);
-  const Security_context *sctx= &thd->main_security_ctx;
-  char header[256];
-  int len;
-
-  mysql_mutex_lock(&LOCK_thread_count);
-
-  /*
-    The pointers thd->query and thd->proc_info might change since they are
-    being modified concurrently. This is acceptable for proc_info since its
-    values doesn't have to very accurate and the memory it points to is static,
-    but we need to attempt a snapshot on the pointer values to avoid using NULL
-    values. The pointer to thd->query however, doesn't point to static memory
-    and has to be protected by thd->LOCK_thd_data or risk pointing to
-    uninitialized memory.
-  */
-  const char *proc_info= thd->proc_info;
-
-  len= my_snprintf(header, sizeof(header),
-                   "MySQL thread id %lu, OS thread handle 0x%lx, query id %lu",
-                   thd->thread_id, (ulong) thd->real_id, (ulong) thd->query_id);
-  str.length(0);
-  str.append(header, len);
-
-  if (sctx->host)
-  {
-    str.append(' ');
-    str.append(sctx->host);
-  }
-
-  if (sctx->ip)
-  {
-    str.append(' ');
-    str.append(sctx->ip);
-  }
-
-  if (sctx->user)
-  {
-    str.append(' ');
-    str.append(sctx->user);
-  }
-
-  if (proc_info)
-  {
-    str.append(' ');
-    str.append(proc_info);
-  }
-
-  /* Don't wait if LOCK_thd_data is used as this could cause a deadlock */
-  if (!mysql_mutex_trylock(&thd->LOCK_thd_data))
-  {
-    if (thd->query())
-    {
-      if (max_query_len < 1)
-        len= thd->query_length();
-      else
-        len= MY_MIN(thd->query_length(), max_query_len);
-      str.append('\n');
-      str.append(thd->query(), len);
-    }
-    mysql_mutex_unlock(&thd->LOCK_thd_data);
-  }
-  mysql_mutex_unlock(&LOCK_thread_count);
-
-  if (str.c_ptr_safe() == buffer)
-    return buffer;
-
-  /*
-    We have to copy the new string to the destination buffer because the string
-    was reallocated to a larger buffer to be able to fit.
-  */
-  DBUG_ASSERT(buffer != NULL);
-  length= MY_MIN(str.length(), length-1);
-  memcpy(buffer, str.c_ptr_quick(), length);
-  /* Make sure that the new string is null terminated */
-  buffer[length]= '\0';
-  return buffer;
-}
-
-
 #if MARIA_PLUGIN_INTERFACE_VERSION < 0x0200
 /**
   TODO: This function is for API compatibility, remove it eventually.
@@ -1008,7 +911,6 @@ THD::THD(bool is_wsrep_applier)
   *scramble= '\0';
 
 #ifdef WITH_WSREP
-  mysql_mutex_init(key_LOCK_wsrep_thd, &LOCK_wsrep_thd, MY_MUTEX_INIT_FAST);
   wsrep_ws_handle.trx_id = WSREP_UNDEFINED_TRX_ID;
   wsrep_ws_handle.opaque = NULL;
   wsrep_retry_counter     = 0;
@@ -1644,9 +1546,6 @@ THD::~THD()
   mysql_mutex_unlock(&LOCK_thd_data);
 
 #ifdef WITH_WSREP
-  mysql_mutex_lock(&LOCK_wsrep_thd);
-  mysql_mutex_unlock(&LOCK_wsrep_thd);
-  mysql_mutex_destroy(&LOCK_wsrep_thd);
   if (wsrep_rgi) delete wsrep_rgi;
 #endif
   /* Close connection */
@@ -2657,6 +2556,8 @@ void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
                                             MEM_ROOT *runtime_memroot)
 {
   Item_change_record *change;
+  DBUG_ENTER("THD::nocheck_register_item_tree_change");
+  DBUG_PRINT("enter", ("Register %p <- %p", old_value, (*place)));
   /*
     Now we use one node per change, which adds some memory overhead,
     but still is rather fast as we use alloc_root for allocations.
@@ -2669,12 +2570,13 @@ void THD::nocheck_register_item_tree_change(Item **place, Item *old_value,
       OOM, thd->fatal_error() is called by the error handler of the
       memroot. Just return.
     */
-    return;
+    DBUG_VOID_RETURN;
   }
   change= new (change_mem) Item_change_record;
   change->place= place;
   change->old_value= old_value;
   change_list.append(change);
+  DBUG_VOID_RETURN;
 }
 
 /**
@@ -2696,6 +2598,9 @@ void THD::check_and_register_item_tree_change(Item **place, Item **new_value,
                                               MEM_ROOT *runtime_memroot)
 {
   Item_change_record *change;
+  DBUG_ENTER("THD::check_and_register_item_tree_change");
+  DBUG_PRINT("enter", ("Register: %p (%p) <- %p (%p)",
+                       *place, place, *new_value, new_value));
   I_List_iterator<Item_change_record> it(change_list);
   while ((change= it++))
   {
@@ -2705,17 +2610,22 @@ void THD::check_and_register_item_tree_change(Item **place, Item **new_value,
   if (change)
     nocheck_register_item_tree_change(place, change->old_value,
                                       runtime_memroot);
+  DBUG_VOID_RETURN;
 }
 
 
 void THD::rollback_item_tree_changes()
 {
+  DBUG_ENTER("THD::rollback_item_tree_changes");
   I_List_iterator<Item_change_record> it(change_list);
   Item_change_record *change;
-  DBUG_ENTER("rollback_item_tree_changes");
 
   while ((change= it++))
+  {
+    DBUG_PRINT("info", ("Rollback: %p (%p) <- %p",
+                        *change->place, change->place, change->old_value));
     *change->place= change->old_value;
+  }
   /* We can forget about changes memory: it's allocated in runtime memroot */
   change_list.empty();
   DBUG_VOID_RETURN;
@@ -7093,6 +7003,13 @@ bool THD::rgi_have_temporary_tables()
   return rgi_slave->rli->save_temporary_tables != 0;
 }
 
+bool THD::is_optimistic_slave_worker()
+{
+  DBUG_ASSERT(system_thread != SYSTEM_THREAD_SLAVE_SQL || rgi_slave);
+
+  return system_thread == SYSTEM_THREAD_SLAVE_SQL && rgi_slave &&
+    rgi_slave->speculation == rpl_group_info::SPECULATE_OPTIMISTIC;
+}
 
 void
 wait_for_commit::reinit()

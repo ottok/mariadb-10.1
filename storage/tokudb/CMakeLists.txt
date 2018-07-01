@@ -1,14 +1,25 @@
-SET(TOKUDB_VERSION 5.6.37-82.2)
+SET(TOKUDB_VERSION 5.6.39-83.1)
 # PerconaFT only supports x86-64 and cmake-2.8.9+
 IF(CMAKE_VERSION VERSION_LESS "2.8.9")
   MESSAGE(STATUS "CMake 2.8.9 or higher is required by TokuDB")
+ELSEIF(NOT HAVE_DLOPEN)
+  MESSAGE(STATUS "dlopen is required by TokuDB")
+ELSEIF(PLUGIN_PERFSCHEMA MATCHES "^NO$")
+  MESSAGE(STATUS "Performance Schema is required by TokuDB")
+  RETURN()
 ELSEIF(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" OR
        CMAKE_SYSTEM_PROCESSOR STREQUAL "amd64")
+# tokudb requires F_NOCACHE or O_DIRECT, and designated initializers
 CHECK_CXX_SOURCE_COMPILES(
 "
+#include <fcntl.h>
 struct a {int b; int c; };
 struct a d = { .b=1, .c=2 };
+#if defined(O_DIRECT) || defined(F_NOCACHE)
 int main() { return 0; }
+#else
+#error
+#endif
 " TOKUDB_OK)
 ENDIF()
 
@@ -33,6 +44,7 @@ IF(NOT LIBJEMALLOC)
   MESSAGE(WARNING "TokuDB is enabled, but jemalloc is not. This configuration is not supported")
 ENDIF()
 
+MY_CHECK_AND_SET_COMPILER_FLAG("-Wno-shadow")
 MY_CHECK_AND_SET_COMPILER_FLAG("-Wno-vla" DEBUG)
 MY_CHECK_AND_SET_COMPILER_FLAG("-Wno-implicit-fallthrough")
 
