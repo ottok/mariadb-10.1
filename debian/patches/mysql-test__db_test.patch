@@ -12,11 +12,9 @@ Subject: mysql-test__db_test
  mysql-test/mysql-test-run.pl | 4 ++++
  1 file changed, 4 insertions(+)
 
-diff --git a/mysql-test/mysql-test-run.pl b/mysql-test/mysql-test-run.pl
-index ac9f493..7e7f116 100755
 --- a/mysql-test/mysql-test-run.pl
 +++ b/mysql-test/mysql-test-run.pl
-@@ -3203,6 +3203,10 @@ sub mysql_install_db {
+@@ -3222,6 +3222,10 @@ sub mysql_install_db {
        mtr_appendfile_to_file("$sql_dir/mysql_system_tables_data.sql",
             $bootstrap_sql_file);
  

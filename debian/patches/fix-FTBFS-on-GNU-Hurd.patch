@@ -11,12 +11,10 @@ Subject: fix-FTBFS-on-GNU-Hurd
  storage/mroonga/vendor/groonga/config.h.cmake |  1 +
  6 files changed, 68 insertions(+), 21 deletions(-)
 
-diff --git a/cmake/dtrace.cmake b/cmake/dtrace.cmake
-index 3edcdc4..c090d65 100644
 --- a/cmake/dtrace.cmake
 +++ b/cmake/dtrace.cmake
-@@ -45,6 +45,10 @@ MACRO(CHECK_DTRACE)
-      AND NOT BUGGY_LINUX_DTRACE) 
+@@ -46,6 +46,10 @@ MACRO(CHECK_DTRACE)
+      AND NOT CMAKE_SYSTEM_NAME MATCHES "SunOS")
     SET(ENABLE_DTRACE ON CACHE BOOL "Enable dtrace")
   ENDIF()
 + # On GNU/Hurd, dtrace is not supported
@@ -26,8 +24,6 @@ index 3edcdc4..c090d65 100644
   SET(HAVE_DTRACE ${ENABLE_DTRACE})
   IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
     IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-diff --git a/cmake/package_name.cmake b/cmake/package_name.cmake
-index 7681f78..2a9b1e1 100644
 --- a/cmake/package_name.cmake
 +++ b/cmake/package_name.cmake
 @@ -81,6 +81,9 @@ IF(NOT VERSION)
@@ -40,8 +36,6 @@ index 7681f78..2a9b1e1 100644
      ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
        IF(CMAKE_OSX_DEPLOYMENT_TARGET)
          SET(DEFAULT_PLATFORM "osx${CMAKE_OSX_DEPLOYMENT_TARGET}")
-diff --git a/extra/mariabackup/backup_copy.cc b/extra/mariabackup/backup_copy.cc
-index c019209..632faad 100644
 --- a/extra/mariabackup/backup_copy.cc
 +++ b/extra/mariabackup/backup_copy.cc
 @@ -623,11 +623,13 @@ static
@@ -61,7 +55,7 @@ index c019209..632faad 100644
  
  	for (p = parent + strlen(parent);
  	    !is_path_separator(*p) && p != parent; p--);
-@@ -636,19 +638,23 @@ mkdirp(const char *pathname, int Flags, myf MyFlags)
+@@ -636,19 +638,23 @@ mkdirp(const char *pathname, int Flags,
  
  	/* try to make parent directory */
  	if (p != parent && mkdirp(parent, Flags, MyFlags) != 0) {
@@ -115,8 +109,6 @@ index c019209..632faad 100644
  #else
  	return strcmp(first, second) == 0;
  #endif
-diff --git a/mysys/mysys_priv.h b/mysys/mysys_priv.h
-index 892e091..9bf44e0 100644
 --- a/mysys/mysys_priv.h
 +++ b/mysys/mysys_priv.h
 @@ -16,6 +16,10 @@
@@ -139,7 +131,7 @@ index 892e091..9bf44e0 100644
  #define O_PATH O_EXEC
  #endif
  #endif
-@@ -128,8 +132,8 @@ const char *my_open_parent_dir_nosymlinks(const char *pathname, int *pdfd);
+@@ -128,8 +132,8 @@ const char *my_open_parent_dir_nosymlink
    return res;
  #elif defined(HAVE_REALPATH) && defined(PATH_MAX)
  #define NOSYMLINK_FUNCTION_BODY(AT,NOAT)                                \
@@ -150,11 +142,9 @@ index 892e091..9bf44e0 100644
    if (strcmp(pathname, buf)) { errno= ENOTDIR; return -1; }             \
    return NOAT;
  #elif defined(HAVE_REALPATH)
-diff --git a/sql/wsrep_binlog.cc b/sql/wsrep_binlog.cc
-index 998f4e7..784b235 100644
 --- a/sql/wsrep_binlog.cc
 +++ b/sql/wsrep_binlog.cc
-@@ -318,13 +318,23 @@ int wsrep_write_cache(wsrep_t*  const wsrep,
+@@ -318,13 +318,23 @@ int wsrep_write_cache(wsrep_t*  const ws
  
  void wsrep_dump_rbr_buf(THD *thd, const void* rbr_buf, size_t buf_len)
  {
@@ -182,7 +172,7 @@ index 998f4e7..784b235 100644
      return;
    }
  
-@@ -343,6 +353,7 @@ void wsrep_dump_rbr_buf(THD *thd, const void* rbr_buf, size_t buf_len)
+@@ -343,6 +353,7 @@ void wsrep_dump_rbr_buf(THD *thd, const
      WSREP_ERROR("Failed to open file '%s': %d (%s)",
                  filename, errno, strerror(errno));
    }
@@ -190,7 +180,7 @@ index 998f4e7..784b235 100644
  }
  
  /*
-@@ -448,19 +459,29 @@ void wsrep_dump_rbr_buf_with_header(THD *thd, const void *rbr_buf,
+@@ -448,19 +459,29 @@ void wsrep_dump_rbr_buf_with_header(THD
  {
    DBUG_ENTER("wsrep_dump_rbr_buf_with_header");
  
@@ -226,7 +216,7 @@ index 998f4e7..784b235 100644
      DBUG_VOID_RETURN;
    }
  
-@@ -498,6 +519,7 @@ void wsrep_dump_rbr_buf_with_header(THD *thd, const void *rbr_buf,
+@@ -498,6 +519,7 @@ void wsrep_dump_rbr_buf_with_header(THD
    }
  
  cleanup2:
@@ -234,8 +224,6 @@ index 998f4e7..784b235 100644
    end_io_cache(&cache);
  
  cleanup1:
-diff --git a/storage/mroonga/vendor/groonga/config.h.cmake b/storage/mroonga/vendor/groonga/config.h.cmake
-index bfd0cbd..ec67c5e 100644
 --- a/storage/mroonga/vendor/groonga/config.h.cmake
 +++ b/storage/mroonga/vendor/groonga/config.h.cmake
 @@ -107,6 +107,7 @@

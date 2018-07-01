@@ -10,8 +10,6 @@ Subject: c11_atomics
  sql/CMakeLists.txt            |  4 ++++
  5 files changed, 46 insertions(+), 4 deletions(-)
 
-diff --git a/configure.cmake b/configure.cmake
-index 0057c7f..43ad114 100644
 --- a/configure.cmake
 +++ b/configure.cmake
 @@ -128,7 +128,7 @@ IF(UNIX)
@@ -23,7 +21,7 @@ index 0057c7f..43ad114 100644
      ${LIBM} ${LIBNSL} ${LIBBIND} ${LIBCRYPT} ${LIBSOCKET} ${LIBDL} ${CMAKE_THREAD_LIBS_INIT} ${LIBRT} ${LIBEXECINFO})
    # Need explicit pthread for gcc -fsanitize=address
    IF(CMAKE_USE_PTHREADS_INIT AND CMAKE_C_FLAGS MATCHES "-fsanitize=")
-@@ -1028,7 +1028,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
+@@ -1038,7 +1038,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
      long long int *ptr= &var;
      return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
    }"
@@ -51,8 +49,6 @@ index 0057c7f..43ad114 100644
  ELSE()
    MESSAGE(FATAL_ERROR "${WITH_ATOMIC_OPS} is not a valid value for WITH_ATOMIC_OPS!")
  ENDIF()
-diff --git a/include/atomic/gcc_builtins.h b/include/atomic/gcc_builtins.h
-index 56a0323..044be2e 100644
 --- a/include/atomic/gcc_builtins.h
 +++ b/include/atomic/gcc_builtins.h
 @@ -16,6 +16,7 @@
@@ -84,8 +80,6 @@ index 56a0323..044be2e 100644
  #ifdef MY_ATOMIC_MODE_DUMMY
  #define make_atomic_load_body(S)   ret= *a
  #define make_atomic_store_body(S)  *a= v
-diff --git a/include/atomic/nolock.h b/include/atomic/nolock.h
-index 2137445..2ad7d98 100644
 --- a/include/atomic/nolock.h
 +++ b/include/atomic/nolock.h
 @@ -17,7 +17,7 @@
@@ -106,8 +100,6 @@ index 2137445..2ad7d98 100644
  #      include "gcc_builtins.h"
  #    elif defined(__i386__) || defined(__x86_64__)
  #      include "x86-gcc.h"
-diff --git a/mysys/CMakeLists.txt b/mysys/CMakeLists.txt
-index eb7f75e..a9221d7 100644
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
 @@ -78,6 +78,10 @@ IF(HAVE_BFD_H)
@@ -121,11 +113,9 @@ index eb7f75e..a9221d7 100644
  IF (WIN32)
    TARGET_LINK_LIBRARIES(mysys IPHLPAPI)  
  ENDIF(WIN32)
-diff --git a/sql/CMakeLists.txt b/sql/CMakeLists.txt
-index b4acac5..8247714 100644
 --- a/sql/CMakeLists.txt
 +++ b/sql/CMakeLists.txt
-@@ -165,6 +165,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATIC_PLUGIN_LIBS}
+@@ -165,6 +165,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  
