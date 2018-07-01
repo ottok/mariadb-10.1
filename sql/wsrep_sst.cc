@@ -85,33 +85,10 @@ static void make_wsrep_defaults_file()
 }
 
 
-// TODO: Improve address verification.
-static bool sst_receive_address_check (const char* str)
-{
-    if (!strncasecmp(str, "127.0.0.1", strlen("127.0.0.1")) ||
-        !strncasecmp(str, "localhost", strlen("localhost")))
-    {
-        return 1;
-    }
-
-    return 0;
-}
-
 bool  wsrep_sst_receive_address_check (sys_var *self, THD* thd, set_var* var)
 {
-  char addr_buf[FN_REFLEN];
-
   if ((! var->save_result.string_value.str) ||
       (var->save_result.string_value.length > (FN_REFLEN - 1))) // safety
-  {
-    goto err;
-  }
-
-  memcpy(addr_buf, var->save_result.string_value.str,
-         var->save_result.string_value.length);
-  addr_buf[var->save_result.string_value.length]= 0;
-
-  if (sst_receive_address_check(addr_buf))
   {
     goto err;
   }
@@ -182,8 +159,8 @@ bool wsrep_sst_auth_update (sys_var *self, THD* thd, enum_var_type type)
 
 void wsrep_sst_auth_init (const char* value)
 {
-    if (wsrep_sst_auth == value) wsrep_sst_auth = NULL;
-    if (value) sst_auth_real_set (value);
+    DBUG_ASSERT(wsrep_sst_auth == value);
+    sst_auth_real_set (wsrep_sst_auth);
 }
 
 bool  wsrep_sst_donor_check (sys_var *self, THD* thd, set_var* var)
@@ -579,11 +556,11 @@ static ssize_t sst_prepare_other (const char*  method,
 
   ret= snprintf (cmd_str(), cmd_len,
                  "wsrep_sst_%s "
-                 WSREP_SST_OPT_ROLE" 'joiner' "
-                 WSREP_SST_OPT_ADDR" '%s' "
-                 WSREP_SST_OPT_DATA" '%s' "
+                 WSREP_SST_OPT_ROLE " 'joiner' "
+                 WSREP_SST_OPT_ADDR " '%s' "
+                 WSREP_SST_OPT_DATA " '%s' "
                  " %s "
-                 WSREP_SST_OPT_PARENT" '%d'"
+                 WSREP_SST_OPT_PARENT " '%d'"
                  " %s '%s' ",
                  method, addr_in, mysql_real_data_home,
                  wsrep_defaults_file,
@@ -865,13 +842,13 @@ static int sst_donate_mysqldump (const char*         addr,
 
   int ret= snprintf (cmd_str(), cmd_len,
                      "wsrep_sst_mysqldump "
-                     WSREP_SST_OPT_ADDR" '%s' "
-                     WSREP_SST_OPT_PORT" '%d' "
-                     WSREP_SST_OPT_LPORT" '%u' "
-                     WSREP_SST_OPT_SOCKET" '%s' "
-                     " '%s' "
-                     WSREP_SST_OPT_GTID" '%s:%lld' "
-                     WSREP_SST_OPT_GTID_DOMAIN_ID" '%d'"
+                     WSREP_SST_OPT_ADDR " '%s' "
+                     WSREP_SST_OPT_PORT " '%d' "
+                     WSREP_SST_OPT_LPORT " '%u' "
+                     WSREP_SST_OPT_SOCKET " '%s' "
+                     " %s "
+                     WSREP_SST_OPT_GTID " '%s:%lld' "
+                     WSREP_SST_OPT_GTID_DOMAIN_ID " '%d'"
                      "%s",
 	             addr, port, mysqld_port, mysqld_unix_port,
                      wsrep_defaults_file, uuid_str,
@@ -1228,14 +1205,14 @@ static int sst_donate_other (const char*   method,
 
   ret= snprintf (cmd_str(), cmd_len,
                  "wsrep_sst_%s "
-                 WSREP_SST_OPT_ROLE" 'donor' "
-                 WSREP_SST_OPT_ADDR" '%s' "
-                 WSREP_SST_OPT_SOCKET" '%s' "
-                 WSREP_SST_OPT_DATA" '%s' "
+                 WSREP_SST_OPT_ROLE " 'donor' "
+                 WSREP_SST_OPT_ADDR " '%s' "
+                 WSREP_SST_OPT_SOCKET " '%s' "
+                 WSREP_SST_OPT_DATA " '%s' "
                  " %s "
                  " %s '%s' "
-                 WSREP_SST_OPT_GTID" '%s:%lld' "
-                 WSREP_SST_OPT_GTID_DOMAIN_ID" '%d'"
+                 WSREP_SST_OPT_GTID " '%s:%lld' "
+                 WSREP_SST_OPT_GTID_DOMAIN_ID " '%d'"
                  "%s",
                  method, addr, mysqld_unix_port, mysql_real_data_home,
                  wsrep_defaults_file,

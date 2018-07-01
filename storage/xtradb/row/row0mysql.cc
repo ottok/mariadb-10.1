@@ -1,6 +1,6 @@
 /*****************************************************************************
 
-Copyright (c) 2000, 2017, Oracle and/or its affiliates. All Rights Reserved.
+Copyright (c) 2000, 2018, Oracle and/or its affiliates. All Rights Reserved.
 Copyright (c) 2015, 2018, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
@@ -1504,8 +1504,7 @@ error_exit:
 			doc_ids difference should not exceed
 			FTS_DOC_ID_MAX_STEP value. */
 
-			if (next_doc_id > 1
-			    && doc_id - next_doc_id >= FTS_DOC_ID_MAX_STEP) {
+			if (doc_id - next_doc_id >= FTS_DOC_ID_MAX_STEP) {
 				fprintf(stderr,
 					"InnoDB: Doc ID " UINT64PF " is too"
 					" big. Its difference with largest"
@@ -3541,6 +3540,8 @@ row_truncate_table_for_mysql(
 			fil_space_release(space);
 		}
 
+		buf_LRU_drop_page_hash_for_tablespace(table);
+
 		if (flags != ULINT_UNDEFINED
 		    && fil_discard_tablespace(space_id) == DB_SUCCESS) {
 
@@ -4238,6 +4239,21 @@ row_drop_table_for_mysql(
 		/* Mark the index unusable. */
 		index->page = FIL_NULL;
 		rw_lock_x_unlock(dict_index_get_lock(index));
+	}
+
+	if (table->space != TRX_SYS_SPACE) {
+		/* On DISCARD TABLESPACE, we would not drop the
+		adaptive hash index entries. If the tablespace is
+		missing here, delete-marking the record in SYS_INDEXES
+		would not free any pages in the buffer pool. Thus,
+		dict_index_remove_from_cache() would hang due to
+		adaptive hash index entries existing in the buffer
+		pool.  To prevent this hang, and also to guarantee
+		that btr_search_drop_page_hash_when_freed() will avoid
+		calling btr_search_drop_page_hash_index() while we
+		hold the InnoDB dictionary lock, we will drop any
+		adaptive hash index entries upfront. */
+		buf_LRU_drop_page_hash_for_tablespace(table);
 	}
 
 	/* We use the private SQL parser of Innobase to generate the
@@ -5270,7 +5286,8 @@ row_rename_table_for_mysql(
 		}
 	}
 
-	if (dict_table_has_fts_index(table)
+	if ((dict_table_has_fts_index(table)
+	    || DICT_TF2_FLAG_IS_SET(table, DICT_TF2_FTS_HAS_DOC_ID))
 	    && !dict_tables_have_same_db(old_name, new_name)) {
 		err = fts_rename_aux_tables(table, new_name, trx);
 		if (err != DB_TABLE_NOT_FOUND) {
@@ -5372,6 +5389,7 @@ end:
 			trx_rollback_to_savepoint(trx, NULL);
 			trx->error_state = DB_SUCCESS;
 		}
+		table->data_dir_path= NULL;
 	}
 
 funct_exit:

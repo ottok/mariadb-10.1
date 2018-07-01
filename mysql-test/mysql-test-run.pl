@@ -2,7 +2,7 @@
 # -*- cperl -*-
 
 # Copyright (c) 2004, 2014, Oracle and/or its affiliates.
-# Copyright (c) 2009, 2017, MariaDB Corporation
+# Copyright (c) 2009, 2018, MariaDB Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,6 +91,7 @@ use My::Platform;
 use My::SafeProcess;
 use My::ConfigFactory;
 use My::Options;
+use My::Tee;
 use My::Find;
 use My::SysInfo;
 use My::CoreDump;
@@ -392,6 +393,11 @@ sub main {
   initialize_servers();
   init_timers();
 
+  unless (IS_WINDOWS) {
+    binmode(STDOUT,":via(My::Tee)") or die "binmode(STDOUT, :via(My::Tee)):$!";
+    binmode(STDERR,":via(My::Tee)") or die "binmode(STDERR, :via(My::Tee)):$!";
+  }
+
   mtr_report("Checking supported features...");
 
   executable_setup();
@@ -641,50 +647,59 @@ sub run_test_server ($$$) {
 	    my $worker_savename= basename($worker_savedir);
 	    my $savedir= "$opt_vardir/log/$worker_savename";
 
+            # Move any core files from e.g. mysqltest
+            foreach my $coref (glob("core*"), glob("*.dmp"))
+            {
+              mtr_report(" - found '$coref', moving it to '$worker_savedir'");
+              move($coref, $worker_savedir);
+            }
+
+            find(
+            {
+              no_chdir => 1,
+              wanted => sub
+              {
+                my $core_file= $File::Find::name;
+                my $core_name= basename($core_file);
+
+                # Name beginning with core, not ending in .gz
+                if (($core_name =~ /^core/ and $core_name !~ /\.gz$/)
+                    or (IS_WINDOWS and $core_name =~ /\.dmp$/))
+                {
+                  # Ending with .dmp
+                  mtr_report(" - found '$core_name'",
+                             "($num_saved_cores/$opt_max_save_core)");
+
+                  My::CoreDump->show($core_file, $exe_mysqld, $opt_parallel);
+
+                  # Limit number of core files saved
+                  if ($opt_max_save_core > 0 &&
+                      $num_saved_cores >= $opt_max_save_core)
+                  {
+                    mtr_report(" - deleting it, already saved",
+                               "$opt_max_save_core");
+                    unlink("$core_file");
+                  }
+                  else
+                  {
+                    mtr_compress_file($core_file) unless @opt_cases;
+                    ++$num_saved_cores;
+                  }
+                }
+              }
+            },
+            $worker_savedir);
+
 	    if ($opt_max_save_datadir > 0 &&
 		$num_saved_datadir >= $opt_max_save_datadir)
 	    {
 	      mtr_report(" - skipping '$worker_savedir/'");
 	      rmtree($worker_savedir);
 	    }
-	    else {
+            else
+            {
 	      mtr_report(" - saving '$worker_savedir/' to '$savedir/'");
 	      rename($worker_savedir, $savedir);
-	      # Move any core files from e.g. mysqltest
-	      foreach my $coref (glob("core*"), glob("*.dmp"))
-	      {
-		mtr_report(" - found '$coref', moving it to '$savedir'");
-                move($coref, $savedir);
-              }
-	      if ($opt_max_save_core > 0) {
-		# Limit number of core files saved
-		find({ no_chdir => 1,
-		       wanted => sub {
-			 my $core_file= $File::Find::name;
-			 my $core_name= basename($core_file);
-
-			 # Name beginning with core, not ending in .gz
-			 if (($core_name =~ /^core/ and $core_name !~ /\.gz$/)
-			     or (IS_WINDOWS and $core_name =~ /\.dmp$/)){
-                                                       # Ending with .dmp
-			   mtr_report(" - found '$core_name'",
-				      "($num_saved_cores/$opt_max_save_core)");
-
-			   My::CoreDump->show($core_file, $exe_mysqld, $opt_parallel);
-
-			   if ($num_saved_cores >= $opt_max_save_core) {
-			     mtr_report(" - deleting it, already saved",
-					"$opt_max_save_core");
-			     unlink("$core_file");
-			   } else {
-			     mtr_compress_file($core_file) unless @opt_cases;
-			   }
-			   ++$num_saved_cores;
-			 }
-		       }
-		     },
-		     $savedir);
-	      }
 	    }
 	    resfile_print_test();
 	    $num_saved_datadir++;
@@ -4452,6 +4467,7 @@ sub extract_warning_lines ($$) {
      qr|SSL error: Failed to set ciphers to use|,
      qr/Plugin 'InnoDB' will be forced to shutdown/,
      qr|Could not increase number of max_open_files to more than|,
+     qr|Changed limits: max_open_files|,
      qr/InnoDB: Error table encrypted but encryption service not available.*/,
      qr/InnoDB: Could not find a valid tablespace file for*/,
      qr/InnoDB: Tablespace open failed for*/,
@@ -5706,7 +5722,7 @@ sub lldb_arguments {
   $input = $input ? "< $input" : "";
 
   # write init file for mysqld or client
-  mtr_tofile($lldb_init_file, "set args $str $input\n");
+  mtr_tofile($lldb_init_file, "process launch --stop-at-entry -- $str $input\n");
 
     print "\nTo start lldb for $type, type in another window:\n";
     print "cd $glob_mysql_test_dir && lldb -s $lldb_init_file $$exe\n";
@@ -6280,7 +6296,8 @@ sub xterm_stat {
     my $done = $num_tests - $left;
     my $spent = time - $^T;
 
-    printf "\e];mtr: spent %s on %d tests. %s (%d tests) left\a",
+    syswrite STDOUT, sprintf
+           "\e];mtr: spent %s on %d tests. %s (%d tests) left\a",
            time_format($spent), $done,
            time_format($spent/$done * $left), $left;
   }

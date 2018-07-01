@@ -1,5 +1,5 @@
-/* Copyright (c) 2000, 2015, Oracle and/or its affiliates.
-   Copyright (c) 2008, 2015, MariaDB
+/* Copyright (c) 2000, 2017, Oracle and/or its affiliates.
+   Copyright (c) 2008, 2018, MariaDB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -2233,6 +2233,9 @@ int TABLE_SHARE::init_from_sql_statement_string(THD *thd, bool write,
     goto ret;
 
   thd->lex->create_info.db_type= hton;
+#ifdef WITH_PARTITION_STORAGE_ENGINE
+  thd->work_part_info= 0;                       // For partitioning
+#endif
 
   if (tabledef_version.str)
     thd->lex->create_info.tabledef_version= tabledef_version;
@@ -3734,7 +3737,7 @@ Table_check_intact::check(TABLE *table, const TABLE_FIELD_DEF *table_def)
 
   /* Whether the table definition has already been validated. */
   if (table->s->table_field_def_cache == table_def)
-    DBUG_RETURN(FALSE);
+    goto end;
 
   if (table->s->fields != table_def->count)
   {
@@ -3897,6 +3900,16 @@ Table_check_intact::check(TABLE *table, const TABLE_FIELD_DEF *table_def)
 
   if (! error)
     table->s->table_field_def_cache= table_def;
+
+end:
+
+  if (has_keys && !error && !table->key_info)
+  {
+    report_error(0, "Incorrect definition of table %s.%s: "
+                 "indexes are missing",
+                 table->s->db.str, table->alias.c_ptr());
+    error= TRUE;
+  }
 
   DBUG_RETURN(error);
 }
@@ -5415,6 +5428,8 @@ Item *create_view_field(THD *thd, TABLE_LIST *view, Item **field_ref,
                Item_direct_view_ref(thd, &view->view->select_lex.context,
                                     field_ref, view->alias,
                                     name, view));
+  if (!item)
+    return NULL;
   /*
     Force creation of nullable item for the result tmp table for outer joined
     views/derived tables.
@@ -7345,7 +7360,15 @@ int TABLE_LIST::fetch_number_of_rows()
 {
   int error= 0;
   if (jtbm_subselect)
+  {
+    if (jtbm_subselect->is_jtbm_merged)
+    {
+      table->file->stats.records= jtbm_subselect->jtbm_record_count;
+      set_if_bigger(table->file->stats.records, 2);
+      table->used_stat_records= table->file->stats.records;
+    }
     return 0;
+  }
   if (is_materialized_derived() && !fill_me)
 
   {

@@ -1028,21 +1028,6 @@ public:
   LEX_STRING name; /* name for named prepared statements */
   LEX *lex;                                     // parse tree descriptor
   /*
-    LEX which represents current statement (conventional, SP or PS)
-
-    For example during view parsing THD::lex will point to the views LEX and
-    THD::stmt_lex will point to LEX of the statement where the view will be
-    included
-
-    Currently it is used to have always correct select numbering inside
-    statement (LEX::current_select_number) without storing and restoring a
-    global counter which was THD::select_number.
-
-    TODO: make some unified statement representation (now SP has different)
-    to store such data like LEX::current_select_number.
-  */
-  LEX *stmt_lex;
-  /*
     Points to the query associated with this statement. It's const, but
     we need to declare it char * because all table handlers are written
     in C and need to point to it.
@@ -1697,7 +1682,7 @@ public:
   void unlink_all_closed_tables(THD *thd,
                                 MYSQL_LOCK *lock,
                                 size_t reopen_count);
-  bool reopen_tables(THD *thd);
+  bool reopen_tables(THD *thd, bool need_reopen);
   bool restore_lock(THD *thd, TABLE_LIST *dst_table_list, TABLE *table,
                     MYSQL_LOCK *lock);
   void add_back_last_deleted_lock(TABLE_LIST *dst_table_list);
@@ -2955,6 +2940,7 @@ public:
     query_id_t first_query_id;
   } binlog_evt_union;
 
+  mysql_cond_t              COND_wsrep_thd;
   /**
     Internal parser state.
     Note that since the parser is not re-entrant, we keep only one parser
@@ -4105,7 +4091,6 @@ public:
   query_id_t                wsrep_last_query_id;
   enum wsrep_query_state    wsrep_query_state;
   enum wsrep_conflict_state wsrep_conflict_state;
-  mysql_mutex_t             LOCK_wsrep_thd;
   wsrep_trx_meta_t          wsrep_trx_meta;
   uint32                    wsrep_rand;
   Relay_log_info            *wsrep_rli;
@@ -4183,6 +4168,12 @@ public:
        (THD_TRANS::DID_WAIT | THD_TRANS::CREATED_TEMP_TABLE |
         THD_TRANS::DROPPED_TEMP_TABLE | THD_TRANS::DID_DDL));
   }
+
+  /*
+    Returns true when the thread handle belongs to a slave worker thread
+    running in the optimistic execution mode.
+  */
+  bool is_optimistic_slave_worker();
 };
 
 
