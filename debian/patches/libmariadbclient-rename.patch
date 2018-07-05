@@ -307,3 +307,14 @@ Subject: libmariadbclient-rename
  
  IF(WIN32)
    MY_ADD_TESTS(my_delete LINK_LIBRARIES mysys)
+--- a/storage/tokudb/PerconaFT/tools/CMakeLists.txt
++++ b/storage/tokudb/PerconaFT/tools/CMakeLists.txt
+@@ -12,7 +12,7 @@ foreach(tool ${tools})
+         (CMAKE_CXX_FLAGS_DEBUG MATCHES " -DENABLED_DEBUG_SYNC"))
+       target_link_libraries(${tool} sql)
+     endif()
+-    target_link_libraries(${tool} mysqlclient)
++    target_link_libraries(${tool} mariadbclient)
+   endif ()
+ 
+   add_space_separated_property(TARGET ${tool} COMPILE_FLAGS -fvisibility=hidden)
