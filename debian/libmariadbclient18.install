@@ -1,4 +1,5 @@
 usr/lib/*/libmariadbclient.so.*
 usr/lib/*/mariadb18/plugin/client_ed25519.so
 usr/lib/*/mariadb18/plugin/dialog.so
+usr/lib/*/mariadb18/plugin/disks.so
 usr/lib/*/mariadb18/plugin/mysql_clear_password.so
