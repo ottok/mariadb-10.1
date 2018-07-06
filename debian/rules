@@ -144,6 +144,12 @@ endif
 	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/qa_auth_interface.so
 	rm -f $(TMP)/usr/lib/*/mariadb18/plugin/qa_auth_server.so
 
+	# Delete useless systemd files introduced in upstream commit
+	# https://github.com/MariaDB/server/commit/7bbc6c14d1e8fcf1f4737e0a5fcf6237fe18bd23
+	# They have no function in Debian systems and their path and usage is unstandardized.
+	rm -rf $(TMP)/usr/lib/sysusers.d/sysusers.conf
+	rm -rf $(TMP)/usr/lib/tmpfiles.d/tmpfiles.conf
+
 	# nm numeric soft is not enough, therefore extra sort in command
 	# to satisfy Debian reproducible build requirements
 	nm --defined-only $(BUILDDIR)/sql/mysqld | LC_ALL=C sort | gzip -n -9 > $(TMP)/usr/share/doc/mariadb-server-10.1/mysqld.sym.gz
