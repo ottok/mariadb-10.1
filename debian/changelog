@@ -27,7 +27,17 @@ mariadb-10.1 (1:10.1.34-0ubuntu0.18.04.1) bionic-security; urgency=medium
     security vulnerabilities:
     - CVE-2017-15365
 
- -- Otto Kekäläinen <otto@debian.org>  Mon, 02 Jul 2018 00:58:30 +0300
+  [ Otto Kekäläinen ]
+  * Update VCS-* links to point to the new source repository
+  * Update Maintainer in d/control for Ubuntu repositories
+  * Delete unnecessary systemd files introduced by upstream
+  * Add new files introduced by upstream to correct packages
+
+  [ Vicențiu Ciorbaru ]
+  * Extend libmariadbclient-rename.patch to cover TokuDB as well
+  * Disable disks.disks test
+
+ -- Otto Kekäläinen <otto@debian.org>  Sun, 08 Jul 2018 11:14:42 +0300
 
 mariadb-10.1 (1:10.1.29-6) unstable; urgency=high
 
