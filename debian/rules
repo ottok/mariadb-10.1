@@ -176,9 +176,6 @@ override_dh_installinit-arch:
 override_dh_installcron-arch:
 	dh_installcron --name mysql-server
 
-get-orig-source:
-	uscan --force-download --verbose
-
 %:
 	dh $@ --parallel --with systemd --fail-missing
 
