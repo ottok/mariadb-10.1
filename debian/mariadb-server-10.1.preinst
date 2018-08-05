@@ -18,7 +18,6 @@ if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
 ${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*" 1>&2 }
 
 export PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin
-MYADMIN="/usr/bin/mysqladmin --defaults-file=/etc/mysql/debian.cnf"
 mysql_datadir=/var/lib/mysql
 mysql_upgradedir=/var/lib/mysql-upgrade
 
@@ -36,12 +35,12 @@ do
   # The for loop leaves $flag as the query string if there are no results,
   # so the check below is needed to stop further processing when there are
   # no real results.
-  if [ $flag = "$mysql_datadir/debian-*.flag" ]
+  if [ "$flag" = "$mysql_datadir/debian-*.flag" ]
   then
     break
   fi
 
-  flag_version=`echo $flag | sed 's/.*debian-\([0-9\.]\+\).flag/\1/'`
+  flag_version=$(echo "$flag" | sed 's/.*debian-\([0-9\.]\+\).flag/\1/')
 
   # Initialize value if empty
   if [ -z "$found_version" ]
@@ -95,16 +94,16 @@ then
   echo "previous data directory will be renamed to $mysql_datadir-$found_version and" 1>&2
   echo "a new data directory will be initialized at $mysql_datadir." 1>&2
   echo "Please manually export/import your data (e.g. with mysqldump) if needed." 1>&2
-  mv -f $mysql_datadir $mysql_datadir-$found_version
+  mv -f "$mysql_datadir" "$mysql_datadir-$found_version"
   # Also move away the old debian.cnf file that included credentials that are
   # no longer valid
-  mv -f /etc/mysql/debian.cnf /etc/mysql/debian.cnf-$found_version
+  mv -f /etc/mysql/debian.cnf "/etc/mysql/debian.cnf-$found_version"
 fi
 
 # If we use NIS then errors should be tolerated. It's up to the
 # user to ensure that the mysql user is correctly setup.
 # Beware that there are two ypwhich one of them needs the 2>/dev/null!
-if test -n "`which ypwhich 2>/dev/null`"  &&  ypwhich >/dev/null 2>&1; then
+if test -n "$(which ypwhich 2>/dev/null)"  &&  ypwhich >/dev/null 2>&1; then
   set +e
 fi
 
@@ -144,7 +143,7 @@ set -e
 # if there's a symlink, let's store where it's pointing, because otherwise
 # it's going to be lost in some situations
 for dir in DATADIR LOGDIR; do
-    checkdir=`eval echo "$"$dir`
+    checkdir=$(eval echo "$"$dir)
     if [ -L "$checkdir" ]; then
 	mkdir -p "$mysql_upgradedir"
 	cp -dT "$checkdir" "$mysql_upgradedir/$dir.link"
@@ -152,7 +151,7 @@ for dir in DATADIR LOGDIR; do
 done
 
 # creating mysql home directory
-if [ ! -d $mysql_datadir -a ! -L $mysql_datadir ]; then
+if [ ! -d $mysql_datadir ] && [ ! -L $mysql_datadir ]; then
  	mkdir $mysql_datadir
 fi
 
@@ -171,7 +170,7 @@ fi
 # The "set +e" is necessary as e.g. a ".journal" of a ext3 partition is
 # not chgrp'able (#318435).
 set +e
-find $mysql_datadir ! -uid $(id -u mysql) -print0 | xargs -0 -r chown mysql
+find $mysql_datadir ! -uid "$(id -u mysql)" -print0 | xargs -0 -r chown mysql
 find $mysql_datadir -follow -not -group mysql -print0 2>/dev/null \
   | xargs -0 --no-run-if-empty chgrp mysql
 set -e

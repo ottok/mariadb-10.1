@@ -45,7 +45,7 @@ case "$1" in
           mv "$savelink" "$targetdir"
         else
           # this should never even happen, but just in case...
-          mysql_tmp=`mktemp -d -t mysql-symlink-restore-XXXXXX`
+          mysql_tmp=$(mktemp -d -t mysql-symlink-restore-XXXXXX)
           echo "this is very strange!  see $mysql_tmp/README..." >&2
           mv "$targetdir" "$mysql_tmp"
           cat << EOF > "$mysql_tmp/README"
@@ -69,16 +69,16 @@ EOF
 
     # Ensure the existence and right permissions for the database and
     # log files.
-    if [ ! -d "$mysql_statedir" -a ! -L "$mysql_statedir" ]; then mkdir "$mysql_statedir"; fi
-    if [ ! -d "$mysql_datadir"  -a ! -L "$mysql_datadir" ]; then mkdir "$mysql_datadir" ; fi
-    if [ ! -d "$mysql_logdir"   -a ! -L "$mysql_logdir"  ]; then mkdir "$mysql_logdir"  ; fi
+    if [ ! -d "$mysql_statedir" ] && [ ! -L "$mysql_statedir" ]; then mkdir "$mysql_statedir"; fi
+    if [ ! -d "$mysql_datadir"  ] && [ ! -L "$mysql_datadir" ]; then mkdir "$mysql_datadir" ; fi
+    if [ ! -d "$mysql_logdir"   ] && [ ! -L "$mysql_logdir"  ]; then mkdir "$mysql_logdir"  ; fi
     # When creating an ext3 jounal on an already mounted filesystem like e.g.
     # /var/lib/mysql, you get a .journal file that is not modifyable by chown.
     # The mysql_statedir must not be writable by the mysql user under any
     # circumstances as it contains scripts that are executed by root.
     set +e
     chown -R 0:0 $mysql_statedir
-    find $mysql_datadir ! -uid $(id -u mysql) -print0 | xargs -0 -r chown mysql
+    find $mysql_datadir ! -uid "$(id -u mysql)" -print0 | xargs -0 -r chown mysql
     chown -R mysql:adm $mysql_logdir
     chmod 2750 $mysql_logdir
     set -e
