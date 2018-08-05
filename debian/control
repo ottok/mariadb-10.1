@@ -342,6 +342,24 @@ Description: MariaDB database client (metapackage depending on the latest versio
  maintainers.  Install this package if in doubt about which MariaDB version
  you want, as this is the one considered to be in the best shape.
 
+Package: mariadb-backup
+Architecture: any
+Breaks: mariadb-backup-10.1,
+        mariadb-backup-10.2,
+        mariadb-client-10.1 (<< ${source:Version})
+Replaces: mariadb-backup-10.1,
+          mariadb-backup-10.2,
+          mariadb-client-10.1 (<< ${source:Version})
+Depends: mariadb-client-core-10.1 (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: Backup tool for MariaDB server
+ This backup tool is guaranteed to be compatible with MariaDB.
+ Based on Xtrabackup, but improved to work with MariaDB.
+ .
+ Please refer to the MariaDB Knowledge Base on more information on
+ how to use this tool.
+
 Package: mariadb-plugin-connect
 Architecture: any
 Depends: libxml2,
