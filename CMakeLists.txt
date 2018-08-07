@@ -179,6 +179,12 @@ ENDIF()
 OPTION (WITH_UNIT_TESTS "Compile MySQL with unit tests" ON)
 MARK_AS_ADVANCED(CYBOZU)
 
+IF (WITHOUT_SERVER)
+  SET (SKIP_COMPONENTS "Server|IniFiles|SuportFiles|Readme")
+ELSE()
+  SET (SKIP_COMPONENTS "N-O-N-E")
+ENDIF()
+
 OPTION(NOT_FOR_DISTRIBUTION "Allow linking with GPLv2-incompatible system libraries. Only set it you never plan to distribute the resulting binaries" OFF)
 
 INCLUDE(check_compiler_flag)
@@ -362,10 +368,6 @@ INCLUDE(maintainer)
 
 IF(WITH_UNIT_TESTS)
  ENABLE_TESTING()
- # This is the only instance where ADD_TEST should be used,
- # to make sure that make test will run MTR,
- # use MY_ADD_TEST macro to add other tests
- ADD_TEST(NAME MTR COMMAND ./mysql-test-run WORKING_DIRECTORY "mysql-test")
  ADD_SUBDIRECTORY(unittest/mytap)
  ADD_SUBDIRECTORY(unittest/strings)
  ADD_SUBDIRECTORY(unittest/examples)

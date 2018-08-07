@@ -30,6 +30,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#if MYSQL_VERSION_ID < 100200
+# include <my_service_manager.h>
+#endif
+
 static char wsrep_defaults_file[FN_REFLEN * 2 + 10 + 30 +
                                 sizeof(WSREP_SST_OPT_CONF) +
                                 sizeof(WSREP_SST_OPT_CONF_SUFFIX) +
@@ -186,6 +190,9 @@ bool wsrep_before_SE()
 static bool            sst_complete = false;
 static bool            sst_needed   = false;
 
+#define WSREP_EXTEND_TIMEOUT_INTERVAL 30
+#define WSREP_TIMEDWAIT_SECONDS 10
+
 void wsrep_sst_grab ()
 {
   WSREP_INFO("wsrep_sst_grab()");
@@ -197,11 +204,28 @@ void wsrep_sst_grab ()
 // Wait for end of SST
 bool wsrep_sst_wait ()
 {
-  if (mysql_mutex_lock (&LOCK_wsrep_sst)) abort();
+  double total_wtime = 0;
+
+  if (mysql_mutex_lock (&LOCK_wsrep_sst))
+    abort();
+
+  WSREP_INFO("Waiting for SST to complete.");
+
   while (!sst_complete)
   {
-    WSREP_INFO("Waiting for SST to complete.");
-    mysql_cond_wait (&COND_wsrep_sst, &LOCK_wsrep_sst);
+    struct timespec wtime;
+    set_timespec(wtime, WSREP_TIMEDWAIT_SECONDS);
+    time_t start_time = time(NULL);
+    mysql_cond_timedwait (&COND_wsrep_sst, &LOCK_wsrep_sst, &wtime);
+    time_t end_time = time(NULL);
+
+    if (!sst_complete)
+    {
+      total_wtime += difftime(end_time, start_time);
+      WSREP_DEBUG("Waiting for SST to complete. current seqno: %ld waited %f secs.", local_seqno, total_wtime);
+      service_manager_extend_timeout(WSREP_EXTEND_TIMEOUT_INTERVAL,
+        "WSREP state transfer ongoing, current seqno: %ld waited %f secs", local_seqno, total_wtime);
+    }
   }
 
   if (local_seqno >= 0)
@@ -1298,10 +1322,25 @@ void wsrep_SE_init_grab()
 
 void wsrep_SE_init_wait()
 {
+  double total_wtime=0;
+
   while (SE_initialized == false)
   {
-    mysql_cond_wait (&COND_wsrep_sst_init, &LOCK_wsrep_sst_init);
+    struct timespec wtime;
+    set_timespec(wtime, WSREP_TIMEDWAIT_SECONDS);
+    time_t start_time = time(NULL);
+    mysql_cond_timedwait (&COND_wsrep_sst_init, &LOCK_wsrep_sst_init, &wtime);
+    time_t end_time = time(NULL);
+
+    if (!SE_initialized)
+    {
+      total_wtime += difftime(end_time, start_time);
+      WSREP_DEBUG("Waiting for SST to complete. current seqno: %ld waited %f secs.", local_seqno, total_wtime);
+      service_manager_extend_timeout(WSREP_EXTEND_TIMEOUT_INTERVAL,
+        "WSREP state transfer ongoing, current seqno: %ld waited %f secs", local_seqno, total_wtime);
+    }
   }
+
   mysql_mutex_unlock (&LOCK_wsrep_sst_init);
 }
 
