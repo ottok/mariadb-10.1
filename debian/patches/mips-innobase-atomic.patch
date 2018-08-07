@@ -6,8 +6,6 @@ Subject: mips-innobase-atomic
  storage/innobase/include/os0sync.h | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/storage/innobase/include/os0sync.h b/storage/innobase/include/os0sync.h
-index bb225c5..6520237 100644
 --- a/storage/innobase/include/os0sync.h
 +++ b/storage/innobase/include/os0sync.h
 @@ -37,6 +37,7 @@ Created 9/6/1995 Heikki Tuuri

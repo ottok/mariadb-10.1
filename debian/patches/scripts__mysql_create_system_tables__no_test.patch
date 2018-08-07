@@ -13,8 +13,6 @@ Subject: scripts__mysql_create_system_tables__no_test
  scripts/mysql_system_tables_data.sql | 10 ----------
  1 file changed, 10 deletions(-)
 
-diff --git a/scripts/mysql_system_tables_data.sql b/scripts/mysql_system_tables_data.sql
-index 9556e7b..0783f3d 100644
 --- a/scripts/mysql_system_tables_data.sql
 +++ b/scripts/mysql_system_tables_data.sql
 @@ -26,16 +26,6 @@

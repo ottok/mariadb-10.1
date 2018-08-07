@@ -7,8 +7,6 @@ Subject: mips-groonga-atomic
  storage/mroonga/vendor/groonga/lib/CMakeLists.txt | 1 +
  2 files changed, 3 insertions(+)
 
-diff --git a/storage/mroonga/vendor/groonga/CMakeLists.txt b/storage/mroonga/vendor/groonga/CMakeLists.txt
-index e27070f..7f1899c 100644
 --- a/storage/mroonga/vendor/groonga/CMakeLists.txt
 +++ b/storage/mroonga/vendor/groonga/CMakeLists.txt
 @@ -238,6 +238,8 @@ endmacro()
@@ -20,8 +18,6 @@ index e27070f..7f1899c 100644
  ac_check_symbols(fpclassify math.h)
  ac_check_lib(m fpclassify)
  
-diff --git a/storage/mroonga/vendor/groonga/lib/CMakeLists.txt b/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
-index 6765261..6c13737 100644
 --- a/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
 +++ b/storage/mroonga/vendor/groonga/lib/CMakeLists.txt
 @@ -90,6 +90,7 @@ endif()

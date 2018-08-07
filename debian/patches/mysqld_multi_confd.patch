@@ -6,8 +6,6 @@ Subject: mysqld_multi_confd
  scripts/mysqld_multi.sh | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/scripts/mysqld_multi.sh b/scripts/mysqld_multi.sh
-index c6515a3..f50f0fe 100644
 --- a/scripts/mysqld_multi.sh
 +++ b/scripts/mysqld_multi.sh
 @@ -497,6 +497,7 @@ sub list_defaults_files

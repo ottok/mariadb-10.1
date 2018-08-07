@@ -8,7 +8,7 @@ Subject: remove_rename_mariadb-server_files_in
 
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -448,12 +448,6 @@ CONFIGURE_FILE(
+@@ -450,12 +450,6 @@ CONFIGURE_FILE(
      ${CMAKE_SOURCE_DIR}/cmake/info_macros.cmake.in
      ${CMAKE_BINARY_DIR}/info_macros.cmake @ONLY)
  

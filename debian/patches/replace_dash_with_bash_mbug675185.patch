@@ -13,8 +13,6 @@ Subject: replace_dash_with_bash_mbug675185
  scripts/mysqld_safe.sh | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/scripts/mysqld_safe.sh b/scripts/mysqld_safe.sh
-index 3236ebb..96b4ca7 100644
 --- a/scripts/mysqld_safe.sh
 +++ b/scripts/mysqld_safe.sh
 @@ -1,4 +1,4 @@

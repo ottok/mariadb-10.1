@@ -6,8 +6,6 @@ Subject: mips-machine
  cmake/package_name.cmake | 4 ++++
  1 file changed, 4 insertions(+)
 
-diff --git a/cmake/package_name.cmake b/cmake/package_name.cmake
-index 4930a6b..7681f78 100644
 --- a/cmake/package_name.cmake
 +++ b/cmake/package_name.cmake
 @@ -34,6 +34,10 @@ IF(NOT VERSION)

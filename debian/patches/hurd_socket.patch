@@ -6,8 +6,6 @@ Subject: hurd_socket
  mysql-test/lib/My/Platform.pm | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/mysql-test/lib/My/Platform.pm b/mysql-test/lib/My/Platform.pm
-index 110cf8a..c49450b 100644
 --- a/mysql-test/lib/My/Platform.pm
 +++ b/mysql-test/lib/My/Platform.pm
 @@ -112,6 +112,8 @@ sub check_socket_path_length {
