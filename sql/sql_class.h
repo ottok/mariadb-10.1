@@ -3562,6 +3562,10 @@ public:
     *format= (enum_binlog_format) variables.binlog_format;
     *current_format= current_stmt_binlog_format;
   }
+  inline enum_binlog_format get_current_stmt_binlog_format()
+  {
+    return current_stmt_binlog_format;
+  }
   inline void set_binlog_format(enum_binlog_format format,
                                 enum_binlog_format current_format)
   {
@@ -4168,12 +4172,6 @@ public:
        (THD_TRANS::DID_WAIT | THD_TRANS::CREATED_TEMP_TABLE |
         THD_TRANS::DROPPED_TEMP_TABLE | THD_TRANS::DID_DDL));
   }
-
-  /*
-    Returns true when the thread handle belongs to a slave worker thread
-    running in the optimistic execution mode.
-  */
-  bool is_optimistic_slave_worker();
 };
 
 
@@ -5532,8 +5530,6 @@ inline int handler::ha_ft_read(uchar *buf)
 inline int handler::ha_rnd_pos_by_record(uchar *buf)
 {
   int error= rnd_pos_by_record(buf);
-  if (!error)
-    update_rows_read();
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
 }
